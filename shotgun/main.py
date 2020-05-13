@@ -84,7 +84,8 @@ class main_dialogue(QDialog):
         self.handoff_type_list.addItems(['Local Export', 'Shotgun Export'])
         self.handoff_type_label = QLabel('Handoff Type')
         self.handoff_type_label.setBuddy(self.handoff_type_list)
-        self.handoff_type_list.currentTextChanged.connect(self.on_handoff_type_changed)
+        self.handoff_type_list.currentTextChanged.connect(
+            self.on_handoff_type_changed)
 
         self.export_layout = QHBoxLayout()
         self.export_path = QLineEdit()
@@ -139,7 +140,9 @@ class main_dialogue(QDialog):
             self.reset('Log In')
             return
 
-        credentials = self.flix_api.authenticate(self.hostname.text(), self.login.text(), self.password.text())
+        credentials = self.flix_api.authenticate(self.hostname.text(),
+                                                 self.login.text(),
+                                                 self.password.text())
         if credentials is None:
             self.error('Could not authenticate user')
             self.login.clear()
@@ -211,16 +214,18 @@ class main_dialogue(QDialog):
         self.selected_handoff_type = handoff_type
 
     def sort_alphanumeric(self, d):
-        """sort_alphanumeric will sort a dictionnary alphanumerically by his keys
+        """sort_alphanumeric will sort a dictionnary alphanumerically by keys
         d: dictionnary to sort
         """
-        convert = lambda text: int(text) if text.isdigit() else text
-        alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
+        def convert(text): return int(text) if text.isdigit() else text
+        def alphanum_key(key): return [convert(c)
+                                       for c in re.split('([0-9]+)', key)]
         keys = sorted(d.keys(), key=alphanum_key)
         return OrderedDict((k, d[k]) for k in keys)
 
     def get_show_tracking_code(self, shows):
-        """get_show_tracking_code will format the shows to have a mapping: tracking_code -> [show_id, episodic]
+        """get_show_tracking_code will format the shows to have a mapping:
+        tracking_code -> [show_id, episodic]
         shows: list of show
         """
         show_tracking_codes = {}
@@ -228,11 +233,15 @@ class main_dialogue(QDialog):
             return show_tracking_codes
         for s in shows:
             if s.get('hidden', False) is False:
-                show_tracking_codes[s.get('tracking_code')] = [s.get('id'), s.get('episodic')]
+                show_tracking_codes[s.get('tracking_code')] = [
+                    s.get('id'),
+                    s.get('episodic')
+                ]
         return self.sort_alphanumeric(show_tracking_codes)
 
     def get_sequence_tracking_code(self, sequences):
-        """get_sequence_tracking_code will format the sequences to have a mapping: tracking_code -> [sequence_id, last_seq_rev_id]
+        """get_sequence_tracking_code will format the sequences to have
+        a mapping: tracking_code -> [sequence_id, last_seq_rev_id]
         sequences: list of sequence
         """
         sequence_tracking_codes = {}
@@ -240,11 +249,15 @@ class main_dialogue(QDialog):
             return sequence_tracking_codes
         for s in sequences:
             if s.get('revisions_count') > 0:
-                sequence_tracking_codes[s.get('tracking_code')] = [s.get('id'), s.get('revisions_count')]
+                sequence_tracking_codes[s.get('tracking_code')] = [
+                    s.get('id'),
+                    s.get('revisions_count')
+                ]
         return self.sort_alphanumeric(sequence_tracking_codes)
 
     def get_episode_tracking_code(self, episodes):
-        """get_episode_tracking_code will format the episodes to have a mapping: tracking_code -> episode_id
+        """get_episode_tracking_code will format the episodes to have a
+        mapping: tracking_code -> episode_id
         episodes: list of episodes
         """
         episode_tracking_codes = {}
@@ -275,7 +288,8 @@ class main_dialogue(QDialog):
         return seq_id, seq_rev, stc
 
     def on_show_changed(self, tracking_code):
-        """on_show_changed triggered after a show is selected, will init the list of sequences from this show
+        """on_show_changed triggered after a show is selected,
+        will init the list of sequences from this show
         tracking_code: show_tracking_code from the event
         """
         self.selected_show_tracking_code = tracking_code
@@ -289,7 +303,8 @@ class main_dialogue(QDialog):
             episodes = self.flix_api.get_episodes(show_id)
             if episodes is None:
                 self.error('Could not retrieve episodes')
-            self.episode_tracking_code = self.get_episode_tracking_code(episodes)
+            self.episode_tracking_code = self.get_episode_tracking_code(
+                episodes)
             for e in self.episode_tracking_code:
                 self.episode_list.addItem(e)
             self.episode_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
@@ -300,13 +315,15 @@ class main_dialogue(QDialog):
             if sequences is None:
                 self.error('Could not retreive sequences')
                 return
-            self.sequence_tracking_code = self.get_sequence_tracking_code(sequences)
+            self.sequence_tracking_code = self.get_sequence_tracking_code(
+                sequences)
             for s in self.sequence_tracking_code:
                 self.sequence_list.addItem(s)
             self.sequence_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
 
     def on_episode_changed(self, tracking_code):
-        """on_episode_changed triggered after an episode is selected, will store the selected episode
+        """on_episode_changed triggered after an episode is selected,
+        will store the selected episode
         tracking_code: episode_tracking_code from the event
         """
         if tracking_code == '':
@@ -318,14 +335,16 @@ class main_dialogue(QDialog):
         if sequences is None:
             self.error('Could not retreive sequences')
             return
-        self.sequence_tracking_code = self.get_sequence_tracking_code(sequences)
+        self.sequence_tracking_code = self.get_sequence_tracking_code(
+            sequences)
         self.sequence_list.clear()
         for s in self.sequence_tracking_code:
             self.sequence_list.addItem(s)
         self.sequence_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
 
     def on_sequence_changed(self, tracking_code):
-        """on_sequence_changed triggered after a sequence is selected, will store the selected sequence
+        """on_sequence_changed triggered after a sequence is selected,
+        will store the selected sequence
         tracking_code: sequence_tracking_code from the event
         """
         self.selected_sequence_tracking_code = tracking_code
@@ -348,7 +367,8 @@ class main_dialogue(QDialog):
         msgbox.exec_()
 
     def format_panel_for_revision(self, panel, pos):
-        """format_panel_for_revision will format the panel as revisioned panel
+        """format_panel_for_revision will format the panel as
+        revisionned panel
         panel: panel to format
         """
         return {
@@ -361,7 +381,8 @@ class main_dialogue(QDialog):
         }
 
     def get_markers(self, sequence_revision):
-        """get_markers will format the sequence_revision to have a mapping of markers: start -> marker_name
+        """get_markers will format the sequence_revision to have a
+        mapping of markers: start -> marker_name
         sequences_revision: sequence revision entity
         """
         markers_mapping = {}
@@ -382,19 +403,27 @@ class main_dialogue(QDialog):
         for i, p in enumerate(panels):
             if markers_keys[marker_i] == panel_in:
                 panels_per_markers[markers[markers_keys[marker_i]]] = []
-                panels_per_markers[markers[markers_keys[marker_i]]].append(self.format_panel_for_revision(p, i))
-                if len(markers_keys) > marker_i+1:
-                    marker_i = marker_i+1
+                panels_per_markers[markers[markers_keys[marker_i]]].append(
+                    self.format_panel_for_revision(p, i))
+                if len(markers_keys) > marker_i + 1:
+                    marker_i = marker_i + 1
             elif markers_keys[marker_i] > panel_in:
-                panels_per_markers[markers[markers_keys[marker_i-1]]].append(self.format_panel_for_revision(p, i))
-            elif len(markers_keys)-1 == marker_i:
+                panels_per_markers[markers[markers_keys[marker_i - 1]]].append(
+                    self.format_panel_for_revision(p, i))
+            elif len(markers_keys) - 1 == marker_i:
                 if markers[markers_keys[marker_i]] not in panels_per_markers:
                     panels_per_markers[markers[markers_keys[marker_i]]] = []
-                panels_per_markers[markers[markers_keys[marker_i]]].append(self.format_panel_for_revision(p, i))
+                panels_per_markers[markers[markers_keys[marker_i]]].append(
+                    self.format_panel_for_revision(p, i))
             panel_in = panel_in + p.get('duration')
         return panels_per_markers
 
-    def mo_per_shots(self, panels_per_markers, show_id, seq_id, seq_rev_number, episode_id=None):
+    def mo_per_shots(self,
+                     panels_per_markers,
+                     show_id,
+                     seq_id,
+                     seq_rev_number,
+                     episode_id=None):
         """mo_per_shots will make a mapping of all media objects per shots
         panels_per_markers: panels per markers
         show_id: show ID
@@ -411,37 +440,45 @@ class main_dialogue(QDialog):
                 if asset is None:
                     self.error('Could not retrieve asset')
                     return None, False
+                artwork = asset.get('media_objects', {}).get('artwork')[0]
                 mo_per_shots[shot_name]['artwork'].append({
-                    'name': asset.get('media_objects', {}).get('artwork')[0].get('name'),
+                    'name': artwork.get('name'),
                     'id': p.get('id'),
                     'revision_number': p.get('revision_number'),
                     'pos': p.get('pos'),
-                    'mo': asset.get('media_objects', {}).get('artwork')[0].get('id')
+                    'mo': artwork.get('id')
                 })
-                mo_per_shots[shot_name]['thumbnails'].append({
-                    'name': asset.get('media_objects', {}).get('thumbnail')[0].get('name'),
-                    'id': p.get('id'),
-                    'revision_number': p.get('revision_number'),
-                    'pos': p.get('pos'),
-                    'mo': asset.get('media_objects', {}).get('thumbnail')[0].get('id')
-                })
-            if self.update_progress('Export quicktime from Flix for shot {0}'.format(shot_name), True) is False:
+                mo_per_shots[shot_name]['thumbnails'].append(
+                    {'name': asset.get('media_objects', {}).get('thumbnail')
+                     [0].get('name'),
+                     'id': p.get('id'),
+                     'revision_number': p.get('revision_number'),
+                     'pos': p.get('pos'),
+                     'mo': asset.get('media_objects', {}).get('thumbnail')
+                     [0].get('id')})
+            if self.update_progress(
+                'Export quicktime from Flix for shot {0}'.format(shot_name),
+                    True) is False:
                 return None, False
-            chain_id = self.flix_api.start_quicktime_export(show_id, seq_id, seq_rev_number, panels, episode_id, False)
+            chain_id = self.flix_api.start_quicktime_export(
+                show_id, seq_id, seq_rev_number, panels, episode_id, False)
             while True:
                 res = self.flix_api.get_chain(chain_id)
-                if res is None or res.get('status') == 'errored' or res.get('status') == 'timed out':
+                if res is None or res.get('status') == 'errored' or res.get(
+                        'status') == 'timed out':
                     self.error('Could not export quicktime')
                     return None, False
                 if res.get('status') == 'in progress':
                     time.sleep(1)
                     continue
                 if res.get('status') == 'completed':
-                    asset = self.flix_api.get_asset(res.get('results', {}).get('assetID'))
+                    asset = self.flix_api.get_asset(
+                        res.get('results', {}).get('assetID'))
                     if asset is None:
                         self.error('Could not retrieve asset')
                         return None, False
-                    mo_per_shots[shot_name]['mov'] = asset.get('media_objects', {}).get('artwork', [])[0].get('id')
+                    mo_per_shots[shot_name]['mov'] = asset.get(
+                        'media_objects', {}).get('artwork', [])[0].get('id')
                     break
         return mo_per_shots, True
 
@@ -453,7 +490,8 @@ class main_dialogue(QDialog):
             os.makedirs(path)
 
     def create_folders(self, base):
-        """create_folders will create the structure of folders from shows to sequence revision
+        """create_folders will create the structure of folders from
+        shows to sequence revision
         base: base of the folder creation
         """
         _, episodic, show_tracking_code = self.get_selected_show()
@@ -467,11 +505,17 @@ class main_dialogue(QDialog):
             self.create_folder(episode_path)
             sequence_path = os.path.join(episode_path, seq_tracking_code)
         self.create_folder(sequence_path)
-        sequence_revision_path = os.path.join(sequence_path, 'v{0}'.format(seq_rev_number))
+        sequence_revision_path = os.path.join(
+            sequence_path, 'v{0}'.format(seq_rev_number))
         self.create_folder(sequence_revision_path)
         return sequence_revision_path
 
-    def get_default_image_name(self, seq_rev_number, panel_pos, panel_id, panel_revision):
+    def get_default_image_name(
+            self,
+            seq_rev_number,
+            panel_pos,
+            panel_id,
+            panel_revision):
         """get_default_image_name will format the image name
         seq_rev_number: sequence revision number
         panel_pos: position of the panel in the sequence
@@ -480,12 +524,17 @@ class main_dialogue(QDialog):
         """
         _, _, show_tracking_code = self.get_selected_show()
         _, _, seq_tracking_code = self.get_selected_sequence()
-        return '{0}_{1}_v{2}_{3}_{4}_v{5}'.format(show_tracking_code,
-                                                  seq_tracking_code, seq_rev_number,
-                                                  panel_pos, panel_id, panel_revision)
+        return '{0}_{1}_v{2}_{3}_{4}_v{5}'.format(
+            show_tracking_code,
+            seq_tracking_code,
+            seq_rev_number,
+            panel_pos,
+            panel_id,
+            panel_revision)
 
     def download_files(self, export_path, mo_per_shots):
-        """download_files will download all the media objects and put them in the correct directory
+        """download_files will download all the media objects
+        and put them in the correct directory
         export_path: path to export files
         mo_per_shots: media objects per shots
         """
@@ -493,33 +542,49 @@ class main_dialogue(QDialog):
         for _, shot in enumerate(mo_per_shots):
             shot_path = os.path.join(export_path, shot)
             self.create_folder(shot_path)
-            mov_name = '{0}_v{1}_{2}.mov'.format(seq_tracking_code, seq_rev_number, shot)
+            mov_name = '{0}_v{1}_{2}.mov'.format(
+                seq_tracking_code, seq_rev_number, shot)
             mov_path = os.path.join(shot_path, mov_name)
             if sys.platform == 'win32' or sys.platform == 'cygwin':
                 mov_path = mov_path.replace('\\', '\\\\')
-            self.flix_api.download_media_object(mov_path, mo_per_shots[shot].get('mov'))
+            self.flix_api.download_media_object(
+                mov_path, mo_per_shots[shot].get('mov'))
             artwork_folder_path = os.path.join(shot_path, 'artwork')
             self.create_folder(artwork_folder_path)
-            if self.update_progress('Download artworks for shot {0}'.format(shot), True) is False:
+            if self.update_progress(
+                'Download artworks for shot {0}'.format(shot),
+                    True) is False:
                 return
             for artwork in mo_per_shots[shot].get('artwork', []):
                 ext = os.path.splitext(artwork.get('name'))
-                art_name = self.get_default_image_name(seq_rev_number, artwork.get('pos'), artwork.get('id'), artwork.get('revision_number'))
-                artwork_path = os.path.join(artwork_folder_path, '{0}{1}'.format(art_name, ext[1]))
+                art_name = self.get_default_image_name(
+                    seq_rev_number, artwork.get('pos'),
+                    artwork.get('id'),
+                    artwork.get('revision_number'))
+                artwork_path = os.path.join(
+                    artwork_folder_path, '{0}{1}'.format(art_name, ext[1]))
                 if sys.platform == 'win32' or sys.platform == 'cygwin':
                     artwork_path = artwork_path.replace('\\', '\\\\')
-                self.flix_api.download_media_object(artwork_path, artwork.get('mo'))
+                self.flix_api.download_media_object(
+                    artwork_path, artwork.get('mo'))
             thumb_folder_path = os.path.join(shot_path, 'thumbnail')
             self.create_folder(thumb_folder_path)
-            if self.update_progress('Download thumbnails for shot {0}'.format(shot), True) is False:
+            if self.update_progress(
+                'Download thumbnails for shot {0}'.format(shot),
+                    True) is False:
                 return
             for thumb in mo_per_shots[shot].get('thumbnails', []):
                 ext = os.path.splitext(thumb.get('name'))
-                art_name = self.get_default_image_name(seq_rev_number, thumb.get('pos'), thumb.get('id'), thumb.get('revision_number'))
-                thumb_path = os.path.join(thumb_folder_path, '{0}{1}'.format(art_name, ext[1]))
+                art_name = self.get_default_image_name(
+                    seq_rev_number, thumb.get('pos'),
+                    thumb.get('id'),
+                    thumb.get('revision_number'))
+                thumb_path = os.path.join(
+                    thumb_folder_path, '{0}{1}'.format(art_name, ext[1]))
                 if sys.platform == 'win32' or sys.platform == 'cygwin':
                     thumb_path = thumb_path.replace('\\', '\\\\')
-                self.flix_api.download_media_object(thumb_path, thumb.get('mo'))
+                self.flix_api.download_media_object(
+                    thumb_path, thumb.get('mo'))
         return True
 
     def push_to_sg(self, mo_per_shots, sg_password):
@@ -533,7 +598,9 @@ class main_dialogue(QDialog):
             sg_seq = self.shotgun.create_seq(sg_show, seq_name)
         temp_folder = tempfile.gettempdir()
         for shot_name in mo_per_shots:
-            if self.update_progress('Push shot {0} to Shotgun'.format(shot_name), True) is False:
+            if self.update_progress(
+                'Push shot {0} to Shotgun'.format(shot_name),
+                    True) is False:
                 return False
             sg_shot = self.shotgun.get_shot(sg_show, sg_seq, shot_name)
             if sg_shot is None:
@@ -544,15 +611,23 @@ class main_dialogue(QDialog):
             else:
                 ver = re.search('(.*)v([0-9]+)', version['code'])
                 new_version = int(ver.group(2)) + 1
-            version = self.shotgun.create_version(sg_show, sg_shot, new_version)
-            mov_name = '{0}_v{1}_{2}.mov'.format(seq_name, seq_rev_number, shot_name)
+            version = self.shotgun.create_version(
+                sg_show, sg_shot, new_version)
+            mov_name = '{0}_v{1}_{2}.mov'.format(
+                seq_name, seq_rev_number, shot_name)
             temp_quicktime_path = os.path.join(temp_folder, mov_name)
             if sys.platform == 'win32' or sys.platform == 'cygwin':
-                temp_quicktime_path = temp_quicktime_path.replace('\\', '\\\\')            
-            if self.flix_api.download_media_object(temp_quicktime_path, mo_per_shots[shot_name].get('mov')) is None:
-                self.error('could not download quicktime for shot {0}'.format(shot_name))
+                temp_quicktime_path = temp_quicktime_path.replace('\\', '\\\\')
+            if self.flix_api.download_media_object(
+                    temp_quicktime_path,
+                    mo_per_shots[shot_name].get('mov')) is None:
+                self.error(
+                    'could not download quicktime for shot {0}'.format(
+                        shot_name))
                 continue
-            if self.update_progress('Upload movie for shot {0} to Shotgun'.format(shot_name), True) is False:
+            title_progress = 'Upload movie for shot {0} to Shotgun'.format(
+                shot_name)
+            if self.update_progress(title_progress, True) is False:
                 return False
             self.shotgun.upload_movie(version, temp_quicktime_path)
         return True
@@ -585,14 +660,19 @@ class main_dialogue(QDialog):
         if self.sg_login.text() == '' or self.sg_hostname.text() == '':
             self.info('You need to enter your shotgun info')
             return '', False
-        sg_password, ok = QInputDialog().getText(self, 'Shotgun password', 'Shotgun password:', QLineEdit.Password)
+        sg_password, ok = QInputDialog().getText(self,
+                                                 'Shotgun password',
+                                                 'Shotgun password:',
+                                                 QLineEdit.Password)
         if ok is False:
             return '', False
-        self.shotgun = shotgun_api.shotgun(self.sg_hostname.text(), self.sg_login.text(), sg_password)
+        self.shotgun = shotgun_api.shotgun(self.sg_hostname.text(),
+                                           self.sg_login.text(),
+                                           sg_password)
         try:
             _, _, stc = self.get_selected_show()
             self.shotgun.get_project(stc)
-        except:
+        except BaseException:
             self.progress.hide()
             self.error('could not login to shotgun')
             return '', False
@@ -604,7 +684,10 @@ class main_dialogue(QDialog):
             self.info('You should log in first')
             return
 
-        self.progress = QProgressDialog("Operation in progress.", 'Stop', 0, 7)
+        self.progress = QProgressDialog("Operation in progress.",
+                                        'Stop',
+                                        0,
+                                        7)
         self.progress.setMinimumWidth(400)
         self.progress.setMinimumHeight(100)
         self.progress.show()
@@ -620,7 +703,9 @@ class main_dialogue(QDialog):
 
         show_id, episodic, _ = self.get_selected_show()
         seq_id, seq_rev_number, _ = self.get_selected_sequence()
-        seq_rev = self.flix_api.get_sequence_rev(show_id, seq_id, seq_rev_number)
+        seq_rev = self.flix_api.get_sequence_rev(show_id,
+                                                 seq_id,
+                                                 seq_rev_number)
         episode_id = None
         if episodic:
             episode_id, _ = self.get_selected_episode()
@@ -648,7 +733,11 @@ class main_dialogue(QDialog):
         panels_per_markers = self.get_markers_per_panels(markers, panels)
         if self.update_progress('Get Assets info') is False:
             return
-        mo_per_shots, ok = self.mo_per_shots(panels_per_markers, show_id, seq_id, seq_rev_number, episode_id)
+        mo_per_shots, ok = self.mo_per_shots(panels_per_markers,
+                                             show_id,
+                                             seq_id,
+                                             seq_rev_number,
+                                             episode_id)
         if mo_per_shots is None:
             self.progress.hide()
             self.error('Could not retrieve media objects per shots')
@@ -673,6 +762,7 @@ class main_dialogue(QDialog):
         if self.update_progress('Finished') is False:
             return
         self.info('Sequence revision exported successfully')
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

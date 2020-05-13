@@ -1,8 +1,10 @@
+from typing import Dict
+
 import shotgun_api3
 
 
 class shotgun:
-    def __init__(self, hostname, login, password):
+    def __init__(self, hostname: str, login: str, password: str):
         self.hostname = hostname
         self.login = login
         self.password = password
@@ -10,23 +12,22 @@ class shotgun:
                                        login=self.login,
                                        password=self.password)
 
-    def get_project(self, project_name):
+    def get_project(self, project_name: str) -> Dict:
         project = self.sg.find_one('Project',
                                    [['name', 'is', project_name]],
                                    ['id', 'name'])
         if project:
             return project
-        else:
-            print('Could not find {0} Project in SG'.format(project_name))
-            return None
+        print('Could not find {0} Project in SG'.format(project_name))
+        return None
 
-    def create_project(self, project_name):
+    def create_project(self, project_name: str) -> Dict:
         data = {
             'name': project_name,
         }
         return self.sg.create('Project', data)
 
-    def get_sequence(self, project, seq_name):
+    def get_sequence(self, project: Dict, seq_name: str) -> Dict:
         sFilters = [['project', 'is', project], ['code', 'is', seq_name]]
         sFields = ['id', 'code']
         sgSeq = self.sg.find_one('Sequence', sFilters, sFields)
@@ -36,7 +37,7 @@ class shotgun:
             print('Could not find {0} Sequence in SG'.format(seq_name))
         return None
 
-    def create_seq(self, project, seq_name):
+    def create_seq(self, project: Dict, seq_name: str) -> Dict:
         data = {
             'project': {"type": "Project", "id": project['id']},
             'code': seq_name,
@@ -44,7 +45,7 @@ class shotgun:
         }
         return self.sg.create('Sequence', data)
 
-    def get_shot(self, project, seq, shot_name):
+    def get_shot(self, project: Dict, seq: Dict, shot_name: str) -> Dict:
         sFilters = [
             ['project', 'is', project],
             ['sg_sequence', 'is', seq],
@@ -54,11 +55,10 @@ class shotgun:
         sgSeq = self.sg.find_one('Shot', sFilters, sFields)
         if sgSeq:
             return sgSeq
-        else:
-            print('Could not find {0} Shot in SG'.format(shot_name))
+        print('Could not find {0} Shot in SG'.format(shot_name))
         return None
 
-    def create_shot(self, project, seq, shot_name):
+    def create_shot(self, project: Dict, seq: Dict, shot_name: str) -> Dict:
         data = {
             "project": {"type": "Project", "id": project['id']},
             'code': shot_name,
@@ -67,7 +67,7 @@ class shotgun:
         }
         return self.sg.create('Shot', data)
 
-    def get_version(self, project, shot):
+    def get_version(self, project: Dict, shot: Dict) -> Dict:
         sFilters = [
             ['project', 'is', project],
             ['entity', 'is', {'type': 'Shot', 'id': shot['id']}]]
@@ -75,18 +75,17 @@ class shotgun:
         sgSeq = self.sg.find_one('Version', sFilters, sFields)
         if sgSeq:
             return sgSeq
-        else:
-            print('Could not find {0} Version in SG'.format(shot['code']))
+        print('Could not find {0} Version in SG'.format(shot['code']))
         return None
 
-    def create_version(self, show, shot, version_number):
+    def create_version(self, show: Dict, shot: Dict, version_nbr: int) -> Dict:
         data = {'project': {'type': 'Project', 'id': show['id']},
-                'code': shot['code'] + "_v%03d" % version_number,
+                'code': shot['code'] + "_v%03d" % version_nbr,
                 'sg_status_list': 'rev',
                 'entity': {'type': 'Shot', 'id': shot['id']}
                 }
         return self.sg.create('Version', data)
 
-    def upload_movie(self, version, movie_path):
+    def upload_movie(self, version: Dict, movie_path: str) -> Dict:
         return self.sg.upload('Version', version['id'],
                               movie_path, field_name='sg_uploaded_movie')

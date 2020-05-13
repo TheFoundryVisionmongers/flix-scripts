@@ -295,7 +295,7 @@ class flix:
                 'audio_timings': [],
                 'highlights': [],
                 'markers': markers
-                },
+            },
             'revisioned_panels': revisioned_panels
         }
         headers = self.__get_headers(content, url, 'POST')
