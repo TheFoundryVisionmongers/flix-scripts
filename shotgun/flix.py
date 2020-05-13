@@ -14,16 +14,18 @@ class flix:
     create shows etc.
     """
 
-    def __init__(self):
-        self.reset()
+    def __init__(cls):
+        cls.reset()
 
-    def authenticate(self, hostname: str, login: str, password: str) -> Dict:
+    def authenticate(cls, hostname: str, login: str, password: str) -> Dict:
         """authenticate will authenticate a user
 
         Arguments:
-            hostname {[type]} -- Hostname of the server
-            login {[type]} -- Login of the user
-            password {[type]} -- Password of the user
+            hostname {str} -- Hostname of the server
+
+            login {str} -- Login of the user
+
+            password {str} -- Password of the user
 
         Returns:
             Dict -- Authenticate
@@ -39,29 +41,29 @@ class flix:
                               verify=False)
             r.raise_for_status()
             response = json.loads(r.content)
-            self.hostname = hostname
-            self.login = login
-            self.password = password
+            cls.hostname = hostname
+            cls.login = login
+            cls.password = password
         except requests.exceptions.RequestException as err:
             print('Authentification failed', err)
             return None
 
-        self.key = response['id']
-        self.secret = response['secret_access_key']
-        self.expiry = datetime.strptime(
+        cls.key = response['id']
+        cls.secret = response['secret_access_key']
+        cls.expiry = datetime.strptime(
             response['expiry_date'].split('.')[0], '%Y-%m-%dT%H:%M:%S')
         return response
 
-    def get_shows(self) -> Dict:
+    def get_shows(cls) -> Dict:
         """get_shows retrieve the list of shows
 
         Returns:
             Dict -- Shows
         """
-        headers = self.__get_headers(None, '/shows', 'GET')
+        headers = cls.__get_headers(None, '/shows', 'GET')
         response = None
         try:
-            r = requests.get(self.hostname + '/shows', headers=headers,
+            r = requests.get(cls.hostname + '/shows', headers=headers,
                              verify=False)
             r.raise_for_status()
             response = json.loads(r.content)
@@ -74,7 +76,7 @@ class flix:
             return None
         return response
 
-    def get_asset(self, asset_id: int) -> Dict:
+    def get_asset(cls, asset_id: int) -> Dict:
         """get_asset retrieve an asset
 
         Arguments:
@@ -84,11 +86,11 @@ class flix:
             Dict -- Asset
         """
         url = '/asset/{0}'.format(asset_id)
-        headers = self.__get_headers(None, url, 'GET')
+        headers = cls.__get_headers(None, url, 'GET')
         response = None
 
         try:
-            r = requests.get(self.hostname + url, headers=headers,
+            r = requests.get(cls.hostname + url, headers=headers,
                              verify=False)
             r.raise_for_status()
             response = json.loads(r.content)
@@ -100,20 +102,20 @@ class flix:
             return None
         return response
 
-    def get_episodes(self, show_id: int) -> Dict:
+    def get_episodes(cls, show_id: int) -> Dict:
         """get_episodes retrieve the list of episodes from a show
 
         Arguments:
             show_id {int} -- Show ID
 
         Returns:
-            [Dict] -- Episodes
+            Dict -- Episodes
         """
         url = '/show/{0}/episodes'.format(show_id)
-        headers = self.__get_headers(None, url, 'GET')
+        headers = cls.__get_headers(None, url, 'GET')
         response = None
         try:
-            r = requests.get(self.hostname + url, headers=headers,
+            r = requests.get(cls.hostname + url, headers=headers,
                              verify=False)
             r.raise_for_status()
             response = json.loads(r.content)
@@ -126,7 +128,7 @@ class flix:
             return None
         return response
 
-    def get_sequences(self, show_id: int, episode_id: int = None) -> Dict:
+    def get_sequences(cls, show_id: int, episode_id: int = None) -> Dict:
         """get_sequences retrieve the list of sequence from a show
 
         Arguments:
@@ -142,10 +144,10 @@ class flix:
         if episode_id is not None:
             url = '/show/{0}/episode/{1}/sequences'.format(
                 show_id, episode_id)
-        headers = self.__get_headers(None, url, 'GET')
+        headers = cls.__get_headers(None, url, 'GET')
         response = None
         try:
-            r = requests.get(self.hostname + url, headers=headers,
+            r = requests.get(cls.hostname + url, headers=headers,
                              verify=False)
             response = json.loads(r.content)
             response = response.get('sequences')
@@ -158,12 +160,14 @@ class flix:
         return response
 
     def get_panels(
-            self, show_id: int, sequence_id: int, rev_number: int) -> Dict:
+            cls, show_id: int, sequence_id: int, rev_number: int) -> Dict:
         """get_panels retrieve the list of panels from a sequence revision
 
         Arguments:
             show_id {int} -- Show ID
+
             sequence_id {int} -- Sequence ID
+
             rev_number {int} -- Sequence revision number
 
         Returns:
@@ -171,10 +175,10 @@ class flix:
         """
         url = '/show/{0}/sequence/{1}/revision/{2}/panels'.format(
             show_id, sequence_id, rev_number)
-        headers = self.__get_headers(None, url, 'GET')
+        headers = cls.__get_headers(None, url, 'GET')
         response = None
         try:
-            r = requests.get(self.hostname + url, headers=headers,
+            r = requests.get(cls.hostname + url, headers=headers,
                              verify=False)
             response = json.loads(r.content)
             response = response.get('panels')
@@ -187,12 +191,14 @@ class flix:
         return response
 
     def get_dialogues(
-            self, show_id: int, sequence_id: int, rev_number: int) -> Dict:
+            cls, show_id: int, sequence_id: int, rev_number: int) -> Dict:
         """get_dialogues get the list of dialogues from a sequence revision
 
         Arguments:
             show_id {int} -- Show ID
+
             sequence_id {int} -- Sequence ID
+
             rev_number {int} -- Sequence revision number
 
         Returns:
@@ -200,10 +206,10 @@ class flix:
         """
         url = '/show/{0}/sequence/{1}/revision/{2}/dialogues'.format(
             show_id, sequence_id, rev_number)
-        headers = self.__get_headers(None, url, 'GET')
+        headers = cls.__get_headers(None, url, 'GET')
         response = None
         try:
-            r = requests.get(self.hostname + url, headers=headers,
+            r = requests.get(cls.hostname + url, headers=headers,
                              verify=False)
             response = json.loads(r.content)
             response = response.get('dialogues')
@@ -215,13 +221,15 @@ class flix:
             return None
         return response
 
-    def get_sequence_rev(self, show_id: int, sequence_id: int,
+    def get_sequence_rev(cls, show_id: int, sequence_id: int,
                          revision_number: int) -> Dict:
         """get_sequence_rev retrieve a sequence revision
 
         Arguments:
             show_id {int} -- Show ID
+
             sequence_id {int} -- Sequence ID
+
             revision_number {int} -- Sequence Revision Number
 
         Returns:
@@ -229,10 +237,10 @@ class flix:
         """
         url = '/show/{0}/sequence/{1}/revision/{2}'.format(
             show_id, sequence_id, revision_number)
-        headers = self.__get_headers(None, url, 'GET')
+        headers = cls.__get_headers(None, url, 'GET')
         response = None
         try:
-            r = requests.get(self.hostname + url, headers=headers,
+            r = requests.get(cls.hostname + url, headers=headers,
                              verify=False)
             response = json.loads(r.content)
         except requests.exceptions.RequestException as err:
@@ -244,20 +252,21 @@ class flix:
         return response
 
     def download_media_object(
-            self, temp_filepath: str, media_object_id: int) -> str:
+            cls, temp_filepath: str, media_object_id: int) -> str:
         """download_media_object download a media object
 
         Arguments:
             temp_filepath {str} -- Temp filepath to store the downloaded file
+
             media_object_id {int} -- Media Object ID
 
         Returns:
             str -- Temp filepath of the downloaded file
         """
         url = '/file/{0}/data'.format(media_object_id)
-        headers = self.__get_headers(None, url, 'GET')
+        headers = cls.__get_headers(None, url, 'GET')
         try:
-            r = requests.get(self.hostname + url, headers=headers,
+            r = requests.get(cls.hostname + url, headers=headers,
                              verify=False)
             file = open(temp_filepath, 'wb')
             file.write(r.content)
@@ -270,7 +279,7 @@ class flix:
             return None
         return temp_filepath
 
-    def start_quicktime_export(self,
+    def start_quicktime_export(cls,
                                show_id: int,
                                sequence_id: int,
                                seq_rev_number: int,
@@ -281,8 +290,11 @@ class flix:
 
         Arguments:
             show_id {int} -- Show ID
+
             sequence_id {int} -- Sequence ID
+
             seq_rev_number {int} -- Sequence Revision Number
+
             panel_revisions {List} -- List of panel revisions
 
         Keyword Arguments:
@@ -302,10 +314,10 @@ class flix:
             'include_dialogue': include_dialogue,
             'panel_revisions': panel_revisions
         }
-        headers = self.__get_headers(content, url, 'POST')
+        headers = cls.__get_headers(content, url, 'POST')
         response = None
         try:
-            r = requests.post(self.hostname + url, headers=headers,
+            r = requests.post(cls.hostname + url, headers=headers,
                               data=json.dumps(content), verify=False)
             response = json.loads(r.content)
         except requests.exceptions.RequestException as err:
@@ -316,7 +328,7 @@ class flix:
             return None
         return response
 
-    def get_chain(self, chain_id: int) -> Dict:
+    def get_chain(cls, chain_id: int) -> Dict:
         """get_sequence_rev retrieve a chain
 
         Arguments:
@@ -326,10 +338,10 @@ class flix:
             Dict -- Chain
         """
         url = '/chain/{0}'.format(chain_id)
-        headers = self.__get_headers(None, url, 'GET')
+        headers = cls.__get_headers(None, url, 'GET')
         response = None
         try:
-            r = requests.get(self.hostname + url, headers=headers,
+            r = requests.get(cls.hostname + url, headers=headers,
                              verify=False)
             response = json.loads(r.content)
         except requests.exceptions.RequestException as err:
@@ -340,7 +352,7 @@ class flix:
             return None
         return response
 
-    def new_sequence_revision(self,
+    def new_sequence_revision(cls,
                               show_id: int,
                               sequence_id: int,
                               revisioned_panels: List,
@@ -350,8 +362,11 @@ class flix:
 
         Arguments:
             show_id {int} -- Show ID
+
             sequence_id {int} -- Sequence ID
+
             revisioned_panels {List} -- List of revisionned panels
+
             markers {List} -- List of Markers
 
         Keyword Arguments:
@@ -372,10 +387,10 @@ class flix:
             },
             'revisioned_panels': revisioned_panels
         }
-        headers = self.__get_headers(content, url, 'POST')
+        headers = cls.__get_headers(content, url, 'POST')
         response = None
         try:
-            r = requests.post(self.hostname + url, headers=headers,
+            r = requests.post(cls.hostname + url, headers=headers,
                               data=json.dumps(content), verify=False)
             response = json.loads(r.content)
         except requests.exceptions.RequestException as err:
@@ -387,20 +402,22 @@ class flix:
         return response
 
     def new_panel(
-            self, show_id: int, sequence_id: int, asset_id: int = None,
+            cls, show_id: int, sequence_id: int, asset_id: int = None,
             duration: int = 12) -> Dict:
         """new_panel will create a blank panel
 
         Arguments:
             show_id {int} -- Show ID
+
             sequence_id {int} -- Sequence ID
 
         Keyword Arguments:
             asset_id {int} -- Asset ID (default: {None})
+
             duration {int} -- Duration (default: {12})
 
         Returns:
-            [Duct] -- Panel
+            Dict -- Panel
         """
         url = '/show/{0}/sequence/{1}/panel'.format(show_id, sequence_id)
         content = {
@@ -408,10 +425,10 @@ class flix:
         }
         if asset_id is not None:
             content['asset'] = {'asset_id': asset_id}
-        headers = self.__get_headers(content, url, 'POST')
+        headers = cls.__get_headers(content, url, 'POST')
         response = None
         try:
-            r = requests.post(self.hostname + url, headers=headers,
+            r = requests.post(cls.hostname + url, headers=headers,
                               data=json.dumps(content), verify=False)
             response = json.loads(r.content)
         except requests.exceptions.RequestException as err:
@@ -422,38 +439,38 @@ class flix:
             return None
         return response
 
-    def reset(self):
+    def reset(cls):
         """reset will reset the user info
         """
-        self.hostname = None
-        self.secret = None
-        self.expiry = None
-        self.login = None
-        self.password = None
-        self.key = None
+        cls.hostname = None
+        cls.secret = None
+        cls.expiry = None
+        cls.login = None
+        cls.password = None
+        cls.key = None
 
-    def __get_token(self) -> Tuple[str, str]:
+    def __get_token(cls) -> Tuple[str, str]:
         """__get_token will request a token and will reset it
         if it is too close to the expiry date
 
         Returns:
             Tuple[str, str] -- Key and Secret
         """
-        if (self.key is None or self.secret is None or self.expiry is None or
-                datetime.now() + timedelta(hours=2) > self.expiry):
-            authentificationToken = self.authenticate(
-                self.hostname, self.login, self.password)
+        if (cls.key is None or cls.secret is None or cls.expiry is None or
+                datetime.now() + timedelta(hours=2) > cls.expiry):
+            authentificationToken = cls.authenticate(
+                cls.hostname, cls.login, cls.password)
             auth_id = authentificationToken['id']
             auth_secret_token = authentificationToken['secret_access_key']
             auth_expiry_date = authentificationToken['expiry_date']
             auth_expiry_date = auth_expiry_date.split('.')[0]
-            self.key = auth_id
-            self.secret = auth_secret_token
-            self.expiry = datetime.strptime(auth_expiry_date,
-                                            '%Y-%m-%dT%H:%M:%S')
-        return self.key, self.secret
+            cls.key = auth_id
+            cls.secret = auth_secret_token
+            cls.expiry = datetime.strptime(auth_expiry_date,
+                                           '%Y-%m-%dT%H:%M:%S')
+        return cls.key, cls.secret
 
-    def __fn_sign(self,
+    def __fn_sign(cls,
                   access_key_id: str,
                   secret_access_key: str,
                   url: str,
@@ -465,11 +482,17 @@ class flix:
 
         Arguments:
             access_key_id {str} -- Access key ID from your token
+
             secret_access_key {str} -- Secret access key from your token
+
             url {str} -- Url of the request
+
             content {object} -- Content of your request
+
             http_method {str} -- Http Method of your request
+
             content_type {str} -- Content Type of your request
+
             dt {str} -- Datetime
 
         Raises:
@@ -508,12 +531,13 @@ class flix:
         return 'FNAUTH ' + access_key_id + ':' + digest_created.decode('utf-8')
 
     def __get_headers(
-            self, content: object, url: str, method: str = 'POST') -> object:
+            cls, content: object, url: str, method: str = 'POST') -> object:
         """__get_headers will generate the header to make any request
         containing the authorization with signature
 
         Arguments:
             content {object} -- Content of the request
+
             url {str} -- Url to make the request
 
         Keyword Arguments:
@@ -523,9 +547,9 @@ class flix:
             object -- Headers
         """
         dt = datetime.utcnow()
-        key, secret = self.__get_token()
+        key, secret = cls.__get_token()
         return {
-            'Authorization': self.__fn_sign(
+            'Authorization': cls.__fn_sign(
                 key,
                 secret,
                 url,
