@@ -1,0 +1,793 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.8.1" />
+<title>shotgun API documentation</title>
+<meta name="description" content="" />
+<link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
+<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>shotgun</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">from typing import Dict
+
+import shotgun_api3
+
+
+class shotgun:
+    &#34;&#34;&#34;shotgun will handle the login and expose functions to get, create
+    projects etc.&#34;&#34;&#34;
+
+    def __init__(self, hostname: str, login: str, password: str):
+        self.hostname = hostname
+        self.login = login
+        self.password = password
+        self.sg = shotgun_api3.Shotgun(self.hostname,
+                                       login=self.login,
+                                       password=self.password)
+
+    def get_project(self, project_name: str) -&gt; Dict:
+        &#34;&#34;&#34;get_project will try to retrieve a project by name.
+
+        Arguments:
+            project_name {str} -- Name of the project to retrieve
+
+        Returns:
+            Dict -- Project from Shotgun
+        &#34;&#34;&#34;
+        project = self.sg.find_one(&#39;Project&#39;,
+                                   [[&#39;name&#39;, &#39;is&#39;, project_name]],
+                                   [&#39;id&#39;, &#39;name&#39;])
+        if project:
+            return project
+        print(&#39;Could not find {0} Project in SG&#39;.format(project_name))
+        return None
+
+    def create_project(self, project_name: str) -&gt; Dict:
+        &#34;&#34;&#34;create_project will create a project.
+
+        Arguments:
+            project_name {str} -- Project name
+
+        Returns:
+            Dict -- Project from Shotgun
+        &#34;&#34;&#34;
+        data = {
+            &#39;name&#39;: project_name,
+        }
+        return self.sg.create(&#39;Project&#39;, data)
+
+    def get_sequence(self, project: Dict, seq_name: str) -&gt; Dict:
+        &#34;&#34;&#34;get_sequence will retrieve a sequence.
+
+        Arguments:
+            project {Dict} -- Project from Shotgun
+
+            seq_name {str} -- Sequence name
+
+        Returns:
+            Dict -- Sequence from Shotgun
+        &#34;&#34;&#34;
+        sFilters = [[&#39;project&#39;, &#39;is&#39;, project], [&#39;code&#39;, &#39;is&#39;, seq_name]]
+        sFields = [&#39;id&#39;, &#39;code&#39;]
+        sgSeq = self.sg.find_one(&#39;Sequence&#39;, sFilters, sFields)
+        if sgSeq:
+            return sgSeq
+        else:
+            print(&#39;Could not find {0} Sequence in SG&#39;.format(seq_name))
+        return None
+
+    def create_seq(self, project: Dict, seq_name: str) -&gt; Dict:
+        &#34;&#34;&#34;create_seq will create a sequence.
+
+        Arguments:
+            project {Dict} -- Project from Shotgun
+
+            seq_name {str} -- Sequence name
+
+        Returns:
+            Dict -- Sequence from Shotgun
+        &#34;&#34;&#34;
+        data = {
+            &#39;project&#39;: {&#34;type&#34;: &#34;Project&#34;, &#34;id&#34;: project[&#39;id&#39;]},
+            &#39;code&#39;: seq_name,
+            &#39;sg_status_list&#39;: &#34;ip&#34;
+        }
+        return self.sg.create(&#39;Sequence&#39;, data)
+
+    def get_shot(self, project: Dict, seq: Dict, shot_name: str) -&gt; Dict:
+        &#34;&#34;&#34;get_shot will retrieve a shot from Shotgun.
+
+        Arguments:
+            project {Dict} -- Project from Shotgun
+
+            seq {Dict} -- Sequence from Shotgun
+
+            shot_name {str} -- Shot name
+
+        Returns:
+            Dict -- Shot from Shotgun
+        &#34;&#34;&#34;
+        sFilters = [
+            [&#39;project&#39;, &#39;is&#39;, project],
+            [&#39;sg_sequence&#39;, &#39;is&#39;, seq],
+            [&#39;code&#39;, &#39;is&#39;, shot_name]
+        ]
+        sFields = [&#39;id&#39;, &#39;code&#39;]
+        sgSeq = self.sg.find_one(&#39;Shot&#39;, sFilters, sFields)
+        if sgSeq:
+            return sgSeq
+        print(&#39;Could not find {0} Shot in SG&#39;.format(shot_name))
+        return None
+
+    def create_shot(self, project: Dict, seq: Dict, shot_name: str) -&gt; Dict:
+        &#34;&#34;&#34;create_shot will create a shot.
+
+        Arguments:
+            project {Dict} -- Project from Shotgun
+
+            seq {Dict} -- Sequence from Shotgun
+
+            shot_name {str} -- Shot name
+
+        Returns:
+            Dict -- Shot from Shotgun
+        &#34;&#34;&#34;
+        data = {
+            &#34;project&#34;: {&#34;type&#34;: &#34;Project&#34;, &#34;id&#34;: project[&#39;id&#39;]},
+            &#39;code&#39;: shot_name,
+            &#39;sg_sequence&#39;: {&#39;type&#39;: &#39;Sequence&#39;, &#39;id&#39;: seq[&#39;id&#39;]},
+            &#39;sg_status_list&#39;: &#39;ip&#39;
+        }
+        return self.sg.create(&#39;Shot&#39;, data)
+
+    def get_version(self, project: Dict, shot: Dict) -&gt; Dict:
+        &#34;&#34;&#34;get_version will retrieve a version.
+
+        Arguments:
+            project {Dict} -- Project from Shotgun
+
+            shot {Dict} -- Shot from Shotgun
+
+        Returns:
+            Dict -- Version from Shotgun
+        &#34;&#34;&#34;
+        sFilters = [
+            [&#39;project&#39;, &#39;is&#39;, project],
+            [&#39;entity&#39;, &#39;is&#39;, {&#39;type&#39;: &#39;Shot&#39;, &#39;id&#39;: shot[&#39;id&#39;]}]]
+        sFields = [&#39;id&#39;, &#39;code&#39;]
+        sgSeq = self.sg.find_one(&#39;Version&#39;, sFilters, sFields)
+        if sgSeq:
+            return sgSeq
+        print(&#39;Could not find {0} Version in SG&#39;.format(shot[&#39;code&#39;]))
+        return None
+
+    def create_version(
+            self, project: Dict, shot: Dict, version_nbr: int) -&gt; Dict:
+        &#34;&#34;&#34;create_version will create a version.
+
+        Arguments:
+            project {Dict} -- Project from Shotgun
+
+            shot {Dict} -- Shot from Shotgun
+
+            version_nbr {int} -- Version number
+
+        Returns:
+            Dict -- Version from Shotgun
+        &#34;&#34;&#34;
+        data = {&#39;project&#39;: {&#39;type&#39;: &#39;Project&#39;, &#39;id&#39;: project[&#39;id&#39;]},
+                &#39;code&#39;: shot[&#39;code&#39;] + &#34;_v%03d&#34; % version_nbr,
+                &#39;sg_status_list&#39;: &#39;rev&#39;,
+                &#39;entity&#39;: {&#39;type&#39;: &#39;Shot&#39;, &#39;id&#39;: shot[&#39;id&#39;]}
+                }
+        return self.sg.create(&#39;Version&#39;, data)
+
+    def upload_movie(self, version: Dict, movie_path: str) -&gt; Dict:
+        &#34;&#34;&#34;upload_movie will upload a movie to Shotgun.
+
+        Arguments:
+            version {Dict} -- Version from Shotgun
+
+            movie_path {str} -- Movie path to upload
+
+        Returns:
+            Dict -- Movie upload from Shotgun
+        &#34;&#34;&#34;
+        return self.sg.upload(&#39;Version&#39;, version[&#39;id&#39;],
+                              movie_path, field_name=&#39;sg_uploaded_movie&#39;)</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="shotgun.shotgun"><code class="flex name class">
+<span>class <span class="ident">shotgun</span></span>
+<span>(</span><span>hostname: str, login: str, password: str)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>shotgun will handle the login and expose functions to get, create
+projects etc.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class shotgun:
+    &#34;&#34;&#34;shotgun will handle the login and expose functions to get, create
+    projects etc.&#34;&#34;&#34;
+
+    def __init__(self, hostname: str, login: str, password: str):
+        self.hostname = hostname
+        self.login = login
+        self.password = password
+        self.sg = shotgun_api3.Shotgun(self.hostname,
+                                       login=self.login,
+                                       password=self.password)
+
+    def get_project(self, project_name: str) -&gt; Dict:
+        &#34;&#34;&#34;get_project will try to retrieve a project by name.
+
+        Arguments:
+            project_name {str} -- Name of the project to retrieve
+
+        Returns:
+            Dict -- Project from Shotgun
+        &#34;&#34;&#34;
+        project = self.sg.find_one(&#39;Project&#39;,
+                                   [[&#39;name&#39;, &#39;is&#39;, project_name]],
+                                   [&#39;id&#39;, &#39;name&#39;])
+        if project:
+            return project
+        print(&#39;Could not find {0} Project in SG&#39;.format(project_name))
+        return None
+
+    def create_project(self, project_name: str) -&gt; Dict:
+        &#34;&#34;&#34;create_project will create a project.
+
+        Arguments:
+            project_name {str} -- Project name
+
+        Returns:
+            Dict -- Project from Shotgun
+        &#34;&#34;&#34;
+        data = {
+            &#39;name&#39;: project_name,
+        }
+        return self.sg.create(&#39;Project&#39;, data)
+
+    def get_sequence(self, project: Dict, seq_name: str) -&gt; Dict:
+        &#34;&#34;&#34;get_sequence will retrieve a sequence.
+
+        Arguments:
+            project {Dict} -- Project from Shotgun
+
+            seq_name {str} -- Sequence name
+
+        Returns:
+            Dict -- Sequence from Shotgun
+        &#34;&#34;&#34;
+        sFilters = [[&#39;project&#39;, &#39;is&#39;, project], [&#39;code&#39;, &#39;is&#39;, seq_name]]
+        sFields = [&#39;id&#39;, &#39;code&#39;]
+        sgSeq = self.sg.find_one(&#39;Sequence&#39;, sFilters, sFields)
+        if sgSeq:
+            return sgSeq
+        else:
+            print(&#39;Could not find {0} Sequence in SG&#39;.format(seq_name))
+        return None
+
+    def create_seq(self, project: Dict, seq_name: str) -&gt; Dict:
+        &#34;&#34;&#34;create_seq will create a sequence.
+
+        Arguments:
+            project {Dict} -- Project from Shotgun
+
+            seq_name {str} -- Sequence name
+
+        Returns:
+            Dict -- Sequence from Shotgun
+        &#34;&#34;&#34;
+        data = {
+            &#39;project&#39;: {&#34;type&#34;: &#34;Project&#34;, &#34;id&#34;: project[&#39;id&#39;]},
+            &#39;code&#39;: seq_name,
+            &#39;sg_status_list&#39;: &#34;ip&#34;
+        }
+        return self.sg.create(&#39;Sequence&#39;, data)
+
+    def get_shot(self, project: Dict, seq: Dict, shot_name: str) -&gt; Dict:
+        &#34;&#34;&#34;get_shot will retrieve a shot from Shotgun.
+
+        Arguments:
+            project {Dict} -- Project from Shotgun
+
+            seq {Dict} -- Sequence from Shotgun
+
+            shot_name {str} -- Shot name
+
+        Returns:
+            Dict -- Shot from Shotgun
+        &#34;&#34;&#34;
+        sFilters = [
+            [&#39;project&#39;, &#39;is&#39;, project],
+            [&#39;sg_sequence&#39;, &#39;is&#39;, seq],
+            [&#39;code&#39;, &#39;is&#39;, shot_name]
+        ]
+        sFields = [&#39;id&#39;, &#39;code&#39;]
+        sgSeq = self.sg.find_one(&#39;Shot&#39;, sFilters, sFields)
+        if sgSeq:
+            return sgSeq
+        print(&#39;Could not find {0} Shot in SG&#39;.format(shot_name))
+        return None
+
+    def create_shot(self, project: Dict, seq: Dict, shot_name: str) -&gt; Dict:
+        &#34;&#34;&#34;create_shot will create a shot.
+
+        Arguments:
+            project {Dict} -- Project from Shotgun
+
+            seq {Dict} -- Sequence from Shotgun
+
+            shot_name {str} -- Shot name
+
+        Returns:
+            Dict -- Shot from Shotgun
+        &#34;&#34;&#34;
+        data = {
+            &#34;project&#34;: {&#34;type&#34;: &#34;Project&#34;, &#34;id&#34;: project[&#39;id&#39;]},
+            &#39;code&#39;: shot_name,
+            &#39;sg_sequence&#39;: {&#39;type&#39;: &#39;Sequence&#39;, &#39;id&#39;: seq[&#39;id&#39;]},
+            &#39;sg_status_list&#39;: &#39;ip&#39;
+        }
+        return self.sg.create(&#39;Shot&#39;, data)
+
+    def get_version(self, project: Dict, shot: Dict) -&gt; Dict:
+        &#34;&#34;&#34;get_version will retrieve a version.
+
+        Arguments:
+            project {Dict} -- Project from Shotgun
+
+            shot {Dict} -- Shot from Shotgun
+
+        Returns:
+            Dict -- Version from Shotgun
+        &#34;&#34;&#34;
+        sFilters = [
+            [&#39;project&#39;, &#39;is&#39;, project],
+            [&#39;entity&#39;, &#39;is&#39;, {&#39;type&#39;: &#39;Shot&#39;, &#39;id&#39;: shot[&#39;id&#39;]}]]
+        sFields = [&#39;id&#39;, &#39;code&#39;]
+        sgSeq = self.sg.find_one(&#39;Version&#39;, sFilters, sFields)
+        if sgSeq:
+            return sgSeq
+        print(&#39;Could not find {0} Version in SG&#39;.format(shot[&#39;code&#39;]))
+        return None
+
+    def create_version(
+            self, project: Dict, shot: Dict, version_nbr: int) -&gt; Dict:
+        &#34;&#34;&#34;create_version will create a version.
+
+        Arguments:
+            project {Dict} -- Project from Shotgun
+
+            shot {Dict} -- Shot from Shotgun
+
+            version_nbr {int} -- Version number
+
+        Returns:
+            Dict -- Version from Shotgun
+        &#34;&#34;&#34;
+        data = {&#39;project&#39;: {&#39;type&#39;: &#39;Project&#39;, &#39;id&#39;: project[&#39;id&#39;]},
+                &#39;code&#39;: shot[&#39;code&#39;] + &#34;_v%03d&#34; % version_nbr,
+                &#39;sg_status_list&#39;: &#39;rev&#39;,
+                &#39;entity&#39;: {&#39;type&#39;: &#39;Shot&#39;, &#39;id&#39;: shot[&#39;id&#39;]}
+                }
+        return self.sg.create(&#39;Version&#39;, data)
+
+    def upload_movie(self, version: Dict, movie_path: str) -&gt; Dict:
+        &#34;&#34;&#34;upload_movie will upload a movie to Shotgun.
+
+        Arguments:
+            version {Dict} -- Version from Shotgun
+
+            movie_path {str} -- Movie path to upload
+
+        Returns:
+            Dict -- Movie upload from Shotgun
+        &#34;&#34;&#34;
+        return self.sg.upload(&#39;Version&#39;, version[&#39;id&#39;],
+                              movie_path, field_name=&#39;sg_uploaded_movie&#39;)</code></pre>
+</details>
+<h3>Methods</h3>
+<dl>
+<dt id="shotgun.shotgun.create_project"><code class="name flex">
+<span>def <span class="ident">create_project</span></span>(<span>self, project_name: str) -> typing.Dict</span>
+</code></dt>
+<dd>
+<div class="desc"><p>create_project will create a project.</p>
+<h2 id="arguments">Arguments</h2>
+<p>project_name {str} &ndash; Project name</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict -- Project from Shotgun</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def create_project(self, project_name: str) -&gt; Dict:
+    &#34;&#34;&#34;create_project will create a project.
+
+    Arguments:
+        project_name {str} -- Project name
+
+    Returns:
+        Dict -- Project from Shotgun
+    &#34;&#34;&#34;
+    data = {
+        &#39;name&#39;: project_name,
+    }
+    return self.sg.create(&#39;Project&#39;, data)</code></pre>
+</details>
+</dd>
+<dt id="shotgun.shotgun.create_seq"><code class="name flex">
+<span>def <span class="ident">create_seq</span></span>(<span>self, project: typing.Dict, seq_name: str) -> typing.Dict</span>
+</code></dt>
+<dd>
+<div class="desc"><p>create_seq will create a sequence.</p>
+<h2 id="arguments">Arguments</h2>
+<p>project {Dict} &ndash; Project from Shotgun</p>
+<p>seq_name {str} &ndash; Sequence name</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict -- Sequence from Shotgun</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def create_seq(self, project: Dict, seq_name: str) -&gt; Dict:
+    &#34;&#34;&#34;create_seq will create a sequence.
+
+    Arguments:
+        project {Dict} -- Project from Shotgun
+
+        seq_name {str} -- Sequence name
+
+    Returns:
+        Dict -- Sequence from Shotgun
+    &#34;&#34;&#34;
+    data = {
+        &#39;project&#39;: {&#34;type&#34;: &#34;Project&#34;, &#34;id&#34;: project[&#39;id&#39;]},
+        &#39;code&#39;: seq_name,
+        &#39;sg_status_list&#39;: &#34;ip&#34;
+    }
+    return self.sg.create(&#39;Sequence&#39;, data)</code></pre>
+</details>
+</dd>
+<dt id="shotgun.shotgun.create_shot"><code class="name flex">
+<span>def <span class="ident">create_shot</span></span>(<span>self, project: typing.Dict, seq: typing.Dict, shot_name: str) -> typing.Dict</span>
+</code></dt>
+<dd>
+<div class="desc"><p>create_shot will create a shot.</p>
+<h2 id="arguments">Arguments</h2>
+<p>project {Dict} &ndash; Project from Shotgun</p>
+<p>seq {Dict} &ndash; Sequence from Shotgun</p>
+<p>shot_name {str} &ndash; Shot name</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict -- Shot from Shotgun</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def create_shot(self, project: Dict, seq: Dict, shot_name: str) -&gt; Dict:
+    &#34;&#34;&#34;create_shot will create a shot.
+
+    Arguments:
+        project {Dict} -- Project from Shotgun
+
+        seq {Dict} -- Sequence from Shotgun
+
+        shot_name {str} -- Shot name
+
+    Returns:
+        Dict -- Shot from Shotgun
+    &#34;&#34;&#34;
+    data = {
+        &#34;project&#34;: {&#34;type&#34;: &#34;Project&#34;, &#34;id&#34;: project[&#39;id&#39;]},
+        &#39;code&#39;: shot_name,
+        &#39;sg_sequence&#39;: {&#39;type&#39;: &#39;Sequence&#39;, &#39;id&#39;: seq[&#39;id&#39;]},
+        &#39;sg_status_list&#39;: &#39;ip&#39;
+    }
+    return self.sg.create(&#39;Shot&#39;, data)</code></pre>
+</details>
+</dd>
+<dt id="shotgun.shotgun.create_version"><code class="name flex">
+<span>def <span class="ident">create_version</span></span>(<span>self, project: typing.Dict, shot: typing.Dict, version_nbr: int) -> typing.Dict</span>
+</code></dt>
+<dd>
+<div class="desc"><p>create_version will create a version.</p>
+<h2 id="arguments">Arguments</h2>
+<p>project {Dict} &ndash; Project from Shotgun</p>
+<p>shot {Dict} &ndash; Shot from Shotgun</p>
+<p>version_nbr {int} &ndash; Version number</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict -- Version from Shotgun</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def create_version(
+        self, project: Dict, shot: Dict, version_nbr: int) -&gt; Dict:
+    &#34;&#34;&#34;create_version will create a version.
+
+    Arguments:
+        project {Dict} -- Project from Shotgun
+
+        shot {Dict} -- Shot from Shotgun
+
+        version_nbr {int} -- Version number
+
+    Returns:
+        Dict -- Version from Shotgun
+    &#34;&#34;&#34;
+    data = {&#39;project&#39;: {&#39;type&#39;: &#39;Project&#39;, &#39;id&#39;: project[&#39;id&#39;]},
+            &#39;code&#39;: shot[&#39;code&#39;] + &#34;_v%03d&#34; % version_nbr,
+            &#39;sg_status_list&#39;: &#39;rev&#39;,
+            &#39;entity&#39;: {&#39;type&#39;: &#39;Shot&#39;, &#39;id&#39;: shot[&#39;id&#39;]}
+            }
+    return self.sg.create(&#39;Version&#39;, data)</code></pre>
+</details>
+</dd>
+<dt id="shotgun.shotgun.get_project"><code class="name flex">
+<span>def <span class="ident">get_project</span></span>(<span>self, project_name: str) -> typing.Dict</span>
+</code></dt>
+<dd>
+<div class="desc"><p>get_project will try to retrieve a project by name.</p>
+<h2 id="arguments">Arguments</h2>
+<p>project_name {str} &ndash; Name of the project to retrieve</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict -- Project from Shotgun</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_project(self, project_name: str) -&gt; Dict:
+    &#34;&#34;&#34;get_project will try to retrieve a project by name.
+
+    Arguments:
+        project_name {str} -- Name of the project to retrieve
+
+    Returns:
+        Dict -- Project from Shotgun
+    &#34;&#34;&#34;
+    project = self.sg.find_one(&#39;Project&#39;,
+                               [[&#39;name&#39;, &#39;is&#39;, project_name]],
+                               [&#39;id&#39;, &#39;name&#39;])
+    if project:
+        return project
+    print(&#39;Could not find {0} Project in SG&#39;.format(project_name))
+    return None</code></pre>
+</details>
+</dd>
+<dt id="shotgun.shotgun.get_sequence"><code class="name flex">
+<span>def <span class="ident">get_sequence</span></span>(<span>self, project: typing.Dict, seq_name: str) -> typing.Dict</span>
+</code></dt>
+<dd>
+<div class="desc"><p>get_sequence will retrieve a sequence.</p>
+<h2 id="arguments">Arguments</h2>
+<p>project {Dict} &ndash; Project from Shotgun</p>
+<p>seq_name {str} &ndash; Sequence name</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict -- Sequence from Shotgun</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_sequence(self, project: Dict, seq_name: str) -&gt; Dict:
+    &#34;&#34;&#34;get_sequence will retrieve a sequence.
+
+    Arguments:
+        project {Dict} -- Project from Shotgun
+
+        seq_name {str} -- Sequence name
+
+    Returns:
+        Dict -- Sequence from Shotgun
+    &#34;&#34;&#34;
+    sFilters = [[&#39;project&#39;, &#39;is&#39;, project], [&#39;code&#39;, &#39;is&#39;, seq_name]]
+    sFields = [&#39;id&#39;, &#39;code&#39;]
+    sgSeq = self.sg.find_one(&#39;Sequence&#39;, sFilters, sFields)
+    if sgSeq:
+        return sgSeq
+    else:
+        print(&#39;Could not find {0} Sequence in SG&#39;.format(seq_name))
+    return None</code></pre>
+</details>
+</dd>
+<dt id="shotgun.shotgun.get_shot"><code class="name flex">
+<span>def <span class="ident">get_shot</span></span>(<span>self, project: typing.Dict, seq: typing.Dict, shot_name: str) -> typing.Dict</span>
+</code></dt>
+<dd>
+<div class="desc"><p>get_shot will retrieve a shot from Shotgun.</p>
+<h2 id="arguments">Arguments</h2>
+<p>project {Dict} &ndash; Project from Shotgun</p>
+<p>seq {Dict} &ndash; Sequence from Shotgun</p>
+<p>shot_name {str} &ndash; Shot name</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict -- Shot from Shotgun</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_shot(self, project: Dict, seq: Dict, shot_name: str) -&gt; Dict:
+    &#34;&#34;&#34;get_shot will retrieve a shot from Shotgun.
+
+    Arguments:
+        project {Dict} -- Project from Shotgun
+
+        seq {Dict} -- Sequence from Shotgun
+
+        shot_name {str} -- Shot name
+
+    Returns:
+        Dict -- Shot from Shotgun
+    &#34;&#34;&#34;
+    sFilters = [
+        [&#39;project&#39;, &#39;is&#39;, project],
+        [&#39;sg_sequence&#39;, &#39;is&#39;, seq],
+        [&#39;code&#39;, &#39;is&#39;, shot_name]
+    ]
+    sFields = [&#39;id&#39;, &#39;code&#39;]
+    sgSeq = self.sg.find_one(&#39;Shot&#39;, sFilters, sFields)
+    if sgSeq:
+        return sgSeq
+    print(&#39;Could not find {0} Shot in SG&#39;.format(shot_name))
+    return None</code></pre>
+</details>
+</dd>
+<dt id="shotgun.shotgun.get_version"><code class="name flex">
+<span>def <span class="ident">get_version</span></span>(<span>self, project: typing.Dict, shot: typing.Dict) -> typing.Dict</span>
+</code></dt>
+<dd>
+<div class="desc"><p>get_version will retrieve a version.</p>
+<h2 id="arguments">Arguments</h2>
+<p>project {Dict} &ndash; Project from Shotgun</p>
+<p>shot {Dict} &ndash; Shot from Shotgun</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict -- Version from Shotgun</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_version(self, project: Dict, shot: Dict) -&gt; Dict:
+    &#34;&#34;&#34;get_version will retrieve a version.
+
+    Arguments:
+        project {Dict} -- Project from Shotgun
+
+        shot {Dict} -- Shot from Shotgun
+
+    Returns:
+        Dict -- Version from Shotgun
+    &#34;&#34;&#34;
+    sFilters = [
+        [&#39;project&#39;, &#39;is&#39;, project],
+        [&#39;entity&#39;, &#39;is&#39;, {&#39;type&#39;: &#39;Shot&#39;, &#39;id&#39;: shot[&#39;id&#39;]}]]
+    sFields = [&#39;id&#39;, &#39;code&#39;]
+    sgSeq = self.sg.find_one(&#39;Version&#39;, sFilters, sFields)
+    if sgSeq:
+        return sgSeq
+    print(&#39;Could not find {0} Version in SG&#39;.format(shot[&#39;code&#39;]))
+    return None</code></pre>
+</details>
+</dd>
+<dt id="shotgun.shotgun.upload_movie"><code class="name flex">
+<span>def <span class="ident">upload_movie</span></span>(<span>self, version: typing.Dict, movie_path: str) -> typing.Dict</span>
+</code></dt>
+<dd>
+<div class="desc"><p>upload_movie will upload a movie to Shotgun.</p>
+<h2 id="arguments">Arguments</h2>
+<p>version {Dict} &ndash; Version from Shotgun</p>
+<p>movie_path {str} &ndash; Movie path to upload</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict -- Movie upload from Shotgun</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def upload_movie(self, version: Dict, movie_path: str) -&gt; Dict:
+    &#34;&#34;&#34;upload_movie will upload a movie to Shotgun.
+
+    Arguments:
+        version {Dict} -- Version from Shotgun
+
+        movie_path {str} -- Movie path to upload
+
+    Returns:
+        Dict -- Movie upload from Shotgun
+    &#34;&#34;&#34;
+    return self.sg.upload(&#39;Version&#39;, version[&#39;id&#39;],
+                          movie_path, field_name=&#39;sg_uploaded_movie&#39;)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="shotgun.shotgun" href="#shotgun.shotgun">shotgun</a></code></h4>
+<ul class="two-column">
+<li><code><a title="shotgun.shotgun.create_project" href="#shotgun.shotgun.create_project">create_project</a></code></li>
+<li><code><a title="shotgun.shotgun.create_seq" href="#shotgun.shotgun.create_seq">create_seq</a></code></li>
+<li><code><a title="shotgun.shotgun.create_shot" href="#shotgun.shotgun.create_shot">create_shot</a></code></li>
+<li><code><a title="shotgun.shotgun.create_version" href="#shotgun.shotgun.create_version">create_version</a></code></li>
+<li><code><a title="shotgun.shotgun.get_project" href="#shotgun.shotgun.get_project">get_project</a></code></li>
+<li><code><a title="shotgun.shotgun.get_sequence" href="#shotgun.shotgun.get_sequence">get_sequence</a></code></li>
+<li><code><a title="shotgun.shotgun.get_shot" href="#shotgun.shotgun.get_shot">get_shot</a></code></li>
+<li><code><a title="shotgun.shotgun.get_version" href="#shotgun.shotgun.get_version">get_version</a></code></li>
+<li><code><a title="shotgun.shotgun.upload_movie" href="#shotgun.shotgun.upload_movie">upload_movie</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.8.1</a>.</p>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad()</script>
+</body>
+</html>
