@@ -133,7 +133,7 @@ class main_dialogue(QDialog):
         self.setLayout(h_main_box)
 
     def authenticate(self):
-        """authenticate will authenticate a user and update the view"""
+        """authenticate will authenticate a user and update the view."""
         if self.authenticated:
             self.flix_api.reset()
             self.authenticated = False
@@ -165,7 +165,7 @@ class main_dialogue(QDialog):
         self.export_path.setText(export_p)
 
     def init_shows(self):
-        """init_shows will retrieve the list of show and update the UI"""
+        """init_shows will retrieve the list of show and update the UI."""
         shows = self.flix_api.get_shows()
         if shows is None:
             self.error('Could not retreive shows')
@@ -225,6 +225,7 @@ class main_dialogue(QDialog):
 
     def get_show_tracking_code(self, shows):
         """get_show_tracking_code will format the shows to have a mapping:
+
         tracking_code -> [show_id, episodic]
         shows: list of show
         """
@@ -677,13 +678,13 @@ class main_dialogue(QDialog):
             self.error('could not login to shotgun')
             return '', False
         return sg_password, True
+        return sg_password, True
 
     def pull_latest(self):
-        """pull_latest will export the latest sequence revision"""
+        """pull_latest will export the latest sequence revision."""
         if not self.authenticated:
             self.info('You should log in first')
             return
-
         self.progress = QProgressDialog("Operation in progress.",
                                         'Stop',
                                         0,
