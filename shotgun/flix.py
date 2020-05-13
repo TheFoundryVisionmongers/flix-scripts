@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 
 
 class flix:
-    
+
     def __init__(self):
         self.reset()
 
@@ -26,7 +26,8 @@ class flix:
             'Authorization': 'Basic ' + authdata.decode('UTF-8'),
         }
         try:
-            r = requests.post(hostname + '/authenticate', headers=header, verify=False)
+            r = requests.post(hostname + '/authenticate', headers=header,
+                              verify=False)
             r.raise_for_status()
             response = json.loads(r.content)
             self.hostname = hostname
@@ -38,7 +39,8 @@ class flix:
 
         self.key = response['id']
         self.secret = response['secret_access_key']
-        self.expiry = datetime.strptime(response['expiry_date'].split('.')[0], '%Y-%m-%dT%H:%M:%S')
+        self.expiry = datetime.strptime(
+            response['expiry_date'].split('.')[0], '%Y-%m-%dT%H:%M:%S')
         return response
 
     def get_shows(self):
@@ -46,7 +48,8 @@ class flix:
         headers = self.__get_headers(None, '/shows', 'GET')
         response = None
         try:
-            r = requests.get(self.hostname + '/shows', headers=headers, verify=False)
+            r = requests.get(self.hostname + '/shows', headers=headers,
+                             verify=False)
             r.raise_for_status()
             response = json.loads(r.content)
             response = response.get('shows')
@@ -65,7 +68,8 @@ class flix:
         response = None
 
         try:
-            r = requests.get(self.hostname + url, headers=headers, verify=False)
+            r = requests.get(self.hostname + url, headers=headers,
+                             verify=False)
             r.raise_for_status()
             response = json.loads(r.content)
         except requests.exceptions.RequestException as err:
@@ -84,7 +88,8 @@ class flix:
         headers = self.__get_headers(None, url, 'GET')
         response = None
         try:
-            r = requests.get(self.hostname + url, headers=headers, verify=False)
+            r = requests.get(self.hostname + url, headers=headers,
+                             verify=False)
             r.raise_for_status()
             response = json.loads(r.content)
             response = response.get('episodes')
@@ -103,11 +108,13 @@ class flix:
         """
         url = '/show/{0}/sequences'.format(show_id)
         if episode_id is not None:
-            url = '/show/{0}/episode/{1}/sequences'.format(show_id, episode_id)
+            url = '/show/{0}/episode/{1}/sequences'.format(
+                show_id, episode_id)
         headers = self.__get_headers(None, url, 'GET')
         response = None
         try:
-            r = requests.get(self.hostname + url, headers=headers, verify=False)
+            r = requests.get(self.hostname + url, headers=headers,
+                             verify=False)
             response = json.loads(r.content)
             response = response.get('sequences')
         except requests.exceptions.RequestException as err:
@@ -129,7 +136,8 @@ class flix:
         headers = self.__get_headers(None, url, 'GET')
         response = None
         try:
-            r = requests.get(self.hostname + url, headers=headers, verify=False)
+            r = requests.get(self.hostname + url, headers=headers,
+                             verify=False)
             response = json.loads(r.content)
             response = response.get('panels')
         except requests.exceptions.RequestException as err:
@@ -141,7 +149,7 @@ class flix:
         return response
 
     def get_dialogues(self, show_id, sequence_id, revision_number):
-        """get_dialogues retrieve the list of dialogues from a sequence revision
+        """get_dialogues get the list of dialogues from a sequence revision
         show_id: show ID
         sequence_id: sequence ID
         revision_number: sequence revision number
@@ -151,7 +159,8 @@ class flix:
         headers = self.__get_headers(None, url, 'GET')
         response = None
         try:
-            r = requests.get(self.hostname + url, headers=headers, verify=False)
+            r = requests.get(self.hostname + url, headers=headers,
+                             verify=False)
             response = json.loads(r.content)
             response = response.get('dialogues')
         except requests.exceptions.RequestException as err:
@@ -173,7 +182,8 @@ class flix:
         headers = self.__get_headers(None, url, 'GET')
         response = None
         try:
-            r = requests.get(self.hostname + url, headers=headers, verify=False)
+            r = requests.get(self.hostname + url, headers=headers,
+                             verify=False)
             response = json.loads(r.content)
         except requests.exceptions.RequestException as err:
             if r is not None and r.status_code == 401:
@@ -191,7 +201,8 @@ class flix:
         url = '/file/{0}/data'.format(media_object_id)
         headers = self.__get_headers(None, url, 'GET')
         try:
-            r = requests.get(self.hostname + url, headers=headers, verify=False)
+            r = requests.get(self.hostname + url, headers=headers,
+                             verify=False)
             file = open(temp_filepath, 'wb')
             file.write(r.content)
             file.close()
@@ -203,7 +214,13 @@ class flix:
             return None
         return temp_filepath
 
-    def start_quicktime_export(self, show_id, sequence_id, seq_rev_number, panel_revisions, episode_id=None, include_dialogue=False):
+    def start_quicktime_export(self,
+                               show_id,
+                               sequence_id,
+                               seq_rev_number,
+                               panel_revisions,
+                               episode_id=None,
+                               include_dialogue=False):
         """start_quicktime_export will create a quicktime export
         show_id: show ID
         sequence_id: sequence ID
@@ -212,9 +229,12 @@ class flix:
         include_dialogue: include dialogue or not
         """
 
-        url = '/show/{0}/sequence/{1}/revision/{2}/export/quicktime'.format(show_id, sequence_id, seq_rev_number)
+        url = '/show/{0}/sequence/{1}/revision/{2}/export/quicktime'.format(
+            show_id, sequence_id, seq_rev_number)
         if episode_id is not None:
-            url = '/show/{0}/episode/{1}/sequence/{2}/revision/{3}/export/quicktime'.format(show_id, episode_id, sequence_id, seq_rev_number)
+            url = ('/show/{0}/episode/{1}/sequence/{2}/revision/{3}/' +
+                   'export/quicktime').format(
+                       show_id, episode_id, sequence_id, seq_rev_number)
         content = {
             'include_dialogue': include_dialogue,
             'panel_revisions': panel_revisions
@@ -222,7 +242,8 @@ class flix:
         headers = self.__get_headers(content, url, 'POST')
         response = None
         try:
-            r = requests.post(self.hostname + url, headers=headers, data=json.dumps(content), verify=False)
+            r = requests.post(self.hostname + url, headers=headers,
+                              data=json.dumps(content), verify=False)
             response = json.loads(r.content)
         except requests.exceptions.RequestException as err:
             if r is not None and r.status_code == 401:
@@ -240,7 +261,8 @@ class flix:
         headers = self.__get_headers(None, url, 'GET')
         response = None
         try:
-            r = requests.get(self.hostname + url, headers=headers, verify=False)
+            r = requests.get(self.hostname + url, headers=headers,
+                             verify=False)
             response = json.loads(r.content)
         except requests.exceptions.RequestException as err:
             if r is not None and r.status_code == 401:
@@ -250,7 +272,12 @@ class flix:
             return None
         return response
 
-    def new_sequence_revision(self, show_id, sequence_id, revisioned_panels, markers, comment='From Hiero'):
+    def new_sequence_revision(self,
+                              show_id,
+                              sequence_id,
+                              revisioned_panels,
+                              markers,
+                              comment='From Hiero'):
         """new_sequence_revision will create a new sequence revision
         show_id: show ID
         sequence_id: sequence ID
@@ -263,13 +290,19 @@ class flix:
         content = {
             'comment': comment,
             'imported': False,
-            'meta_data': {'annotations': [], 'audio_timings': [], 'highlights': [], 'markers': markers},
+            'meta_data': {
+                'annotations': [],
+                'audio_timings': [],
+                'highlights': [],
+                'markers': markers
+                },
             'revisioned_panels': revisioned_panels
         }
         headers = self.__get_headers(content, url, 'POST')
         response = None
         try:
-            r = requests.post(self.hostname + url, headers=headers, data=json.dumps(content), verify=False)
+            r = requests.post(self.hostname + url, headers=headers,
+                              data=json.dumps(content), verify=False)
             response = json.loads(r.content)
         except requests.exceptions.RequestException as err:
             if r is not None and r.status_code == 401:
@@ -295,7 +328,8 @@ class flix:
         headers = self.__get_headers(content, url, 'POST')
         response = None
         try:
-            r = requests.post(self.hostname + url, headers=headers, data=json.dumps(content), verify=False)
+            r = requests.post(self.hostname + url, headers=headers,
+                              data=json.dumps(content), verify=False)
             response = json.loads(r.content)
         except requests.exceptions.RequestException as err:
             if r is not None and r.status_code == 401:
@@ -315,17 +349,33 @@ class flix:
         self.key = None
 
     def __get_token(self):
-        """__get_token will request a token and reset it if it is too close to expiry"""
-        if self.key is None or self.secret is None or self.expiry is None or datetime.now() + timedelta(hours=2) > self.expiry:
+        """__get_token will request a token
+        will reset it if it is too close to expiry
+        """
+        if (self.key is None or self.secret is None or self.expiry is None or
+                datetime.now() + timedelta(hours=2) > self.expiry):
             authentificationToken = self.authenticate(
                 self.hostname, self.login, self.password)
-            self.key = authentificationToken['id']
-            self.secret = authentificationToken['secret_access_key']
-            self.expiry = datetime.strptime(authentificationToken['expiry_date'].split('.')[0], '%Y-%m-%dT%H:%M:%S')
+            auth_id = authentificationToken['id']
+            auth_secret_token = authentificationToken['secret_access_key']
+            auth_expiry_date = authentificationToken['expiry_date']
+            auth_expiry_date = auth_expiry_date.split('.')[0]
+            self.key = auth_id
+            self.secret = auth_secret_token
+            self.expiry = datetime.strptime(auth_expiry_date,
+                                            '%Y-%m-%dT%H:%M:%S')
         return self.key, self.secret
 
-    def __fn_sign(self, access_key_id, secret_access_key, url, content, http_method, content_type, dt):
-        """After being logged in, you will have a token. This token will be use to sign your requests.
+    def __fn_sign(self,
+                  access_key_id,
+                  secret_access_key,
+                  url,
+                  content,
+                  http_method,
+                  content_type,
+                  dt):
+        """After being logged in, you will have a token.
+        This token will be use to sign your requests.
         accessKeyId: Access key ID from your token
         secretAccessKey: Secret access key from your token
         url: Url of the request
@@ -339,7 +389,8 @@ class flix:
             if isinstance(content, str):
                 content_md5 = hashlib.md5(content).hexdigest()
             elif isinstance(content, bytes):
-                content_md5 = hashlib.md5(binascii.hexlify(content)).hexdigest()
+                hx = binascii.hexlify(content)
+                content_md5 = hashlib.md5(hx).hexdigest()
             elif isinstance(content, dict):
                 jsoned = json.dumps(content)
                 content_md5 = hashlib.md5(jsoned.encode('utf-8')).hexdigest()
@@ -355,7 +406,9 @@ class flix:
         if len(secret_access_key) == 0:
             raise ValueError('FnSigner: You must specify a secret_access_key')
         digest_created = base64.b64encode(
-            hmac.new(secret_access_key.encode('utf-8'), raw_string.encode('utf-8'), digestmod=hashlib.sha256).digest()
+            hmac.new(secret_access_key.encode('utf-8'),
+                     raw_string.encode('utf-8'),
+                     digestmod=hashlib.sha256).digest()
         )
         return 'FNAUTH ' + access_key_id + ':' + digest_created.decode('utf-8')
 
