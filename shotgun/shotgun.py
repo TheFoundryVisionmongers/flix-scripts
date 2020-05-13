@@ -6,10 +6,14 @@ class shotgun:
         self.hostname = hostname
         self.login = login
         self.password = password
-        self.sg = shotgun_api3.Shotgun(self.hostname, login=self.login, password=self.password)
+        self.sg = shotgun_api3.Shotgun(self.hostname,
+                                       login=self.login,
+                                       password=self.password)
 
     def get_project(self, project_name):
-        project = self.sg.find_one('Project',  [['name', 'is', project_name]], ['id', 'name'])
+        project = self.sg.find_one('Project',
+                                   [['name', 'is', project_name]],
+                                   ['id', 'name'])
         if project:
             return project
         else:
@@ -41,7 +45,11 @@ class shotgun:
         return self.sg.create('Sequence', data)
 
     def get_shot(self, project, seq, shot_name):
-        sFilters = [['project', 'is', project], ['sg_sequence', 'is', seq], ['code', 'is', shot_name]]
+        sFilters = [
+            ['project', 'is', project],
+            ['sg_sequence', 'is', seq],
+            ['code', 'is', shot_name]
+        ]
         sFields = ['id', 'code']
         sgSeq = self.sg.find_one('Shot', sFilters, sFields)
         if sgSeq:
@@ -60,7 +68,9 @@ class shotgun:
         return self.sg.create('Shot', data)
 
     def get_version(self, project, shot):
-        sFilters = [['project', 'is', project], ['entity', 'is', {'type': 'Shot', 'id': shot['id']}]]
+        sFilters = [
+            ['project', 'is', project],
+            ['entity', 'is', {'type': 'Shot', 'id': shot['id']}]]
         sFields = ['id', 'code']
         sgSeq = self.sg.find_one('Version', sFilters, sFields)
         if sgSeq:
@@ -78,4 +88,5 @@ class shotgun:
         return self.sg.create('Version', data)
 
     def upload_movie(self, version, movie_path):
-        return self.sg.upload('Version', version['id'], movie_path, field_name='sg_uploaded_movie')
+        return self.sg.upload('Version', version['id'],
+                              movie_path, field_name='sg_uploaded_movie')
