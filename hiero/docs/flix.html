@@ -1,0 +1,1391 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.8.1" />
+<title>flix API documentation</title>
+<meta name="description" content="" />
+<link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
+<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>flix</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">import base64
+import binascii
+import hashlib
+import hmac
+import json
+# import urllib2
+from datetime import datetime, timedelta
+
+
+class flix:
+    &#34;&#34;&#34;Flix will handle the login and expose functions to get shows,
+    get sequences etc.
+    &#34;&#34;&#34;
+
+    def __init__(self):
+        self.reset()
+
+    def authenticate(self, hostname, login, password):
+        &#34;&#34;&#34;authenticate will authenticate a user
+
+        Arguments:
+            hostname {str} -- Hostname of the server
+
+            login {str} -- Login of the user
+
+            password {str} -- Password of the user
+
+        Returns:
+            Dict -- Authenticate
+        &#34;&#34;&#34;
+        authdata = base64.b64encode((login + &#39;:&#39; + password).encode(&#39;UTF-8&#39;))
+        response = None
+        header = {
+            &#39;Content-Type&#39;: &#39;application/json&#39;,
+            &#39;Authorization&#39;: &#39;Basic &#39; + authdata.decode(&#39;UTF-8&#39;),
+        }
+        try:
+            req = urllib2.Request(hostname + &#39;/authenticate&#39;,
+                                  headers=header, data=&#39;&#39;)
+            response = urllib2.urlopen(req).read()
+            response = json.loads(response)
+            self.hostname = hostname
+            self.login = login
+            self.password = password
+        except BaseException:
+            print(&#39;Authentification failed&#39;)
+            return None
+        return response
+
+    def get_shows(self):
+        &#34;&#34;&#34;get_shows retrieve the list of shows
+
+        Returns:
+            Dict -- Shows
+        &#34;&#34;&#34;
+        headers = self.__get_headers(None, &#39;/shows&#39;, &#39;GET&#39;)
+        response = None
+        try:
+            req = urllib2.Request(self.hostname + &#39;/shows&#39;, headers=headers)
+            response = urllib2.urlopen(req).read()
+            response = json.loads(response)
+            response = response.get(&#39;shows&#39;)
+        except BaseException:
+            print(&#39;Could not retrieve shows&#39;)
+            return None
+        return response
+
+    def get_episodes(self, show_id):
+        &#34;&#34;&#34;get_episodes retrieve the list of episodes from a show
+
+        Arguments:
+            show_id {int} -- Show ID
+
+        Returns:
+            Dict -- Episodes
+        &#34;&#34;&#34;
+        url = &#39;/show/{0}/episodes&#39;.format(show_id)
+        headers = self.__get_headers(None, url, &#39;GET&#39;)
+        response = None
+        try:
+            req = urllib2.Request(self.hostname + url, headers=headers)
+            response = urllib2.urlopen(req).read()
+            response = json.loads(response)
+            response = response.get(&#39;episodes&#39;)
+        except BaseException:
+            print(&#39;Could not retrieve episodes&#39;)
+            return None
+        return response
+
+    def get_sequences(self, show_id, episode_id=None):
+        &#34;&#34;&#34;get_sequences retrieve the list of sequence from a show
+
+        Arguments:
+            show_id {int} -- Show ID
+
+        Keyword Arguments:
+            episode_id {int} -- Episode ID (default: {None})
+
+        Returns:
+            Dict -- Sequences
+        &#34;&#34;&#34;
+        url = &#39;/show/{0}/sequences&#39;.format(show_id)
+        if episode_id is not None:
+            url = &#39;/show/{0}/episode/{1}/sequences&#39;.format(show_id, episode_id)
+        headers = self.__get_headers(None, url, &#39;GET&#39;)
+        response = None
+        try:
+            req = urllib2.Request(self.hostname + url, headers=headers)
+            response = urllib2.urlopen(req).read()
+            response = json.loads(response)
+            response = response.get(&#39;sequences&#39;)
+        except BaseException:
+            print(&#39;Could not retrieve sequences&#39;)
+            return None
+        return response
+
+    def get_panels(self, show_id, sequence_id, revision_number):
+        &#34;&#34;&#34;get_panels retrieve the list of panels from a sequence revision
+
+        Arguments:
+            show_id {int} -- Show ID
+
+            sequence_id {int} -- Sequence ID
+
+            rev_number {int} -- Sequence revision number
+
+        Returns:
+            Dict -- Panels
+        &#34;&#34;&#34;
+        url = &#39;/show/{0}/sequence/{1}/revision/{2}/panels&#39;.format(
+            show_id, sequence_id, revision_number)
+        headers = self.__get_headers(None, url, &#39;GET&#39;)
+        response = None
+        try:
+            req = urllib2.Request(self.hostname + url, headers=headers)
+            response = urllib2.urlopen(req).read()
+            response = json.loads(response)
+            response = response.get(&#39;panels&#39;)
+        except BaseException:
+            print(&#39;Could not retrieve panels&#39;)
+            return None
+        return response
+
+    def get_dialogues(self, show_id, sequence_id, revision_number):
+        &#34;&#34;&#34;get_dialogues get the list of dialogues from a sequence revision
+
+        Arguments:
+            show_id {int} -- Show ID
+
+            sequence_id {int} -- Sequence ID
+
+            rev_number {int} -- Sequence revision number
+
+        Returns:
+            Dict -- Dialogues
+        &#34;&#34;&#34;
+        url = &#39;/show/{0}/sequence/{1}/revision/{2}/dialogues&#39;.format(
+            show_id, sequence_id, revision_number)
+        headers = self.__get_headers(None, url, &#39;GET&#39;)
+        response = None
+        try:
+            req = urllib2.Request(self.hostname + url, headers=headers)
+            response = urllib2.urlopen(req).read()
+            response = json.loads(response)
+            response = response.get(&#39;dialogues&#39;)
+        except BaseException:
+            print(&#39;Could not retrieve dialogues&#39;)
+            return None
+        return response
+
+    def get_sequence_rev(self, show_id, sequence_id, revision_number):
+        &#34;&#34;&#34;get_sequence_rev retrieve a sequence revision
+
+        Arguments:
+            show_id {int} -- Show ID
+
+            sequence_id {int} -- Sequence ID
+
+            revision_number {int} -- Sequence Revision Number
+
+        Returns:
+            Dict -- Sequence Revision
+        &#34;&#34;&#34;
+        url = &#39;/show/{0}/sequence/{1}/revision/{2}&#39;.format(
+            show_id, sequence_id, revision_number)
+        headers = self.__get_headers(None, url, &#39;GET&#39;)
+        response = None
+        try:
+            req = urllib2.Request(self.hostname + url, headers=headers)
+            response = urllib2.urlopen(req).read()
+            response = json.loads(response)
+        except BaseException:
+            print(&#39;Could not retrieve sequence revision&#39;)
+            return None
+        return response
+
+    def download_media_object(self, temp_filepath, media_object_id):
+        &#34;&#34;&#34;download_media_object download a media object
+
+        Arguments:
+            temp_filepath {str} -- Temp filepath to store the downloaded file
+
+            media_object_id {int} -- Media Object ID
+
+        Returns:
+            str -- Temp filepath of the downloaded file
+        &#34;&#34;&#34;
+        url = &#39;/file/{0}/data&#39;.format(media_object_id)
+        headers = self.__get_headers(None, url, &#39;GET&#39;)
+        response = None
+        try:
+            req = urllib2.Request(self.hostname + url, headers=headers)
+            response = urllib2.urlopen(req).read()
+            file = open(temp_filepath, &#39;wb&#39;)
+            file.write(response)
+            file.close()
+        except BaseException:
+            print(&#39;Could not retrieve thumbnail&#39;)
+            return None
+        return temp_filepath
+
+    def new_sequence_revision(
+            self, show_id, sequence_id, revisioned_panels, markers,
+            comment=&#39;From Hiero&#39;):
+        &#34;&#34;&#34;new_sequence_revision will create a new sequence revision
+
+        Arguments:
+            show_id {int} -- Show ID
+
+            sequence_id {int} -- Sequence ID
+
+            revisioned_panels {List} -- List of revisionned panels
+
+            markers {List} -- List of Markers
+
+        Keyword Arguments:
+            comment {str} -- Comment (default: {&#39;From Hiero&#39;})
+
+        Returns:
+            Dict -- Sequence Revision
+        &#34;&#34;&#34;
+        url = &#39;/show/{0}/sequence/{1}/revision&#39;.format(show_id, sequence_id)
+        content = {
+            &#39;comment&#39;: comment,
+            &#39;imported&#39;: False,
+            &#39;meta_data&#39;: {
+                &#39;annotations&#39;: [],
+                &#39;audio_timings&#39;: [],
+                &#39;highlights&#39;: [],
+                &#39;markers&#39;: markers},
+            &#39;revisioned_panels&#39;: revisioned_panels}
+        headers = self.__get_headers(content, url, &#39;POST&#39;)
+        response = None
+        try:
+            req = urllib2.Request(self.hostname + url,
+                                  headers=headers, data=json.dumps(content))
+            response = urllib2.urlopen(req).read()
+            response = json.loads(response)
+        except BaseException:
+            print(&#39;Could not create sequence revision&#39;)
+            return None
+        return response
+
+    def new_panel(self, show_id, sequence_id, asset_id=None, duration=12):
+        &#34;&#34;&#34;new_panel will create a blank panel
+
+        Arguments:
+            show_id {int} -- Show ID
+
+            sequence_id {int} -- Sequence ID
+
+        Keyword Arguments:
+            asset_id {int} -- Asset ID (default: {None})
+
+            duration {int} -- Duration (default: {12})
+
+        Returns:
+            Dict -- Panel
+        &#34;&#34;&#34;
+        url = &#39;/show/{0}/sequence/{1}/panel&#39;.format(show_id, sequence_id)
+        content = {
+            &#39;duration&#39;: duration,
+        }
+        if asset_id is not None:
+            content[&#39;asset&#39;] = {&#39;asset_id&#39;: asset_id}
+        headers = self.__get_headers(content, url, &#39;POST&#39;)
+        response = None
+        try:
+            req = urllib2.Request(self.hostname + url,
+                                  headers=headers, data=json.dumps(content))
+            response = urllib2.urlopen(req).read()
+            response = json.loads(response)
+        except BaseException:
+            print(&#39;Could not create blank panel&#39;)
+            return None
+        return response
+
+    def reset(self):
+        &#34;&#34;&#34;reset will reset the user info
+        &#34;&#34;&#34;
+        self.hostname = None
+        self.secret = None
+        self.expiry = None
+        self.login = None
+        self.password = None
+        self.key = None
+
+    def __get_token(self):
+        &#34;&#34;&#34;__get_token will request a token and will reset it
+        if it is too close to the expiry date
+
+        Returns:
+            Tuple[str, str] -- Key and Secret
+        &#34;&#34;&#34;
+        if (self.key is None or self.secret is None or self.expiry is None or
+                datetime.now() + timedelta(hours=2) &gt; self.expiry):
+            authentificationToken = self.authenticate(
+                self.hostname, self.login, self.password)
+            self.key = authentificationToken[&#39;id&#39;]
+            self.secret = authentificationToken[&#39;secret_access_key&#39;]
+            self.expiry = datetime.strptime(
+                authentificationToken
+                [&#39;expiry_date&#39;].split(&#39;.&#39;)[0],
+                &#39;%Y-%m-%dT%H:%M:%S&#39;)
+        return self.key, self.secret
+
+    def __fn_sign(
+            self, access_key_id, secret_access_key, url, content, http_method,
+            content_type, dt):
+        &#34;&#34;&#34;After being logged in, you will have a token.
+
+        Arguments:
+            access_key_id {str} -- Access key ID from your token
+
+            secret_access_key {str} -- Secret access key from your token
+
+            url {str} -- Url of the request
+
+            content {object} -- Content of your request
+
+            http_method {str} -- Http Method of your request
+
+            content_type {str} -- Content Type of your request
+
+            dt {str} -- Datetime
+
+        Raises:
+            ValueError: &#39;You must specify a secret_access_key&#39;
+
+        Returns:
+            str -- Signed header
+        &#34;&#34;&#34;
+        raw_string = http_method.upper() + &#39;\n&#39;
+        content_md5 = &#39;&#39;
+        if content:
+            if isinstance(content, str):
+                content_md5 = hashlib.md5(content).hexdigest()
+            elif isinstance(content, bytes):
+                content_md5 = hashlib.md5(
+                    binascii.hexlify(content)).hexdigest()
+            elif isinstance(content, dict):
+                jsoned = json.dumps(content)
+                content_md5 = hashlib.md5(jsoned.encode(&#39;utf-8&#39;)).hexdigest()
+        if content_md5 != &#39;&#39;:
+            raw_string += content_md5 + &#39;\n&#39;
+            raw_string += content_type + &#39;\n&#39;
+        else:
+            raw_string += &#39;\n\n&#39;
+        raw_string += dt.isoformat().split(&#39;.&#39;)[0] + &#39;Z&#39; + &#39;\n&#39;
+        url_bits = url.split(&#39;?&#39;)
+        url_without_query_params = url_bits[0]
+        raw_string += url_without_query_params
+        if len(secret_access_key) == 0:
+            raise ValueError(&#39;You must specify a secret_access_key&#39;)
+        digest_created = base64.b64encode(
+            hmac.new(
+                secret_access_key.encode(&#39;utf-8&#39;),
+                raw_string.encode(&#39;utf-8&#39;),
+                digestmod=hashlib.sha256).digest())
+        return &#39;FNAUTH &#39; + access_key_id + &#39;:&#39; + digest_created.decode(&#39;utf-8&#39;)
+
+    def __get_headers(self, content, url, method=&#39;POST&#39;):
+        &#34;&#34;&#34;__get_headers will generate the header to make any request
+        containing the authorization with signature
+
+        Arguments:
+            content {object} -- Content of the request
+
+            url {str} -- Url to make the request
+
+        Keyword Arguments:
+            method {str} -- Request method (default: {&#39;POST&#39;})
+
+        Returns:
+            object -- Headers
+        &#34;&#34;&#34;
+        dt = datetime.utcnow()
+        key, secret = self.__get_token()
+        return {
+            &#39;Authorization&#39;: self.__fn_sign(
+                key,
+                secret,
+                url,
+                content,
+                method,
+                &#39;application/json&#39;,
+                dt),
+            &#39;Content-Type&#39;: &#39;application/json&#39;,
+            &#39;Date&#39;: dt.strftime(&#39;%a, %d %b %Y %H:%M:%S GMT&#39;),
+        }</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="flix.flix"><code class="flex name class">
+<span>class <span class="ident">flix</span></span>
+</code></dt>
+<dd>
+<div class="desc"><p>Flix will handle the login and expose functions to get shows,
+get sequences etc.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class flix:
+    &#34;&#34;&#34;Flix will handle the login and expose functions to get shows,
+    get sequences etc.
+    &#34;&#34;&#34;
+
+    def __init__(self):
+        self.reset()
+
+    def authenticate(self, hostname, login, password):
+        &#34;&#34;&#34;authenticate will authenticate a user
+
+        Arguments:
+            hostname {str} -- Hostname of the server
+
+            login {str} -- Login of the user
+
+            password {str} -- Password of the user
+
+        Returns:
+            Dict -- Authenticate
+        &#34;&#34;&#34;
+        authdata = base64.b64encode((login + &#39;:&#39; + password).encode(&#39;UTF-8&#39;))
+        response = None
+        header = {
+            &#39;Content-Type&#39;: &#39;application/json&#39;,
+            &#39;Authorization&#39;: &#39;Basic &#39; + authdata.decode(&#39;UTF-8&#39;),
+        }
+        try:
+            req = urllib2.Request(hostname + &#39;/authenticate&#39;,
+                                  headers=header, data=&#39;&#39;)
+            response = urllib2.urlopen(req).read()
+            response = json.loads(response)
+            self.hostname = hostname
+            self.login = login
+            self.password = password
+        except BaseException:
+            print(&#39;Authentification failed&#39;)
+            return None
+        return response
+
+    def get_shows(self):
+        &#34;&#34;&#34;get_shows retrieve the list of shows
+
+        Returns:
+            Dict -- Shows
+        &#34;&#34;&#34;
+        headers = self.__get_headers(None, &#39;/shows&#39;, &#39;GET&#39;)
+        response = None
+        try:
+            req = urllib2.Request(self.hostname + &#39;/shows&#39;, headers=headers)
+            response = urllib2.urlopen(req).read()
+            response = json.loads(response)
+            response = response.get(&#39;shows&#39;)
+        except BaseException:
+            print(&#39;Could not retrieve shows&#39;)
+            return None
+        return response
+
+    def get_episodes(self, show_id):
+        &#34;&#34;&#34;get_episodes retrieve the list of episodes from a show
+
+        Arguments:
+            show_id {int} -- Show ID
+
+        Returns:
+            Dict -- Episodes
+        &#34;&#34;&#34;
+        url = &#39;/show/{0}/episodes&#39;.format(show_id)
+        headers = self.__get_headers(None, url, &#39;GET&#39;)
+        response = None
+        try:
+            req = urllib2.Request(self.hostname + url, headers=headers)
+            response = urllib2.urlopen(req).read()
+            response = json.loads(response)
+            response = response.get(&#39;episodes&#39;)
+        except BaseException:
+            print(&#39;Could not retrieve episodes&#39;)
+            return None
+        return response
+
+    def get_sequences(self, show_id, episode_id=None):
+        &#34;&#34;&#34;get_sequences retrieve the list of sequence from a show
+
+        Arguments:
+            show_id {int} -- Show ID
+
+        Keyword Arguments:
+            episode_id {int} -- Episode ID (default: {None})
+
+        Returns:
+            Dict -- Sequences
+        &#34;&#34;&#34;
+        url = &#39;/show/{0}/sequences&#39;.format(show_id)
+        if episode_id is not None:
+            url = &#39;/show/{0}/episode/{1}/sequences&#39;.format(show_id, episode_id)
+        headers = self.__get_headers(None, url, &#39;GET&#39;)
+        response = None
+        try:
+            req = urllib2.Request(self.hostname + url, headers=headers)
+            response = urllib2.urlopen(req).read()
+            response = json.loads(response)
+            response = response.get(&#39;sequences&#39;)
+        except BaseException:
+            print(&#39;Could not retrieve sequences&#39;)
+            return None
+        return response
+
+    def get_panels(self, show_id, sequence_id, revision_number):
+        &#34;&#34;&#34;get_panels retrieve the list of panels from a sequence revision
+
+        Arguments:
+            show_id {int} -- Show ID
+
+            sequence_id {int} -- Sequence ID
+
+            rev_number {int} -- Sequence revision number
+
+        Returns:
+            Dict -- Panels
+        &#34;&#34;&#34;
+        url = &#39;/show/{0}/sequence/{1}/revision/{2}/panels&#39;.format(
+            show_id, sequence_id, revision_number)
+        headers = self.__get_headers(None, url, &#39;GET&#39;)
+        response = None
+        try:
+            req = urllib2.Request(self.hostname + url, headers=headers)
+            response = urllib2.urlopen(req).read()
+            response = json.loads(response)
+            response = response.get(&#39;panels&#39;)
+        except BaseException:
+            print(&#39;Could not retrieve panels&#39;)
+            return None
+        return response
+
+    def get_dialogues(self, show_id, sequence_id, revision_number):
+        &#34;&#34;&#34;get_dialogues get the list of dialogues from a sequence revision
+
+        Arguments:
+            show_id {int} -- Show ID
+
+            sequence_id {int} -- Sequence ID
+
+            rev_number {int} -- Sequence revision number
+
+        Returns:
+            Dict -- Dialogues
+        &#34;&#34;&#34;
+        url = &#39;/show/{0}/sequence/{1}/revision/{2}/dialogues&#39;.format(
+            show_id, sequence_id, revision_number)
+        headers = self.__get_headers(None, url, &#39;GET&#39;)
+        response = None
+        try:
+            req = urllib2.Request(self.hostname + url, headers=headers)
+            response = urllib2.urlopen(req).read()
+            response = json.loads(response)
+            response = response.get(&#39;dialogues&#39;)
+        except BaseException:
+            print(&#39;Could not retrieve dialogues&#39;)
+            return None
+        return response
+
+    def get_sequence_rev(self, show_id, sequence_id, revision_number):
+        &#34;&#34;&#34;get_sequence_rev retrieve a sequence revision
+
+        Arguments:
+            show_id {int} -- Show ID
+
+            sequence_id {int} -- Sequence ID
+
+            revision_number {int} -- Sequence Revision Number
+
+        Returns:
+            Dict -- Sequence Revision
+        &#34;&#34;&#34;
+        url = &#39;/show/{0}/sequence/{1}/revision/{2}&#39;.format(
+            show_id, sequence_id, revision_number)
+        headers = self.__get_headers(None, url, &#39;GET&#39;)
+        response = None
+        try:
+            req = urllib2.Request(self.hostname + url, headers=headers)
+            response = urllib2.urlopen(req).read()
+            response = json.loads(response)
+        except BaseException:
+            print(&#39;Could not retrieve sequence revision&#39;)
+            return None
+        return response
+
+    def download_media_object(self, temp_filepath, media_object_id):
+        &#34;&#34;&#34;download_media_object download a media object
+
+        Arguments:
+            temp_filepath {str} -- Temp filepath to store the downloaded file
+
+            media_object_id {int} -- Media Object ID
+
+        Returns:
+            str -- Temp filepath of the downloaded file
+        &#34;&#34;&#34;
+        url = &#39;/file/{0}/data&#39;.format(media_object_id)
+        headers = self.__get_headers(None, url, &#39;GET&#39;)
+        response = None
+        try:
+            req = urllib2.Request(self.hostname + url, headers=headers)
+            response = urllib2.urlopen(req).read()
+            file = open(temp_filepath, &#39;wb&#39;)
+            file.write(response)
+            file.close()
+        except BaseException:
+            print(&#39;Could not retrieve thumbnail&#39;)
+            return None
+        return temp_filepath
+
+    def new_sequence_revision(
+            self, show_id, sequence_id, revisioned_panels, markers,
+            comment=&#39;From Hiero&#39;):
+        &#34;&#34;&#34;new_sequence_revision will create a new sequence revision
+
+        Arguments:
+            show_id {int} -- Show ID
+
+            sequence_id {int} -- Sequence ID
+
+            revisioned_panels {List} -- List of revisionned panels
+
+            markers {List} -- List of Markers
+
+        Keyword Arguments:
+            comment {str} -- Comment (default: {&#39;From Hiero&#39;})
+
+        Returns:
+            Dict -- Sequence Revision
+        &#34;&#34;&#34;
+        url = &#39;/show/{0}/sequence/{1}/revision&#39;.format(show_id, sequence_id)
+        content = {
+            &#39;comment&#39;: comment,
+            &#39;imported&#39;: False,
+            &#39;meta_data&#39;: {
+                &#39;annotations&#39;: [],
+                &#39;audio_timings&#39;: [],
+                &#39;highlights&#39;: [],
+                &#39;markers&#39;: markers},
+            &#39;revisioned_panels&#39;: revisioned_panels}
+        headers = self.__get_headers(content, url, &#39;POST&#39;)
+        response = None
+        try:
+            req = urllib2.Request(self.hostname + url,
+                                  headers=headers, data=json.dumps(content))
+            response = urllib2.urlopen(req).read()
+            response = json.loads(response)
+        except BaseException:
+            print(&#39;Could not create sequence revision&#39;)
+            return None
+        return response
+
+    def new_panel(self, show_id, sequence_id, asset_id=None, duration=12):
+        &#34;&#34;&#34;new_panel will create a blank panel
+
+        Arguments:
+            show_id {int} -- Show ID
+
+            sequence_id {int} -- Sequence ID
+
+        Keyword Arguments:
+            asset_id {int} -- Asset ID (default: {None})
+
+            duration {int} -- Duration (default: {12})
+
+        Returns:
+            Dict -- Panel
+        &#34;&#34;&#34;
+        url = &#39;/show/{0}/sequence/{1}/panel&#39;.format(show_id, sequence_id)
+        content = {
+            &#39;duration&#39;: duration,
+        }
+        if asset_id is not None:
+            content[&#39;asset&#39;] = {&#39;asset_id&#39;: asset_id}
+        headers = self.__get_headers(content, url, &#39;POST&#39;)
+        response = None
+        try:
+            req = urllib2.Request(self.hostname + url,
+                                  headers=headers, data=json.dumps(content))
+            response = urllib2.urlopen(req).read()
+            response = json.loads(response)
+        except BaseException:
+            print(&#39;Could not create blank panel&#39;)
+            return None
+        return response
+
+    def reset(self):
+        &#34;&#34;&#34;reset will reset the user info
+        &#34;&#34;&#34;
+        self.hostname = None
+        self.secret = None
+        self.expiry = None
+        self.login = None
+        self.password = None
+        self.key = None
+
+    def __get_token(self):
+        &#34;&#34;&#34;__get_token will request a token and will reset it
+        if it is too close to the expiry date
+
+        Returns:
+            Tuple[str, str] -- Key and Secret
+        &#34;&#34;&#34;
+        if (self.key is None or self.secret is None or self.expiry is None or
+                datetime.now() + timedelta(hours=2) &gt; self.expiry):
+            authentificationToken = self.authenticate(
+                self.hostname, self.login, self.password)
+            self.key = authentificationToken[&#39;id&#39;]
+            self.secret = authentificationToken[&#39;secret_access_key&#39;]
+            self.expiry = datetime.strptime(
+                authentificationToken
+                [&#39;expiry_date&#39;].split(&#39;.&#39;)[0],
+                &#39;%Y-%m-%dT%H:%M:%S&#39;)
+        return self.key, self.secret
+
+    def __fn_sign(
+            self, access_key_id, secret_access_key, url, content, http_method,
+            content_type, dt):
+        &#34;&#34;&#34;After being logged in, you will have a token.
+
+        Arguments:
+            access_key_id {str} -- Access key ID from your token
+
+            secret_access_key {str} -- Secret access key from your token
+
+            url {str} -- Url of the request
+
+            content {object} -- Content of your request
+
+            http_method {str} -- Http Method of your request
+
+            content_type {str} -- Content Type of your request
+
+            dt {str} -- Datetime
+
+        Raises:
+            ValueError: &#39;You must specify a secret_access_key&#39;
+
+        Returns:
+            str -- Signed header
+        &#34;&#34;&#34;
+        raw_string = http_method.upper() + &#39;\n&#39;
+        content_md5 = &#39;&#39;
+        if content:
+            if isinstance(content, str):
+                content_md5 = hashlib.md5(content).hexdigest()
+            elif isinstance(content, bytes):
+                content_md5 = hashlib.md5(
+                    binascii.hexlify(content)).hexdigest()
+            elif isinstance(content, dict):
+                jsoned = json.dumps(content)
+                content_md5 = hashlib.md5(jsoned.encode(&#39;utf-8&#39;)).hexdigest()
+        if content_md5 != &#39;&#39;:
+            raw_string += content_md5 + &#39;\n&#39;
+            raw_string += content_type + &#39;\n&#39;
+        else:
+            raw_string += &#39;\n\n&#39;
+        raw_string += dt.isoformat().split(&#39;.&#39;)[0] + &#39;Z&#39; + &#39;\n&#39;
+        url_bits = url.split(&#39;?&#39;)
+        url_without_query_params = url_bits[0]
+        raw_string += url_without_query_params
+        if len(secret_access_key) == 0:
+            raise ValueError(&#39;You must specify a secret_access_key&#39;)
+        digest_created = base64.b64encode(
+            hmac.new(
+                secret_access_key.encode(&#39;utf-8&#39;),
+                raw_string.encode(&#39;utf-8&#39;),
+                digestmod=hashlib.sha256).digest())
+        return &#39;FNAUTH &#39; + access_key_id + &#39;:&#39; + digest_created.decode(&#39;utf-8&#39;)
+
+    def __get_headers(self, content, url, method=&#39;POST&#39;):
+        &#34;&#34;&#34;__get_headers will generate the header to make any request
+        containing the authorization with signature
+
+        Arguments:
+            content {object} -- Content of the request
+
+            url {str} -- Url to make the request
+
+        Keyword Arguments:
+            method {str} -- Request method (default: {&#39;POST&#39;})
+
+        Returns:
+            object -- Headers
+        &#34;&#34;&#34;
+        dt = datetime.utcnow()
+        key, secret = self.__get_token()
+        return {
+            &#39;Authorization&#39;: self.__fn_sign(
+                key,
+                secret,
+                url,
+                content,
+                method,
+                &#39;application/json&#39;,
+                dt),
+            &#39;Content-Type&#39;: &#39;application/json&#39;,
+            &#39;Date&#39;: dt.strftime(&#39;%a, %d %b %Y %H:%M:%S GMT&#39;),
+        }</code></pre>
+</details>
+<h3>Methods</h3>
+<dl>
+<dt id="flix.flix.authenticate"><code class="name flex">
+<span>def <span class="ident">authenticate</span></span>(<span>self, hostname, login, password)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>authenticate will authenticate a user</p>
+<h2 id="arguments">Arguments</h2>
+<p>hostname {str} &ndash; Hostname of the server</p>
+<p>login {str} &ndash; Login of the user</p>
+<p>password {str} &ndash; Password of the user</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict -- Authenticate</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def authenticate(self, hostname, login, password):
+    &#34;&#34;&#34;authenticate will authenticate a user
+
+    Arguments:
+        hostname {str} -- Hostname of the server
+
+        login {str} -- Login of the user
+
+        password {str} -- Password of the user
+
+    Returns:
+        Dict -- Authenticate
+    &#34;&#34;&#34;
+    authdata = base64.b64encode((login + &#39;:&#39; + password).encode(&#39;UTF-8&#39;))
+    response = None
+    header = {
+        &#39;Content-Type&#39;: &#39;application/json&#39;,
+        &#39;Authorization&#39;: &#39;Basic &#39; + authdata.decode(&#39;UTF-8&#39;),
+    }
+    try:
+        req = urllib2.Request(hostname + &#39;/authenticate&#39;,
+                              headers=header, data=&#39;&#39;)
+        response = urllib2.urlopen(req).read()
+        response = json.loads(response)
+        self.hostname = hostname
+        self.login = login
+        self.password = password
+    except BaseException:
+        print(&#39;Authentification failed&#39;)
+        return None
+    return response</code></pre>
+</details>
+</dd>
+<dt id="flix.flix.download_media_object"><code class="name flex">
+<span>def <span class="ident">download_media_object</span></span>(<span>self, temp_filepath, media_object_id)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>download_media_object download a media object</p>
+<h2 id="arguments">Arguments</h2>
+<p>temp_filepath {str} &ndash; Temp filepath to store the downloaded file</p>
+<p>media_object_id {int} &ndash; Media Object ID</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>str -- Temp filepath</code> of <code>the downloaded file</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def download_media_object(self, temp_filepath, media_object_id):
+    &#34;&#34;&#34;download_media_object download a media object
+
+    Arguments:
+        temp_filepath {str} -- Temp filepath to store the downloaded file
+
+        media_object_id {int} -- Media Object ID
+
+    Returns:
+        str -- Temp filepath of the downloaded file
+    &#34;&#34;&#34;
+    url = &#39;/file/{0}/data&#39;.format(media_object_id)
+    headers = self.__get_headers(None, url, &#39;GET&#39;)
+    response = None
+    try:
+        req = urllib2.Request(self.hostname + url, headers=headers)
+        response = urllib2.urlopen(req).read()
+        file = open(temp_filepath, &#39;wb&#39;)
+        file.write(response)
+        file.close()
+    except BaseException:
+        print(&#39;Could not retrieve thumbnail&#39;)
+        return None
+    return temp_filepath</code></pre>
+</details>
+</dd>
+<dt id="flix.flix.get_dialogues"><code class="name flex">
+<span>def <span class="ident">get_dialogues</span></span>(<span>self, show_id, sequence_id, revision_number)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>get_dialogues get the list of dialogues from a sequence revision</p>
+<h2 id="arguments">Arguments</h2>
+<p>show_id {int} &ndash; Show ID</p>
+<p>sequence_id {int} &ndash; Sequence ID</p>
+<p>rev_number {int} &ndash; Sequence revision number</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict -- Dialogues</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_dialogues(self, show_id, sequence_id, revision_number):
+    &#34;&#34;&#34;get_dialogues get the list of dialogues from a sequence revision
+
+    Arguments:
+        show_id {int} -- Show ID
+
+        sequence_id {int} -- Sequence ID
+
+        rev_number {int} -- Sequence revision number
+
+    Returns:
+        Dict -- Dialogues
+    &#34;&#34;&#34;
+    url = &#39;/show/{0}/sequence/{1}/revision/{2}/dialogues&#39;.format(
+        show_id, sequence_id, revision_number)
+    headers = self.__get_headers(None, url, &#39;GET&#39;)
+    response = None
+    try:
+        req = urllib2.Request(self.hostname + url, headers=headers)
+        response = urllib2.urlopen(req).read()
+        response = json.loads(response)
+        response = response.get(&#39;dialogues&#39;)
+    except BaseException:
+        print(&#39;Could not retrieve dialogues&#39;)
+        return None
+    return response</code></pre>
+</details>
+</dd>
+<dt id="flix.flix.get_episodes"><code class="name flex">
+<span>def <span class="ident">get_episodes</span></span>(<span>self, show_id)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>get_episodes retrieve the list of episodes from a show</p>
+<h2 id="arguments">Arguments</h2>
+<p>show_id {int} &ndash; Show ID</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict -- Episodes</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_episodes(self, show_id):
+    &#34;&#34;&#34;get_episodes retrieve the list of episodes from a show
+
+    Arguments:
+        show_id {int} -- Show ID
+
+    Returns:
+        Dict -- Episodes
+    &#34;&#34;&#34;
+    url = &#39;/show/{0}/episodes&#39;.format(show_id)
+    headers = self.__get_headers(None, url, &#39;GET&#39;)
+    response = None
+    try:
+        req = urllib2.Request(self.hostname + url, headers=headers)
+        response = urllib2.urlopen(req).read()
+        response = json.loads(response)
+        response = response.get(&#39;episodes&#39;)
+    except BaseException:
+        print(&#39;Could not retrieve episodes&#39;)
+        return None
+    return response</code></pre>
+</details>
+</dd>
+<dt id="flix.flix.get_panels"><code class="name flex">
+<span>def <span class="ident">get_panels</span></span>(<span>self, show_id, sequence_id, revision_number)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>get_panels retrieve the list of panels from a sequence revision</p>
+<h2 id="arguments">Arguments</h2>
+<p>show_id {int} &ndash; Show ID</p>
+<p>sequence_id {int} &ndash; Sequence ID</p>
+<p>rev_number {int} &ndash; Sequence revision number</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict -- Panels</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_panels(self, show_id, sequence_id, revision_number):
+    &#34;&#34;&#34;get_panels retrieve the list of panels from a sequence revision
+
+    Arguments:
+        show_id {int} -- Show ID
+
+        sequence_id {int} -- Sequence ID
+
+        rev_number {int} -- Sequence revision number
+
+    Returns:
+        Dict -- Panels
+    &#34;&#34;&#34;
+    url = &#39;/show/{0}/sequence/{1}/revision/{2}/panels&#39;.format(
+        show_id, sequence_id, revision_number)
+    headers = self.__get_headers(None, url, &#39;GET&#39;)
+    response = None
+    try:
+        req = urllib2.Request(self.hostname + url, headers=headers)
+        response = urllib2.urlopen(req).read()
+        response = json.loads(response)
+        response = response.get(&#39;panels&#39;)
+    except BaseException:
+        print(&#39;Could not retrieve panels&#39;)
+        return None
+    return response</code></pre>
+</details>
+</dd>
+<dt id="flix.flix.get_sequence_rev"><code class="name flex">
+<span>def <span class="ident">get_sequence_rev</span></span>(<span>self, show_id, sequence_id, revision_number)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>get_sequence_rev retrieve a sequence revision</p>
+<h2 id="arguments">Arguments</h2>
+<p>show_id {int} &ndash; Show ID</p>
+<p>sequence_id {int} &ndash; Sequence ID</p>
+<p>revision_number {int} &ndash; Sequence Revision Number</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict -- Sequence Revision</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_sequence_rev(self, show_id, sequence_id, revision_number):
+    &#34;&#34;&#34;get_sequence_rev retrieve a sequence revision
+
+    Arguments:
+        show_id {int} -- Show ID
+
+        sequence_id {int} -- Sequence ID
+
+        revision_number {int} -- Sequence Revision Number
+
+    Returns:
+        Dict -- Sequence Revision
+    &#34;&#34;&#34;
+    url = &#39;/show/{0}/sequence/{1}/revision/{2}&#39;.format(
+        show_id, sequence_id, revision_number)
+    headers = self.__get_headers(None, url, &#39;GET&#39;)
+    response = None
+    try:
+        req = urllib2.Request(self.hostname + url, headers=headers)
+        response = urllib2.urlopen(req).read()
+        response = json.loads(response)
+    except BaseException:
+        print(&#39;Could not retrieve sequence revision&#39;)
+        return None
+    return response</code></pre>
+</details>
+</dd>
+<dt id="flix.flix.get_sequences"><code class="name flex">
+<span>def <span class="ident">get_sequences</span></span>(<span>self, show_id, episode_id=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>get_sequences retrieve the list of sequence from a show</p>
+<h2 id="arguments">Arguments</h2>
+<p>show_id {int} &ndash; Show ID</p>
+<p>Keyword Arguments:
+episode_id {int} &ndash; Episode ID (default: {None})</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict -- Sequences</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_sequences(self, show_id, episode_id=None):
+    &#34;&#34;&#34;get_sequences retrieve the list of sequence from a show
+
+    Arguments:
+        show_id {int} -- Show ID
+
+    Keyword Arguments:
+        episode_id {int} -- Episode ID (default: {None})
+
+    Returns:
+        Dict -- Sequences
+    &#34;&#34;&#34;
+    url = &#39;/show/{0}/sequences&#39;.format(show_id)
+    if episode_id is not None:
+        url = &#39;/show/{0}/episode/{1}/sequences&#39;.format(show_id, episode_id)
+    headers = self.__get_headers(None, url, &#39;GET&#39;)
+    response = None
+    try:
+        req = urllib2.Request(self.hostname + url, headers=headers)
+        response = urllib2.urlopen(req).read()
+        response = json.loads(response)
+        response = response.get(&#39;sequences&#39;)
+    except BaseException:
+        print(&#39;Could not retrieve sequences&#39;)
+        return None
+    return response</code></pre>
+</details>
+</dd>
+<dt id="flix.flix.get_shows"><code class="name flex">
+<span>def <span class="ident">get_shows</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>get_shows retrieve the list of shows</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict -- Shows</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_shows(self):
+    &#34;&#34;&#34;get_shows retrieve the list of shows
+
+    Returns:
+        Dict -- Shows
+    &#34;&#34;&#34;
+    headers = self.__get_headers(None, &#39;/shows&#39;, &#39;GET&#39;)
+    response = None
+    try:
+        req = urllib2.Request(self.hostname + &#39;/shows&#39;, headers=headers)
+        response = urllib2.urlopen(req).read()
+        response = json.loads(response)
+        response = response.get(&#39;shows&#39;)
+    except BaseException:
+        print(&#39;Could not retrieve shows&#39;)
+        return None
+    return response</code></pre>
+</details>
+</dd>
+<dt id="flix.flix.new_panel"><code class="name flex">
+<span>def <span class="ident">new_panel</span></span>(<span>self, show_id, sequence_id, asset_id=None, duration=12)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>new_panel will create a blank panel</p>
+<h2 id="arguments">Arguments</h2>
+<p>show_id {int} &ndash; Show ID</p>
+<p>sequence_id {int} &ndash; Sequence ID</p>
+<p>Keyword Arguments:
+asset_id {int} &ndash; Asset ID (default: {None})</p>
+<pre><code>duration {int} -- Duration (default: {12})
+</code></pre>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict -- Panel</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def new_panel(self, show_id, sequence_id, asset_id=None, duration=12):
+    &#34;&#34;&#34;new_panel will create a blank panel
+
+    Arguments:
+        show_id {int} -- Show ID
+
+        sequence_id {int} -- Sequence ID
+
+    Keyword Arguments:
+        asset_id {int} -- Asset ID (default: {None})
+
+        duration {int} -- Duration (default: {12})
+
+    Returns:
+        Dict -- Panel
+    &#34;&#34;&#34;
+    url = &#39;/show/{0}/sequence/{1}/panel&#39;.format(show_id, sequence_id)
+    content = {
+        &#39;duration&#39;: duration,
+    }
+    if asset_id is not None:
+        content[&#39;asset&#39;] = {&#39;asset_id&#39;: asset_id}
+    headers = self.__get_headers(content, url, &#39;POST&#39;)
+    response = None
+    try:
+        req = urllib2.Request(self.hostname + url,
+                              headers=headers, data=json.dumps(content))
+        response = urllib2.urlopen(req).read()
+        response = json.loads(response)
+    except BaseException:
+        print(&#39;Could not create blank panel&#39;)
+        return None
+    return response</code></pre>
+</details>
+</dd>
+<dt id="flix.flix.new_sequence_revision"><code class="name flex">
+<span>def <span class="ident">new_sequence_revision</span></span>(<span>self, show_id, sequence_id, revisioned_panels, markers, comment='From Hiero')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>new_sequence_revision will create a new sequence revision</p>
+<h2 id="arguments">Arguments</h2>
+<p>show_id {int} &ndash; Show ID</p>
+<p>sequence_id {int} &ndash; Sequence ID</p>
+<p>revisioned_panels {List} &ndash; List of revisionned panels</p>
+<p>markers {List} &ndash; List of Markers</p>
+<p>Keyword Arguments:
+comment {str} &ndash; Comment (default: {'From Hiero'})</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict -- Sequence Revision</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def new_sequence_revision(
+        self, show_id, sequence_id, revisioned_panels, markers,
+        comment=&#39;From Hiero&#39;):
+    &#34;&#34;&#34;new_sequence_revision will create a new sequence revision
+
+    Arguments:
+        show_id {int} -- Show ID
+
+        sequence_id {int} -- Sequence ID
+
+        revisioned_panels {List} -- List of revisionned panels
+
+        markers {List} -- List of Markers
+
+    Keyword Arguments:
+        comment {str} -- Comment (default: {&#39;From Hiero&#39;})
+
+    Returns:
+        Dict -- Sequence Revision
+    &#34;&#34;&#34;
+    url = &#39;/show/{0}/sequence/{1}/revision&#39;.format(show_id, sequence_id)
+    content = {
+        &#39;comment&#39;: comment,
+        &#39;imported&#39;: False,
+        &#39;meta_data&#39;: {
+            &#39;annotations&#39;: [],
+            &#39;audio_timings&#39;: [],
+            &#39;highlights&#39;: [],
+            &#39;markers&#39;: markers},
+        &#39;revisioned_panels&#39;: revisioned_panels}
+    headers = self.__get_headers(content, url, &#39;POST&#39;)
+    response = None
+    try:
+        req = urllib2.Request(self.hostname + url,
+                              headers=headers, data=json.dumps(content))
+        response = urllib2.urlopen(req).read()
+        response = json.loads(response)
+    except BaseException:
+        print(&#39;Could not create sequence revision&#39;)
+        return None
+    return response</code></pre>
+</details>
+</dd>
+<dt id="flix.flix.reset"><code class="name flex">
+<span>def <span class="ident">reset</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>reset will reset the user info</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def reset(self):
+    &#34;&#34;&#34;reset will reset the user info
+    &#34;&#34;&#34;
+    self.hostname = None
+    self.secret = None
+    self.expiry = None
+    self.login = None
+    self.password = None
+    self.key = None</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="flix.flix" href="#flix.flix">flix</a></code></h4>
+<ul class="">
+<li><code><a title="flix.flix.authenticate" href="#flix.flix.authenticate">authenticate</a></code></li>
+<li><code><a title="flix.flix.download_media_object" href="#flix.flix.download_media_object">download_media_object</a></code></li>
+<li><code><a title="flix.flix.get_dialogues" href="#flix.flix.get_dialogues">get_dialogues</a></code></li>
+<li><code><a title="flix.flix.get_episodes" href="#flix.flix.get_episodes">get_episodes</a></code></li>
+<li><code><a title="flix.flix.get_panels" href="#flix.flix.get_panels">get_panels</a></code></li>
+<li><code><a title="flix.flix.get_sequence_rev" href="#flix.flix.get_sequence_rev">get_sequence_rev</a></code></li>
+<li><code><a title="flix.flix.get_sequences" href="#flix.flix.get_sequences">get_sequences</a></code></li>
+<li><code><a title="flix.flix.get_shows" href="#flix.flix.get_shows">get_shows</a></code></li>
+<li><code><a title="flix.flix.new_panel" href="#flix.flix.new_panel">new_panel</a></code></li>
+<li><code><a title="flix.flix.new_sequence_revision" href="#flix.flix.new_sequence_revision">new_sequence_revision</a></code></li>
+<li><code><a title="flix.flix.reset" href="#flix.flix.reset">reset</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.8.1</a>.</p>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad()</script>
+</body>
+</html>
