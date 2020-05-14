@@ -1,325 +1,27 @@
-import base64
-import binascii
-import functools
-import hashlib
-import hmac
 import json
 import os
 import re
 import sys
 import tempfile
-import urllib2
 import uuid
 from collections import OrderedDict
-from datetime import datetime, timedelta
 
 from PySide2.QtWidgets import (QApplication, QComboBox, QDialog, QErrorMessage,
                                QHBoxLayout, QInputDialog, QLabel, QLineEdit,
                                QMessageBox, QPushButton, QStackedWidget,
                                QVBoxLayout)
 
-from hiero.core import (Bin, BinItem, Format, Sequence, Tag, VideoTrack,
-                        newProject)
-from hiero.ui import addMenuAction, createMenuAction
-
-
-class flix:
-
-    def __init__(self):
-        self.reset()
-
-    def get_shows(self):
-        """get_shows retrieve the list of shows"""
-        headers = self.__get_headers(None, '/shows', 'GET')
-        response = None
-        try:
-            req = urllib2.Request(self.hostname + '/shows', headers=headers)
-            response = urllib2.urlopen(req).read()
-            response = json.loads(response)
-            response = response.get('shows')
-        except:
-            print('Could not retrieve shows')
-            return None
-        return response
-
-    def authenticate(self, hostname, login, password):
-        """authenticate will authenticate a user
-        hostname: hostname of the server (ex: http://localhost:1234)
-        login: login of the user
-        password: password of the user
-        """
-        authdata = base64.b64encode((login + ':' + password).encode('UTF-8'))
-        response = None
-        header = {
-            'Content-Type': 'application/json',
-            'Authorization': 'Basic ' + authdata.decode('UTF-8'),
-        }
-        try:
-            req = urllib2.Request(hostname + '/authenticate',
-                headers=header, data='')
-            response = urllib2.urlopen(req).read()
-            response = json.loads(response)
-            self.hostname = hostname
-            self.login = login
-            self.password = password
-        except:
-            print('Authentification failed')
-            return None
-        return response
-
-    def get_episodes(self, show_id):
-        """get_episodes retrieve the list of episodes from a show
-        show_id: show ID
-        """
-        url = '/show/{0}/episodes'.format(show_id)
-        headers = self.__get_headers(None, url, 'GET')
-        response = None
-        try:
-            req = urllib2.Request(self.hostname + url, headers=headers)
-            response = urllib2.urlopen(req).read()
-            response = json.loads(response)
-            response = response.get('episodes')
-        except:
-            print('Could not retrieve episodes')
-            return None
-        return response
-
-    def get_sequences(self, show_id, episode_id=None):
-        """get_sequences retrieve the list of sequence from a show
-        show_id: show ID
-        episode_id: optional is the episode ID
-        """
-        url = '/show/{0}/sequences'.format(show_id)
-        if episode_id is not None:
-            url = '/show/{0}/episode/{1}/sequences'.format(show_id, episode_id)
-        headers = self.__get_headers(None, url, 'GET')
-        response = None
-        try:
-            req = urllib2.Request(self.hostname + url, headers=headers)
-            response = urllib2.urlopen(req).read()
-            response = json.loads(response)
-            response = response.get('sequences')
-        except:
-            print('Could not retrieve sequences')
-            return None
-        return response
-
-    def get_panels(self, show_id, sequence_id, revision_number):
-        """get_panels retrieve the list of panels from a sequence revision
-        show_id: show ID
-        sequence_id: sequence ID
-        revision_number: sequence revision number
-        """
-        url = '/show/{0}/sequence/{1}/revision/{2}/panels'.format(
-            show_id, sequence_id, revision_number)
-        headers = self.__get_headers(None, url, 'GET')
-        response = None
-        try:
-            req = urllib2.Request(self.hostname + url, headers=headers)
-            response = urllib2.urlopen(req).read()
-            response = json.loads(response)
-            response = response.get('panels')
-        except:
-            print('Could not retrieve panels')
-            return None
-        return response
-
-    def get_dialogues(self, show_id, sequence_id, revision_number):
-        """get_dialogues retrieve the list of dialogues from a sequence revision
-        show_id: show ID
-        sequence_id: sequence ID
-        revision_number: sequence revision number
-        """
-        url = '/show/{0}/sequence/{1}/revision/{2}/dialogues'.format(
-            show_id, sequence_id, revision_number)
-        headers = self.__get_headers(None, url, 'GET')
-        response = None
-        try:
-            req = urllib2.Request(self.hostname + url, headers=headers)
-            response = urllib2.urlopen(req).read()
-            response = json.loads(response)
-            response = response.get('dialogues')
-        except:
-            print('Could not retrieve dialogues')
-            return None
-        return response
-
-    def get_sequence_rev(self, show_id, sequence_id, revision_number):
-        """get_sequence_rev retrieve a sequence revision
-        show_id: show ID
-        sequence_id: sequence ID
-        revision_number: sequence revision number
-        """
-        url = '/show/{0}/sequence/{1}/revision/{2}'.format(
-            show_id, sequence_id, revision_number)
-        headers = self.__get_headers(None, url, 'GET')
-        response = None
-        try:
-            req = urllib2.Request(self.hostname + url, headers=headers)
-            response = urllib2.urlopen(req).read()
-            response = json.loads(response)
-        except:
-            print('Could not retrieve sequence revision')
-            return None
-        return response
-
-    def download_media_object(self, temp_filepath, media_object_id):
-        """download_media_object download a media object
-        temp_filepath: filepath to store the downloaded image
-        media_object_id: media object id
-        """
-        url = '/file/{0}/data'.format(media_object_id)
-        headers = self.__get_headers(None, url, 'GET')
-        response = None
-        try:
-            req = urllib2.Request(self.hostname + url, headers=headers)
-            response = urllib2.urlopen(req).read()
-            file = open(temp_filepath, 'wb')
-            file.write(response)
-            file.close()
-        except:
-            print('Could not retrieve thumbnail')
-            return None
-        return temp_filepath
-
-    def new_sequence_revision(self, show_id, sequence_id, revisioned_panels, markers, comment='From Hiero'):
-        """new_sequence_revision will create a new sequence revision
-        show_id: show ID
-        sequence_id: sequence ID
-        revisioned_panels: list of revisoned panels for the sequence revision
-        markers: list of markers
-        comment: comment of the sequence revision
-        """
-
-        url = '/show/{0}/sequence/{1}/revision'.format(show_id, sequence_id)
-        content = {
-            'comment': comment,
-            'imported': False,
-            'meta_data': {'annotations': [], 'audio_timings': [], 'highlights': [], 'markers': markers},
-            'revisioned_panels': revisioned_panels
-        }
-        headers = self.__get_headers(content, url, 'POST')
-        response = None
-        try:
-            req = urllib2.Request(self.hostname + url, headers=headers, data=json.dumps(content))
-            response = urllib2.urlopen(req).read()
-            response = json.loads(response)
-        except:
-            print('Could not create sequence revision')
-            return None
-        return response
-
-    def new_panel(self, show_id, sequence_id, asset_id=None, duration=12):
-        """new_panel will create a blank panel
-        show_id: show ID
-        sequence_id: sequence ID
-        asset_id: asset ID
-        duration: duration
-        """
-        url = '/show/{0}/sequence/{1}/panel'.format(show_id, sequence_id)
-        content = {
-            'duration': duration,
-        }
-        if asset_id is not None:
-            content['asset'] = {'asset_id': asset_id}
-        headers = self.__get_headers(content, url, 'POST')
-        response = None
-        try:
-            req = urllib2.Request(self.hostname + url, headers=headers, data=json.dumps(content))
-            response = urllib2.urlopen(req).read()
-            response = json.loads(response)
-        except:
-            print('Could not create blank panel')
-            return None
-        return response
-
-    def reset(self):
-        """reset will reset the user info"""
-        self.hostname = None
-        self.secret = None
-        self.expiry = None
-        self.login = None
-        self.password = None
-        self.key = None
-
-    def __get_token(self):
-        """__get_token will request a token and reset it if it is too close to expiry"""
-        if self.key is None or self.secret is None or self.expiry is None or datetime.now() + timedelta(hours=2) > self.expiry:
-            authentificationToken = self.authenticate(
-                self.hostname, self.login, self.password)
-            self.key = authentificationToken['id']
-            self.secret = authentificationToken['secret_access_key']
-            self.expiry = datetime.strptime(authentificationToken['expiry_date'].split('.')[0], '%Y-%m-%dT%H:%M:%S')
-        return self.key, self.secret
-
-    def __fn_sign(self, access_key_id, secret_access_key, url, content, http_method, content_type, dt):
-        """After being logged in, you will have a token. This token will be use to sign your requests.
-        accessKeyId: Access key ID from your token
-        secretAccessKey: Secret access key from your token
-        url: Url of the request
-        content: Content of your request
-        httpMethod: Http Method of your request
-        contentType: Content Type of your request
-        """
-        raw_string = http_method.upper() + '\n'
-        content_md5 = ''
-        if content:
-            if isinstance(content, str):
-                content_md5 = hashlib.md5(content).hexdigest()
-            elif isinstance(content, bytes):
-                content_md5 = hashlib.md5(binascii.hexlify(content)).hexdigest()
-            elif isinstance(content, dict):
-                jsoned = json.dumps(content)
-                content_md5 = hashlib.md5(jsoned.encode('utf-8')).hexdigest()
-        if content_md5 != '':
-            raw_string += content_md5 + '\n'
-            raw_string += content_type + '\n'
-        else:
-            raw_string += '\n\n'
-        raw_string += dt.isoformat().split('.')[0] + 'Z' + '\n'
-        url_bits = url.split('?')
-        url_without_query_params = url_bits[0]
-        raw_string += url_without_query_params
-        if len(secret_access_key) == 0:
-            raise ValueError('FnSigner: You must specify a secret_access_key')
-        digest_created = base64.b64encode(
-            hmac.new(secret_access_key.encode('utf-8'), raw_string.encode('utf-8'), digestmod=hashlib.sha256).digest()
-        )
-        return 'FNAUTH ' + access_key_id + ':' + digest_created.decode('utf-8')
-
-    def __get_headers(self, content, url, method='POST'):
-        """__get_headers will generate the header to make any request
-        containing the authorization with signature
-        content: content of the request
-        url: url to make request
-        method: request method
-        """
-        dt = datetime.utcnow()
-        key, secret = self.__get_token()
-        return {
-            'Authorization': self.__fn_sign(
-                key,
-                secret,
-                url,
-                content,
-                method,
-                'application/json',
-                dt),
-            'Content-Type': 'application/json',
-            'Date': dt.strftime('%a, %d %b %Y %H:%M:%S GMT'),
-        }
+import flix as flix_api
+import hiero_c as hiero_api
 
 
 class main_dialogue(QDialog):
     def __init__(self, parent=None):
         super(main_dialogue, self).__init__(parent)
-        self.flix_api = flix()
+        self.flix_api = flix_api.flix()
+        self.hiero_api = hiero_api.hiero_c()
         self.authenticated = False
         self.setWindowTitle("Flix")
-        self.preset_comment_tag = hiero.core.findProjectTags(hiero.core.project('Tag Presets'), 'Comment')[0]
-        self.preset_fr_tag_tag = hiero.core.findProjectTags(hiero.core.project('Tag Presets'), 'France')[0]
-        self.preset_ready_to_start_tag = hiero.core.findProjectTags(hiero.core.project('Tag Presets'), 'Ready To Start')[0]
-        self.preset_ref_tag = hiero.core.findProjectTags(hiero.core.project('Tag Presets'), 'Reference')[0]
 
         h_main_box = QHBoxLayout()
         v_login_box = QVBoxLayout()
@@ -389,7 +91,10 @@ class main_dialogue(QDialog):
             self.reset('Log In')
             return
 
-        credentials = self.flix_api.authenticate(self.hostname.text(), self.login.text(), self.password.text())
+        credentials = self.flix_api.authenticate(
+            self.hostname.text(),
+            self.login.text(),
+            self.password.text())
         if credentials is None:
             self.error('Could not authenticate user')
             self.login.clear()
@@ -434,8 +139,9 @@ class main_dialogue(QDialog):
         """sort_alphanumeric will sort a dictionnary alphanumerically by his keys
         d: dictionnary to sort
         """
-        convert = lambda text: int(text) if text.isdigit() else text
-        alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
+        def convert(text): return int(text) if text.isdigit() else text
+        def alphanum_key(key): return [convert(c)
+                                       for c in re.split('([0-9]+)', key)]
         keys = sorted(d.keys(), key=alphanum_key)
         return OrderedDict((k, d[k]) for k in keys)
 
@@ -448,7 +154,8 @@ class main_dialogue(QDialog):
             return show_tracking_codes
         for s in shows:
             if s.get('hidden', False) is False:
-                show_tracking_codes[s.get('tracking_code')] = [s.get('id'), s.get('episodic')]
+                show_tracking_codes[s.get('tracking_code')] = [
+                    s.get('id'), s.get('episodic')]
         return self.sort_alphanumeric(show_tracking_codes)
 
     def get_sequence_tracking_code(self, sequences):
@@ -460,7 +167,8 @@ class main_dialogue(QDialog):
             return sequence_tracking_codes
         for s in sequences:
             if s.get('revisions_count') > 0:
-                sequence_tracking_codes[s.get('tracking_code')] = [s.get('id'), s.get('revisions_count')]
+                sequence_tracking_codes[s.get('tracking_code')] = [
+                    s.get('id'), s.get('revisions_count')]
         return self.sort_alphanumeric(sequence_tracking_codes)
 
     def get_episode_tracking_code(self, episodes):
@@ -501,7 +209,8 @@ class main_dialogue(QDialog):
             episodes = self.flix_api.get_episodes(show_id)
             if episodes is None:
                 self.error('Could not retrieve episodes')
-            self.episode_tracking_code = self.get_episode_tracking_code(episodes)
+            self.episode_tracking_code = self.get_episode_tracking_code(
+                episodes)
             for e in self.episode_tracking_code:
                 self.episode_list.addItem(e)
             self.episode_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
@@ -512,7 +221,8 @@ class main_dialogue(QDialog):
             if sequences is None:
                 self.error('Could not retreive sequences')
                 return
-            self.sequence_tracking_code = self.get_sequence_tracking_code(sequences)
+            self.sequence_tracking_code = self.get_sequence_tracking_code(
+                sequences)
             self.sequence_list.addItem('All Sequences')
             for s in self.sequence_tracking_code:
                 self.sequence_list.addItem(s)
@@ -531,7 +241,8 @@ class main_dialogue(QDialog):
         if sequences is None:
             self.error('Could not retreive sequences')
             return
-        self.sequence_tracking_code = self.get_sequence_tracking_code(sequences)
+        self.sequence_tracking_code = self.get_sequence_tracking_code(
+            sequences)
         self.sequence_list.clear()
         for s in self.sequence_tracking_code:
             self.sequence_list.addItem(s)
@@ -554,73 +265,8 @@ class main_dialogue(QDialog):
         if sequences is None:
             self.error('Could not retreive sequences')
             return
-        self.sequence_tracking_code = self.get_sequence_tracking_code(sequences)
-
-    def add_track_item(self, track, track_item_name, source_clip, duration=12, tags=[], last_track_item=None):
-        """add_track_item will add a trackitem to a track, it will add a source and tags
-        track: track to add the new track item
-        track_item_name: name of the new track item
-        source_clip: clip to link to the track item
-        duration: duration of the clip
-        tags: list of tags to add to the new track_item
-        last_track_item: previous track item to link them all
-        """
-        track_item = track.createTrackItem(track_item_name)
-        track_item.setSource(source_clip)
-        for t in tags:
-            track_item.addTag(t)
-        if last_track_item:
-            track_item.setTimelineIn(last_track_item.timelineOut() + 1)
-            track_item.setTimelineOut(last_track_item.timelineOut() + duration)
-        else:
-            track_item.setTimelineIn(0)
-            track_item.setTimelineOut(duration - 1)
-
-        track.addTrackItem(track_item)
-        return track_item
-
-    def get_project(self, project_name):
-        """get_project will reuse existing project depending of the project name or will create it
-        project_name: project to find
-        """
-        my_project = hiero.core.project(project_name)
-        if my_project is None:
-            my_project = newProject(project_name)
-        f = Format(1000, 562, 1, 'flix')
-        my_project.setOutputFormat(f)
-        return my_project
-
-    def get_project_bin(self, project_bin, bin_name):
-        """get_project_bin will try to reuse a bin from a project depending on the bin_name or will create it
-        project_bin: is the project bin
-        bin_name: bin's name to search
-        """
-        b = project_bin.bins(bin_name)
-        if len(b) > 0:
-            b = b[0]
-            return b, True
-        return Bin(bin_name), False
-
-    def get_seq_bin(self, host_b, bin_name):
-        """get_seq_bin will try to reuse a bin from a project depending on the bin_name or will create it
-            host_b: is the host bin
-            bin_name: bin's name to search
-        """
-        b = host_b.bins()
-        for seq_bin in b:
-            if seq_bin.name() == bin_name:
-                return seq_bin, True
-        return Bin(bin_name), False
-
-    def get_clips(self, seq_bin):
-        """get_clips will retrieve all the clips from the bin
-        seq_bin: bin of the sequence
-        """
-        clips = {}
-        for b in seq_bin.bins():
-            for c in b.clips():
-                clips[c.name()] = c.activeItem()
-        return clips
+        self.sequence_tracking_code = self.get_sequence_tracking_code(
+            sequences)
 
     def create_clip(self, seq_rev, p, clip_name, clips):
         """create_clip will create a clip and download image or reuse one
@@ -631,16 +277,24 @@ class main_dialogue(QDialog):
         """
         if clip_name not in clips:
             temp_path = tempfile.mkdtemp()
-            thumb_mo = p.get('asset', {}).get('media_objects', {}).get('thumbnail', [])
+            thumb_mo = p.get(
+                'asset', {}).get(
+                'media_objects', {}).get(
+                'thumbnail', [])
             thumb_mo_id = None if len(thumb_mo) < 1 else thumb_mo[0].get('id')
             if thumb_mo_id is None:
                 self.error('Could not retrieve thumbnail ID')
                 return None
-            temp_filepath = os.path.join(temp_path, '{0}_{1}_{2}_.png'.format(
-                self.selected_sequence_tracking_code, p.get('panel_id'), p.get('revision_counter')))
+            temp_filepath = os.path.join(
+                temp_path,
+                '{0}_{1}_{2}_.png'.format(
+                    self.selected_sequence_tracking_code,
+                    p.get('panel_id'),
+                    p.get('revision_counter')))
             if sys.platform == 'win32' or sys.platform == 'cygwin':
                 temp_filepath = temp_filepath.replace('\\', '\\\\')
-            if self.flix_api.download_media_object(temp_filepath, thumb_mo_id) is None:
+            if self.flix_api.download_media_object(
+                    temp_filepath, thumb_mo_id) is None:
                 self.error('Could not download thumbnail')
                 return None
             return seq_rev.createClip(temp_filepath)
@@ -653,10 +307,7 @@ class main_dialogue(QDialog):
         comment = p.get('latest_open_note', {}).get('body', None)
         t = None
         if comment is not None:
-            t = self.preset_comment_tag.copy()
-            cleanr = re.compile('<.*?>|&([a-z0-9]+|#[0-9]{1,6}|#x[0-9a-f]{1,6});')
-            comment = re.sub(cleanr, '', comment)
-            t.setNote(comment)
+            t = self.hiero_api.create_comment_tag(comment)
         return t
 
     def add_dialogue(self, mapped_dialogue, panel_id, track, prev):
@@ -667,8 +318,7 @@ class main_dialogue(QDialog):
         prev: previous trackitem
         """
         if panel_id in mapped_dialogue:
-            node = track.createEffect(effectType='Text2', trackItem=prev, subTrackIndex=0).node()
-            dialogue_settings = {
+            settings = {
                 'name': 'dialogue-[{0}]'.format(uuid.uuid4()),
                 'message': mapped_dialogue[panel_id],
                 'opacity': .6,
@@ -679,8 +329,7 @@ class main_dialogue(QDialog):
                 'xjustify': 1,
                 'yjustify': 2
             }
-            for name, value in dialogue_settings.iteritems():
-                node[name].setValue(value)
+            self.hiero_api.add_dialogue_track_effect(track, prev, settings)
 
     def create_burnin(self, track, fr, to, burnin_name):
         """create_burnin will create a burnin and add it to the track
@@ -689,8 +338,7 @@ class main_dialogue(QDialog):
         to: from where to end the burnin (frame)
         burnin_name: name of the burnin
         """
-        node = track.createEffect(effectType='BurnIn', subTrackIndex=0, timelineIn=fr, timelineOut=to).node()
-        burnin_settings = {
+        settings = {
             'name': '{0}-[{1}]'.format(burnin_name, uuid.uuid4()),
             'burnIn_textScale': .25,
             'burnIn_topLeft': 'hiero/clip',
@@ -704,9 +352,7 @@ class main_dialogue(QDialog):
             'burnIn_backgroundYBorder': 10,
             'burnIn_backgroundOpacity': .6,
         }
-
-        for name, value in burnin_settings.iteritems():
-            node[name].setValue(value)
+        self.hiero_api.add_burnin_track_effect(track, fr, to, settings)
 
     def get_markers(self, sequence_revision):
         """get_markers will format the sequence_revision to have a mapping of markers: start -> marker_name
@@ -718,20 +364,16 @@ class main_dialogue(QDialog):
             markers_mapping[m.get('start')] = m.get('name')
         return OrderedDict(sorted(markers_mapping.items()))
 
-    def create_marker(self, in_time, marker_name):
-        """create_marker will create a marker
-        in_time: start of the marker
-        marker_name: name of the marker
-        """
-        t = self.preset_ready_to_start_tag.copy()
-        t.setNote(marker_name)
-        t.metadata().setValue('tag.start', '{0}'.format(in_time))
-        t.metadata().setValue('tag.length', '{0}'.format(1))
-        t.setInTime(in_time)
-        t.setOutTime(in_time + 1)
-        return t
-
-    def add_burnin(self, panels, panel_in, markers_mapping, marker_tmp, marker_in, shots, p, i):
+    def add_burnin(
+            self,
+            panels,
+            panel_in,
+            markers_mapping,
+            marker_tmp,
+            marker_in,
+            shots,
+            p,
+            i):
         """add_burnin will add a burnin in a VideoTrack
         panels: list of panels
         panel_in: first frame of the panel (from the whole timeline)
@@ -743,10 +385,20 @@ class main_dialogue(QDialog):
         """
         if panel_in in markers_mapping and markers_mapping[panel_in] != marker_tmp:
             if marker_in is not None:
-                self.create_burnin(shots, marker_in, panel_in - 1, markers_mapping[panel_in])
+                self.create_burnin(
+                    shots,
+                    marker_in,
+                    panel_in - 1,
+                    markers_mapping[panel_in])
             marker_in = panel_in
         if len(panels) - 1 == i and marker_in is not None:
-            self.create_burnin(shots, marker_in, panel_in + p.get('duration') - 1, marker_tmp)
+            self.create_burnin(
+                shots,
+                marker_in,
+                panel_in +
+                p.get('duration') -
+                1,
+                marker_tmp)
         return marker_in
 
     def add_comment(self, p, tags):
@@ -764,9 +416,7 @@ class main_dialogue(QDialog):
         p: actual panel
         tags: list of tags
         """
-        t = self.preset_fr_tag_tag.copy()
-        t.setNote(json.dumps(p))
-        t.setVisible(False)
+        t = self.hiero_api.create_info_tag(json.dumps(p))
         tags.append(t)
         return tags
 
@@ -777,9 +427,18 @@ class main_dialogue(QDialog):
         sequence: sequence to add to
         """
         if panel_in in markers_mapping:
-            sequence.addTagToRange(self.create_marker(panel_in, markers_mapping[panel_in]), panel_in, panel_in + 1)
+            tag = self.hiero_api.create_marker_tag(
+                    panel_in,
+                    markers_mapping[panel_in])
+            sequence.addTagToRange(tag, panel_in, panel_in + 1)
 
-    def create_video_track(self, sequence, seq_bin, seq_rev_bin, seq_id, seq_rev_number):
+    def create_video_track(
+            self,
+            sequence,
+            seq_bin,
+            seq_rev_bin,
+            seq_id,
+            seq_rev_number):
         """create_video_track will create 2 videos tracks, one for the sequence and one for shots
         sequence: sequence
         seq_bin: sequence bin
@@ -787,17 +446,22 @@ class main_dialogue(QDialog):
         seq_id: sequence ID
         seq_rev_number: sequence revision count
         """
-        track = VideoTrack('Flix_{0}_v{1}'.format(self.selected_sequence_tracking_code, seq_rev_number))
+        track = self.hiero_api.create_video_track(
+            'Flix_{0}_v{1}'.format(
+                self.selected_sequence_tracking_code,
+                seq_rev_number))
         show_id = self.show_tracking_code[self.selected_show_tracking_code][0]
-        dialogues = self.flix_api.get_dialogues(show_id, seq_id, seq_rev_number)
+        dialogues = self.flix_api.get_dialogues(
+            show_id, seq_id, seq_rev_number)
         mapped_dialogue = self.get_dialogues_by_panel_id(dialogues)
-        sequence_revision = self.flix_api.get_sequence_rev(show_id, seq_id, seq_rev_number)
+        sequence_revision = self.flix_api.get_sequence_rev(
+            show_id, seq_id, seq_rev_number)
         if sequence_revision is None:
             self.error('Could not retreive sequence revision')
             return
         markers_mapping = self.get_markers(sequence_revision)
-        shots = VideoTrack('Shots') if len(markers_mapping) > 0 else None
-        clips = self.get_clips(seq_bin)
+        shots = self.hiero_api.create_video_track('Shots') if len(markers_mapping) > 0 else None
+        clips = self.hiero_api.get_clips(seq_bin)
         panels = self.flix_api.get_panels(show_id, seq_id, seq_rev_number)
         if panels is None:
             self.error('Could not retreive panels')
@@ -810,7 +474,9 @@ class main_dialogue(QDialog):
         for i, p in enumerate(panels):
             tags = []
             panel_id = p.get('panel_id')
-            clip_name = '{0}_{1}_{2}_'.format(self.selected_sequence_tracking_code, panel_id, p.get('revision_counter'))
+            clip_name = '{0}_{1}_{2}_'.format(
+                self.selected_sequence_tracking_code, panel_id, p.get(
+                    'revision_counter'))
             clip = self.create_clip(seq_rev_bin, p, clip_name, clips)
             if clip is None:
                 self.error('could not create clip: {0}'.format(clip_name))
@@ -823,11 +489,20 @@ class main_dialogue(QDialog):
             # Add marker
             self.add_marker(markers_mapping, panel_in, sequence)
             # Add track item
-            prev = self.add_track_item(track, clip_name, clip, p.get('duration'), tags, prev)
+            prev = self.hiero_api.add_track_item(
+                track, clip_name, clip, p.get('duration'), tags, prev)
             # Add dialogue
             self.add_dialogue(mapped_dialogue, panel_id, track, prev)
             # Add burnin
-            marker_in = self.add_burnin(panels, panel_in, markers_mapping, prev_marker_name, marker_in, shots, p, i)
+            marker_in = self.add_burnin(
+                panels,
+                panel_in,
+                markers_mapping,
+                prev_marker_name,
+                marker_in,
+                shots,
+                p,
+                i)
 
             if panel_in in markers_mapping:
                 prev_marker_name = markers_mapping[panel_in]
@@ -841,19 +516,29 @@ class main_dialogue(QDialog):
         seq_id = self.sequence_tracking_code[self.selected_sequence_tracking_code][0]
         seq_rev_number = self.sequence_tracking_code[self.selected_sequence_tracking_code][1]
 
-        my_project = self.get_project('Flix_{0}'.format(self.selected_show_tracking_code))
-        seq, seq_bin_reused = self.get_project_bin(my_project, 'Flix_{0}'.format(self.selected_sequence_tracking_code))
+        my_project = self.hiero_api.get_project(
+            'Flix_{0}'.format(
+                self.selected_show_tracking_code))
+        seq, seq_bin_reused = self.hiero_api.get_project_bin(
+            my_project, 'Flix_{0}'.format(
+                self.selected_sequence_tracking_code))
         if seq_bin_reused is False:
             clipsBin = my_project.clipsBin()
             clipsBin.addItem(seq)
 
-        seq_rev_bin, seq_rev_bin_reused = self.get_seq_bin(seq, 'v{0}'.format(seq_rev_number))
+        seq_rev_bin, seq_rev_bin_reused = self.hiero_api.get_seq_bin(
+            seq, 'v{0}'.format(seq_rev_number))
         if seq_rev_bin_reused is False:
             seq.addItem(seq_rev_bin)
 
-        sequence = Sequence('Flix_{0}_v{1}'.format(self.selected_sequence_tracking_code, seq_rev_number))
-        seq_rev_bin.addItem(BinItem(sequence))
-        track, shots = self.create_video_track(sequence, seq, seq_rev_bin, seq_id, seq_rev_number)
+        sequence = self.hiero_api.create_sequence(
+            'Flix_{0}_v{1}'.format(
+                self.selected_sequence_tracking_code,
+                seq_rev_number))
+        seq_item = self.hiero_api.sequence_to_bin_item(sequence)
+        seq_rev_bin.addItem(seq_item)
+        track, shots = self.create_video_track(
+            sequence, seq, seq_rev_bin, seq_id, seq_rev_number)
         if track is None:
             return
         sequence.addTrack(track)
@@ -867,12 +552,13 @@ class main_dialogue(QDialog):
             for count in range(self.sequence_list.count()):
                 if self.sequence_list.itemText(count) == 'All Sequences':
                     continue
-                self.selected_sequence_tracking_code = self.sequence_list.itemText(count)
+                self.selected_sequence_tracking_code = self.sequence_list.itemText(
+                    count)
                 self.pull_latest_seq_rev()
+            self.selected_sequence_tracking_code = 'All Sequences'
         else:
             self.pull_latest_seq_rev()
 
-        self.selected_sequence_tracking_code = 'All Sequences'
         self.info('Sequence revision imported successfully')
 
     def get_panels_from_sequence(self, sequence, show_id, sequence_id):
@@ -883,11 +569,10 @@ class main_dialogue(QDialog):
         """
         panels = []
         for track_item in sequence.items():
-            track_tags = track_item.tags()
             panel_info = None
-            for tag in track_tags:
-                if tag.name() == 'France':
-                    panel_info = tag.note()
+            tags_note = self.hiero_api.get_item_tags_note(track_item, 'France')
+            if len(tags_note) > 0:
+                panel_info = tags_note[0]
             if panel_info is None:
                 blank_panel = self.flix_api.new_panel(show_id, sequence_id)
                 blank_panel['panel_id'] = blank_panel.get('id')
@@ -905,7 +590,6 @@ class main_dialogue(QDialog):
             panel = json.loads(panels[i])
             panel['duration'] = int(track_item.duration())
             panels[i] = panel
-
         return panels
 
     def format_panel_for_revision(self, panels):
@@ -959,7 +643,8 @@ class main_dialogue(QDialog):
         """duplicate_panel wil duplicate a panel and reuse his asset
         p: panel to duplicate
         """
-        new_panel = self.flix_api.new_panel(show_id, sequence_id, p['asset']['asset_id'], p['duration'])
+        new_panel = self.flix_api.new_panel(
+            show_id, sequence_id, p['asset']['asset_id'], p['duration'])
         new_panel['panel_id'] = new_panel.get('id')
         new_panel['revision_number'] = 1
         new_panel['duration'] = p['duration']
@@ -987,7 +672,7 @@ class main_dialogue(QDialog):
         revisioned_panels = []
         markers = []
 
-        sequence = hiero.ui.activeSequence()
+        sequence = self.hiero_api.get_active_sequence()
         if sequence is None:
             self.error('could not find any sequence selected')
             return
@@ -1002,19 +687,24 @@ class main_dialogue(QDialog):
                     revisioned_panels = self.format_panel_for_revision(panels)
 
         if len(revisioned_panels) < 1:
-            self.error('could not create a sequence revision, need at least one clip')
+            self.error(
+                'could not create a sequence revision, need at least one clip')
             return
 
-        comment, ok = QInputDialog.getText(self, 'Update to Flix', 'Sequence revision comment:')
+        comment, ok = QInputDialog.getText(
+            self, 'Update to Flix', 'Sequence revision comment:')
         if ok is False:
             return
 
-        new_seq_rev = self.flix_api.new_sequence_revision(show_id, seq_id, revisioned_panels, markers, comment)
+        new_seq_rev = self.flix_api.new_sequence_revision(
+            show_id, seq_id, revisioned_panels, markers, comment)
         if new_seq_rev is None:
             self.error('Could not save sequence revision')
         else:
             self.info('Sequence revision successfully created')
 
+
 main_view = main_dialogue()
-wm = hiero.ui.windowManager()
+wm = hiero_api.hiero_c()
+wm = wm.new_window_manager()
 wm.addWindow(main_view)
