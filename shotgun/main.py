@@ -27,10 +27,12 @@ class main_dialogue(QDialog):
         self.authenticated = False
         self.setWindowTitle('Flix Production Handoff')
 
+        # Setup UI view
         h_main_box = QHBoxLayout()
         v_login_box = QVBoxLayout()
         v_sequence_box = QVBoxLayout()
 
+        # Setup Flix Login view
         self.hostname = QLineEdit('http://localhost:1234')
         self.hostname.setMinimumWidth(200)
         hostname_label = QLabel('Flix Server')
@@ -47,6 +49,7 @@ class main_dialogue(QDialog):
         self.submit = QPushButton('Log In')
         self.submit.clicked.connect(self.authenticate)
 
+        # Add Login view to layout        
         login_layout = QVBoxLayout()
         login_layout.addWidget(hostname_label)
         login_layout.addWidget(self.hostname)
@@ -59,15 +62,15 @@ class main_dialogue(QDialog):
         login_widget.setLayout(login_layout)
         login_widget.setMaximumHeight(250)
 
+        # Add Flix logo
         picture = QPixmap('./flix.png')
         picture = picture.scaledToHeight(120)
-
         label = QLabel()
         label.setPixmap(picture)
-
         v_login_box.addWidget(login_widget, alignment=Qt.AlignTop)
         v_login_box.addWidget(label, alignment=Qt.AlignCenter)
 
+        # Setup lists for shows / episodes and sequences
         self.show_list = QComboBox()
         show_label = QLabel('Show')
         show_label.setMinimumWidth(400)
@@ -82,6 +85,7 @@ class main_dialogue(QDialog):
         sequence_label.setBuddy(self.sequence_list)
         self.sequence_list.currentTextChanged.connect(self.on_sequence_changed)
 
+        # Setup list for production handoff export option
         self.handoff_type_list = QComboBox()
         self.handoff_type_list.addItems(['Local Export', 'Shotgun Export'])
         self.handoff_type_label = QLabel('Handoff Type')
@@ -89,6 +93,7 @@ class main_dialogue(QDialog):
         self.handoff_type_list.currentTextChanged.connect(
             self.on_handoff_type_changed)
 
+        # Setup Local Export option
         self.export_layout = QHBoxLayout()
         self.export_path = QLineEdit()
         self.export_path_label = QLabel('Export path')
@@ -98,6 +103,7 @@ class main_dialogue(QDialog):
         self.export_layout.addWidget(self.export_path)
         self.export_layout.addWidget(self.export_path_button)
 
+        # Setup Shotgun export option
         self.sg_hostname = QLineEdit('https://thomaslacroix.shotgunstudio.com')
         self.sg_hostname.setMinimumWidth(350)
         self.sg_hostname_label = QLabel('Shotgun URL')
@@ -107,6 +113,7 @@ class main_dialogue(QDialog):
         self.sg_login_label = QLabel('Username')
         self.sg_login_label.setBuddy(self.sg_login)
 
+        # Setup Export Latest action
         pull = QPushButton('Export Latest')
         pull.clicked.connect(self.pull_latest)
         v_sequence_box.addWidget(show_label)
@@ -210,6 +217,7 @@ class main_dialogue(QDialog):
 
         self.sequence_list.clear()
         self.episode_list.clear()
+        # If the show is episodic we show the episode list and update his list
         if episodic is True:
             self.episode_list.show()
             self.episode_label.show()
@@ -223,6 +231,7 @@ class main_dialogue(QDialog):
                 self.episode_list.addItem(e)
             self.episode_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
             return
+        # If not episodic we hide the episode list and update the sequence list
         self.episode_list.hide()
         self.episode_label.hide()
         sequences = self.flix_api.get_sequences(show_id)

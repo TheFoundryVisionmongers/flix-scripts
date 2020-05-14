@@ -37,3 +37,9 @@ Pick the one you want to export and select your choice or production handoff:
     Once the credentials set, you can click `Export Latest`, it will retrieve the latest sequence revision, export a quicktime per shots and download the thumbnails
 
     It will login to Shotgun and will start creating / reusing a project, a Sequence, Shots and Revisions by uploading the quicktime
+
+
+### Documentation
+
+You can go to `./docs` and open them in a browser, it's a generated documentation to show you the methods for each classes
+
