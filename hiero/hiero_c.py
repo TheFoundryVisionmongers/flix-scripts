@@ -55,16 +55,21 @@ class hiero_c:
             duration=12,
             tags=[],
             last_track_item=None):
-        """add_track_item will add a trackitem to a track, it will add a source and tags
+        """add_track_item will add a trackitem to a track, it will
+        add a source and tags
 
         Arguments:
             track {Dict} -- Track to add the new track item
+
             track_item_name {str} -- Name of the new track item
+
             source_clip {Dict} -- Clip to link to the track item
 
         Keyword Arguments:
             duration {int} -- Duration of the clip (default: {12})
+
             tags {list} -- list of tags to add (default: {[]})
+
             last_track_item {[type]} -- previous track item (default: {None})
 
         Returns:
@@ -85,10 +90,12 @@ class hiero_c:
         return track_item
 
     def get_project_bin(self, project_bin, bin_name):
-        """get_project_bin will try to reuse a bin from a project depending on the bin_name or will create it
+        """get_project_bin will try to reuse a bin from a project depending
+        on the bin_name or will create it
 
         Arguments:
             project_bin {Dict} -- Project Bin
+
             bin_name {str} -- Bin's name to find
 
         Returns:
@@ -101,10 +108,12 @@ class hiero_c:
         return Bin(bin_name), False
 
     def get_seq_bin(self, host_b, bin_name):
-        """get_seq_bin will try to reuse a bin from a project depending on the bin_name or will create it
+        """get_seq_bin will try to reuse a bin from a project depending on
+        the bin_name or will create it
 
         Arguments:
             host_b {Dict} -- Host Bin
+
             bin_name {[type]} -- Bin's name to find
 
         Returns:
@@ -152,6 +161,7 @@ class hiero_c:
 
         Arguments:
             in_time {int} -- Start of the marker tag
+
             marker_name {str} -- Marker Name
 
         Returns:
@@ -188,7 +198,9 @@ class hiero_c:
 
         Arguments:
             track {Dict} -- Track to add effect on
+
             track_item {Dict} -- Track Item
+
             settings {Dict} -- Settings to apply to the node
         """
         node = track.createEffect(
@@ -204,8 +216,11 @@ class hiero_c:
 
         Arguments:
             track {Dict} -- Track to add effect on
+
             fr {int} -- Start of the burnin
+
             to {int} -- End of the burnin
+
             settings {Dict} -- Settings to apply to the node
         """
         node = track.createEffect(
@@ -255,6 +270,7 @@ class hiero_c:
 
         Arguments:
             items {Dict} -- Item
+
             name {str} -- Tag's name to get
 
         Returns:
