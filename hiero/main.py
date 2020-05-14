@@ -84,7 +84,8 @@ class main_dialogue(QDialog):
         self.setLayout(h_main_box)
 
     def authenticate(self):
-        """authenticate will authenticate a user and update the view"""
+        """authenticate will authenticate a user and update the view
+        """
         if self.authenticated:
             self.flix_api.reset()
             self.authenticated = False
@@ -105,21 +106,33 @@ class main_dialogue(QDialog):
         self.authenticated = True
         self.reset('Log Out')
 
-    def init_shows(self):
-        """init_shows will retrieve the list of show and update the UI"""
-        shows = self.flix_api.get_shows()
-        if shows is None:
-            self.error('Could not retreive shows')
-            return
-        self.show_tracking_code = self.get_show_tracking_code(shows)
-        self.show_list.clear()
-        for s in self.show_tracking_code:
-            self.show_list.addItem(s)
-        self.show_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
+    def error(self, message):
+        """error will show a error message with a given message
+
+        Arguments:
+            message {str} -- Message to show
+        """
+        err = QErrorMessage(self.parent())
+        err.setWindowTitle('Flix')
+        err.showMessage(message)
+        err.exec_()
+
+    def info(self, message):
+        """info will show a message with a given message
+
+        Arguments:
+            message {str} -- Message to show
+        """
+        msgbox = QMessageBox(self.parent())
+        msgbox.setWindowTitle('Flix')
+        msgbox.setText(message)
+        msgbox.exec_()
 
     def reset(self, action='Log Out'):
         """reset will reset the login form / shows info for login / logout
-        logout: action to handle, 'Log In' and 'Log Out'
+
+        Keyword Arguments:
+            action {str} -- action to handle (default: {'Log Out'})
         """
         if action == 'Log Out':
             self.hostname.setReadOnly(True)
@@ -135,71 +148,15 @@ class main_dialogue(QDialog):
         self.episode_list.clear()
         self.submit.setText(action)
 
-    def sort_alphanumeric(self, d):
-        """sort_alphanumeric will sort a dictionnary alphanumerically by his keys
-        d: dictionnary to sort
-        """
-        def convert(text): return int(text) if text.isdigit() else text
-        def alphanum_key(key): return [convert(c)
-                                       for c in re.split('([0-9]+)', key)]
-        keys = sorted(d.keys(), key=alphanum_key)
-        return OrderedDict((k, d[k]) for k in keys)
-
-    def get_show_tracking_code(self, shows):
-        """get_show_tracking_code will format the shows to have a mapping: tracking_code -> [show_id, episodic]
-        shows: list of show
-        """
-        show_tracking_codes = {}
-        if shows is None:
-            return show_tracking_codes
-        for s in shows:
-            if s.get('hidden', False) is False:
-                show_tracking_codes[s.get('tracking_code')] = [
-                    s.get('id'), s.get('episodic')]
-        return self.sort_alphanumeric(show_tracking_codes)
-
-    def get_sequence_tracking_code(self, sequences):
-        """get_sequence_tracking_code will format the sequences to have a mapping: tracking_code -> [sequence_id, last_seq_rev_id]
-        sequences: list of sequence
-        """
-        sequence_tracking_codes = {}
-        if sequences is None:
-            return sequence_tracking_codes
-        for s in sequences:
-            if s.get('revisions_count') > 0:
-                sequence_tracking_codes[s.get('tracking_code')] = [
-                    s.get('id'), s.get('revisions_count')]
-        return self.sort_alphanumeric(sequence_tracking_codes)
-
-    def get_episode_tracking_code(self, episodes):
-        """get_episode_tracking_code will format the episodes to have a mapping: tracking_code -> episode_id
-        episodes: list of episodes
-        """
-        episode_tracking_codes = {}
-        if episodes is None:
-            return episode_tracking_codes
-        for s in episodes:
-            episode_tracking_codes[s.get('tracking_code')] = s.get('id')
-        return self.sort_alphanumeric(episode_tracking_codes)
-
-    def get_dialogues_by_panel_id(self, dialogues):
-        """get_dialogues_by_panel_id will format the dialogues to have a mapping panel_id -> dialogue
-        dialogues: list of dialogue
-        """
-        mapped_dialogues = {}
-        cleanr = re.compile('<.*?>|&([a-z0-9]+|#[0-9]{1,6}|#x[0-9a-f]{1,6});')
-        for d in dialogues:
-            t = d.get('text', '').replace('</p>', '\n')
-            mapped_dialogues[d.get('panel_id')] = re.sub(cleanr, '', t)
-        return mapped_dialogues
-
     def on_show_changed(self, tracking_code):
-        """on_show_changed triggered after a show is selected, will init the list of sequences from this show
-        tracking_code: show_tracking_code from the event
+        """on_show_changed triggered after a show is selected,
+        will init the list of sequences from this show
+
+        Arguments:
+            tracking_code {str} -- show_tracking_code from the event
         """
         self.selected_show_tracking_code = tracking_code
-        show_id = self.show_tracking_code[tracking_code][0]
-        episodic = self.show_tracking_code[tracking_code][1]
+        show_id, episodic, _ = self.get_selected_show()
 
         self.sequence_list.clear()
         self.episode_list.clear()
@@ -229,14 +186,17 @@ class main_dialogue(QDialog):
             self.sequence_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
 
     def on_episode_changed(self, tracking_code):
-        """on_episode_changed triggered after an episode is selected, will store the selected episode
-        tracking_code: episode_tracking_code from the event
+        """on_episode_changed triggered after an episode is selected,
+        will store the selected episode
+
+        Arguments:
+            tracking_code {str} -- episode_tracking_code from the event
         """
         if tracking_code == '':
             return
         self.selected_episode_tracking_code = tracking_code
-        show_id = self.show_tracking_code[self.selected_show_tracking_code][0]
-        episode_id = self.episode_tracking_code[tracking_code]
+        show_id, _, _ = self.get_selected_show()
+        episode_id, _ = self.get_selected_episode()
         sequences = self.flix_api.get_sequences(show_id, episode_id)
         if sequences is None:
             self.error('Could not retreive sequences')
@@ -249,18 +209,122 @@ class main_dialogue(QDialog):
         self.sequence_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
 
     def on_sequence_changed(self, tracking_code):
-        """on_sequence_changed triggered after a sequence is selected, will store the selected sequence
-        tracking_code: sequence_tracking_code from the event
+        """on_sequence_changed triggered after a sequence is selected,
+        will store the selected sequence
+
+        Arguments:
+            tracking_code {str} -- sequence_tracking_code from the event
         """
         self.selected_sequence_tracking_code = tracking_code
 
+    def init_shows(self):
+        """init_shows will retrieve the list of show and update the UI
+        """
+        shows = self.flix_api.get_shows()
+        if shows is None:
+            self.error('Could not retreive shows')
+            return
+        self.show_tracking_code = self.get_show_tracking_code(shows)
+        self.show_list.clear()
+        for s in self.show_tracking_code:
+            self.show_list.addItem(s)
+        self.show_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
+
+    def sort_alphanumeric(self, d):
+        """sort_alphanumeric will sort a dictionnary alphanumerically by keys
+
+        Arguments:
+            d {Dict} -- Dictionnary to sort
+
+        Returns:
+            Dict -- Sorted Dictionnary
+        """
+        def convert(text): return int(text) if text.isdigit() else text
+        def alphanum_key(key): return [convert(c)
+                                       for c in re.split('([0-9]+)', key)]
+        keys = sorted(d.keys(), key=alphanum_key)
+        return OrderedDict((k, d[k]) for k in keys)
+
+    def get_show_tracking_code(self, shows):
+        """get_show_tracking_code will format the shows to have a mapping:
+        tracking_code -> [show_id, episodic]
+
+        Arguments:
+            shows {List} -- List of shows
+
+        Returns:
+            Dict -- Shows by tracking code
+        """
+        show_tracking_codes = {}
+        if shows is None:
+            return show_tracking_codes
+        for s in shows:
+            if s.get('hidden', False) is False:
+                show_tracking_codes[s.get('tracking_code')] = [
+                    s.get('id'), s.get('episodic')]
+        return self.sort_alphanumeric(show_tracking_codes)
+
+    def get_sequence_tracking_code(self, sequences):
+        """get_sequence_tracking_code will format the sequences to have
+        a mapping: tracking_code -> [sequence_id, last_seq_rev_id]
+
+        Arguments:
+            sequences {List} -- List of sequences
+
+        Returns:
+            Dict -- sequence ID and last seq rev by tracking code
+        """
+        sequence_tracking_codes = {}
+        if sequences is None:
+            return sequence_tracking_codes
+        for s in sequences:
+            if s.get('revisions_count') > 0:
+                sequence_tracking_codes[s.get('tracking_code')] = [
+                    s.get('id'), s.get('revisions_count')]
+        return self.sort_alphanumeric(sequence_tracking_codes)
+
+    def get_episode_tracking_code(self, episodes):
+        """get_episode_tracking_code will format the episodes to have a
+        mapping: tracking_code -> episode_id
+
+        Arguments:
+            episodes {List} -- List of episodes
+
+        Returns:
+            Dict -- Episodes by tracking code
+        """
+        episode_tracking_codes = {}
+        if episodes is None:
+            return episode_tracking_codes
+        for s in episodes:
+            episode_tracking_codes[s.get('tracking_code')] = s.get('id')
+        return self.sort_alphanumeric(episode_tracking_codes)
+
+    def get_dialogues_by_panel_id(self, dialogues):
+        """get_dialogues_by_panel_id will format the dialogues to have
+        a mapping panel_id -> dialogue
+
+        Arguments:
+            dialogues {List} -- List of Dialogues
+
+        Returns:
+            Dict -- Mapping panel_id to dialogue
+        """
+        mapped_dialogues = {}
+        cleanr = re.compile('<.*?>|&([a-z0-9]+|#[0-9]{1,6}|#x[0-9a-f]{1,6});')
+        for d in dialogues:
+            t = d.get('text', '').replace('</p>', '\n')
+            mapped_dialogues[d.get('panel_id')] = re.sub(cleanr, '', t)
+        return mapped_dialogues
+
     def update_sequence_items(self):
-        """update_sequence_items will refresh the list of sequence from the selected show"""
-        show_id = self.show_tracking_code[self.selected_show_tracking_code][0]
-        episodic = self.show_tracking_code[self.selected_show_tracking_code][1]
+        """update_sequence_items will refresh the list of sequence
+        from the selected show
+        """
+        show_id, episodic, _ = self.get_selected_show()
         episode_id = None
         if episodic:
-            episode_id = self.episode_tracking_code[self.selected_episode_tracking_code]
+            episode_id, _ = self.get_selected_episode()
         sequences = self.flix_api.get_sequences(show_id, episode_id)
         if sequences is None:
             self.error('Could not retreive sequences')
@@ -269,11 +333,19 @@ class main_dialogue(QDialog):
             sequences)
 
     def create_clip(self, seq_rev, p, clip_name, clips):
-        """create_clip will create a clip and download image or reuse one
-        seq_rev: sequence bin
-        p: panel entity
-        clip_name: name of the clip
-        clips: list of all clips
+        """create_clip will create a clip or reuse one and download image
+
+        Arguments:
+            seq_rev {Dict} -- Sequence bin
+
+            p {Dict} -- Panel entity
+
+            clip_name {st} -- Name of the clip
+
+            clips {List} -- List of all clips
+
+        Returns:
+            Dict -- Clip created / reused
         """
         if clip_name not in clips:
             temp_path = tempfile.mkdtemp()
@@ -285,10 +357,11 @@ class main_dialogue(QDialog):
             if thumb_mo_id is None:
                 self.error('Could not retrieve thumbnail ID')
                 return None
+            _, _, seq_tracking_code = self.get_selected_sequence()
             temp_filepath = os.path.join(
                 temp_path,
                 '{0}_{1}_{2}_.png'.format(
-                    self.selected_sequence_tracking_code,
+                    seq_tracking_code,
                     p.get('panel_id'),
                     p.get('revision_counter')))
             if sys.platform == 'win32' or sys.platform == 'cygwin':
@@ -301,8 +374,14 @@ class main_dialogue(QDialog):
         return clips[clip_name]
 
     def get_comment_tag(self, p):
-        """get_comment_tag will make a copy of a comment tag and set his comment as a note
-        p: panel entity
+        """get_comment_tag will make a copy of a comment tag and set
+        his comment as a note
+
+        Arguments:
+            p {Dict} -- Panel
+
+        Returns:
+            Dict -- Hiero Tag
         """
         comment = p.get('latest_open_note', {}).get('body', None)
         t = None
@@ -312,10 +391,16 @@ class main_dialogue(QDialog):
 
     def add_dialogue(self, mapped_dialogue, panel_id, track, prev):
         """add_dialogue will create a dialogue and add it to the track
-        mapped_dialogue: mapping of dialogue to ensure there is a dialogue for the panel
-        panel_id: panel ID
-        track: track to add the dialogue
-        prev: previous trackitem
+
+        Arguments:
+            mapped_dialogue {Dict} -- mapping of dialogue to ensure there is a
+            dialogue for the panel
+
+            panel_id {int} -- Panel ID
+
+            track {dict} -- Track to add the dialogue
+
+            prev {Dict} -- Previous trackitem
         """
         if panel_id in mapped_dialogue:
             settings = {
@@ -333,10 +418,15 @@ class main_dialogue(QDialog):
 
     def create_burnin(self, track, fr, to, burnin_name):
         """create_burnin will create a burnin and add it to the track
-        track: track to add the burnin
-        fr: from where to start the burnin (frame)
-        to: from where to end the burnin (frame)
-        burnin_name: name of the burnin
+
+        Arguments:
+            track {Dict} -- Hiero Track
+
+            fr {int} -- Start of the burnin
+
+            to {int} -- End of the burnin
+
+            burnin_name {str} -- Burnin Name
         """
         settings = {
             'name': '{0}-[{1}]'.format(burnin_name, uuid.uuid4()),
@@ -355,8 +445,14 @@ class main_dialogue(QDialog):
         self.hiero_api.add_burnin_track_effect(track, fr, to, settings)
 
     def get_markers(self, sequence_revision):
-        """get_markers will format the sequence_revision to have a mapping of markers: start -> marker_name
-        sequences_revision: sequence revision entity
+        """get_markers will format the sequence_revision to have a
+        mapping of markers: start -> marker_name
+
+        Arguments:
+            sequence_revision {Dict} -- Sequence revision
+
+        Returns:
+            Dict -- Mapping start -> marker_name
         """
         markers_mapping = {}
         markers = sequence_revision.get('meta_data', {}).get('markers', [])
@@ -368,28 +464,50 @@ class main_dialogue(QDialog):
             self,
             panels,
             panel_in,
-            markers_mapping,
-            marker_tmp,
+            markers_map,
+            current_marker,
             marker_in,
             shots,
             p,
             i):
         """add_burnin will add a burnin in a VideoTrack
+
+        Arguments:
+            panels {List} -- List of Panels
+
+            panel_in {int} -- First frame of the panel (from whole timeline)
+
+            markers_map {Dict} -- Mapping of markers
+
+            current_marker {str} -- Current Marker
+
+            marker_in {int} -- First frame of the marker to add as burnin
+
+            shots {Dict} -- Video track to add the burnin
+
+            p {Dict} -- Panel
+
+            i {int} -- Posiion of the panel
+
+        Returns:
+            [type] -- [description]
+        """
+        """add_burnin will add a burnin in a VideoTrack
         panels: list of panels
         panel_in: first frame of the panel (from the whole timeline)
-        markers_mapping: mapping of markers
+        markers_map: mapping of markers
         marker_in: first frame of the marker to add as burnin
         shots: video track to add the burnin
         p: actual panel
         i: position of the panel
         """
-        if panel_in in markers_mapping and markers_mapping[panel_in] != marker_tmp:
+        if panel_in in markers_map and markers_map[panel_in] != current_marker:
             if marker_in is not None:
                 self.create_burnin(
                     shots,
                     marker_in,
                     panel_in - 1,
-                    markers_mapping[panel_in])
+                    markers_map[panel_in])
             marker_in = panel_in
         if len(panels) - 1 == i and marker_in is not None:
             self.create_burnin(
@@ -398,13 +516,19 @@ class main_dialogue(QDialog):
                 panel_in +
                 p.get('duration') -
                 1,
-                marker_tmp)
+                current_marker)
         return marker_in
 
     def add_comment(self, p, tags):
         """add_comment will add a tag comment to the list
-        p: actual panel
-        tags: list of tags
+
+        Arguments:
+            p {Dict} -- Panel
+
+            tags {List} -- List of all tags
+
+        Returns:
+            List -- List of all tags
         """
         comment_tag = self.get_comment_tag(p)
         if comment_tag is not None:
@@ -413,8 +537,14 @@ class main_dialogue(QDialog):
 
     def add_panel_info_tag(self, p, tags):
         """add_panel_info_tag will add a tag of the panel info
-        p: actual panel
-        tags: list of tags
+
+        Arguments:
+            p {Dict} -- Panel
+
+            tags {List} -- List of all tags
+
+        Returns:
+            List -- List of all tags
         """
         t = self.hiero_api.create_info_tag(json.dumps(p))
         tags.append(t)
@@ -422,14 +552,19 @@ class main_dialogue(QDialog):
 
     def add_marker(self, markers_mapping, panel_in, sequence):
         """add_marker will add a marker in the sequence
-        markers_mapping: mapping of markers
-        panel_in: first frame of the panel(from the whole sequence)
-        sequence: sequence to add to
+
+        Arguments:
+            markers_mapping {Dict} -- Mapping of markers
+
+            panel_in {int} -- First frame of the panel
+            (from the whole sequence)
+
+            sequence {Dict} -- Hiero Sequence
         """
         if panel_in in markers_mapping:
             tag = self.hiero_api.create_marker_tag(
-                    panel_in,
-                    markers_mapping[panel_in])
+                panel_in,
+                markers_mapping[panel_in])
             sequence.addTagToRange(tag, panel_in, panel_in + 1)
 
     def create_video_track(
@@ -439,18 +574,29 @@ class main_dialogue(QDialog):
             seq_rev_bin,
             seq_id,
             seq_rev_number):
-        """create_video_track will create 2 videos tracks, one for the sequence and one for shots
-        sequence: sequence
-        seq_bin: sequence bin
-        seq_rev: sequence revision bin
-        seq_id: sequence ID
-        seq_rev_number: sequence revision count
+        """create_video_track will create 2 videos tracks, one for the
+        sequence and one for shots
+
+        Arguments:
+            sequence {Dict} -- Hiero Sequence
+
+            seq_bin {Dict} -- Sequence Bin
+
+            seq_rev_bin {Dict} -- Sequence revision Bin
+
+            seq_id {int} -- Sequence ID
+
+            seq_rev_number {int} -- Sequence revision number
+
+        Returns:
+            Tuple[Dict, Dict] -- VideoTrack, ShotTrack
         """
+        _, _, seq_tracking_code = self.get_selected_sequence()
         track = self.hiero_api.create_video_track(
             'Flix_{0}_v{1}'.format(
-                self.selected_sequence_tracking_code,
+                seq_tracking_code,
                 seq_rev_number))
-        show_id = self.show_tracking_code[self.selected_show_tracking_code][0]
+        show_id, _, _ = self.get_selected_show()
         dialogues = self.flix_api.get_dialogues(
             show_id, seq_id, seq_rev_number)
         mapped_dialogue = self.get_dialogues_by_panel_id(dialogues)
@@ -460,7 +606,8 @@ class main_dialogue(QDialog):
             self.error('Could not retreive sequence revision')
             return
         markers_mapping = self.get_markers(sequence_revision)
-        shots = self.hiero_api.create_video_track('Shots') if len(markers_mapping) > 0 else None
+        shots = self.hiero_api.create_video_track(
+            'Shots') if len(markers_mapping) > 0 else None
         clips = self.hiero_api.get_clips(seq_bin)
         panels = self.flix_api.get_panels(show_id, seq_id, seq_rev_number)
         if panels is None:
@@ -470,12 +617,12 @@ class main_dialogue(QDialog):
         panel_in = 0
         marker_in = None
         prev_marker_name = None
-
+        _, _, seq_tracking_code = self.get_selected_sequence()
         for i, p in enumerate(panels):
             tags = []
             panel_id = p.get('panel_id')
             clip_name = '{0}_{1}_{2}_'.format(
-                self.selected_sequence_tracking_code, panel_id, p.get(
+                seq_tracking_code, panel_id, p.get(
                     'revision_counter'))
             clip = self.create_clip(seq_rev_bin, p, clip_name, clips)
             if clip is None:
@@ -510,35 +657,35 @@ class main_dialogue(QDialog):
         return track, shots
 
     def pull_latest_seq_rev(self):
-        # Update sequence mapping to have the last seq rev info
+        """pull_taltest_seq_rev will pull one latest sequence revision and send
+        it to hiero
+        """
         self.update_sequence_items()
-
-        seq_id = self.sequence_tracking_code[self.selected_sequence_tracking_code][0]
-        seq_rev_number = self.sequence_tracking_code[self.selected_sequence_tracking_code][1]
-
+        _, _, show_tc = self.get_selected_show()
+        seq_id, seq_rev_tc, seq_tracking_code = self.get_selected_sequence()
         my_project = self.hiero_api.get_project(
             'Flix_{0}'.format(
-                self.selected_show_tracking_code))
+                show_tc))
         seq, seq_bin_reused = self.hiero_api.get_project_bin(
             my_project, 'Flix_{0}'.format(
-                self.selected_sequence_tracking_code))
+                seq_tracking_code))
         if seq_bin_reused is False:
             clipsBin = my_project.clipsBin()
             clipsBin.addItem(seq)
 
         seq_rev_bin, seq_rev_bin_reused = self.hiero_api.get_seq_bin(
-            seq, 'v{0}'.format(seq_rev_number))
+            seq, 'v{0}'.format(seq_rev_tc))
         if seq_rev_bin_reused is False:
             seq.addItem(seq_rev_bin)
 
         sequence = self.hiero_api.create_sequence(
             'Flix_{0}_v{1}'.format(
-                self.selected_sequence_tracking_code,
-                seq_rev_number))
+                seq_tracking_code,
+                seq_rev_tc))
         seq_item = self.hiero_api.sequence_to_bin_item(sequence)
         seq_rev_bin.addItem(seq_item)
         track, shots = self.create_video_track(
-            sequence, seq, seq_rev_bin, seq_id, seq_rev_number)
+            sequence, seq, seq_rev_bin, seq_id, seq_rev_tc)
         if track is None:
             return
         sequence.addTrack(track)
@@ -546,14 +693,17 @@ class main_dialogue(QDialog):
             sequence.addTrack(shots)
 
     def pull_latest(self):
-        """pull_latest will retrieve the last sequence revision from Flix and will create / reuse bins, sequences, clips"""
-
+        """pull_latest will retrieve the last sequence revision from Flix and
+        will create / reuse bins, sequences, clips
+        Depending on the selection it will pull only one or all of them
+        """
         if self.selected_sequence_tracking_code == 'All Sequences':
             for count in range(self.sequence_list.count()):
                 if self.sequence_list.itemText(count) == 'All Sequences':
                     continue
-                self.selected_sequence_tracking_code = self.sequence_list.itemText(
+                select_seq_tracking_code = self.sequence_list.itemText(
                     count)
+                self.selected_sequence_tracking_code = select_seq_tracking_code
                 self.pull_latest_seq_rev()
             self.selected_sequence_tracking_code = 'All Sequences'
         else:
@@ -562,10 +712,18 @@ class main_dialogue(QDialog):
         self.info('Sequence revision imported successfully')
 
     def get_panels_from_sequence(self, sequence, show_id, sequence_id):
-        """get_panels_from_sequence will retrieve all the clips and format them as panels from a hiero sequence
-        sequence: Video track sequence
-        show_id: show ID
-        sequence_id: sequence ID
+        """get_panels_from_sequence will retrieve all the clips and format
+        them as panels from a hiero sequence
+
+        Arguments:
+            sequence {Dict} -- Video Track Sequence
+
+            show_id {int} -- Show ID
+
+            sequence_id {int} -- Sequence ID
+
+        Returns:
+            List -- List of panels
         """
         panels = []
         for track_item in sequence.items():
@@ -583,8 +741,16 @@ class main_dialogue(QDialog):
         return panels
 
     def update_panel_from_sequence(self, sequence, panels):
-        """update_panel_from_sequence will update panels depending on hiero sequence
-        sequence: Video track sequence
+        """update_panel_from_sequence will update panels depending
+        on hiero sequence
+
+        Arguments:
+            sequence {Dict} -- Video Track Sequence
+
+            panels {List} -- List of Panels
+
+        Returns:
+            List -- List of Panels
         """
         for i, track_item in enumerate(sequence.items()):
             panel = json.loads(panels[i])
@@ -592,9 +758,47 @@ class main_dialogue(QDialog):
             panels[i] = panel
         return panels
 
+    def get_selected_show(self):
+        """get_selected_show will return the selected show info
+
+        Returns:
+            Tuple[int, bool, str] -- Show ID, Episodic, Show tracking code
+        """
+        stc = self.selected_show_tracking_code
+        show_id = self.show_tracking_code[stc][0]
+        episodic = self.show_tracking_code[stc][1]
+        return show_id, episodic, stc
+
+    def get_selected_episode(self):
+        """get_selected_episode will return the selected episode info
+
+        Returns:
+            Tuple[int, str] -- Episode ID, Episode tracking code
+        """
+        etc = self.selected_episode_tracking_code
+        episode_id = self.episode_tracking_code[etc]
+        return episode_id, etc
+
+    def get_selected_sequence(self):
+        """get_selected_sequence will return the selected sequence info
+
+        Returns:
+            Tuple[int, int, str] -- Sequence ID, Seq rev ID, seq tracking code
+        """
+        stc = self.selected_sequence_tracking_code
+        seq_id = self.sequence_tracking_code[stc][0]
+        seq_rev = self.sequence_tracking_code[stc][1]
+        return seq_id, seq_rev, stc
+
     def format_panel_for_revision(self, panels):
-        """format_panel_for_revision will format the panels as revisioned panels
-        panels: list of panels
+        """format_panel_for_revision will format the panels as
+        revisioned panels
+
+        Arguments:
+            panels {List} -- List of panels
+
+        Returns:
+            List -- Formatted list of panels
         """
         revisioned_panels = []
         for p in panels:
@@ -607,8 +811,14 @@ class main_dialogue(QDialog):
         return revisioned_panels
 
     def get_markers_from_sequence(self, sequence):
-        """get_markers_from_sequence will retrieve all the markers from a sequence
-        sequence: Video track shots
+        """get_markers_from_sequence will retrieve all the
+        markers from a sequence
+
+        Arguments:
+            sequence {Dict} -- Video Track Shots
+
+        Returns:
+            List -- List of markers
         """
         markers = []
         for mrks in sequence.subTrackItems():
@@ -622,26 +832,18 @@ class main_dialogue(QDialog):
                 })
         return markers
 
-    def error(self, message):
-        """error will show a error message with a given message
-        message: message to show
-        """
-        err = QErrorMessage(self.parent())
-        err.setWindowTitle('Flix')
-        err.showMessage(message)
-        err.exec_()
-
-    def info(self, message):
-        """info will show a message with a given message
-        message: message to show"""
-        msgbox = QMessageBox(self.parent())
-        msgbox.setWindowTitle('Flix')
-        msgbox.setText(message)
-        msgbox.exec_()
-
     def duplicate_panel(self, show_id, sequence_id, p):
         """duplicate_panel wil duplicate a panel and reuse his asset
-        p: panel to duplicate
+
+        Arguments:
+            show_id {int} -- Show ID
+
+            sequence_id {int} -- Sequence ID
+
+            p {Dict} -- Panel to duplicate
+
+        Returns:
+            Dict -- New Duplicated Panel
         """
         new_panel = self.flix_api.new_panel(
             show_id, sequence_id, p['asset']['asset_id'], p['duration'])
@@ -651,10 +853,18 @@ class main_dialogue(QDialog):
         return new_panel
 
     def handle_duplicate_panels(self, panels, show_id, seq_id):
-        """handle_duplicate_panels will handle duplicate panels and create new ones
-        panels: list of panels to update
-        show_id: show ID
-        seq_id: sequence ID
+        """handle_duplicate_panels will handle duplicate panels
+        and create new ones
+
+        Arguments:
+            panels {List} -- List of Panels
+
+            show_id {int} -- Show ID
+
+            seq_id {int} -- Sequence ID
+
+        Returns:
+            List -- List of panels
         """
         uniq_p = {}
         for i, p in enumerate(panels):
@@ -666,9 +876,10 @@ class main_dialogue(QDialog):
         return panels
 
     def update_in_flix(self):
-        """update_in_flix will send a sequence to Flix"""
-        show_id = self.show_tracking_code[self.selected_show_tracking_code][0]
-        seq_id = self.sequence_tracking_code[self.selected_sequence_tracking_code][0]
+        """update_in_flix will send a sequence to Flix
+        """
+        show_id, _, _ = self.get_selected_show()
+        seq_id, _, _ = self.get_selected_sequence()
         revisioned_panels = []
         markers = []
 
