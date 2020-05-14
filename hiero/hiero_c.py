@@ -5,6 +5,8 @@ from hiero.ui import (activeSequence, windowManager)
 
 
 class hiero_c:
+    """hiero_c is an interface with Hiero to create tags, project, bins etc.
+    """
 
     def __init__(self):
         self.preset_comment_tag = self.get_project_tag('Comment')
@@ -14,6 +16,14 @@ class hiero_c:
         self.preset_ref_tag = self.get_project_tag('Reference')
 
     def get_project_tag(self, tag_name):
+        """get_project_tag will retreive a preset tag
+
+        Arguments:
+            tag_name {str} -- tag name
+
+        Returns:
+            Dict -- Hiero Tag
+        """
         tag = findProjectTags(
             project('Tag Presets'), tag_name)
         if len(tag) > 0:
@@ -23,7 +33,12 @@ class hiero_c:
     def get_project(self, project_name):
         """get_project will reuse existing project depending of the
         project name or will create it
-        project_name: project to find
+
+        Arguments:
+            project_name {str} -- Project to find / create
+
+        Returns:
+            Dict -- Hiero Project
         """
         my_project = project(project_name)
         if my_project is None:
@@ -41,12 +56,19 @@ class hiero_c:
             tags=[],
             last_track_item=None):
         """add_track_item will add a trackitem to a track, it will add a source and tags
-        track: track to add the new track item
-        track_item_name: name of the new track item
-        source_clip: clip to link to the track item
-        duration: duration of the clip
-        tags: list of tags to add to the new track_item
-        last_track_item: previous track item to link them all
+
+        Arguments:
+            track {Dict} -- Track to add the new track item
+            track_item_name {str} -- Name of the new track item
+            source_clip {Dict} -- Clip to link to the track item
+
+        Keyword Arguments:
+            duration {int} -- Duration of the clip (default: {12})
+            tags {list} -- list of tags to add (default: {[]})
+            last_track_item {[type]} -- previous track item (default: {None})
+
+        Returns:
+            Dict -- New Track Item
         """
         track_item = track.createTrackItem(track_item_name)
         track_item.setSource(source_clip)
@@ -64,8 +86,13 @@ class hiero_c:
 
     def get_project_bin(self, project_bin, bin_name):
         """get_project_bin will try to reuse a bin from a project depending on the bin_name or will create it
-        project_bin: is the project bin
-        bin_name: bin's name to search
+
+        Arguments:
+            project_bin {Dict} -- Project Bin
+            bin_name {str} -- Bin's name to find
+
+        Returns:
+            Dict -- Hiero Project Bin
         """
         b = project_bin.bins(bin_name)
         if len(b) > 0:
@@ -75,8 +102,13 @@ class hiero_c:
 
     def get_seq_bin(self, host_b, bin_name):
         """get_seq_bin will try to reuse a bin from a project depending on the bin_name or will create it
-            host_b: is the host bin
-            bin_name: bin's name to search
+
+        Arguments:
+            host_b {Dict} -- Host Bin
+            bin_name {[type]} -- Bin's name to find
+
+        Returns:
+            Dict -- Hiero Bin
         """
         b = host_b.bins()
         for seq_bin in b:
@@ -86,7 +118,12 @@ class hiero_c:
 
     def get_clips(self, seq_bin):
         """get_clips will retrieve all the clips from the bin
-        seq_bin: bin of the sequence
+
+        Arguments:
+            seq_bin {Dict} -- bin of the sequence
+
+        Returns:
+            [type] -- [description]
         """
         clips = {}
         for b in seq_bin.bins():
@@ -95,6 +132,14 @@ class hiero_c:
         return clips
 
     def create_comment_tag(self, comment):
+        """create_comment_tag will create a comment tag
+
+        Arguments:
+            comment {str} -- Comment
+
+        Returns:
+            Dict -- Hiero Tag
+        """
         t = self.preset_comment_tag.copy()
         cleanr = re.compile(
             '<.*?>|&([a-z0-9]+|#[0-9]{1,6}|#x[0-9a-f]{1,6});')
@@ -103,6 +148,15 @@ class hiero_c:
         return t
 
     def create_marker_tag(self, in_time, marker_name):
+        """create_comment_tag will create a marker tag
+
+        Arguments:
+            in_time {int} -- Start of the marker tag
+            marker_name {str} -- Marker Name
+
+        Returns:
+            Dict -- Hiero Tag
+        """
         t = self.preset_ready_to_start_tag.copy()
         t.setNote(marker_name)
         t.metadata().setValue('tag.start', '{0}'.format(in_time))
@@ -112,12 +166,31 @@ class hiero_c:
         return t
 
     def create_info_tag(self, note, visible=False):
+        """create_info_tag will create an info tag
+
+        Arguments:
+            note {str} -- Content
+
+        Keyword Arguments:
+            visible {bool} -- Set tag bvisible or not (default: {False})
+
+        Returns:
+            Dict -- Hiero Tags
+        """
         t = self.preset_fr_tag_tag.copy()
         t.setNote(note)
         t.setVisible(False)
         return t
 
     def add_dialogue_track_effect(self, track, track_item, settings):
+        """add_dialogue_track_effect will create a dialogue track effect
+        and set settings to his node
+
+        Arguments:
+            track {Dict} -- Track to add effect on
+            track_item {Dict} -- Track Item
+            settings {Dict} -- Settings to apply to the node
+        """
         node = track.createEffect(
             effectType='Text2',
             trackItem=track_item,
@@ -126,6 +199,15 @@ class hiero_c:
             node[name].setValue(value)
 
     def add_burnin_track_effect(self, track, fr, to, settings):
+        """add_burnin_track_effect will create a burnin track effect
+        and set settings to his node
+
+        Arguments:
+            track {Dict} -- Track to add effect on
+            fr {int} -- Start of the burnin
+            to {int} -- End of the burnin
+            settings {Dict} -- Settings to apply to the node
+        """
         node = track.createEffect(
             effectType='BurnIn',
             subTrackIndex=0,
@@ -135,23 +217,67 @@ class hiero_c:
             node[name].setValue(value)
 
     def create_video_track(self, name):
+        """create_video_track will create a video track
+
+        Arguments:
+            name {str} -- Video track name
+
+        Returns:
+            Dict -- Hiero Video Track
+        """
         return VideoTrack(name)
 
     def create_sequence(self, name):
+        """create_sequence will create a sequence
+
+        Arguments:
+            name {str} -- Sequence name
+
+        Returns:
+            Dict -- Hiero Sequence
+        """
         return Sequence(name)
 
     def sequence_to_bin_item(self, seq):
+        """sequence_to_bin_item will make an Sequence as bin item
+
+        Arguments:
+            seq {Dict} -- Sequence
+
+        Returns:
+            Dict -- Hiero Bin Item
+        """
         return BinItem(seq)
 
-    def get_item_tags_note(self, items, name):
+    def get_item_tags_note(self, item, name):
+        """get_item_tags_note will get items tag's notes depending
+        on the the tag name
+
+        Arguments:
+            items {Dict} -- Item
+            name {str} -- Tag's name to get
+
+        Returns:
+            List -- List of tags
+        """
         tags_notes = []
-        for tag in items.tags():
+        for tag in item.tags():
             if tag.name() == name:
                 tags_notes.append(tag.note())
         return tags_notes
 
     def get_active_sequence(self):
+        """get_active_sequence will return the active Sequence
+
+        Returns:
+            Dict -- Hiero Active Sequence
+        """
         return activeSequence()
 
-    def new_window_manager(self):
+    def get_window_manager(self):
+        """get_window_manager will return the window manager
+
+        Returns:
+            Dict -- Hiero Window Manager
+        """
         return windowManager()

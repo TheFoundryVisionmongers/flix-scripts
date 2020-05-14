@@ -706,5 +706,5 @@ class main_dialogue(QDialog):
 
 main_view = main_dialogue()
 wm = hiero_api.hiero_c()
-wm = wm.new_window_manager()
+wm = wm.get_window_manager()
 wm.addWindow(main_view)

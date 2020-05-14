@@ -8,6 +8,9 @@ from datetime import datetime, timedelta
 
 
 class flix:
+    """Flix will handle the login and expose functions to get shows,
+    get sequences etc.
+    """
 
     def __init__(self):
         self.reset()
