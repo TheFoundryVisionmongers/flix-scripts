@@ -357,7 +357,7 @@ class flix:
                               sequence_id: int,
                               revisioned_panels: List,
                               markers: List,
-                              comment: str = 'From Hiero') -> Dict:
+                              comment: str = 'From Shotgun') -> Dict:
         """new_sequence_revision will create a new sequence revision
 
         Arguments:
@@ -370,7 +370,7 @@ class flix:
             markers {List} -- List of Markers
 
         Keyword Arguments:
-            comment {str} -- Comment (default: {'From Hiero'})
+            comment {str} -- Comment (default: {'From Shotgun'})
 
         Returns:
             Dict -- Sequence Revision

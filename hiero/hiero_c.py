@@ -3,6 +3,7 @@ from hiero.core import (Bin, BinItem, Format, Sequence, Tag, VideoTrack,
                         newProject, project, findProjectTags)
 from hiero.ui import (activeSequence, windowManager)
 
+
 class hiero_c:
 
     def __init__(self):
