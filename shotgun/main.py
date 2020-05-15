@@ -49,7 +49,7 @@ class main_dialogue(QDialog):
         self.submit = QPushButton('Log In')
         self.submit.clicked.connect(self.authenticate)
 
-        # Add Login view to layout        
+        # Add Login view to layout
         login_layout = QVBoxLayout()
         login_layout.addWidget(hostname_label)
         login_layout.addWidget(self.hostname)
@@ -151,8 +151,8 @@ class main_dialogue(QDialog):
             return
 
         credentials = self.flix_api.authenticate(self.hostname.text(),
-                                                self.login.text(),
-                                                self.password.text())
+                                                 self.login.text(),
+                                                 self.password.text())
         if credentials is None:
             self.error('Could not authenticate user')
             self.login.clear()
@@ -820,8 +820,8 @@ class main_dialogue(QDialog):
         if ok is False:
             return '', False
         self.shotgun = shotgun_api.shotgun(self.sg_hostname.text(),
-                                          self.sg_login.text(),
-                                          sg_password)
+                                           self.sg_login.text(),
+                                           sg_password)
         try:
             _, _, stc = self.get_selected_show()
             self.shotgun.get_project(stc)
@@ -838,9 +838,9 @@ class main_dialogue(QDialog):
             self.info('You should log in first')
             return
         self.progress = QProgressDialog('Operation in progress.',
-                                       'Stop',
-                                       0,
-                                       7)
+                                        'Stop',
+                                        0,
+                                        7)
         self.progress.setMinimumWidth(400)
         self.progress.setMinimumHeight(100)
         self.progress.show()
@@ -858,8 +858,8 @@ class main_dialogue(QDialog):
         show_id, episodic, _ = self.get_selected_show()
         seq_id, seq_rev_number, _ = self.get_selected_sequence()
         seq_rev = self.flix_api.get_sequence_rev(show_id,
-                                                seq_id,
-                                                seq_rev_number)
+                                                 seq_id,
+                                                 seq_rev_number)
         episode_id = None
         if episodic:
             episode_id, _ = self.get_selected_episode()
@@ -888,10 +888,10 @@ class main_dialogue(QDialog):
         if self.update_progress('Get Assets info') is False:
             return
         mo_per_shots, ok = self.mo_per_shots(panels_per_markers,
-                                            show_id,
-                                            seq_id,
-                                            seq_rev_number,
-                                            episode_id)
+                                             show_id,
+                                             seq_id,
+                                             seq_rev_number,
+                                             episode_id)
         if mo_per_shots is None:
             self.progress.hide()
             self.error('Could not retrieve media objects per shots')
