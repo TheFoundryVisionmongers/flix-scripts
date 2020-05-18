@@ -6,12 +6,12 @@ This is an example of the Flix Production Handoff.
 
 You need python3 and pip3
 
-You can run this command to install the needed dependencies:
+### Getting Started
+
+Run this command to install the needed dependencies:
 ```
 pip3 install -r requirements.txt
 ```
-
-### Getting Started
 
 You need an instance of Flix server running
 

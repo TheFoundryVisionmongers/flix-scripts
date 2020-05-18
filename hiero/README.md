@@ -10,6 +10,8 @@ You need to have Hiero/HieroPlayer installed
 
 You need an instance of Flix server running
 
+Open Hiero or Hiero Player
+
 Install / execute the script in Hiero/HieroPlayer and Open the new action `Flix` from `Windows` tab
 
 You can now enter your Flix credentials and press login
