@@ -1,4 +1,5 @@
 import re
+import os
 import sys
 from collections import OrderedDict
 from typing import Dict, List, Tuple
@@ -148,6 +149,79 @@ class flix_ui(QWidget):
             raise RuntimeError(self.__err_episode_not_found)
         episode_id = self.episode_tracking_code[etc]
         return episode_id, etc
+
+    def get_default_image_name(
+            self,
+            seq_rev_number: int,
+            panel_pos: int,
+            panel_id: int,
+            panel_revision: int) -> str:
+        """get_default_image_name will format the image name
+
+        Arguments:
+            seq_rev_number {int} -- Sequence revision number
+            panel_pos {int} -- Panel position
+            panel_id {int} -- Panel ID
+            panel_revision {int} -- Panel revision
+
+        Returns:
+            str -- Formatted name
+        """
+        _, _, show_tracking_code = self.get_selected_show()
+        _, _, seq_tracking_code = self.get_selected_sequence()
+        return '{0}_{1}_v{2}_{3}_{4}_v{5}'.format(
+            show_tracking_code,
+            seq_tracking_code,
+            seq_rev_number,
+            panel_pos,
+            panel_id,
+            panel_revision)
+
+    def local_download(self, base_path, mo, seq_rev_nbr):
+        ext = os.path.splitext(mo.get('name'))
+        filename = self.get_default_image_name(
+            seq_rev_nbr, mo.get('pos'),
+            mo.get('id'),
+            mo.get('revision_number'))
+        file_path = os.path.join(
+            base_path, '{0}{1}'.format(filename, ext[1]))
+        if sys.platform == 'win32' or sys.platform == 'cygwin':
+            file_path = file_path.replace('\\', '\\\\')
+        self.get_flix_api().download_media_object(
+            file_path, mo.get('mo'))
+
+    def get_media_object_per_shots(self):
+        show_id, episodic, _ = self.get_selected_show()
+        seq_id, seq_rev_number, _ = self.get_selected_sequence()
+        flix_api = self.get_flix_api()
+        seq_rev = flix_api.get_sequence_rev(show_id, seq_id, seq_rev_number)
+        episode_id = None
+        if episodic:
+            episode_id, _ = self.get_selected_episode()
+        if seq_rev is None:
+            self.__error('Could not retrieve sequence revision')
+            return None
+        markers = self.get_flix_api().get_markers(seq_rev)
+        if len(markers) < 1:
+            self.__info('You need at least one shot')
+            return None
+        panels = self.get_flix_api().get_panels(
+            show_id, seq_id, seq_rev_number)
+        if panels is None:
+            self.__error('Could not retrieve panels')
+            return None
+        panels_per_markers = self.get_flix_api().get_markers_per_panels(markers, panels)
+        mo_per_shots, ok = self.get_flix_api().mo_per_shots(panels_per_markers,
+                                             show_id,
+                                             seq_id,
+                                             seq_rev_number,
+                                             episode_id)
+        if mo_per_shots is None:
+            self.__error('Could not retrieve media objects per shots')
+            return None
+        if ok is False:
+            return None
+        return mo_per_shots
 
     def get_selected_sequence(self) -> Tuple[int, int, str]:
         """get_selected_sequence will return the selected sequence info
