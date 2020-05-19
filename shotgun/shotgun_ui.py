@@ -20,7 +20,7 @@ import shotgun as shotgun_api
 class shotgun_ui(QWidget):
 
     e_local_export = Signal()
-    e_shotgun_export = Signal()
+    e_shotgun_export = Signal(str)
     export_path = None
 
     def __init__(self, *args, **kwargs):
@@ -68,7 +68,7 @@ class shotgun_ui(QWidget):
         )
 
         pull = QPushButton('Export Latest')
-        pull.clicked.connect(self.pull_latest)
+        pull.clicked.connect(self.__pull_latest)
 
         self.__add_widget_to_layout(v_main_box,
                                     self.handoff_type_label,
@@ -84,6 +84,112 @@ class shotgun_ui(QWidget):
 
         self.__update_ui_handoff_type('Local Export')
         self.setLayout(v_main_box)
+
+    def get_shotgun_api(self):
+        return self.shotgun
+
+    def create_folders(self, show_tc: str, seq_tc: str, seq_rev_nbr: int, episode_tc: str = None) -> str:
+        """create_folders will create the structure of folders from
+        shows to sequence revision
+
+        Arguments:
+            base {str} -- base of the folder creation
+
+        Returns:
+            str -- Sequence revision path
+        """
+        show_path = os.path.join(self.export_path.text(), show_tc)
+        self.__create_folder(show_path)
+        sequence_path = os.path.join(show_path, seq_tc)
+        if episode_tc is not None:
+            episode_path = os.path.join(show_path, episode_tc)
+            self.__create_folder(episode_path)
+            sequence_path = os.path.join(episode_path, seq_tc)
+        self.__create_folder(sequence_path)
+        sequence_revision_path = os.path.join(
+            sequence_path, 'v{0}'.format(seq_rev_nbr))
+        self.__create_folder(sequence_revision_path)
+        return sequence_revision_path
+
+    def get_shot_download_paths(self, export_path, shot):
+        show_folder_path = os.path.join(export_path, shot)
+        self.__create_folder(show_folder_path)
+        artwork_folder_path = os.path.join(show_folder_path, 'artwork')
+        self.__create_folder(artwork_folder_path)
+        thumb_folder_path = os.path.join(show_folder_path, 'thumbnail')
+        self.__create_folder(thumb_folder_path)
+        return show_folder_path, artwork_folder_path, thumb_folder_path
+
+    def export_to_version(self, shots: List, sg_password: str, show_tc, seq_rev_nbr, seq_tc) -> bool:
+        sg_show = self.shotgun.get_project(show_tc)
+        if sg_show is None:
+            sg_show = self.shotgun.create_project(show_tc)
+        sg_seq = self.shotgun.get_sequence(sg_show, seq_tc)
+        if sg_seq is None:
+            sg_seq = self.shotgun.create_seq(sg_show, seq_tc)
+
+        shot_to_file = {}
+        for shot_name in shots:
+            sg_shot = self.shotgun.get_shot(sg_show, sg_seq, shot_name)
+            if sg_shot is None:
+                sg_shot = self.shotgun.create_shot(sg_show, sg_seq, shot_name)
+            version = self.shotgun.get_version(sg_show, sg_shot)
+            if version is None:
+                new_version = 1
+            else:
+                ver = re.search('(.*)v([0-9]+)', version['code'])
+                new_version = int(ver.group(2)) + 1
+            version = self.shotgun.create_version(
+                sg_show, sg_shot, new_version)
+            mov_name = '{0}_v{1}_{2}.mov'.format(
+                seq_tc, seq_rev_nbr, shot_name)
+            shot_to_file[shot_name] = { 'mov_name': mov_name, 'version': version }
+        return shot_to_file
+
+    def init_local_export(self) -> bool:
+        """init_local_export will initialise the export
+
+        Returns:
+            bool -- If the export path is valid or not
+        """
+        if len(self.export_path.text()) <= 0:
+            self.__info('You need to select an export path')
+            return False
+        if os.path.exists(self.export_path.text()) is False:
+            self.__info('Invalid export path')
+            return False
+        return True
+
+    def init_shotgun_export(self) -> bool:
+        """init_shotgun_export will init the shotgun export
+
+        Returns:
+            bool -- Can login to shotgun
+        """
+        if self.sg_login.text() == '' or self.sg_hostname.text() == '':
+            self.__info('You need to enter your shotgun info')
+            return '', False
+        sg_password, ok = QInputDialog().getText(self,
+                                                 'Shotgun password',
+                                                 'Shotgun password:',
+                                                 QLineEdit.Password)
+        if ok is False:
+            return '', False
+        self.shotgun = shotgun_api.shotgun(self.sg_hostname.text(),
+                                           self.sg_login.text(),
+                                           sg_password)
+        return sg_password, True
+
+    def __pull_latest(self):
+        """__pull_latest will export the latest sequence revision
+        """
+        if self.selected_handoff_type == 'Local Export':
+            if self.init_local_export():
+                self.e_local_export.emit()
+        else:
+            sg_password, ok = self.init_shotgun_export()
+            if ok:
+                self.e_shotgun_export.emit(sg_password)
 
     def __create_line_label(self,
                             name: str,
@@ -197,193 +303,6 @@ class shotgun_ui(QWidget):
         """
         if not os.path.exists(path):
             os.makedirs(path)
-
-    def create_folders(self, show_tc: str, seq_tc: str, seq_rev_nbr: int, episode_tc: str = None) -> str:
-        """create_folders will create the structure of folders from
-        shows to sequence revision
-
-        Arguments:
-            base {str} -- base of the folder creation
-
-        Returns:
-            str -- Sequence revision path
-        """
-        show_path = os.path.join(self.export_path.text(), show_tc)
-        self.__create_folder(show_path)
-        sequence_path = os.path.join(show_path, seq_tc)
-        if episode_tc is not None:
-            episode_path = os.path.join(show_path, episode_tc)
-            self.__create_folder(episode_path)
-            sequence_path = os.path.join(episode_path, seq_tc)
-        self.__create_folder(sequence_path)
-        sequence_revision_path = os.path.join(
-            sequence_path, 'v{0}'.format(seq_rev_nbr))
-        self.__create_folder(sequence_revision_path)
-        return sequence_revision_path
-
-    def get_shot_download_paths(self, export_path, shot):
-        show_folder_path = os.path.join(export_path, shot)
-        self.__create_folder(show_folder_path)
-        artwork_folder_path = os.path.join(show_folder_path, 'artwork')
-        self.__create_folder(artwork_folder_path)
-        thumb_folder_path = os.path.join(show_folder_path, 'thumbnail')
-        self.__create_folder(thumb_folder_path)
-        return show_folder_path, artwork_folder_path, thumb_folder_path
-
-    def push_to_sg(self, mo_per_shots: Dict, sg_password: str) -> bool:
-        """push_to_sg will push a sequence revision to Shotgun
-        Will return False if an error occurred or if the
-        user stop from the progress
-
-        Arguments:
-            mo_per_shots {Dict} -- Media objects per shots
-            sg_password {str} -- Shotgun password
-
-        Returns:
-            bool -- State of the push to shotgun
-        """
-        _, _, show_name = self.wg_flix_ui.get_selected_show()
-        _, seq_rev_number, seq_name = self.wg_flix_ui.get_selected_sequence()
-        sg_show = self.shotgun.get_project(show_name)
-        if sg_show is None:
-            sg_show = self.shotgun.create_project(show_name)
-        sg_seq = self.shotgun.get_sequence(sg_show, seq_name)
-        if sg_seq is None:
-            sg_seq = self.shotgun.create_seq(sg_show, seq_name)
-        temp_folder = tempfile.gettempdir()
-        for shot_name in mo_per_shots:
-            if self.update_progress(
-                'Push shot {0} to Shotgun'.format(shot_name),
-                    True) is False:
-                return False
-            sg_shot = self.shotgun.get_shot(sg_show, sg_seq, shot_name)
-            if sg_shot is None:
-                sg_shot = self.shotgun.create_shot(sg_show, sg_seq, shot_name)
-            version = self.shotgun.get_version(sg_show, sg_shot)
-            if version is None:
-                new_version = 1
-            else:
-                ver = re.search('(.*)v([0-9]+)', version['code'])
-                new_version = int(ver.group(2)) + 1
-            version = self.shotgun.create_version(
-                sg_show, sg_shot, new_version)
-            mov_name = '{0}_v{1}_{2}.mov'.format(
-                seq_name, seq_rev_number, shot_name)
-            temp_quicktime_path = os.path.join(temp_folder, mov_name)
-            if sys.platform == 'win32' or sys.platform == 'cygwin':
-                temp_quicktime_path = temp_quicktime_path.replace('\\', '\\\\')
-            if self.wg_flix_ui.get_flix_api().download_media_object(
-                    temp_quicktime_path,
-                    mo_per_shots[shot_name].get('mov')) is None:
-                self.__error(
-                    'could not download quicktime for shot {0}'.format(
-                        shot_name))
-                continue
-            title_progress = 'Upload movie for shot {0} to Shotgun'.format(
-                shot_name)
-            if self.update_progress(title_progress, True) is False:
-                return False
-            self.shotgun.upload_movie(version, temp_quicktime_path)
-        return True
-
-    def update_progress(self,
-                        message: str,
-                        keep_value: bool = False,
-                        start: bool = False) -> bool:
-        """update_progress will update the progress message
-        and will return False if the progress is 'canceled' by the user
-
-        Arguments:
-            message {str} -- Message to show in the progress
-
-        Keyword Arguments:
-            keep_value {bool} -- Keep previous value (default: {False})
-            start {bool} -- Fist start (default: {False})
-
-        Returns:
-            bool -- Progress not stopped
-        """
-        if start:
-            self.progress_start = 0
-        next_value = self.progress_start
-        if keep_value is False:
-            next_value = next_value + 1
-        self.progress_start = next_value
-        self.progress.setValue(next_value)
-        self.progress.setLabelText(message)
-        self.progress.repaint()
-        QCoreApplication.processEvents()
-        if self.progress.wasCanceled():
-            return False
-        return True
-
-    def init_local_export(self) -> bool:
-        """init_local_export will initialise the export
-
-        Returns:
-            bool -- If the export path is valid or not
-        """
-        if len(self.export_path.text()) <= 0:
-            self.__info('You need to select an export path')
-            return False
-        if os.path.exists(self.export_path.text()) is False:
-            self.__info('Invalid export path')
-            return False
-        return True
-
-    def init_shotgun_export(self) -> bool:
-        """init_shotgun_export will init the shotgun export
-
-        Returns:
-            bool -- Can login to shotgun
-        """
-        if self.sg_login.text() == '' or self.sg_hostname.text() == '':
-            self.__info('You need to enter your shotgun info')
-            return '', False
-        sg_password, ok = QInputDialog().getText(self,
-                                                 'Shotgun password',
-                                                 'Shotgun password:',
-                                                 QLineEdit.Password)
-        if ok is False:
-            return '', False
-        self.shotgun = shotgun_api.shotgun(self.sg_hostname.text(),
-                                           self.sg_login.text(),
-                                           sg_password)
-        try:
-            _, _, stc = self.wg_flix_ui.get_selected_show()
-            self.shotgun.get_project(stc)
-        except BaseException:
-            self.progress.hide()
-            self.__error('could not login to shotgun')
-            return '', False
-        return sg_password, True
-
-    def pull_latest(self):
-        """pull_latest will export the latest sequence revision
-        """
-        # Emit event only
-
-        if self.selected_handoff_type == 'Local Export':
-            if self.init_local_export():
-                self.e_local_export.emit()
-        else:
-            sg_password, ok = self.init_shotgun_export()
-            if ok:
-                self.e_shotgun_export.emit()
-
-        # if self.selected_handoff_type == 'Local Export':
-        #     seq_rev_path = self.__create_folders(self.export_path.text())
-        #     if self.download_files(seq_rev_path, mo_per_shots) is False:
-        #         return
-        # else:
-        #     if self.update_progress('Push to Shotgun') is False:
-        #         return
-        #     self.push_to_sg(mo_per_shots, sg_password)
-        #     if self.update_progress('Pushed to Shotgun') is False:
-        #         return
-        # if self.update_progress('Finished') is False:
-        #     return
-        # self.__info('Sequence revision exported successfully')
 
 
 class main_dialogue(QDialog):
