@@ -32,6 +32,7 @@ import json
 import time
 import requests
 from datetime import datetime, timedelta
+from collections import OrderedDict
 from typing import Dict, List, Tuple
 
 
@@ -383,7 +384,7 @@ class flix:
                               sequence_id: int,
                               revisioned_panels: List,
                               markers: List,
-                              comment: str = &#39;From Hiero&#39;) -&gt; Dict:
+                              comment: str = &#39;From Shotgun&#39;) -&gt; Dict:
         &#34;&#34;&#34;new_sequence_revision will create a new sequence revision
 
         Arguments:
@@ -396,7 +397,7 @@ class flix:
             markers {List} -- List of Markers
 
         Keyword Arguments:
-            comment {str} -- Comment (default: {&#39;From Hiero&#39;})
+            comment {str} -- Comment (default: {&#39;From Shotgun&#39;})
 
         Returns:
             Dict -- Sequence Revision
@@ -474,6 +475,139 @@ class flix:
         self.login = None
         self.password = None
         self.key = None
+
+    def mo_per_shots(self,
+                     panels_per_markers: Dict,
+                     show_id: int,
+                     seq_id: int,
+                     seq_rev_number: int,
+                     episode_id: int = None) -&gt; Dict:
+        &#34;&#34;&#34;mo_per_shots will make a mapping of all media objects per shots
+
+        Arguments:
+            panels_per_markers {Dict} -- Panels per markers
+            show_id {int} -- Show ID
+            seq_id {int} -- Sequence ID
+            seq_rev_number {int} -- Sequence Revision ID
+
+        Keyword Arguments:
+            episode_id {int} -- Episode ID (default: {None})
+
+        Returns:
+            Dict -- Media objects per shots
+        &#34;&#34;&#34;
+        mo_per_shots = {}
+        for shot_name in panels_per_markers:
+            mo_per_shots[shot_name] = {&#39;artwork&#39;: [], &#39;thumbnails&#39;: []}
+            panels = panels_per_markers[shot_name]
+            for p in panels:
+                asset = self.get_asset(
+                    p.get(&#39;asset&#39;).get(&#39;asset_id&#39;))
+                if asset is None:
+                    return None, False
+                artwork = asset.get(&#39;media_objects&#39;, {}).get(&#39;artwork&#39;)[0]
+                mo_per_shots[shot_name][&#39;artwork&#39;].append({
+                    &#39;name&#39;: artwork.get(&#39;name&#39;),
+                    &#39;id&#39;: p.get(&#39;id&#39;),
+                    &#39;revision_number&#39;: p.get(&#39;revision_number&#39;),
+                    &#39;pos&#39;: p.get(&#39;pos&#39;),
+                    &#39;mo&#39;: artwork.get(&#39;id&#39;)
+                })
+                mo_per_shots[shot_name][&#39;thumbnails&#39;].append(
+                    {&#39;name&#39;: asset.get(&#39;media_objects&#39;, {}).get(&#39;thumbnail&#39;)
+                     [0].get(&#39;name&#39;),
+                     &#39;id&#39;: p.get(&#39;id&#39;),
+                     &#39;revision_number&#39;: p.get(&#39;revision_number&#39;),
+                     &#39;pos&#39;: p.get(&#39;pos&#39;),
+                     &#39;mo&#39;: asset.get(&#39;media_objects&#39;, {}).get(&#39;thumbnail&#39;)
+                     [0].get(&#39;id&#39;)})
+            chain_id = self.start_quicktime_export(
+                show_id, seq_id, seq_rev_number, panels, episode_id, False)
+            while True:
+                res = self.get_chain(chain_id)
+                if res is None or res.get(&#39;status&#39;) == &#39;errored&#39; or res.get(
+                        &#39;status&#39;) == &#39;timed out&#39;:
+                    return None, False
+                if res.get(&#39;status&#39;) == &#39;in progress&#39;:
+                    time.sleep(1)
+                    continue
+                if res.get(&#39;status&#39;) == &#39;completed&#39;:
+                    asset = self.get_asset(
+                        res.get(&#39;results&#39;, {}).get(&#39;assetID&#39;))
+                    if asset is None:
+                        return None, False
+                    mo_per_shots[shot_name][&#39;mov&#39;] = asset.get(
+                        &#39;media_objects&#39;, {}).get(&#39;artwork&#39;, [])[0].get(&#39;id&#39;)
+                    break
+        return mo_per_shots, True
+
+    def get_markers(self, sequence_revision: object) -&gt; Dict:
+        &#34;&#34;&#34;get_markers will format the sequence_revision to have a
+        mapping of markers: start -&gt; marker_name
+
+        Arguments:
+            sequence_revision {object} -- Sequence revision
+
+        Returns:
+            Dict -- Markers by start time
+        &#34;&#34;&#34;
+        markers_mapping = {}
+        markers = sequence_revision.get(&#39;meta_data&#39;, {}).get(&#39;markers&#39;, [])
+        for m in markers:
+            markers_mapping[m.get(&#39;start&#39;)] = m.get(&#39;name&#39;)
+        return OrderedDict(sorted(markers_mapping.items()))
+
+    def format_panel_for_revision(self, panel: object, pos: int) -&gt; object:
+        &#34;&#34;&#34;format_panel_for_revision will format the panel as
+        revisionned panel
+
+        Arguments:
+            panel {object} -- Panel from Flix
+            pos {int} -- Position in the Flix timeline
+
+        Returns:
+            object -- Formatted panel
+        &#34;&#34;&#34;
+        return {
+            &#39;dialogue&#39;: panel.get(&#39;dialogue&#39;),
+            &#39;duration&#39;: panel.get(&#39;duration&#39;),
+            &#39;id&#39;: panel.get(&#39;panel_id&#39;),
+            &#39;revision_number&#39;: panel.get(&#39;revision_number&#39;),
+            &#39;asset&#39;: panel.get(&#39;asset&#39;),
+            &#39;pos&#39;: pos
+        }
+
+    def get_markers_per_panels(self, markers: List, panels: List) -&gt; Dict:
+        &#34;&#34;&#34;get_markers_per_panels will return a mapping of markers per panels
+
+        Arguments:
+            markers {List} -- List of markers
+            panels {List} -- List of panels
+
+        Returns:
+            Dict -- Panels per markers
+        &#34;&#34;&#34;
+        panels_per_markers = {}
+        panel_in = 0
+        markers_keys = list(markers.keys())
+        marker_i = 0
+        for i, p in enumerate(panels):
+            if markers_keys[marker_i] == panel_in:
+                panels_per_markers[markers[markers_keys[marker_i]]] = []
+                panels_per_markers[markers[markers_keys[marker_i]]].append(
+                    self.format_panel_for_revision(p, i))
+                if len(markers_keys) &gt; marker_i + 1:
+                    marker_i = marker_i + 1
+            elif markers_keys[marker_i] &gt; panel_in:
+                panels_per_markers[markers[markers_keys[marker_i - 1]]].append(
+                    self.format_panel_for_revision(p, i))
+            elif len(markers_keys) - 1 == marker_i:
+                if markers[markers_keys[marker_i]] not in panels_per_markers:
+                    panels_per_markers[markers[markers_keys[marker_i]]] = []
+                panels_per_markers[markers[markers_keys[marker_i]]].append(
+                    self.format_panel_for_revision(p, i))
+            panel_in = panel_in + p.get(&#39;duration&#39;)
+        return panels_per_markers
 
     def __get_token(self) -&gt; Tuple[str, str]:
         &#34;&#34;&#34;__get_token will request a token and will reset it
@@ -955,7 +1089,7 @@ create shows etc.</p></div>
                               sequence_id: int,
                               revisioned_panels: List,
                               markers: List,
-                              comment: str = &#39;From Hiero&#39;) -&gt; Dict:
+                              comment: str = &#39;From Shotgun&#39;) -&gt; Dict:
         &#34;&#34;&#34;new_sequence_revision will create a new sequence revision
 
         Arguments:
@@ -968,7 +1102,7 @@ create shows etc.</p></div>
             markers {List} -- List of Markers
 
         Keyword Arguments:
-            comment {str} -- Comment (default: {&#39;From Hiero&#39;})
+            comment {str} -- Comment (default: {&#39;From Shotgun&#39;})
 
         Returns:
             Dict -- Sequence Revision
@@ -1046,6 +1180,139 @@ create shows etc.</p></div>
         self.login = None
         self.password = None
         self.key = None
+
+    def mo_per_shots(self,
+                     panels_per_markers: Dict,
+                     show_id: int,
+                     seq_id: int,
+                     seq_rev_number: int,
+                     episode_id: int = None) -&gt; Dict:
+        &#34;&#34;&#34;mo_per_shots will make a mapping of all media objects per shots
+
+        Arguments:
+            panels_per_markers {Dict} -- Panels per markers
+            show_id {int} -- Show ID
+            seq_id {int} -- Sequence ID
+            seq_rev_number {int} -- Sequence Revision ID
+
+        Keyword Arguments:
+            episode_id {int} -- Episode ID (default: {None})
+
+        Returns:
+            Dict -- Media objects per shots
+        &#34;&#34;&#34;
+        mo_per_shots = {}
+        for shot_name in panels_per_markers:
+            mo_per_shots[shot_name] = {&#39;artwork&#39;: [], &#39;thumbnails&#39;: []}
+            panels = panels_per_markers[shot_name]
+            for p in panels:
+                asset = self.get_asset(
+                    p.get(&#39;asset&#39;).get(&#39;asset_id&#39;))
+                if asset is None:
+                    return None, False
+                artwork = asset.get(&#39;media_objects&#39;, {}).get(&#39;artwork&#39;)[0]
+                mo_per_shots[shot_name][&#39;artwork&#39;].append({
+                    &#39;name&#39;: artwork.get(&#39;name&#39;),
+                    &#39;id&#39;: p.get(&#39;id&#39;),
+                    &#39;revision_number&#39;: p.get(&#39;revision_number&#39;),
+                    &#39;pos&#39;: p.get(&#39;pos&#39;),
+                    &#39;mo&#39;: artwork.get(&#39;id&#39;)
+                })
+                mo_per_shots[shot_name][&#39;thumbnails&#39;].append(
+                    {&#39;name&#39;: asset.get(&#39;media_objects&#39;, {}).get(&#39;thumbnail&#39;)
+                     [0].get(&#39;name&#39;),
+                     &#39;id&#39;: p.get(&#39;id&#39;),
+                     &#39;revision_number&#39;: p.get(&#39;revision_number&#39;),
+                     &#39;pos&#39;: p.get(&#39;pos&#39;),
+                     &#39;mo&#39;: asset.get(&#39;media_objects&#39;, {}).get(&#39;thumbnail&#39;)
+                     [0].get(&#39;id&#39;)})
+            chain_id = self.start_quicktime_export(
+                show_id, seq_id, seq_rev_number, panels, episode_id, False)
+            while True:
+                res = self.get_chain(chain_id)
+                if res is None or res.get(&#39;status&#39;) == &#39;errored&#39; or res.get(
+                        &#39;status&#39;) == &#39;timed out&#39;:
+                    return None, False
+                if res.get(&#39;status&#39;) == &#39;in progress&#39;:
+                    time.sleep(1)
+                    continue
+                if res.get(&#39;status&#39;) == &#39;completed&#39;:
+                    asset = self.get_asset(
+                        res.get(&#39;results&#39;, {}).get(&#39;assetID&#39;))
+                    if asset is None:
+                        return None, False
+                    mo_per_shots[shot_name][&#39;mov&#39;] = asset.get(
+                        &#39;media_objects&#39;, {}).get(&#39;artwork&#39;, [])[0].get(&#39;id&#39;)
+                    break
+        return mo_per_shots, True
+
+    def get_markers(self, sequence_revision: object) -&gt; Dict:
+        &#34;&#34;&#34;get_markers will format the sequence_revision to have a
+        mapping of markers: start -&gt; marker_name
+
+        Arguments:
+            sequence_revision {object} -- Sequence revision
+
+        Returns:
+            Dict -- Markers by start time
+        &#34;&#34;&#34;
+        markers_mapping = {}
+        markers = sequence_revision.get(&#39;meta_data&#39;, {}).get(&#39;markers&#39;, [])
+        for m in markers:
+            markers_mapping[m.get(&#39;start&#39;)] = m.get(&#39;name&#39;)
+        return OrderedDict(sorted(markers_mapping.items()))
+
+    def format_panel_for_revision(self, panel: object, pos: int) -&gt; object:
+        &#34;&#34;&#34;format_panel_for_revision will format the panel as
+        revisionned panel
+
+        Arguments:
+            panel {object} -- Panel from Flix
+            pos {int} -- Position in the Flix timeline
+
+        Returns:
+            object -- Formatted panel
+        &#34;&#34;&#34;
+        return {
+            &#39;dialogue&#39;: panel.get(&#39;dialogue&#39;),
+            &#39;duration&#39;: panel.get(&#39;duration&#39;),
+            &#39;id&#39;: panel.get(&#39;panel_id&#39;),
+            &#39;revision_number&#39;: panel.get(&#39;revision_number&#39;),
+            &#39;asset&#39;: panel.get(&#39;asset&#39;),
+            &#39;pos&#39;: pos
+        }
+
+    def get_markers_per_panels(self, markers: List, panels: List) -&gt; Dict:
+        &#34;&#34;&#34;get_markers_per_panels will return a mapping of markers per panels
+
+        Arguments:
+            markers {List} -- List of markers
+            panels {List} -- List of panels
+
+        Returns:
+            Dict -- Panels per markers
+        &#34;&#34;&#34;
+        panels_per_markers = {}
+        panel_in = 0
+        markers_keys = list(markers.keys())
+        marker_i = 0
+        for i, p in enumerate(panels):
+            if markers_keys[marker_i] == panel_in:
+                panels_per_markers[markers[markers_keys[marker_i]]] = []
+                panels_per_markers[markers[markers_keys[marker_i]]].append(
+                    self.format_panel_for_revision(p, i))
+                if len(markers_keys) &gt; marker_i + 1:
+                    marker_i = marker_i + 1
+            elif markers_keys[marker_i] &gt; panel_in:
+                panels_per_markers[markers[markers_keys[marker_i - 1]]].append(
+                    self.format_panel_for_revision(p, i))
+            elif len(markers_keys) - 1 == marker_i:
+                if markers[markers_keys[marker_i]] not in panels_per_markers:
+                    panels_per_markers[markers[markers_keys[marker_i]]] = []
+                panels_per_markers[markers[markers_keys[marker_i]]].append(
+                    self.format_panel_for_revision(p, i))
+            panel_in = panel_in + p.get(&#39;duration&#39;)
+        return panels_per_markers
 
     def __get_token(self) -&gt; Tuple[str, str]:
         &#34;&#34;&#34;__get_token will request a token and will reset it
@@ -1263,6 +1530,45 @@ create shows etc.</p></div>
     return temp_filepath</code></pre>
 </details>
 </dd>
+<dt id="flix.flix.format_panel_for_revision"><code class="name flex">
+<span>def <span class="ident">format_panel_for_revision</span></span>(<span>self, panel: object, pos: int) -> object</span>
+</code></dt>
+<dd>
+<div class="desc"><p>format_panel_for_revision will format the panel as
+revisionned panel</p>
+<h2 id="arguments">Arguments</h2>
+<p>panel {object} &ndash; Panel from Flix
+pos {int} &ndash; Position in the Flix timeline</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>object -- Formatted panel</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def format_panel_for_revision(self, panel: object, pos: int) -&gt; object:
+    &#34;&#34;&#34;format_panel_for_revision will format the panel as
+    revisionned panel
+
+    Arguments:
+        panel {object} -- Panel from Flix
+        pos {int} -- Position in the Flix timeline
+
+    Returns:
+        object -- Formatted panel
+    &#34;&#34;&#34;
+    return {
+        &#39;dialogue&#39;: panel.get(&#39;dialogue&#39;),
+        &#39;duration&#39;: panel.get(&#39;duration&#39;),
+        &#39;id&#39;: panel.get(&#39;panel_id&#39;),
+        &#39;revision_number&#39;: panel.get(&#39;revision_number&#39;),
+        &#39;asset&#39;: panel.get(&#39;asset&#39;),
+        &#39;pos&#39;: pos
+    }</code></pre>
+</details>
+</dd>
 <dt id="flix.flix.get_asset"><code class="name flex">
 <span>def <span class="ident">get_asset</span></span>(<span>self, asset_id: int) -> typing.Dict</span>
 </code></dt>
@@ -1438,6 +1744,90 @@ create shows etc.</p></div>
             print(&#39;Could not retrieve episodes&#39;, err)
         return None
     return response</code></pre>
+</details>
+</dd>
+<dt id="flix.flix.get_markers"><code class="name flex">
+<span>def <span class="ident">get_markers</span></span>(<span>self, sequence_revision: object) -> typing.Dict</span>
+</code></dt>
+<dd>
+<div class="desc"><p>get_markers will format the sequence_revision to have a
+mapping of markers: start -&gt; marker_name</p>
+<h2 id="arguments">Arguments</h2>
+<p>sequence_revision {object} &ndash; Sequence revision</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict -- Markers by start time</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_markers(self, sequence_revision: object) -&gt; Dict:
+    &#34;&#34;&#34;get_markers will format the sequence_revision to have a
+    mapping of markers: start -&gt; marker_name
+
+    Arguments:
+        sequence_revision {object} -- Sequence revision
+
+    Returns:
+        Dict -- Markers by start time
+    &#34;&#34;&#34;
+    markers_mapping = {}
+    markers = sequence_revision.get(&#39;meta_data&#39;, {}).get(&#39;markers&#39;, [])
+    for m in markers:
+        markers_mapping[m.get(&#39;start&#39;)] = m.get(&#39;name&#39;)
+    return OrderedDict(sorted(markers_mapping.items()))</code></pre>
+</details>
+</dd>
+<dt id="flix.flix.get_markers_per_panels"><code class="name flex">
+<span>def <span class="ident">get_markers_per_panels</span></span>(<span>self, markers: typing.List, panels: typing.List) -> typing.Dict</span>
+</code></dt>
+<dd>
+<div class="desc"><p>get_markers_per_panels will return a mapping of markers per panels</p>
+<h2 id="arguments">Arguments</h2>
+<p>markers {List} &ndash; List of markers
+panels {List} &ndash; List of panels</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict -- Panels per markers</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_markers_per_panels(self, markers: List, panels: List) -&gt; Dict:
+    &#34;&#34;&#34;get_markers_per_panels will return a mapping of markers per panels
+
+    Arguments:
+        markers {List} -- List of markers
+        panels {List} -- List of panels
+
+    Returns:
+        Dict -- Panels per markers
+    &#34;&#34;&#34;
+    panels_per_markers = {}
+    panel_in = 0
+    markers_keys = list(markers.keys())
+    marker_i = 0
+    for i, p in enumerate(panels):
+        if markers_keys[marker_i] == panel_in:
+            panels_per_markers[markers[markers_keys[marker_i]]] = []
+            panels_per_markers[markers[markers_keys[marker_i]]].append(
+                self.format_panel_for_revision(p, i))
+            if len(markers_keys) &gt; marker_i + 1:
+                marker_i = marker_i + 1
+        elif markers_keys[marker_i] &gt; panel_in:
+            panels_per_markers[markers[markers_keys[marker_i - 1]]].append(
+                self.format_panel_for_revision(p, i))
+        elif len(markers_keys) - 1 == marker_i:
+            if markers[markers_keys[marker_i]] not in panels_per_markers:
+                panels_per_markers[markers[markers_keys[marker_i]]] = []
+            panels_per_markers[markers[markers_keys[marker_i]]].append(
+                self.format_panel_for_revision(p, i))
+        panel_in = panel_in + p.get(&#39;duration&#39;)
+    return panels_per_markers</code></pre>
 </details>
 </dd>
 <dt id="flix.flix.get_panels"><code class="name flex">
@@ -1626,6 +2016,93 @@ episode_id {int} &ndash; Episode ID (default: {None})</p>
     return response</code></pre>
 </details>
 </dd>
+<dt id="flix.flix.mo_per_shots"><code class="name flex">
+<span>def <span class="ident">mo_per_shots</span></span>(<span>self, panels_per_markers: typing.Dict, show_id: int, seq_id: int, seq_rev_number: int, episode_id: int = None) -> typing.Dict</span>
+</code></dt>
+<dd>
+<div class="desc"><p>mo_per_shots will make a mapping of all media objects per shots</p>
+<h2 id="arguments">Arguments</h2>
+<p>panels_per_markers {Dict} &ndash; Panels per markers
+show_id {int} &ndash; Show ID
+seq_id {int} &ndash; Sequence ID
+seq_rev_number {int} &ndash; Sequence Revision ID</p>
+<p>Keyword Arguments:
+episode_id {int} &ndash; Episode ID (default: {None})</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict -- Media objects per shots</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def mo_per_shots(self,
+                 panels_per_markers: Dict,
+                 show_id: int,
+                 seq_id: int,
+                 seq_rev_number: int,
+                 episode_id: int = None) -&gt; Dict:
+    &#34;&#34;&#34;mo_per_shots will make a mapping of all media objects per shots
+
+    Arguments:
+        panels_per_markers {Dict} -- Panels per markers
+        show_id {int} -- Show ID
+        seq_id {int} -- Sequence ID
+        seq_rev_number {int} -- Sequence Revision ID
+
+    Keyword Arguments:
+        episode_id {int} -- Episode ID (default: {None})
+
+    Returns:
+        Dict -- Media objects per shots
+    &#34;&#34;&#34;
+    mo_per_shots = {}
+    for shot_name in panels_per_markers:
+        mo_per_shots[shot_name] = {&#39;artwork&#39;: [], &#39;thumbnails&#39;: []}
+        panels = panels_per_markers[shot_name]
+        for p in panels:
+            asset = self.get_asset(
+                p.get(&#39;asset&#39;).get(&#39;asset_id&#39;))
+            if asset is None:
+                return None, False
+            artwork = asset.get(&#39;media_objects&#39;, {}).get(&#39;artwork&#39;)[0]
+            mo_per_shots[shot_name][&#39;artwork&#39;].append({
+                &#39;name&#39;: artwork.get(&#39;name&#39;),
+                &#39;id&#39;: p.get(&#39;id&#39;),
+                &#39;revision_number&#39;: p.get(&#39;revision_number&#39;),
+                &#39;pos&#39;: p.get(&#39;pos&#39;),
+                &#39;mo&#39;: artwork.get(&#39;id&#39;)
+            })
+            mo_per_shots[shot_name][&#39;thumbnails&#39;].append(
+                {&#39;name&#39;: asset.get(&#39;media_objects&#39;, {}).get(&#39;thumbnail&#39;)
+                 [0].get(&#39;name&#39;),
+                 &#39;id&#39;: p.get(&#39;id&#39;),
+                 &#39;revision_number&#39;: p.get(&#39;revision_number&#39;),
+                 &#39;pos&#39;: p.get(&#39;pos&#39;),
+                 &#39;mo&#39;: asset.get(&#39;media_objects&#39;, {}).get(&#39;thumbnail&#39;)
+                 [0].get(&#39;id&#39;)})
+        chain_id = self.start_quicktime_export(
+            show_id, seq_id, seq_rev_number, panels, episode_id, False)
+        while True:
+            res = self.get_chain(chain_id)
+            if res is None or res.get(&#39;status&#39;) == &#39;errored&#39; or res.get(
+                    &#39;status&#39;) == &#39;timed out&#39;:
+                return None, False
+            if res.get(&#39;status&#39;) == &#39;in progress&#39;:
+                time.sleep(1)
+                continue
+            if res.get(&#39;status&#39;) == &#39;completed&#39;:
+                asset = self.get_asset(
+                    res.get(&#39;results&#39;, {}).get(&#39;assetID&#39;))
+                if asset is None:
+                    return None, False
+                mo_per_shots[shot_name][&#39;mov&#39;] = asset.get(
+                    &#39;media_objects&#39;, {}).get(&#39;artwork&#39;, [])[0].get(&#39;id&#39;)
+                break
+    return mo_per_shots, True</code></pre>
+</details>
+</dd>
 <dt id="flix.flix.new_panel"><code class="name flex">
 <span>def <span class="ident">new_panel</span></span>(<span>self, show_id: int, sequence_id: int, asset_id: int = None, duration: int = 12) -> typing.Dict</span>
 </code></dt>
@@ -1687,7 +2164,7 @@ asset_id {int} &ndash; Asset ID (default: {None})</p>
 </details>
 </dd>
 <dt id="flix.flix.new_sequence_revision"><code class="name flex">
-<span>def <span class="ident">new_sequence_revision</span></span>(<span>self, show_id: int, sequence_id: int, revisioned_panels: typing.List, markers: typing.List, comment: str = 'From Hiero') -> typing.Dict</span>
+<span>def <span class="ident">new_sequence_revision</span></span>(<span>self, show_id: int, sequence_id: int, revisioned_panels: typing.List, markers: typing.List, comment: str = 'From Shotgun') -> typing.Dict</span>
 </code></dt>
 <dd>
 <div class="desc"><p>new_sequence_revision will create a new sequence revision</p>
@@ -1697,7 +2174,7 @@ asset_id {int} &ndash; Asset ID (default: {None})</p>
 <p>revisioned_panels {List} &ndash; List of revisionned panels</p>
 <p>markers {List} &ndash; List of Markers</p>
 <p>Keyword Arguments:
-comment {str} &ndash; Comment (default: {'From Hiero'})</p>
+comment {str} &ndash; Comment (default: {'From Shotgun'})</p>
 <h2 id="returns">Returns</h2>
 <dl>
 <dt><code>Dict -- Sequence Revision</code></dt>
@@ -1712,7 +2189,7 @@ comment {str} &ndash; Comment (default: {'From Hiero'})</p>
                           sequence_id: int,
                           revisioned_panels: List,
                           markers: List,
-                          comment: str = &#39;From Hiero&#39;) -&gt; Dict:
+                          comment: str = &#39;From Shotgun&#39;) -&gt; Dict:
     &#34;&#34;&#34;new_sequence_revision will create a new sequence revision
 
     Arguments:
@@ -1725,7 +2202,7 @@ comment {str} &ndash; Comment (default: {'From Hiero'})</p>
         markers {List} -- List of Markers
 
     Keyword Arguments:
-        comment {str} -- Comment (default: {&#39;From Hiero&#39;})
+        comment {str} -- Comment (default: {&#39;From Shotgun&#39;})
 
     Returns:
         Dict -- Sequence Revision
@@ -1867,14 +2344,18 @@ include_dialogue {bool} &ndash; Include Dialogue (default: {False})</p>
 <ul class="">
 <li><code><a title="flix.flix.authenticate" href="#flix.flix.authenticate">authenticate</a></code></li>
 <li><code><a title="flix.flix.download_media_object" href="#flix.flix.download_media_object">download_media_object</a></code></li>
+<li><code><a title="flix.flix.format_panel_for_revision" href="#flix.flix.format_panel_for_revision">format_panel_for_revision</a></code></li>
 <li><code><a title="flix.flix.get_asset" href="#flix.flix.get_asset">get_asset</a></code></li>
 <li><code><a title="flix.flix.get_chain" href="#flix.flix.get_chain">get_chain</a></code></li>
 <li><code><a title="flix.flix.get_dialogues" href="#flix.flix.get_dialogues">get_dialogues</a></code></li>
 <li><code><a title="flix.flix.get_episodes" href="#flix.flix.get_episodes">get_episodes</a></code></li>
+<li><code><a title="flix.flix.get_markers" href="#flix.flix.get_markers">get_markers</a></code></li>
+<li><code><a title="flix.flix.get_markers_per_panels" href="#flix.flix.get_markers_per_panels">get_markers_per_panels</a></code></li>
 <li><code><a title="flix.flix.get_panels" href="#flix.flix.get_panels">get_panels</a></code></li>
 <li><code><a title="flix.flix.get_sequence_rev" href="#flix.flix.get_sequence_rev">get_sequence_rev</a></code></li>
 <li><code><a title="flix.flix.get_sequences" href="#flix.flix.get_sequences">get_sequences</a></code></li>
 <li><code><a title="flix.flix.get_shows" href="#flix.flix.get_shows">get_shows</a></code></li>
+<li><code><a title="flix.flix.mo_per_shots" href="#flix.flix.mo_per_shots">mo_per_shots</a></code></li>
 <li><code><a title="flix.flix.new_panel" href="#flix.flix.new_panel">new_panel</a></code></li>
 <li><code><a title="flix.flix.new_sequence_revision" href="#flix.flix.new_sequence_revision">new_sequence_revision</a></code></li>
 <li><code><a title="flix.flix.reset" href="#flix.flix.reset">reset</a></code></li>

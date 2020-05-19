@@ -32,15 +32,13 @@ import time
 from collections import OrderedDict
 from typing import Dict, List, Tuple
 
-from PySide2.QtCore import QCoreApplication, QRect, Qt
-from PySide2.QtGui import QPixmap
+from PySide2.QtCore import QCoreApplication
 from PySide2.QtWidgets import (QApplication, QComboBox, QDialog, QErrorMessage,
                                QFileDialog, QHBoxLayout, QInputDialog, QLabel,
                                QLineEdit, QMessageBox, QProgressDialog,
-                               QPushButton, QStackedWidget, QVBoxLayout,
-                               QWidget)
+                               QPushButton, QVBoxLayout)
 
-import flix as flix_api
+import flix_ui as flix_widget
 import shotgun as shotgun_api
 
 
@@ -48,66 +46,16 @@ class main_dialogue(QDialog):
 
     def __init__(self, parent=None):
         super(main_dialogue, self).__init__(parent)
-        self.flix_api = flix_api.flix()
         self.export_path = None
-        self.authenticated = False
         self.setWindowTitle(&#39;Flix Production Handoff&#39;)
 
+        self.wg_flix_ui = flix_widget.flix_ui()
+
+        # Setup UI view
         h_main_box = QHBoxLayout()
-        v_login_box = QVBoxLayout()
         v_sequence_box = QVBoxLayout()
 
-        self.hostname = QLineEdit(&#39;http://localhost:1234&#39;)
-        self.hostname.setMinimumWidth(200)
-        hostname_label = QLabel(&#39;Flix Server&#39;)
-        hostname_label.setBuddy(self.hostname)
-        self.login = QLineEdit(&#39;admin&#39;)
-        self.login.setMinimumWidth(200)
-        login_label = QLabel(&#39;Username&#39;)
-        login_label.setBuddy(self.login)
-        self.password = QLineEdit(&#39;admin&#39;)
-        self.password.setMinimumWidth(200)
-        self.password.setEchoMode(QLineEdit.Password)
-        password_label = QLabel(&#39;Password&#39;)
-        password_label.setBuddy(self.password)
-        self.submit = QPushButton(&#39;Log In&#39;)
-        self.submit.clicked.connect(self.authenticate)
-
-        login_layout = QVBoxLayout()
-        login_layout.addWidget(hostname_label)
-        login_layout.addWidget(self.hostname)
-        login_layout.addWidget(login_label)
-        login_layout.addWidget(self.login)
-        login_layout.addWidget(password_label)
-        login_layout.addWidget(self.password)
-        login_layout.addWidget(self.submit)
-        login_widget = QWidget()
-        login_widget.setLayout(login_layout)
-        login_widget.setMaximumHeight(250)
-
-        picture = QPixmap(&#39;./flix.png&#39;)
-        picture = picture.scaledToHeight(120)
-
-        label = QLabel()
-        label.setPixmap(picture)
-
-        v_login_box.addWidget(login_widget, alignment=Qt.AlignTop)
-        v_login_box.addWidget(label, alignment=Qt.AlignCenter)
-
-        self.show_list = QComboBox()
-        show_label = QLabel(&#39;Show&#39;)
-        show_label.setMinimumWidth(400)
-        show_label.setBuddy(self.show_list)
-        self.show_list.currentTextChanged.connect(self.on_show_changed)
-        self.episode_list = QComboBox()
-        self.episode_label = QLabel(&#39;Episode&#39;)
-        self.episode_label.setBuddy(self.episode_list)
-        self.episode_list.currentTextChanged.connect(self.on_episode_changed)
-        self.sequence_list = QComboBox()
-        sequence_label = QLabel(&#39;Sequence&#39;)
-        sequence_label.setBuddy(self.sequence_list)
-        self.sequence_list.currentTextChanged.connect(self.on_sequence_changed)
-
+        # Setup list for production handoff export option
         self.handoff_type_list = QComboBox()
         self.handoff_type_list.addItems([&#39;Local Export&#39;, &#39;Shotgun Export&#39;])
         self.handoff_type_label = QLabel(&#39;Handoff Type&#39;)
@@ -115,6 +63,7 @@ class main_dialogue(QDialog):
         self.handoff_type_list.currentTextChanged.connect(
             self.on_handoff_type_changed)
 
+        # Setup Local Export option
         self.export_layout = QHBoxLayout()
         self.export_path = QLineEdit()
         self.export_path_label = QLabel(&#39;Export path&#39;)
@@ -124,6 +73,7 @@ class main_dialogue(QDialog):
         self.export_layout.addWidget(self.export_path)
         self.export_layout.addWidget(self.export_path_button)
 
+        # Setup Shotgun export option
         self.sg_hostname = QLineEdit(&#39;https://thomaslacroix.shotgunstudio.com&#39;)
         self.sg_hostname.setMinimumWidth(350)
         self.sg_hostname_label = QLabel(&#39;Shotgun URL&#39;)
@@ -133,15 +83,9 @@ class main_dialogue(QDialog):
         self.sg_login_label = QLabel(&#39;Username&#39;)
         self.sg_login_label.setBuddy(self.sg_login)
 
+        # Setup Export Latest action
         pull = QPushButton(&#39;Export Latest&#39;)
         pull.clicked.connect(self.pull_latest)
-        v_sequence_box.addWidget(show_label)
-        v_sequence_box.addWidget(self.show_list)
-        v_sequence_box.addWidget(self.episode_label)
-        v_sequence_box.addWidget(self.episode_list)
-        v_sequence_box.addWidget(sequence_label)
-        v_sequence_box.addWidget(self.sequence_list)
-
         v_sequence_box.addWidget(self.handoff_type_label)
         v_sequence_box.addWidget(self.handoff_type_list)
 
@@ -155,32 +99,11 @@ class main_dialogue(QDialog):
         v_sequence_box.addWidget(pull)
         self.update_ui_handoff_type(&#39;Local Export&#39;)
 
-        h_main_box.addLayout(v_login_box)
+        # Add flix Ui widget
+        h_main_box.addWidget(self.wg_flix_ui)
         h_main_box.addLayout(v_sequence_box)
 
         self.setLayout(h_main_box)
-
-    def authenticate(self):
-        &#34;&#34;&#34;authenticate will authenticate a user and update the view
-        &#34;&#34;&#34;
-        if self.authenticated:
-            self.flix_api.reset()
-            self.authenticated = False
-            self.reset(&#39;Log In&#39;)
-            return
-
-        credentials = self.flix_api.authenticate(self.hostname.text(),
-                                                self.login.text(),
-                                                self.password.text())
-        if credentials is None:
-            self.error(&#39;Could not authenticate user&#39;)
-            self.login.clear()
-            self.password.clear()
-            return
-
-        self.init_shows()
-        self.authenticated = True
-        self.reset(&#39;Log Out&#39;)
 
     def error(self, message: str):
         &#34;&#34;&#34;error will show a error message with a given message
@@ -204,95 +127,6 @@ class main_dialogue(QDialog):
         msgbox.setText(message)
         msgbox.exec_()
 
-    def reset(self, action: str = &#39;Log Out&#39;):
-        &#34;&#34;&#34;reset will reset the login form / shows info for login / logout
-
-        Keyword Arguments:
-            action {str} -- action to handle (default: {&#39;Log Out&#39;})
-        &#34;&#34;&#34;
-        if action == &#39;Log Out&#39;:
-            self.hostname.setReadOnly(True)
-            self.login.setReadOnly(True)
-            self.password.setReadOnly(True)
-            self.submit.setText(&#39;Log Out&#39;)
-            return
-        self.hostname.setReadOnly(False)
-        self.login.setReadOnly(False)
-        self.password.setReadOnly(False)
-        self.show_list.clear()
-        self.sequence_list.clear()
-        self.episode_list.clear()
-        self.submit.setText(action)
-
-    def on_show_changed(self, tracking_code: str):
-        &#34;&#34;&#34;on_show_changed triggered after a show is selected,
-        will init the list of sequences from this show
-
-        Arguments:
-            tracking_code {str} -- show_tracking_code from the event
-        &#34;&#34;&#34;
-        self.selected_show_tracking_code = tracking_code
-        show_id, episodic, _ = self.get_selected_show()
-
-        self.sequence_list.clear()
-        self.episode_list.clear()
-        if episodic is True:
-            self.episode_list.show()
-            self.episode_label.show()
-            episodes = self.flix_api.get_episodes(show_id)
-            if episodes is None:
-                self.error(&#39;Could not retrieve episodes&#39;)
-                return
-            self.episode_tracking_code = self.get_episode_tracking_code(
-                episodes)
-            for e in self.episode_tracking_code:
-                self.episode_list.addItem(e)
-            self.episode_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
-            return
-        self.episode_list.hide()
-        self.episode_label.hide()
-        sequences = self.flix_api.get_sequences(show_id)
-        if sequences is None:
-            self.error(&#39;Could not retreive sequences&#39;)
-            return
-        self.sequence_tracking_code = self.get_sequence_tracking_code(
-            sequences)
-        for s in self.sequence_tracking_code:
-            self.sequence_list.addItem(s)
-        self.sequence_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
-
-    def on_episode_changed(self, tracking_code: str):
-        &#34;&#34;&#34;on_episode_changed triggered after an episode is selected,
-        will store the selected episode
-
-        Arguments:
-            tracking_code {str} -- episode_tracking_code from the event
-        &#34;&#34;&#34;
-        if tracking_code == &#39;&#39;:
-            return
-        self.selected_episode_tracking_code = tracking_code
-        show_id, _, _ = self.get_selected_show()
-        episode_id, _ = self.get_selected_episode()
-        sequences = self.flix_api.get_sequences(show_id, episode_id)
-        if sequences is None:
-            self.error(&#39;Could not retreive sequences&#39;)
-            return
-        self.sequence_tracking_code = self.get_sequence_tracking_code(
-            sequences)
-        self.sequence_list.clear()
-        for s in self.sequence_tracking_code:
-            self.sequence_list.addItem(s)
-        self.sequence_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
-
-    def on_sequence_changed(self, tracking_code: str):
-        &#34;&#34;&#34;on_sequence_changed triggered after a sequence is selected,
-        will store the selected sequence
-
-        Arguments:
-            tracking_code {str} -- sequence_tracking_code from the event
-        &#34;&#34;&#34;
-        self.selected_sequence_tracking_code = tracking_code
-
     def on_handoff_type_changed(self, handoff_type: str):
         &#34;&#34;&#34;on_handoff_type_changed triggered when the handoff type changed
 
@@ -314,19 +148,6 @@ class main_dialogue(QDialog):
         if len(export_p) &lt; 1:
             return
         self.export_path.setText(export_p)
-
-    def init_shows(self):
-        &#34;&#34;&#34;init_shows will retrieve the list of show and update the UI
-        &#34;&#34;&#34;
-        shows = self.flix_api.get_shows()
-        if shows is None:
-            self.error(&#39;Could not retreive shows&#39;)
-            return
-        self.show_tracking_code = self.get_show_tracking_code(shows)
-        self.show_list.clear()
-        for s in self.show_tracking_code:
-            self.show_list.addItem(s)
-        self.show_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
 
     def update_ui_handoff_type(self, handoff_type: str):
         &#34;&#34;&#34;update_ui_handoff_type will update the UI depending
@@ -353,252 +174,6 @@ class main_dialogue(QDialog):
             self.export_path_button.hide()
         self.selected_handoff_type = handoff_type
 
-    def sort_alphanumeric(self, d: Dict) -&gt; Dict:
-        &#34;&#34;&#34;sort_alphanumeric will sort a dictionnary alphanumerically by keys
-
-        Arguments:
-            d {Dict} -- Dictionnary to sort
-
-        Returns:
-            Dict -- Sorted Dictionnary
-        &#34;&#34;&#34;
-        def convert(text): return int(text) if text.isdigit() else text
-
-        def alphanum_key(key): return [convert(c)
-                                       for c in re.split(&#39;([0-9]+)&#39;, key)]
-        keys = sorted(d.keys(), key=alphanum_key)
-        return OrderedDict((k, d[k]) for k in keys)
-
-    def get_show_tracking_code(self, shows: List) -&gt; Dict:
-        &#34;&#34;&#34;get_show_tracking_code will format the shows to have a mapping:
-        tracking_code -&gt; [show_id, episodic]
-
-        Arguments:
-            shows {List} -- List of shows
-
-        Returns:
-            Dict -- Shows by tracking code
-        &#34;&#34;&#34;
-        show_tracking_codes = {}
-        if shows is None:
-            return show_tracking_codes
-        for s in shows:
-            if s.get(&#39;hidden&#39;, False) is False:
-                show_tracking_codes[s.get(&#39;tracking_code&#39;)] = [
-                    s.get(&#39;id&#39;),
-                    s.get(&#39;episodic&#39;)
-                ]
-        return self.sort_alphanumeric(show_tracking_codes)
-
-    def get_sequence_tracking_code(self, sequences: List) -&gt; Dict:
-        &#34;&#34;&#34;get_sequence_tracking_code will format the sequences to have
-        a mapping: tracking_code -&gt; [sequence_id, last_seq_rev_id]
-
-        Arguments:
-            sequences {List} -- List of sequences
-
-        Returns:
-            Dict -- sequence ID and last seq rev by tracking code
-        &#34;&#34;&#34;
-        sequence_tracking_codes = {}
-        if sequences is None:
-            return sequence_tracking_codes
-        for s in sequences:
-            if s.get(&#39;revisions_count&#39;) &gt; 0:
-                sequence_tracking_codes[s.get(&#39;tracking_code&#39;)] = [
-                    s.get(&#39;id&#39;),
-                    s.get(&#39;revisions_count&#39;)
-                ]
-        return self.sort_alphanumeric(sequence_tracking_codes)
-
-    def get_episode_tracking_code(self, episodes: List) -&gt; Dict:
-        &#34;&#34;&#34;get_episode_tracking_code will format the episodes to have a
-        mapping: tracking_code -&gt; episode_id
-
-        Arguments:
-            episodes {List} -- List of episodes
-
-        Returns:
-            Dict -- Episodes by tracking code
-        &#34;&#34;&#34;
-        episode_tracking_codes = {}
-        if episodes is None:
-            return episode_tracking_codes
-        for s in episodes:
-            episode_tracking_codes[s.get(&#39;tracking_code&#39;)] = s.get(&#39;id&#39;)
-        return self.sort_alphanumeric(episode_tracking_codes)
-
-    def get_selected_show(self) -&gt; Tuple[int, bool, str]:
-        &#34;&#34;&#34;get_selected_show will return the selected show info
-
-        Returns:
-            Tuple[int, bool, str] -- Show ID, Episodic, Show tracking code
-        &#34;&#34;&#34;
-        stc = self.selected_show_tracking_code
-        show_id = self.show_tracking_code[stc][0]
-        episodic = self.show_tracking_code[stc][1]
-        return show_id, episodic, stc
-
-    def get_selected_episode(self) -&gt; Tuple[int, str]:
-        &#34;&#34;&#34;get_selected_episode will return the selected episode info
-
-        Returns:
-            Tuple[int, str] -- Episode ID, Episode tracking code
-        &#34;&#34;&#34;
-        etc = self.selected_episode_tracking_code
-        episode_id = self.episode_tracking_code[etc]
-        return episode_id, etc
-
-    def get_selected_sequence(self) -&gt; Tuple[int, int, str]:
-        &#34;&#34;&#34;get_selected_sequence will return the selected sequence info
-
-        Returns:
-            Tuple[int, int, str] -- Sequence ID, Seq rev ID, seq tracking code
-        &#34;&#34;&#34;
-        stc = self.selected_sequence_tracking_code
-        seq_id = self.sequence_tracking_code[stc][0]
-        seq_rev = self.sequence_tracking_code[stc][1]
-        return seq_id, seq_rev, stc
-
-    def format_panel_for_revision(self, panel: object, pos: int) -&gt; object:
-        &#34;&#34;&#34;format_panel_for_revision will format the panel as
-        revisionned panel
-
-        Arguments:
-            panel {object} -- Panel from Flix
-            pos {int} -- Position in the Flix timeline
-
-        Returns:
-            object -- Formatted panel
-        &#34;&#34;&#34;
-        return {
-            &#39;dialogue&#39;: panel.get(&#39;dialogue&#39;),
-            &#39;duration&#39;: panel.get(&#39;duration&#39;),
-            &#39;id&#39;: panel.get(&#39;panel_id&#39;),
-            &#39;revision_number&#39;: panel.get(&#39;revision_number&#39;),
-            &#39;asset&#39;: panel.get(&#39;asset&#39;),
-            &#39;pos&#39;: pos
-        }
-
-    def get_markers(self, sequence_revision: object) -&gt; Dict:
-        &#34;&#34;&#34;get_markers will format the sequence_revision to have a
-        mapping of markers: start -&gt; marker_name
-
-        Arguments:
-            sequence_revision {object} -- Sequence revision
-
-        Returns:
-            Dict -- Markers by start time
-        &#34;&#34;&#34;
-        markers_mapping = {}
-        markers = sequence_revision.get(&#39;meta_data&#39;, {}).get(&#39;markers&#39;, [])
-        for m in markers:
-            markers_mapping[m.get(&#39;start&#39;)] = m.get(&#39;name&#39;)
-        return OrderedDict(sorted(markers_mapping.items()))
-
-    def get_markers_per_panels(self, markers: List, panels: List) -&gt; Dict:
-        &#34;&#34;&#34;get_markers_per_panels will return a mapping of markers per panels
-
-        Arguments:
-            markers {List} -- List of markers
-            panels {List} -- List of panels
-
-        Returns:
-            Dict -- Panels per markers
-        &#34;&#34;&#34;
-        panels_per_markers = {}
-        panel_in = 0
-        markers_keys = list(markers.keys())
-        marker_i = 0
-        for i, p in enumerate(panels):
-            if markers_keys[marker_i] == panel_in:
-                panels_per_markers[markers[markers_keys[marker_i]]] = []
-                panels_per_markers[markers[markers_keys[marker_i]]].append(
-                    self.format_panel_for_revision(p, i))
-                if len(markers_keys) &gt; marker_i + 1:
-                    marker_i = marker_i + 1
-            elif markers_keys[marker_i] &gt; panel_in:
-                panels_per_markers[markers[markers_keys[marker_i - 1]]].append(
-                    self.format_panel_for_revision(p, i))
-            elif len(markers_keys) - 1 == marker_i:
-                if markers[markers_keys[marker_i]] not in panels_per_markers:
-                    panels_per_markers[markers[markers_keys[marker_i]]] = []
-                panels_per_markers[markers[markers_keys[marker_i]]].append(
-                    self.format_panel_for_revision(p, i))
-            panel_in = panel_in + p.get(&#39;duration&#39;)
-        return panels_per_markers
-
-    def mo_per_shots(self,
-                     panels_per_markers: Dict,
-                     show_id: int,
-                     seq_id: int,
-                     seq_rev_number: int,
-                     episode_id: int = None) -&gt; Dict:
-        &#34;&#34;&#34;mo_per_shots will make a mapping of all media objects per shots
-
-        Arguments:
-            panels_per_markers {Dict} -- Panels per markers
-            show_id {int} -- Show ID
-            seq_id {int} -- Sequence ID
-            seq_rev_number {int} -- Sequence Revision ID
-
-        Keyword Arguments:
-            episode_id {int} -- Episode ID (default: {None})
-
-        Returns:
-            Dict -- Media objects per shots
-        &#34;&#34;&#34;
-        mo_per_shots = {}
-        for shot_name in panels_per_markers:
-            mo_per_shots[shot_name] = {&#39;artwork&#39;: [], &#39;thumbnails&#39;: []}
-            panels = panels_per_markers[shot_name]
-            for p in panels:
-                asset = self.flix_api.get_asset(p.get(&#39;asset&#39;).get(&#39;asset_id&#39;))
-                if asset is None:
-                    self.error(&#39;Could not retrieve asset&#39;)
-                    return None, False
-                artwork = asset.get(&#39;media_objects&#39;, {}).get(&#39;artwork&#39;)[0]
-                mo_per_shots[shot_name][&#39;artwork&#39;].append({
-                    &#39;name&#39;: artwork.get(&#39;name&#39;),
-                    &#39;id&#39;: p.get(&#39;id&#39;),
-                    &#39;revision_number&#39;: p.get(&#39;revision_number&#39;),
-                    &#39;pos&#39;: p.get(&#39;pos&#39;),
-                    &#39;mo&#39;: artwork.get(&#39;id&#39;)
-                })
-                mo_per_shots[shot_name][&#39;thumbnails&#39;].append(
-                    {&#39;name&#39;: asset.get(&#39;media_objects&#39;, {}).get(&#39;thumbnail&#39;)
-                     [0].get(&#39;name&#39;),
-                     &#39;id&#39;: p.get(&#39;id&#39;),
-                     &#39;revision_number&#39;: p.get(&#39;revision_number&#39;),
-                     &#39;pos&#39;: p.get(&#39;pos&#39;),
-                     &#39;mo&#39;: asset.get(&#39;media_objects&#39;, {}).get(&#39;thumbnail&#39;)
-                     [0].get(&#39;id&#39;)})
-            if self.update_progress(
-                &#39;Export quicktime from Flix for shot {0}&#39;.format(shot_name),
-                    True) is False:
-                return None, False
-            chain_id = self.flix_api.start_quicktime_export(
-                show_id, seq_id, seq_rev_number, panels, episode_id, False)
-            while True:
-                res = self.flix_api.get_chain(chain_id)
-                if res is None or res.get(&#39;status&#39;) == &#39;errored&#39; or res.get(
-                        &#39;status&#39;) == &#39;timed out&#39;:
-                    self.error(&#39;Could not export quicktime&#39;)
-                    return None, False
-                if res.get(&#39;status&#39;) == &#39;in progress&#39;:
-                    time.sleep(1)
-                    continue
-                if res.get(&#39;status&#39;) == &#39;completed&#39;:
-                    asset = self.flix_api.get_asset(
-                        res.get(&#39;results&#39;, {}).get(&#39;assetID&#39;))
-                    if asset is None:
-                        self.error(&#39;Could not retrieve asset&#39;)
-                        return None, False
-                    mo_per_shots[shot_name][&#39;mov&#39;] = asset.get(
-                        &#39;media_objects&#39;, {}).get(&#39;artwork&#39;, [])[0].get(&#39;id&#39;)
-                    break
-        return mo_per_shots, True
-
     def create_folder(self, path: str):
         &#34;&#34;&#34;create_folder will create a folder if it does not exist
 
@@ -618,19 +193,19 @@ class main_dialogue(QDialog):
         Returns:
             str -- Sequence revision path
         &#34;&#34;&#34;
-        _, episodic, show_tracking_code = self.get_selected_show()
-        _, seq_rev_number, seq_tracking_code = self.get_selected_sequence()
+        _, episodic, show_tracking_code = self.wg_flix_ui.get_selected_show()
+        _, seq_rev_nbr, seq_tr_code = self.wg_flix_ui.get_selected_sequence()
         show_path = os.path.join(base, show_tracking_code)
         self.create_folder(show_path)
-        sequence_path = os.path.join(show_path, seq_tracking_code)
+        sequence_path = os.path.join(show_path, seq_tr_code)
         if episodic:
-            _, episode_tracking_code = self.get_selected_episode()
+            _, episode_tracking_code = self.wg_flix_ui.get_selected_episode()
             episode_path = os.path.join(show_path, episode_tracking_code)
             self.create_folder(episode_path)
-            sequence_path = os.path.join(episode_path, seq_tracking_code)
+            sequence_path = os.path.join(episode_path, seq_tr_code)
         self.create_folder(sequence_path)
         sequence_revision_path = os.path.join(
-            sequence_path, &#39;v{0}&#39;.format(seq_rev_number))
+            sequence_path, &#39;v{0}&#39;.format(seq_rev_nbr))
         self.create_folder(sequence_revision_path)
         return sequence_revision_path
 
@@ -651,8 +226,8 @@ class main_dialogue(QDialog):
         Returns:
             str -- Formatted name
         &#34;&#34;&#34;
-        _, _, show_tracking_code = self.get_selected_show()
-        _, _, seq_tracking_code = self.get_selected_sequence()
+        _, _, show_tracking_code = self.wg_flix_ui.get_selected_show()
+        _, _, seq_tracking_code = self.wg_flix_ui.get_selected_sequence()
         return &#39;{0}_{1}_v{2}_{3}_{4}_v{5}&#39;.format(
             show_tracking_code,
             seq_tracking_code,
@@ -671,16 +246,16 @@ class main_dialogue(QDialog):
         Returns:
             bool -- State of the download file
         &#34;&#34;&#34;
-        _, seq_rev_number, seq_tracking_code = self.get_selected_sequence()
+        _, seq_rev_nbr, seq_tr_code = self.wg_flix_ui.get_selected_sequence()
         for _, shot in enumerate(mo_per_shots):
             shot_path = os.path.join(export_path, shot)
             self.create_folder(shot_path)
             mov_name = &#39;{0}_v{1}_{2}.mov&#39;.format(
-                seq_tracking_code, seq_rev_number, shot)
+                seq_tr_code, seq_rev_nbr, shot)
             mov_path = os.path.join(shot_path, mov_name)
             if sys.platform == &#39;win32&#39; or sys.platform == &#39;cygwin&#39;:
                 mov_path = mov_path.replace(&#39;\\&#39;, &#39;\\\\&#39;)
-            self.flix_api.download_media_object(
+            self.wg_flix_ui.get_flix_api().download_media_object(
                 mov_path, mo_per_shots[shot].get(&#39;mov&#39;))
             artwork_folder_path = os.path.join(shot_path, &#39;artwork&#39;)
             self.create_folder(artwork_folder_path)
@@ -691,14 +266,14 @@ class main_dialogue(QDialog):
             for artwork in mo_per_shots[shot].get(&#39;artwork&#39;, []):
                 ext = os.path.splitext(artwork.get(&#39;name&#39;))
                 art_name = self.get_default_image_name(
-                    seq_rev_number, artwork.get(&#39;pos&#39;),
+                    seq_rev_nbr, artwork.get(&#39;pos&#39;),
                     artwork.get(&#39;id&#39;),
                     artwork.get(&#39;revision_number&#39;))
                 artwork_path = os.path.join(
                     artwork_folder_path, &#39;{0}{1}&#39;.format(art_name, ext[1]))
                 if sys.platform == &#39;win32&#39; or sys.platform == &#39;cygwin&#39;:
                     artwork_path = artwork_path.replace(&#39;\\&#39;, &#39;\\\\&#39;)
-                self.flix_api.download_media_object(
+                self.wg_flix_ui.get_flix_api().download_media_object(
                     artwork_path, artwork.get(&#39;mo&#39;))
             thumb_folder_path = os.path.join(shot_path, &#39;thumbnail&#39;)
             self.create_folder(thumb_folder_path)
@@ -709,14 +284,14 @@ class main_dialogue(QDialog):
             for thumb in mo_per_shots[shot].get(&#39;thumbnails&#39;, []):
                 ext = os.path.splitext(thumb.get(&#39;name&#39;))
                 art_name = self.get_default_image_name(
-                    seq_rev_number, thumb.get(&#39;pos&#39;),
+                    seq_rev_nbr, thumb.get(&#39;pos&#39;),
                     thumb.get(&#39;id&#39;),
                     thumb.get(&#39;revision_number&#39;))
                 thumb_path = os.path.join(
                     thumb_folder_path, &#39;{0}{1}&#39;.format(art_name, ext[1]))
                 if sys.platform == &#39;win32&#39; or sys.platform == &#39;cygwin&#39;:
                     thumb_path = thumb_path.replace(&#39;\\&#39;, &#39;\\\\&#39;)
-                self.flix_api.download_media_object(
+                self.wg_flix_ui.get_flix_api().download_media_object(
                     thumb_path, thumb.get(&#39;mo&#39;))
         return True
 
@@ -732,8 +307,8 @@ class main_dialogue(QDialog):
         Returns:
             bool -- State of the push to shotgun
         &#34;&#34;&#34;
-        _, _, show_name = self.get_selected_show()
-        _, seq_rev_number, seq_name = self.get_selected_sequence()
+        _, _, show_name = self.wg_flix_ui.get_selected_show()
+        _, seq_rev_number, seq_name = self.wg_flix_ui.get_selected_sequence()
         sg_show = self.shotgun.get_project(show_name)
         if sg_show is None:
             sg_show = self.shotgun.create_project(show_name)
@@ -762,7 +337,7 @@ class main_dialogue(QDialog):
             temp_quicktime_path = os.path.join(temp_folder, mov_name)
             if sys.platform == &#39;win32&#39; or sys.platform == &#39;cygwin&#39;:
                 temp_quicktime_path = temp_quicktime_path.replace(&#39;\\&#39;, &#39;\\\\&#39;)
-            if self.flix_api.download_media_object(
+            if self.wg_flix_ui.get_flix_api().download_media_object(
                     temp_quicktime_path,
                     mo_per_shots[shot_name].get(&#39;mov&#39;)) is None:
                 self.error(
@@ -837,10 +412,10 @@ class main_dialogue(QDialog):
         if ok is False:
             return &#39;&#39;, False
         self.shotgun = shotgun_api.shotgun(self.sg_hostname.text(),
-                                          self.sg_login.text(),
-                                          sg_password)
+                                           self.sg_login.text(),
+                                           sg_password)
         try:
-            _, _, stc = self.get_selected_show()
+            _, _, stc = self.wg_flix_ui.get_selected_show()
             self.shotgun.get_project(stc)
         except BaseException:
             self.progress.hide()
@@ -851,13 +426,13 @@ class main_dialogue(QDialog):
     def pull_latest(self):
         &#34;&#34;&#34;pull_latest will export the latest sequence revision
         &#34;&#34;&#34;
-        if not self.authenticated:
+        if not self.wg_flix_ui.is_authenticated():
             self.info(&#39;You should log in first&#39;)
             return
         self.progress = QProgressDialog(&#39;Operation in progress.&#39;,
-                                       &#39;Stop&#39;,
-                                       0,
-                                       7)
+                                        &#39;Stop&#39;,
+                                        0,
+                                        7)
         self.progress.setMinimumWidth(400)
         self.progress.setMinimumHeight(100)
         self.progress.show()
@@ -872,28 +447,28 @@ class main_dialogue(QDialog):
                 self.progress.hide()
                 return
 
-        show_id, episodic, _ = self.get_selected_show()
-        seq_id, seq_rev_number, _ = self.get_selected_sequence()
-        seq_rev = self.flix_api.get_sequence_rev(show_id,
-                                                seq_id,
-                                                seq_rev_number)
+        show_id, episodic, _ = self.wg_flix_ui.get_selected_show()
+        seq_id, seq_rev_number, _ = self.wg_flix_ui.get_selected_sequence()
+        flix_api = self.wg_flix_ui.get_flix_api()
+        seq_rev = flix_api.get_sequence_rev(show_id, seq_id, seq_rev_number)
         episode_id = None
         if episodic:
-            episode_id, _ = self.get_selected_episode()
+            episode_id, _ = self.wg_flix_ui.get_selected_episode()
         if seq_rev is None:
             self.progress.hide()
             self.error(&#39;Could not retrieve sequence revision&#39;)
             return
         if self.update_progress(&#39;Get markers&#39;, False, True) is False:
             return
-        markers = self.get_markers(seq_rev)
+        markers = self.wg_flix_ui.get_flix_api().get_markers(seq_rev)
         if len(markers) &lt; 1:
             self.progress.hide()
             self.info(&#39;You need at least one shot&#39;)
             return
         if self.update_progress(&#39;Get Panels&#39;) is False:
             return
-        panels = self.flix_api.get_panels(show_id, seq_id, seq_rev_number)
+        panels = self.wg_flix_ui.get_flix_api().get_panels(
+            show_id, seq_id, seq_rev_number)
         if panels is None:
             self.progress.hide()
             self.error(&#39;Could not retrieve panels&#39;)
@@ -901,14 +476,14 @@ class main_dialogue(QDialog):
 
         if self.update_progress(&#39;Get Markers&#39;) is False:
             return
-        panels_per_markers = self.get_markers_per_panels(markers, panels)
+        panels_per_markers = self.wg_flix_ui.get_flix_api().get_markers_per_panels(markers, panels)
         if self.update_progress(&#39;Get Assets info&#39;) is False:
             return
-        mo_per_shots, ok = self.mo_per_shots(panels_per_markers,
-                                            show_id,
-                                            seq_id,
-                                            seq_rev_number,
-                                            episode_id)
+        mo_per_shots, ok = self.wg_flix_ui.get_flix_api().mo_per_shots(panels_per_markers,
+                                             show_id,
+                                             seq_id,
+                                             seq_rev_number,
+                                             episode_id)
         if mo_per_shots is None:
             self.progress.hide()
             self.error(&#39;Could not retrieve media objects per shots&#39;)
@@ -965,66 +540,16 @@ if __name__ == &#39;__main__&#39;:
 
     def __init__(self, parent=None):
         super(main_dialogue, self).__init__(parent)
-        self.flix_api = flix_api.flix()
         self.export_path = None
-        self.authenticated = False
         self.setWindowTitle(&#39;Flix Production Handoff&#39;)
 
+        self.wg_flix_ui = flix_widget.flix_ui()
+
+        # Setup UI view
         h_main_box = QHBoxLayout()
-        v_login_box = QVBoxLayout()
         v_sequence_box = QVBoxLayout()
 
-        self.hostname = QLineEdit(&#39;http://localhost:1234&#39;)
-        self.hostname.setMinimumWidth(200)
-        hostname_label = QLabel(&#39;Flix Server&#39;)
-        hostname_label.setBuddy(self.hostname)
-        self.login = QLineEdit(&#39;admin&#39;)
-        self.login.setMinimumWidth(200)
-        login_label = QLabel(&#39;Username&#39;)
-        login_label.setBuddy(self.login)
-        self.password = QLineEdit(&#39;admin&#39;)
-        self.password.setMinimumWidth(200)
-        self.password.setEchoMode(QLineEdit.Password)
-        password_label = QLabel(&#39;Password&#39;)
-        password_label.setBuddy(self.password)
-        self.submit = QPushButton(&#39;Log In&#39;)
-        self.submit.clicked.connect(self.authenticate)
-
-        login_layout = QVBoxLayout()
-        login_layout.addWidget(hostname_label)
-        login_layout.addWidget(self.hostname)
-        login_layout.addWidget(login_label)
-        login_layout.addWidget(self.login)
-        login_layout.addWidget(password_label)
-        login_layout.addWidget(self.password)
-        login_layout.addWidget(self.submit)
-        login_widget = QWidget()
-        login_widget.setLayout(login_layout)
-        login_widget.setMaximumHeight(250)
-
-        picture = QPixmap(&#39;./flix.png&#39;)
-        picture = picture.scaledToHeight(120)
-
-        label = QLabel()
-        label.setPixmap(picture)
-
-        v_login_box.addWidget(login_widget, alignment=Qt.AlignTop)
-        v_login_box.addWidget(label, alignment=Qt.AlignCenter)
-
-        self.show_list = QComboBox()
-        show_label = QLabel(&#39;Show&#39;)
-        show_label.setMinimumWidth(400)
-        show_label.setBuddy(self.show_list)
-        self.show_list.currentTextChanged.connect(self.on_show_changed)
-        self.episode_list = QComboBox()
-        self.episode_label = QLabel(&#39;Episode&#39;)
-        self.episode_label.setBuddy(self.episode_list)
-        self.episode_list.currentTextChanged.connect(self.on_episode_changed)
-        self.sequence_list = QComboBox()
-        sequence_label = QLabel(&#39;Sequence&#39;)
-        sequence_label.setBuddy(self.sequence_list)
-        self.sequence_list.currentTextChanged.connect(self.on_sequence_changed)
-
+        # Setup list for production handoff export option
         self.handoff_type_list = QComboBox()
         self.handoff_type_list.addItems([&#39;Local Export&#39;, &#39;Shotgun Export&#39;])
         self.handoff_type_label = QLabel(&#39;Handoff Type&#39;)
@@ -1032,6 +557,7 @@ if __name__ == &#39;__main__&#39;:
         self.handoff_type_list.currentTextChanged.connect(
             self.on_handoff_type_changed)
 
+        # Setup Local Export option
         self.export_layout = QHBoxLayout()
         self.export_path = QLineEdit()
         self.export_path_label = QLabel(&#39;Export path&#39;)
@@ -1041,6 +567,7 @@ if __name__ == &#39;__main__&#39;:
         self.export_layout.addWidget(self.export_path)
         self.export_layout.addWidget(self.export_path_button)
 
+        # Setup Shotgun export option
         self.sg_hostname = QLineEdit(&#39;https://thomaslacroix.shotgunstudio.com&#39;)
         self.sg_hostname.setMinimumWidth(350)
         self.sg_hostname_label = QLabel(&#39;Shotgun URL&#39;)
@@ -1050,15 +577,9 @@ if __name__ == &#39;__main__&#39;:
         self.sg_login_label = QLabel(&#39;Username&#39;)
         self.sg_login_label.setBuddy(self.sg_login)
 
+        # Setup Export Latest action
         pull = QPushButton(&#39;Export Latest&#39;)
         pull.clicked.connect(self.pull_latest)
-        v_sequence_box.addWidget(show_label)
-        v_sequence_box.addWidget(self.show_list)
-        v_sequence_box.addWidget(self.episode_label)
-        v_sequence_box.addWidget(self.episode_list)
-        v_sequence_box.addWidget(sequence_label)
-        v_sequence_box.addWidget(self.sequence_list)
-
         v_sequence_box.addWidget(self.handoff_type_label)
         v_sequence_box.addWidget(self.handoff_type_list)
 
@@ -1072,32 +593,11 @@ if __name__ == &#39;__main__&#39;:
         v_sequence_box.addWidget(pull)
         self.update_ui_handoff_type(&#39;Local Export&#39;)
 
-        h_main_box.addLayout(v_login_box)
+        # Add flix Ui widget
+        h_main_box.addWidget(self.wg_flix_ui)
         h_main_box.addLayout(v_sequence_box)
 
         self.setLayout(h_main_box)
-
-    def authenticate(self):
-        &#34;&#34;&#34;authenticate will authenticate a user and update the view
-        &#34;&#34;&#34;
-        if self.authenticated:
-            self.flix_api.reset()
-            self.authenticated = False
-            self.reset(&#39;Log In&#39;)
-            return
-
-        credentials = self.flix_api.authenticate(self.hostname.text(),
-                                                self.login.text(),
-                                                self.password.text())
-        if credentials is None:
-            self.error(&#39;Could not authenticate user&#39;)
-            self.login.clear()
-            self.password.clear()
-            return
-
-        self.init_shows()
-        self.authenticated = True
-        self.reset(&#39;Log Out&#39;)
 
     def error(self, message: str):
         &#34;&#34;&#34;error will show a error message with a given message
@@ -1121,95 +621,6 @@ if __name__ == &#39;__main__&#39;:
         msgbox.setText(message)
         msgbox.exec_()
 
-    def reset(self, action: str = &#39;Log Out&#39;):
-        &#34;&#34;&#34;reset will reset the login form / shows info for login / logout
-
-        Keyword Arguments:
-            action {str} -- action to handle (default: {&#39;Log Out&#39;})
-        &#34;&#34;&#34;
-        if action == &#39;Log Out&#39;:
-            self.hostname.setReadOnly(True)
-            self.login.setReadOnly(True)
-            self.password.setReadOnly(True)
-            self.submit.setText(&#39;Log Out&#39;)
-            return
-        self.hostname.setReadOnly(False)
-        self.login.setReadOnly(False)
-        self.password.setReadOnly(False)
-        self.show_list.clear()
-        self.sequence_list.clear()
-        self.episode_list.clear()
-        self.submit.setText(action)
-
-    def on_show_changed(self, tracking_code: str):
-        &#34;&#34;&#34;on_show_changed triggered after a show is selected,
-        will init the list of sequences from this show
-
-        Arguments:
-            tracking_code {str} -- show_tracking_code from the event
-        &#34;&#34;&#34;
-        self.selected_show_tracking_code = tracking_code
-        show_id, episodic, _ = self.get_selected_show()
-
-        self.sequence_list.clear()
-        self.episode_list.clear()
-        if episodic is True:
-            self.episode_list.show()
-            self.episode_label.show()
-            episodes = self.flix_api.get_episodes(show_id)
-            if episodes is None:
-                self.error(&#39;Could not retrieve episodes&#39;)
-                return
-            self.episode_tracking_code = self.get_episode_tracking_code(
-                episodes)
-            for e in self.episode_tracking_code:
-                self.episode_list.addItem(e)
-            self.episode_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
-            return
-        self.episode_list.hide()
-        self.episode_label.hide()
-        sequences = self.flix_api.get_sequences(show_id)
-        if sequences is None:
-            self.error(&#39;Could not retreive sequences&#39;)
-            return
-        self.sequence_tracking_code = self.get_sequence_tracking_code(
-            sequences)
-        for s in self.sequence_tracking_code:
-            self.sequence_list.addItem(s)
-        self.sequence_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
-
-    def on_episode_changed(self, tracking_code: str):
-        &#34;&#34;&#34;on_episode_changed triggered after an episode is selected,
-        will store the selected episode
-
-        Arguments:
-            tracking_code {str} -- episode_tracking_code from the event
-        &#34;&#34;&#34;
-        if tracking_code == &#39;&#39;:
-            return
-        self.selected_episode_tracking_code = tracking_code
-        show_id, _, _ = self.get_selected_show()
-        episode_id, _ = self.get_selected_episode()
-        sequences = self.flix_api.get_sequences(show_id, episode_id)
-        if sequences is None:
-            self.error(&#39;Could not retreive sequences&#39;)
-            return
-        self.sequence_tracking_code = self.get_sequence_tracking_code(
-            sequences)
-        self.sequence_list.clear()
-        for s in self.sequence_tracking_code:
-            self.sequence_list.addItem(s)
-        self.sequence_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
-
-    def on_sequence_changed(self, tracking_code: str):
-        &#34;&#34;&#34;on_sequence_changed triggered after a sequence is selected,
-        will store the selected sequence
-
-        Arguments:
-            tracking_code {str} -- sequence_tracking_code from the event
-        &#34;&#34;&#34;
-        self.selected_sequence_tracking_code = tracking_code
-
     def on_handoff_type_changed(self, handoff_type: str):
         &#34;&#34;&#34;on_handoff_type_changed triggered when the handoff type changed
 
@@ -1231,19 +642,6 @@ if __name__ == &#39;__main__&#39;:
         if len(export_p) &lt; 1:
             return
         self.export_path.setText(export_p)
-
-    def init_shows(self):
-        &#34;&#34;&#34;init_shows will retrieve the list of show and update the UI
-        &#34;&#34;&#34;
-        shows = self.flix_api.get_shows()
-        if shows is None:
-            self.error(&#39;Could not retreive shows&#39;)
-            return
-        self.show_tracking_code = self.get_show_tracking_code(shows)
-        self.show_list.clear()
-        for s in self.show_tracking_code:
-            self.show_list.addItem(s)
-        self.show_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
 
     def update_ui_handoff_type(self, handoff_type: str):
         &#34;&#34;&#34;update_ui_handoff_type will update the UI depending
@@ -1270,252 +668,6 @@ if __name__ == &#39;__main__&#39;:
             self.export_path_button.hide()
         self.selected_handoff_type = handoff_type
 
-    def sort_alphanumeric(self, d: Dict) -&gt; Dict:
-        &#34;&#34;&#34;sort_alphanumeric will sort a dictionnary alphanumerically by keys
-
-        Arguments:
-            d {Dict} -- Dictionnary to sort
-
-        Returns:
-            Dict -- Sorted Dictionnary
-        &#34;&#34;&#34;
-        def convert(text): return int(text) if text.isdigit() else text
-
-        def alphanum_key(key): return [convert(c)
-                                       for c in re.split(&#39;([0-9]+)&#39;, key)]
-        keys = sorted(d.keys(), key=alphanum_key)
-        return OrderedDict((k, d[k]) for k in keys)
-
-    def get_show_tracking_code(self, shows: List) -&gt; Dict:
-        &#34;&#34;&#34;get_show_tracking_code will format the shows to have a mapping:
-        tracking_code -&gt; [show_id, episodic]
-
-        Arguments:
-            shows {List} -- List of shows
-
-        Returns:
-            Dict -- Shows by tracking code
-        &#34;&#34;&#34;
-        show_tracking_codes = {}
-        if shows is None:
-            return show_tracking_codes
-        for s in shows:
-            if s.get(&#39;hidden&#39;, False) is False:
-                show_tracking_codes[s.get(&#39;tracking_code&#39;)] = [
-                    s.get(&#39;id&#39;),
-                    s.get(&#39;episodic&#39;)
-                ]
-        return self.sort_alphanumeric(show_tracking_codes)
-
-    def get_sequence_tracking_code(self, sequences: List) -&gt; Dict:
-        &#34;&#34;&#34;get_sequence_tracking_code will format the sequences to have
-        a mapping: tracking_code -&gt; [sequence_id, last_seq_rev_id]
-
-        Arguments:
-            sequences {List} -- List of sequences
-
-        Returns:
-            Dict -- sequence ID and last seq rev by tracking code
-        &#34;&#34;&#34;
-        sequence_tracking_codes = {}
-        if sequences is None:
-            return sequence_tracking_codes
-        for s in sequences:
-            if s.get(&#39;revisions_count&#39;) &gt; 0:
-                sequence_tracking_codes[s.get(&#39;tracking_code&#39;)] = [
-                    s.get(&#39;id&#39;),
-                    s.get(&#39;revisions_count&#39;)
-                ]
-        return self.sort_alphanumeric(sequence_tracking_codes)
-
-    def get_episode_tracking_code(self, episodes: List) -&gt; Dict:
-        &#34;&#34;&#34;get_episode_tracking_code will format the episodes to have a
-        mapping: tracking_code -&gt; episode_id
-
-        Arguments:
-            episodes {List} -- List of episodes
-
-        Returns:
-            Dict -- Episodes by tracking code
-        &#34;&#34;&#34;
-        episode_tracking_codes = {}
-        if episodes is None:
-            return episode_tracking_codes
-        for s in episodes:
-            episode_tracking_codes[s.get(&#39;tracking_code&#39;)] = s.get(&#39;id&#39;)
-        return self.sort_alphanumeric(episode_tracking_codes)
-
-    def get_selected_show(self) -&gt; Tuple[int, bool, str]:
-        &#34;&#34;&#34;get_selected_show will return the selected show info
-
-        Returns:
-            Tuple[int, bool, str] -- Show ID, Episodic, Show tracking code
-        &#34;&#34;&#34;
-        stc = self.selected_show_tracking_code
-        show_id = self.show_tracking_code[stc][0]
-        episodic = self.show_tracking_code[stc][1]
-        return show_id, episodic, stc
-
-    def get_selected_episode(self) -&gt; Tuple[int, str]:
-        &#34;&#34;&#34;get_selected_episode will return the selected episode info
-
-        Returns:
-            Tuple[int, str] -- Episode ID, Episode tracking code
-        &#34;&#34;&#34;
-        etc = self.selected_episode_tracking_code
-        episode_id = self.episode_tracking_code[etc]
-        return episode_id, etc
-
-    def get_selected_sequence(self) -&gt; Tuple[int, int, str]:
-        &#34;&#34;&#34;get_selected_sequence will return the selected sequence info
-
-        Returns:
-            Tuple[int, int, str] -- Sequence ID, Seq rev ID, seq tracking code
-        &#34;&#34;&#34;
-        stc = self.selected_sequence_tracking_code
-        seq_id = self.sequence_tracking_code[stc][0]
-        seq_rev = self.sequence_tracking_code[stc][1]
-        return seq_id, seq_rev, stc
-
-    def format_panel_for_revision(self, panel: object, pos: int) -&gt; object:
-        &#34;&#34;&#34;format_panel_for_revision will format the panel as
-        revisionned panel
-
-        Arguments:
-            panel {object} -- Panel from Flix
-            pos {int} -- Position in the Flix timeline
-
-        Returns:
-            object -- Formatted panel
-        &#34;&#34;&#34;
-        return {
-            &#39;dialogue&#39;: panel.get(&#39;dialogue&#39;),
-            &#39;duration&#39;: panel.get(&#39;duration&#39;),
-            &#39;id&#39;: panel.get(&#39;panel_id&#39;),
-            &#39;revision_number&#39;: panel.get(&#39;revision_number&#39;),
-            &#39;asset&#39;: panel.get(&#39;asset&#39;),
-            &#39;pos&#39;: pos
-        }
-
-    def get_markers(self, sequence_revision: object) -&gt; Dict:
-        &#34;&#34;&#34;get_markers will format the sequence_revision to have a
-        mapping of markers: start -&gt; marker_name
-
-        Arguments:
-            sequence_revision {object} -- Sequence revision
-
-        Returns:
-            Dict -- Markers by start time
-        &#34;&#34;&#34;
-        markers_mapping = {}
-        markers = sequence_revision.get(&#39;meta_data&#39;, {}).get(&#39;markers&#39;, [])
-        for m in markers:
-            markers_mapping[m.get(&#39;start&#39;)] = m.get(&#39;name&#39;)
-        return OrderedDict(sorted(markers_mapping.items()))
-
-    def get_markers_per_panels(self, markers: List, panels: List) -&gt; Dict:
-        &#34;&#34;&#34;get_markers_per_panels will return a mapping of markers per panels
-
-        Arguments:
-            markers {List} -- List of markers
-            panels {List} -- List of panels
-
-        Returns:
-            Dict -- Panels per markers
-        &#34;&#34;&#34;
-        panels_per_markers = {}
-        panel_in = 0
-        markers_keys = list(markers.keys())
-        marker_i = 0
-        for i, p in enumerate(panels):
-            if markers_keys[marker_i] == panel_in:
-                panels_per_markers[markers[markers_keys[marker_i]]] = []
-                panels_per_markers[markers[markers_keys[marker_i]]].append(
-                    self.format_panel_for_revision(p, i))
-                if len(markers_keys) &gt; marker_i + 1:
-                    marker_i = marker_i + 1
-            elif markers_keys[marker_i] &gt; panel_in:
-                panels_per_markers[markers[markers_keys[marker_i - 1]]].append(
-                    self.format_panel_for_revision(p, i))
-            elif len(markers_keys) - 1 == marker_i:
-                if markers[markers_keys[marker_i]] not in panels_per_markers:
-                    panels_per_markers[markers[markers_keys[marker_i]]] = []
-                panels_per_markers[markers[markers_keys[marker_i]]].append(
-                    self.format_panel_for_revision(p, i))
-            panel_in = panel_in + p.get(&#39;duration&#39;)
-        return panels_per_markers
-
-    def mo_per_shots(self,
-                     panels_per_markers: Dict,
-                     show_id: int,
-                     seq_id: int,
-                     seq_rev_number: int,
-                     episode_id: int = None) -&gt; Dict:
-        &#34;&#34;&#34;mo_per_shots will make a mapping of all media objects per shots
-
-        Arguments:
-            panels_per_markers {Dict} -- Panels per markers
-            show_id {int} -- Show ID
-            seq_id {int} -- Sequence ID
-            seq_rev_number {int} -- Sequence Revision ID
-
-        Keyword Arguments:
-            episode_id {int} -- Episode ID (default: {None})
-
-        Returns:
-            Dict -- Media objects per shots
-        &#34;&#34;&#34;
-        mo_per_shots = {}
-        for shot_name in panels_per_markers:
-            mo_per_shots[shot_name] = {&#39;artwork&#39;: [], &#39;thumbnails&#39;: []}
-            panels = panels_per_markers[shot_name]
-            for p in panels:
-                asset = self.flix_api.get_asset(p.get(&#39;asset&#39;).get(&#39;asset_id&#39;))
-                if asset is None:
-                    self.error(&#39;Could not retrieve asset&#39;)
-                    return None, False
-                artwork = asset.get(&#39;media_objects&#39;, {}).get(&#39;artwork&#39;)[0]
-                mo_per_shots[shot_name][&#39;artwork&#39;].append({
-                    &#39;name&#39;: artwork.get(&#39;name&#39;),
-                    &#39;id&#39;: p.get(&#39;id&#39;),
-                    &#39;revision_number&#39;: p.get(&#39;revision_number&#39;),
-                    &#39;pos&#39;: p.get(&#39;pos&#39;),
-                    &#39;mo&#39;: artwork.get(&#39;id&#39;)
-                })
-                mo_per_shots[shot_name][&#39;thumbnails&#39;].append(
-                    {&#39;name&#39;: asset.get(&#39;media_objects&#39;, {}).get(&#39;thumbnail&#39;)
-                     [0].get(&#39;name&#39;),
-                     &#39;id&#39;: p.get(&#39;id&#39;),
-                     &#39;revision_number&#39;: p.get(&#39;revision_number&#39;),
-                     &#39;pos&#39;: p.get(&#39;pos&#39;),
-                     &#39;mo&#39;: asset.get(&#39;media_objects&#39;, {}).get(&#39;thumbnail&#39;)
-                     [0].get(&#39;id&#39;)})
-            if self.update_progress(
-                &#39;Export quicktime from Flix for shot {0}&#39;.format(shot_name),
-                    True) is False:
-                return None, False
-            chain_id = self.flix_api.start_quicktime_export(
-                show_id, seq_id, seq_rev_number, panels, episode_id, False)
-            while True:
-                res = self.flix_api.get_chain(chain_id)
-                if res is None or res.get(&#39;status&#39;) == &#39;errored&#39; or res.get(
-                        &#39;status&#39;) == &#39;timed out&#39;:
-                    self.error(&#39;Could not export quicktime&#39;)
-                    return None, False
-                if res.get(&#39;status&#39;) == &#39;in progress&#39;:
-                    time.sleep(1)
-                    continue
-                if res.get(&#39;status&#39;) == &#39;completed&#39;:
-                    asset = self.flix_api.get_asset(
-                        res.get(&#39;results&#39;, {}).get(&#39;assetID&#39;))
-                    if asset is None:
-                        self.error(&#39;Could not retrieve asset&#39;)
-                        return None, False
-                    mo_per_shots[shot_name][&#39;mov&#39;] = asset.get(
-                        &#39;media_objects&#39;, {}).get(&#39;artwork&#39;, [])[0].get(&#39;id&#39;)
-                    break
-        return mo_per_shots, True
-
     def create_folder(self, path: str):
         &#34;&#34;&#34;create_folder will create a folder if it does not exist
 
@@ -1535,19 +687,19 @@ if __name__ == &#39;__main__&#39;:
         Returns:
             str -- Sequence revision path
         &#34;&#34;&#34;
-        _, episodic, show_tracking_code = self.get_selected_show()
-        _, seq_rev_number, seq_tracking_code = self.get_selected_sequence()
+        _, episodic, show_tracking_code = self.wg_flix_ui.get_selected_show()
+        _, seq_rev_nbr, seq_tr_code = self.wg_flix_ui.get_selected_sequence()
         show_path = os.path.join(base, show_tracking_code)
         self.create_folder(show_path)
-        sequence_path = os.path.join(show_path, seq_tracking_code)
+        sequence_path = os.path.join(show_path, seq_tr_code)
         if episodic:
-            _, episode_tracking_code = self.get_selected_episode()
+            _, episode_tracking_code = self.wg_flix_ui.get_selected_episode()
             episode_path = os.path.join(show_path, episode_tracking_code)
             self.create_folder(episode_path)
-            sequence_path = os.path.join(episode_path, seq_tracking_code)
+            sequence_path = os.path.join(episode_path, seq_tr_code)
         self.create_folder(sequence_path)
         sequence_revision_path = os.path.join(
-            sequence_path, &#39;v{0}&#39;.format(seq_rev_number))
+            sequence_path, &#39;v{0}&#39;.format(seq_rev_nbr))
         self.create_folder(sequence_revision_path)
         return sequence_revision_path
 
@@ -1568,8 +720,8 @@ if __name__ == &#39;__main__&#39;:
         Returns:
             str -- Formatted name
         &#34;&#34;&#34;
-        _, _, show_tracking_code = self.get_selected_show()
-        _, _, seq_tracking_code = self.get_selected_sequence()
+        _, _, show_tracking_code = self.wg_flix_ui.get_selected_show()
+        _, _, seq_tracking_code = self.wg_flix_ui.get_selected_sequence()
         return &#39;{0}_{1}_v{2}_{3}_{4}_v{5}&#39;.format(
             show_tracking_code,
             seq_tracking_code,
@@ -1588,16 +740,16 @@ if __name__ == &#39;__main__&#39;:
         Returns:
             bool -- State of the download file
         &#34;&#34;&#34;
-        _, seq_rev_number, seq_tracking_code = self.get_selected_sequence()
+        _, seq_rev_nbr, seq_tr_code = self.wg_flix_ui.get_selected_sequence()
         for _, shot in enumerate(mo_per_shots):
             shot_path = os.path.join(export_path, shot)
             self.create_folder(shot_path)
             mov_name = &#39;{0}_v{1}_{2}.mov&#39;.format(
-                seq_tracking_code, seq_rev_number, shot)
+                seq_tr_code, seq_rev_nbr, shot)
             mov_path = os.path.join(shot_path, mov_name)
             if sys.platform == &#39;win32&#39; or sys.platform == &#39;cygwin&#39;:
                 mov_path = mov_path.replace(&#39;\\&#39;, &#39;\\\\&#39;)
-            self.flix_api.download_media_object(
+            self.wg_flix_ui.get_flix_api().download_media_object(
                 mov_path, mo_per_shots[shot].get(&#39;mov&#39;))
             artwork_folder_path = os.path.join(shot_path, &#39;artwork&#39;)
             self.create_folder(artwork_folder_path)
@@ -1608,14 +760,14 @@ if __name__ == &#39;__main__&#39;:
             for artwork in mo_per_shots[shot].get(&#39;artwork&#39;, []):
                 ext = os.path.splitext(artwork.get(&#39;name&#39;))
                 art_name = self.get_default_image_name(
-                    seq_rev_number, artwork.get(&#39;pos&#39;),
+                    seq_rev_nbr, artwork.get(&#39;pos&#39;),
                     artwork.get(&#39;id&#39;),
                     artwork.get(&#39;revision_number&#39;))
                 artwork_path = os.path.join(
                     artwork_folder_path, &#39;{0}{1}&#39;.format(art_name, ext[1]))
                 if sys.platform == &#39;win32&#39; or sys.platform == &#39;cygwin&#39;:
                     artwork_path = artwork_path.replace(&#39;\\&#39;, &#39;\\\\&#39;)
-                self.flix_api.download_media_object(
+                self.wg_flix_ui.get_flix_api().download_media_object(
                     artwork_path, artwork.get(&#39;mo&#39;))
             thumb_folder_path = os.path.join(shot_path, &#39;thumbnail&#39;)
             self.create_folder(thumb_folder_path)
@@ -1626,14 +778,14 @@ if __name__ == &#39;__main__&#39;:
             for thumb in mo_per_shots[shot].get(&#39;thumbnails&#39;, []):
                 ext = os.path.splitext(thumb.get(&#39;name&#39;))
                 art_name = self.get_default_image_name(
-                    seq_rev_number, thumb.get(&#39;pos&#39;),
+                    seq_rev_nbr, thumb.get(&#39;pos&#39;),
                     thumb.get(&#39;id&#39;),
                     thumb.get(&#39;revision_number&#39;))
                 thumb_path = os.path.join(
                     thumb_folder_path, &#39;{0}{1}&#39;.format(art_name, ext[1]))
                 if sys.platform == &#39;win32&#39; or sys.platform == &#39;cygwin&#39;:
                     thumb_path = thumb_path.replace(&#39;\\&#39;, &#39;\\\\&#39;)
-                self.flix_api.download_media_object(
+                self.wg_flix_ui.get_flix_api().download_media_object(
                     thumb_path, thumb.get(&#39;mo&#39;))
         return True
 
@@ -1649,8 +801,8 @@ if __name__ == &#39;__main__&#39;:
         Returns:
             bool -- State of the push to shotgun
         &#34;&#34;&#34;
-        _, _, show_name = self.get_selected_show()
-        _, seq_rev_number, seq_name = self.get_selected_sequence()
+        _, _, show_name = self.wg_flix_ui.get_selected_show()
+        _, seq_rev_number, seq_name = self.wg_flix_ui.get_selected_sequence()
         sg_show = self.shotgun.get_project(show_name)
         if sg_show is None:
             sg_show = self.shotgun.create_project(show_name)
@@ -1679,7 +831,7 @@ if __name__ == &#39;__main__&#39;:
             temp_quicktime_path = os.path.join(temp_folder, mov_name)
             if sys.platform == &#39;win32&#39; or sys.platform == &#39;cygwin&#39;:
                 temp_quicktime_path = temp_quicktime_path.replace(&#39;\\&#39;, &#39;\\\\&#39;)
-            if self.flix_api.download_media_object(
+            if self.wg_flix_ui.get_flix_api().download_media_object(
                     temp_quicktime_path,
                     mo_per_shots[shot_name].get(&#39;mov&#39;)) is None:
                 self.error(
@@ -1754,10 +906,10 @@ if __name__ == &#39;__main__&#39;:
         if ok is False:
             return &#39;&#39;, False
         self.shotgun = shotgun_api.shotgun(self.sg_hostname.text(),
-                                          self.sg_login.text(),
-                                          sg_password)
+                                           self.sg_login.text(),
+                                           sg_password)
         try:
-            _, _, stc = self.get_selected_show()
+            _, _, stc = self.wg_flix_ui.get_selected_show()
             self.shotgun.get_project(stc)
         except BaseException:
             self.progress.hide()
@@ -1768,13 +920,13 @@ if __name__ == &#39;__main__&#39;:
     def pull_latest(self):
         &#34;&#34;&#34;pull_latest will export the latest sequence revision
         &#34;&#34;&#34;
-        if not self.authenticated:
+        if not self.wg_flix_ui.is_authenticated():
             self.info(&#39;You should log in first&#39;)
             return
         self.progress = QProgressDialog(&#39;Operation in progress.&#39;,
-                                       &#39;Stop&#39;,
-                                       0,
-                                       7)
+                                        &#39;Stop&#39;,
+                                        0,
+                                        7)
         self.progress.setMinimumWidth(400)
         self.progress.setMinimumHeight(100)
         self.progress.show()
@@ -1789,28 +941,28 @@ if __name__ == &#39;__main__&#39;:
                 self.progress.hide()
                 return
 
-        show_id, episodic, _ = self.get_selected_show()
-        seq_id, seq_rev_number, _ = self.get_selected_sequence()
-        seq_rev = self.flix_api.get_sequence_rev(show_id,
-                                                seq_id,
-                                                seq_rev_number)
+        show_id, episodic, _ = self.wg_flix_ui.get_selected_show()
+        seq_id, seq_rev_number, _ = self.wg_flix_ui.get_selected_sequence()
+        flix_api = self.wg_flix_ui.get_flix_api()
+        seq_rev = flix_api.get_sequence_rev(show_id, seq_id, seq_rev_number)
         episode_id = None
         if episodic:
-            episode_id, _ = self.get_selected_episode()
+            episode_id, _ = self.wg_flix_ui.get_selected_episode()
         if seq_rev is None:
             self.progress.hide()
             self.error(&#39;Could not retrieve sequence revision&#39;)
             return
         if self.update_progress(&#39;Get markers&#39;, False, True) is False:
             return
-        markers = self.get_markers(seq_rev)
+        markers = self.wg_flix_ui.get_flix_api().get_markers(seq_rev)
         if len(markers) &lt; 1:
             self.progress.hide()
             self.info(&#39;You need at least one shot&#39;)
             return
         if self.update_progress(&#39;Get Panels&#39;) is False:
             return
-        panels = self.flix_api.get_panels(show_id, seq_id, seq_rev_number)
+        panels = self.wg_flix_ui.get_flix_api().get_panels(
+            show_id, seq_id, seq_rev_number)
         if panels is None:
             self.progress.hide()
             self.error(&#39;Could not retrieve panels&#39;)
@@ -1818,14 +970,14 @@ if __name__ == &#39;__main__&#39;:
 
         if self.update_progress(&#39;Get Markers&#39;) is False:
             return
-        panels_per_markers = self.get_markers_per_panels(markers, panels)
+        panels_per_markers = self.wg_flix_ui.get_flix_api().get_markers_per_panels(markers, panels)
         if self.update_progress(&#39;Get Assets info&#39;) is False:
             return
-        mo_per_shots, ok = self.mo_per_shots(panels_per_markers,
-                                            show_id,
-                                            seq_id,
-                                            seq_rev_number,
-                                            episode_id)
+        mo_per_shots, ok = self.wg_flix_ui.get_flix_api().mo_per_shots(panels_per_markers,
+                                             show_id,
+                                             seq_id,
+                                             seq_rev_number,
+                                             episode_id)
         if mo_per_shots is None:
             self.progress.hide()
             self.error(&#39;Could not retrieve media objects per shots&#39;)
@@ -1868,38 +1020,6 @@ if __name__ == &#39;__main__&#39;:
 </dl>
 <h3>Methods</h3>
 <dl>
-<dt id="main.main_dialogue.authenticate"><code class="name flex">
-<span>def <span class="ident">authenticate</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>authenticate will authenticate a user and update the view</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def authenticate(self):
-    &#34;&#34;&#34;authenticate will authenticate a user and update the view
-    &#34;&#34;&#34;
-    if self.authenticated:
-        self.flix_api.reset()
-        self.authenticated = False
-        self.reset(&#39;Log In&#39;)
-        return
-
-    credentials = self.flix_api.authenticate(self.hostname.text(),
-                                            self.login.text(),
-                                            self.password.text())
-    if credentials is None:
-        self.error(&#39;Could not authenticate user&#39;)
-        self.login.clear()
-        self.password.clear()
-        return
-
-    self.init_shows()
-    self.authenticated = True
-    self.reset(&#39;Log Out&#39;)</code></pre>
-</details>
-</dd>
 <dt id="main.main_dialogue.browse_export_path"><code class="name flex">
 <span>def <span class="ident">browse_export_path</span></span>(<span>self)</span>
 </code></dt>
@@ -1973,19 +1093,19 @@ shows to sequence revision</p>
     Returns:
         str -- Sequence revision path
     &#34;&#34;&#34;
-    _, episodic, show_tracking_code = self.get_selected_show()
-    _, seq_rev_number, seq_tracking_code = self.get_selected_sequence()
+    _, episodic, show_tracking_code = self.wg_flix_ui.get_selected_show()
+    _, seq_rev_nbr, seq_tr_code = self.wg_flix_ui.get_selected_sequence()
     show_path = os.path.join(base, show_tracking_code)
     self.create_folder(show_path)
-    sequence_path = os.path.join(show_path, seq_tracking_code)
+    sequence_path = os.path.join(show_path, seq_tr_code)
     if episodic:
-        _, episode_tracking_code = self.get_selected_episode()
+        _, episode_tracking_code = self.wg_flix_ui.get_selected_episode()
         episode_path = os.path.join(show_path, episode_tracking_code)
         self.create_folder(episode_path)
-        sequence_path = os.path.join(episode_path, seq_tracking_code)
+        sequence_path = os.path.join(episode_path, seq_tr_code)
     self.create_folder(sequence_path)
     sequence_revision_path = os.path.join(
-        sequence_path, &#39;v{0}&#39;.format(seq_rev_number))
+        sequence_path, &#39;v{0}&#39;.format(seq_rev_nbr))
     self.create_folder(sequence_revision_path)
     return sequence_revision_path</code></pre>
 </details>
@@ -2017,16 +1137,16 @@ mo_per_shots {Dict} &ndash; Media objects per shots</p>
     Returns:
         bool -- State of the download file
     &#34;&#34;&#34;
-    _, seq_rev_number, seq_tracking_code = self.get_selected_sequence()
+    _, seq_rev_nbr, seq_tr_code = self.wg_flix_ui.get_selected_sequence()
     for _, shot in enumerate(mo_per_shots):
         shot_path = os.path.join(export_path, shot)
         self.create_folder(shot_path)
         mov_name = &#39;{0}_v{1}_{2}.mov&#39;.format(
-            seq_tracking_code, seq_rev_number, shot)
+            seq_tr_code, seq_rev_nbr, shot)
         mov_path = os.path.join(shot_path, mov_name)
         if sys.platform == &#39;win32&#39; or sys.platform == &#39;cygwin&#39;:
             mov_path = mov_path.replace(&#39;\\&#39;, &#39;\\\\&#39;)
-        self.flix_api.download_media_object(
+        self.wg_flix_ui.get_flix_api().download_media_object(
             mov_path, mo_per_shots[shot].get(&#39;mov&#39;))
         artwork_folder_path = os.path.join(shot_path, &#39;artwork&#39;)
         self.create_folder(artwork_folder_path)
@@ -2037,14 +1157,14 @@ mo_per_shots {Dict} &ndash; Media objects per shots</p>
         for artwork in mo_per_shots[shot].get(&#39;artwork&#39;, []):
             ext = os.path.splitext(artwork.get(&#39;name&#39;))
             art_name = self.get_default_image_name(
-                seq_rev_number, artwork.get(&#39;pos&#39;),
+                seq_rev_nbr, artwork.get(&#39;pos&#39;),
                 artwork.get(&#39;id&#39;),
                 artwork.get(&#39;revision_number&#39;))
             artwork_path = os.path.join(
                 artwork_folder_path, &#39;{0}{1}&#39;.format(art_name, ext[1]))
             if sys.platform == &#39;win32&#39; or sys.platform == &#39;cygwin&#39;:
                 artwork_path = artwork_path.replace(&#39;\\&#39;, &#39;\\\\&#39;)
-            self.flix_api.download_media_object(
+            self.wg_flix_ui.get_flix_api().download_media_object(
                 artwork_path, artwork.get(&#39;mo&#39;))
         thumb_folder_path = os.path.join(shot_path, &#39;thumbnail&#39;)
         self.create_folder(thumb_folder_path)
@@ -2055,14 +1175,14 @@ mo_per_shots {Dict} &ndash; Media objects per shots</p>
         for thumb in mo_per_shots[shot].get(&#39;thumbnails&#39;, []):
             ext = os.path.splitext(thumb.get(&#39;name&#39;))
             art_name = self.get_default_image_name(
-                seq_rev_number, thumb.get(&#39;pos&#39;),
+                seq_rev_nbr, thumb.get(&#39;pos&#39;),
                 thumb.get(&#39;id&#39;),
                 thumb.get(&#39;revision_number&#39;))
             thumb_path = os.path.join(
                 thumb_folder_path, &#39;{0}{1}&#39;.format(art_name, ext[1]))
             if sys.platform == &#39;win32&#39; or sys.platform == &#39;cygwin&#39;:
                 thumb_path = thumb_path.replace(&#39;\\&#39;, &#39;\\\\&#39;)
-            self.flix_api.download_media_object(
+            self.wg_flix_ui.get_flix_api().download_media_object(
                 thumb_path, thumb.get(&#39;mo&#39;))
     return True</code></pre>
 </details>
@@ -2088,45 +1208,6 @@ mo_per_shots {Dict} &ndash; Media objects per shots</p>
     err.setWindowTitle(&#39;Flix&#39;)
     err.showMessage(message)
     err.exec_()</code></pre>
-</details>
-</dd>
-<dt id="main.main_dialogue.format_panel_for_revision"><code class="name flex">
-<span>def <span class="ident">format_panel_for_revision</span></span>(<span>self, panel: object, pos: int) -> object</span>
-</code></dt>
-<dd>
-<div class="desc"><p>format_panel_for_revision will format the panel as
-revisionned panel</p>
-<h2 id="arguments">Arguments</h2>
-<p>panel {object} &ndash; Panel from Flix
-pos {int} &ndash; Position in the Flix timeline</p>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code>object -- Formatted panel</code></dt>
-<dd>&nbsp;</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def format_panel_for_revision(self, panel: object, pos: int) -&gt; object:
-    &#34;&#34;&#34;format_panel_for_revision will format the panel as
-    revisionned panel
-
-    Arguments:
-        panel {object} -- Panel from Flix
-        pos {int} -- Position in the Flix timeline
-
-    Returns:
-        object -- Formatted panel
-    &#34;&#34;&#34;
-    return {
-        &#39;dialogue&#39;: panel.get(&#39;dialogue&#39;),
-        &#39;duration&#39;: panel.get(&#39;duration&#39;),
-        &#39;id&#39;: panel.get(&#39;panel_id&#39;),
-        &#39;revision_number&#39;: panel.get(&#39;revision_number&#39;),
-        &#39;asset&#39;: panel.get(&#39;asset&#39;),
-        &#39;pos&#39;: pos
-    }</code></pre>
 </details>
 </dd>
 <dt id="main.main_dialogue.get_default_image_name"><code class="name flex">
@@ -2165,8 +1246,8 @@ panel_revision {int} &ndash; Panel revision</p>
     Returns:
         str -- Formatted name
     &#34;&#34;&#34;
-    _, _, show_tracking_code = self.get_selected_show()
-    _, _, seq_tracking_code = self.get_selected_sequence()
+    _, _, show_tracking_code = self.wg_flix_ui.get_selected_show()
+    _, _, seq_tracking_code = self.wg_flix_ui.get_selected_sequence()
     return &#39;{0}_{1}_v{2}_{3}_{4}_v{5}&#39;.format(
         show_tracking_code,
         seq_tracking_code,
@@ -2174,280 +1255,6 @@ panel_revision {int} &ndash; Panel revision</p>
         panel_pos,
         panel_id,
         panel_revision)</code></pre>
-</details>
-</dd>
-<dt id="main.main_dialogue.get_episode_tracking_code"><code class="name flex">
-<span>def <span class="ident">get_episode_tracking_code</span></span>(<span>self, episodes: typing.List) -> typing.Dict</span>
-</code></dt>
-<dd>
-<div class="desc"><p>get_episode_tracking_code will format the episodes to have a
-mapping: tracking_code -&gt; episode_id</p>
-<h2 id="arguments">Arguments</h2>
-<p>episodes {List} &ndash; List of episodes</p>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code>Dict -- Episodes by tracking code</code></dt>
-<dd>&nbsp;</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def get_episode_tracking_code(self, episodes: List) -&gt; Dict:
-    &#34;&#34;&#34;get_episode_tracking_code will format the episodes to have a
-    mapping: tracking_code -&gt; episode_id
-
-    Arguments:
-        episodes {List} -- List of episodes
-
-    Returns:
-        Dict -- Episodes by tracking code
-    &#34;&#34;&#34;
-    episode_tracking_codes = {}
-    if episodes is None:
-        return episode_tracking_codes
-    for s in episodes:
-        episode_tracking_codes[s.get(&#39;tracking_code&#39;)] = s.get(&#39;id&#39;)
-    return self.sort_alphanumeric(episode_tracking_codes)</code></pre>
-</details>
-</dd>
-<dt id="main.main_dialogue.get_markers"><code class="name flex">
-<span>def <span class="ident">get_markers</span></span>(<span>self, sequence_revision: object) -> typing.Dict</span>
-</code></dt>
-<dd>
-<div class="desc"><p>get_markers will format the sequence_revision to have a
-mapping of markers: start -&gt; marker_name</p>
-<h2 id="arguments">Arguments</h2>
-<p>sequence_revision {object} &ndash; Sequence revision</p>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code>Dict -- Markers by start time</code></dt>
-<dd>&nbsp;</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def get_markers(self, sequence_revision: object) -&gt; Dict:
-    &#34;&#34;&#34;get_markers will format the sequence_revision to have a
-    mapping of markers: start -&gt; marker_name
-
-    Arguments:
-        sequence_revision {object} -- Sequence revision
-
-    Returns:
-        Dict -- Markers by start time
-    &#34;&#34;&#34;
-    markers_mapping = {}
-    markers = sequence_revision.get(&#39;meta_data&#39;, {}).get(&#39;markers&#39;, [])
-    for m in markers:
-        markers_mapping[m.get(&#39;start&#39;)] = m.get(&#39;name&#39;)
-    return OrderedDict(sorted(markers_mapping.items()))</code></pre>
-</details>
-</dd>
-<dt id="main.main_dialogue.get_markers_per_panels"><code class="name flex">
-<span>def <span class="ident">get_markers_per_panels</span></span>(<span>self, markers: typing.List, panels: typing.List) -> typing.Dict</span>
-</code></dt>
-<dd>
-<div class="desc"><p>get_markers_per_panels will return a mapping of markers per panels</p>
-<h2 id="arguments">Arguments</h2>
-<p>markers {List} &ndash; List of markers
-panels {List} &ndash; List of panels</p>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code>Dict -- Panels per markers</code></dt>
-<dd>&nbsp;</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def get_markers_per_panels(self, markers: List, panels: List) -&gt; Dict:
-    &#34;&#34;&#34;get_markers_per_panels will return a mapping of markers per panels
-
-    Arguments:
-        markers {List} -- List of markers
-        panels {List} -- List of panels
-
-    Returns:
-        Dict -- Panels per markers
-    &#34;&#34;&#34;
-    panels_per_markers = {}
-    panel_in = 0
-    markers_keys = list(markers.keys())
-    marker_i = 0
-    for i, p in enumerate(panels):
-        if markers_keys[marker_i] == panel_in:
-            panels_per_markers[markers[markers_keys[marker_i]]] = []
-            panels_per_markers[markers[markers_keys[marker_i]]].append(
-                self.format_panel_for_revision(p, i))
-            if len(markers_keys) &gt; marker_i + 1:
-                marker_i = marker_i + 1
-        elif markers_keys[marker_i] &gt; panel_in:
-            panels_per_markers[markers[markers_keys[marker_i - 1]]].append(
-                self.format_panel_for_revision(p, i))
-        elif len(markers_keys) - 1 == marker_i:
-            if markers[markers_keys[marker_i]] not in panels_per_markers:
-                panels_per_markers[markers[markers_keys[marker_i]]] = []
-            panels_per_markers[markers[markers_keys[marker_i]]].append(
-                self.format_panel_for_revision(p, i))
-        panel_in = panel_in + p.get(&#39;duration&#39;)
-    return panels_per_markers</code></pre>
-</details>
-</dd>
-<dt id="main.main_dialogue.get_selected_episode"><code class="name flex">
-<span>def <span class="ident">get_selected_episode</span></span>(<span>self) -> typing.Tuple[int, str]</span>
-</code></dt>
-<dd>
-<div class="desc"><p>get_selected_episode will return the selected episode info</p>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code>Tuple[int, str] -- Episode ID, Episode tracking code</code></dt>
-<dd>&nbsp;</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def get_selected_episode(self) -&gt; Tuple[int, str]:
-    &#34;&#34;&#34;get_selected_episode will return the selected episode info
-
-    Returns:
-        Tuple[int, str] -- Episode ID, Episode tracking code
-    &#34;&#34;&#34;
-    etc = self.selected_episode_tracking_code
-    episode_id = self.episode_tracking_code[etc]
-    return episode_id, etc</code></pre>
-</details>
-</dd>
-<dt id="main.main_dialogue.get_selected_sequence"><code class="name flex">
-<span>def <span class="ident">get_selected_sequence</span></span>(<span>self) -> typing.Tuple[int, int, str]</span>
-</code></dt>
-<dd>
-<div class="desc"><p>get_selected_sequence will return the selected sequence info</p>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code>Tuple[int, int, str] -- Sequence ID, Seq rev ID, seq tracking code</code></dt>
-<dd>&nbsp;</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def get_selected_sequence(self) -&gt; Tuple[int, int, str]:
-    &#34;&#34;&#34;get_selected_sequence will return the selected sequence info
-
-    Returns:
-        Tuple[int, int, str] -- Sequence ID, Seq rev ID, seq tracking code
-    &#34;&#34;&#34;
-    stc = self.selected_sequence_tracking_code
-    seq_id = self.sequence_tracking_code[stc][0]
-    seq_rev = self.sequence_tracking_code[stc][1]
-    return seq_id, seq_rev, stc</code></pre>
-</details>
-</dd>
-<dt id="main.main_dialogue.get_selected_show"><code class="name flex">
-<span>def <span class="ident">get_selected_show</span></span>(<span>self) -> typing.Tuple[int, bool, str]</span>
-</code></dt>
-<dd>
-<div class="desc"><p>get_selected_show will return the selected show info</p>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code>Tuple[int, bool, str] -- Show ID, Episodic, Show tracking code</code></dt>
-<dd>&nbsp;</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def get_selected_show(self) -&gt; Tuple[int, bool, str]:
-    &#34;&#34;&#34;get_selected_show will return the selected show info
-
-    Returns:
-        Tuple[int, bool, str] -- Show ID, Episodic, Show tracking code
-    &#34;&#34;&#34;
-    stc = self.selected_show_tracking_code
-    show_id = self.show_tracking_code[stc][0]
-    episodic = self.show_tracking_code[stc][1]
-    return show_id, episodic, stc</code></pre>
-</details>
-</dd>
-<dt id="main.main_dialogue.get_sequence_tracking_code"><code class="name flex">
-<span>def <span class="ident">get_sequence_tracking_code</span></span>(<span>self, sequences: typing.List) -> typing.Dict</span>
-</code></dt>
-<dd>
-<div class="desc"><p>get_sequence_tracking_code will format the sequences to have
-a mapping: tracking_code -&gt; [sequence_id, last_seq_rev_id]</p>
-<h2 id="arguments">Arguments</h2>
-<p>sequences {List} &ndash; List of sequences</p>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code>Dict -- sequence ID and last seq rev by tracking code</code></dt>
-<dd>&nbsp;</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def get_sequence_tracking_code(self, sequences: List) -&gt; Dict:
-    &#34;&#34;&#34;get_sequence_tracking_code will format the sequences to have
-    a mapping: tracking_code -&gt; [sequence_id, last_seq_rev_id]
-
-    Arguments:
-        sequences {List} -- List of sequences
-
-    Returns:
-        Dict -- sequence ID and last seq rev by tracking code
-    &#34;&#34;&#34;
-    sequence_tracking_codes = {}
-    if sequences is None:
-        return sequence_tracking_codes
-    for s in sequences:
-        if s.get(&#39;revisions_count&#39;) &gt; 0:
-            sequence_tracking_codes[s.get(&#39;tracking_code&#39;)] = [
-                s.get(&#39;id&#39;),
-                s.get(&#39;revisions_count&#39;)
-            ]
-    return self.sort_alphanumeric(sequence_tracking_codes)</code></pre>
-</details>
-</dd>
-<dt id="main.main_dialogue.get_show_tracking_code"><code class="name flex">
-<span>def <span class="ident">get_show_tracking_code</span></span>(<span>self, shows: typing.List) -> typing.Dict</span>
-</code></dt>
-<dd>
-<div class="desc"><p>get_show_tracking_code will format the shows to have a mapping:
-tracking_code -&gt; [show_id, episodic]</p>
-<h2 id="arguments">Arguments</h2>
-<p>shows {List} &ndash; List of shows</p>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code>Dict -- Shows by tracking code</code></dt>
-<dd>&nbsp;</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def get_show_tracking_code(self, shows: List) -&gt; Dict:
-    &#34;&#34;&#34;get_show_tracking_code will format the shows to have a mapping:
-    tracking_code -&gt; [show_id, episodic]
-
-    Arguments:
-        shows {List} -- List of shows
-
-    Returns:
-        Dict -- Shows by tracking code
-    &#34;&#34;&#34;
-    show_tracking_codes = {}
-    if shows is None:
-        return show_tracking_codes
-    for s in shows:
-        if s.get(&#39;hidden&#39;, False) is False:
-            show_tracking_codes[s.get(&#39;tracking_code&#39;)] = [
-                s.get(&#39;id&#39;),
-                s.get(&#39;episodic&#39;)
-            ]
-    return self.sort_alphanumeric(show_tracking_codes)</code></pre>
 </details>
 </dd>
 <dt id="main.main_dialogue.info"><code class="name flex">
@@ -2532,168 +1339,16 @@ tracking_code -&gt; [show_id, episodic]</p>
     if ok is False:
         return &#39;&#39;, False
     self.shotgun = shotgun_api.shotgun(self.sg_hostname.text(),
-                                      self.sg_login.text(),
-                                      sg_password)
+                                       self.sg_login.text(),
+                                       sg_password)
     try:
-        _, _, stc = self.get_selected_show()
+        _, _, stc = self.wg_flix_ui.get_selected_show()
         self.shotgun.get_project(stc)
     except BaseException:
         self.progress.hide()
         self.error(&#39;could not login to shotgun&#39;)
         return &#39;&#39;, False
     return sg_password, True</code></pre>
-</details>
-</dd>
-<dt id="main.main_dialogue.init_shows"><code class="name flex">
-<span>def <span class="ident">init_shows</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>init_shows will retrieve the list of show and update the UI</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def init_shows(self):
-    &#34;&#34;&#34;init_shows will retrieve the list of show and update the UI
-    &#34;&#34;&#34;
-    shows = self.flix_api.get_shows()
-    if shows is None:
-        self.error(&#39;Could not retreive shows&#39;)
-        return
-    self.show_tracking_code = self.get_show_tracking_code(shows)
-    self.show_list.clear()
-    for s in self.show_tracking_code:
-        self.show_list.addItem(s)
-    self.show_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)</code></pre>
-</details>
-</dd>
-<dt id="main.main_dialogue.mo_per_shots"><code class="name flex">
-<span>def <span class="ident">mo_per_shots</span></span>(<span>self, panels_per_markers: typing.Dict, show_id: int, seq_id: int, seq_rev_number: int, episode_id: int = None) -> typing.Dict</span>
-</code></dt>
-<dd>
-<div class="desc"><p>mo_per_shots will make a mapping of all media objects per shots</p>
-<h2 id="arguments">Arguments</h2>
-<p>panels_per_markers {Dict} &ndash; Panels per markers
-show_id {int} &ndash; Show ID
-seq_id {int} &ndash; Sequence ID
-seq_rev_number {int} &ndash; Sequence Revision ID</p>
-<p>Keyword Arguments:
-episode_id {int} &ndash; Episode ID (default: {None})</p>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code>Dict -- Media objects per shots</code></dt>
-<dd>&nbsp;</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def mo_per_shots(self,
-                 panels_per_markers: Dict,
-                 show_id: int,
-                 seq_id: int,
-                 seq_rev_number: int,
-                 episode_id: int = None) -&gt; Dict:
-    &#34;&#34;&#34;mo_per_shots will make a mapping of all media objects per shots
-
-    Arguments:
-        panels_per_markers {Dict} -- Panels per markers
-        show_id {int} -- Show ID
-        seq_id {int} -- Sequence ID
-        seq_rev_number {int} -- Sequence Revision ID
-
-    Keyword Arguments:
-        episode_id {int} -- Episode ID (default: {None})
-
-    Returns:
-        Dict -- Media objects per shots
-    &#34;&#34;&#34;
-    mo_per_shots = {}
-    for shot_name in panels_per_markers:
-        mo_per_shots[shot_name] = {&#39;artwork&#39;: [], &#39;thumbnails&#39;: []}
-        panels = panels_per_markers[shot_name]
-        for p in panels:
-            asset = self.flix_api.get_asset(p.get(&#39;asset&#39;).get(&#39;asset_id&#39;))
-            if asset is None:
-                self.error(&#39;Could not retrieve asset&#39;)
-                return None, False
-            artwork = asset.get(&#39;media_objects&#39;, {}).get(&#39;artwork&#39;)[0]
-            mo_per_shots[shot_name][&#39;artwork&#39;].append({
-                &#39;name&#39;: artwork.get(&#39;name&#39;),
-                &#39;id&#39;: p.get(&#39;id&#39;),
-                &#39;revision_number&#39;: p.get(&#39;revision_number&#39;),
-                &#39;pos&#39;: p.get(&#39;pos&#39;),
-                &#39;mo&#39;: artwork.get(&#39;id&#39;)
-            })
-            mo_per_shots[shot_name][&#39;thumbnails&#39;].append(
-                {&#39;name&#39;: asset.get(&#39;media_objects&#39;, {}).get(&#39;thumbnail&#39;)
-                 [0].get(&#39;name&#39;),
-                 &#39;id&#39;: p.get(&#39;id&#39;),
-                 &#39;revision_number&#39;: p.get(&#39;revision_number&#39;),
-                 &#39;pos&#39;: p.get(&#39;pos&#39;),
-                 &#39;mo&#39;: asset.get(&#39;media_objects&#39;, {}).get(&#39;thumbnail&#39;)
-                 [0].get(&#39;id&#39;)})
-        if self.update_progress(
-            &#39;Export quicktime from Flix for shot {0}&#39;.format(shot_name),
-                True) is False:
-            return None, False
-        chain_id = self.flix_api.start_quicktime_export(
-            show_id, seq_id, seq_rev_number, panels, episode_id, False)
-        while True:
-            res = self.flix_api.get_chain(chain_id)
-            if res is None or res.get(&#39;status&#39;) == &#39;errored&#39; or res.get(
-                    &#39;status&#39;) == &#39;timed out&#39;:
-                self.error(&#39;Could not export quicktime&#39;)
-                return None, False
-            if res.get(&#39;status&#39;) == &#39;in progress&#39;:
-                time.sleep(1)
-                continue
-            if res.get(&#39;status&#39;) == &#39;completed&#39;:
-                asset = self.flix_api.get_asset(
-                    res.get(&#39;results&#39;, {}).get(&#39;assetID&#39;))
-                if asset is None:
-                    self.error(&#39;Could not retrieve asset&#39;)
-                    return None, False
-                mo_per_shots[shot_name][&#39;mov&#39;] = asset.get(
-                    &#39;media_objects&#39;, {}).get(&#39;artwork&#39;, [])[0].get(&#39;id&#39;)
-                break
-    return mo_per_shots, True</code></pre>
-</details>
-</dd>
-<dt id="main.main_dialogue.on_episode_changed"><code class="name flex">
-<span>def <span class="ident">on_episode_changed</span></span>(<span>self, tracking_code: str)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>on_episode_changed triggered after an episode is selected,
-will store the selected episode</p>
-<h2 id="arguments">Arguments</h2>
-<p>tracking_code {str} &ndash; episode_tracking_code from the event</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def on_episode_changed(self, tracking_code: str):
-    &#34;&#34;&#34;on_episode_changed triggered after an episode is selected,
-    will store the selected episode
-
-    Arguments:
-        tracking_code {str} -- episode_tracking_code from the event
-    &#34;&#34;&#34;
-    if tracking_code == &#39;&#39;:
-        return
-    self.selected_episode_tracking_code = tracking_code
-    show_id, _, _ = self.get_selected_show()
-    episode_id, _ = self.get_selected_episode()
-    sequences = self.flix_api.get_sequences(show_id, episode_id)
-    if sequences is None:
-        self.error(&#39;Could not retreive sequences&#39;)
-        return
-    self.sequence_tracking_code = self.get_sequence_tracking_code(
-        sequences)
-    self.sequence_list.clear()
-    for s in self.sequence_tracking_code:
-        self.sequence_list.addItem(s)
-    self.sequence_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)</code></pre>
 </details>
 </dd>
 <dt id="main.main_dialogue.on_handoff_type_changed"><code class="name flex">
@@ -2716,78 +1371,6 @@ will store the selected episode</p>
     self.update_ui_handoff_type(handoff_type)</code></pre>
 </details>
 </dd>
-<dt id="main.main_dialogue.on_sequence_changed"><code class="name flex">
-<span>def <span class="ident">on_sequence_changed</span></span>(<span>self, tracking_code: str)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>on_sequence_changed triggered after a sequence is selected,
-will store the selected sequence</p>
-<h2 id="arguments">Arguments</h2>
-<p>tracking_code {str} &ndash; sequence_tracking_code from the event</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def on_sequence_changed(self, tracking_code: str):
-    &#34;&#34;&#34;on_sequence_changed triggered after a sequence is selected,
-    will store the selected sequence
-
-    Arguments:
-        tracking_code {str} -- sequence_tracking_code from the event
-    &#34;&#34;&#34;
-    self.selected_sequence_tracking_code = tracking_code</code></pre>
-</details>
-</dd>
-<dt id="main.main_dialogue.on_show_changed"><code class="name flex">
-<span>def <span class="ident">on_show_changed</span></span>(<span>self, tracking_code: str)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>on_show_changed triggered after a show is selected,
-will init the list of sequences from this show</p>
-<h2 id="arguments">Arguments</h2>
-<p>tracking_code {str} &ndash; show_tracking_code from the event</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def on_show_changed(self, tracking_code: str):
-    &#34;&#34;&#34;on_show_changed triggered after a show is selected,
-    will init the list of sequences from this show
-
-    Arguments:
-        tracking_code {str} -- show_tracking_code from the event
-    &#34;&#34;&#34;
-    self.selected_show_tracking_code = tracking_code
-    show_id, episodic, _ = self.get_selected_show()
-
-    self.sequence_list.clear()
-    self.episode_list.clear()
-    if episodic is True:
-        self.episode_list.show()
-        self.episode_label.show()
-        episodes = self.flix_api.get_episodes(show_id)
-        if episodes is None:
-            self.error(&#39;Could not retrieve episodes&#39;)
-            return
-        self.episode_tracking_code = self.get_episode_tracking_code(
-            episodes)
-        for e in self.episode_tracking_code:
-            self.episode_list.addItem(e)
-        self.episode_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
-        return
-    self.episode_list.hide()
-    self.episode_label.hide()
-    sequences = self.flix_api.get_sequences(show_id)
-    if sequences is None:
-        self.error(&#39;Could not retreive sequences&#39;)
-        return
-    self.sequence_tracking_code = self.get_sequence_tracking_code(
-        sequences)
-    for s in self.sequence_tracking_code:
-        self.sequence_list.addItem(s)
-    self.sequence_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)</code></pre>
-</details>
-</dd>
 <dt id="main.main_dialogue.pull_latest"><code class="name flex">
 <span>def <span class="ident">pull_latest</span></span>(<span>self)</span>
 </code></dt>
@@ -2800,13 +1383,13 @@ will init the list of sequences from this show</p>
 <pre><code class="python">def pull_latest(self):
     &#34;&#34;&#34;pull_latest will export the latest sequence revision
     &#34;&#34;&#34;
-    if not self.authenticated:
+    if not self.wg_flix_ui.is_authenticated():
         self.info(&#39;You should log in first&#39;)
         return
     self.progress = QProgressDialog(&#39;Operation in progress.&#39;,
-                                   &#39;Stop&#39;,
-                                   0,
-                                   7)
+                                    &#39;Stop&#39;,
+                                    0,
+                                    7)
     self.progress.setMinimumWidth(400)
     self.progress.setMinimumHeight(100)
     self.progress.show()
@@ -2821,28 +1404,28 @@ will init the list of sequences from this show</p>
             self.progress.hide()
             return
 
-    show_id, episodic, _ = self.get_selected_show()
-    seq_id, seq_rev_number, _ = self.get_selected_sequence()
-    seq_rev = self.flix_api.get_sequence_rev(show_id,
-                                            seq_id,
-                                            seq_rev_number)
+    show_id, episodic, _ = self.wg_flix_ui.get_selected_show()
+    seq_id, seq_rev_number, _ = self.wg_flix_ui.get_selected_sequence()
+    flix_api = self.wg_flix_ui.get_flix_api()
+    seq_rev = flix_api.get_sequence_rev(show_id, seq_id, seq_rev_number)
     episode_id = None
     if episodic:
-        episode_id, _ = self.get_selected_episode()
+        episode_id, _ = self.wg_flix_ui.get_selected_episode()
     if seq_rev is None:
         self.progress.hide()
         self.error(&#39;Could not retrieve sequence revision&#39;)
         return
     if self.update_progress(&#39;Get markers&#39;, False, True) is False:
         return
-    markers = self.get_markers(seq_rev)
+    markers = self.wg_flix_ui.get_flix_api().get_markers(seq_rev)
     if len(markers) &lt; 1:
         self.progress.hide()
         self.info(&#39;You need at least one shot&#39;)
         return
     if self.update_progress(&#39;Get Panels&#39;) is False:
         return
-    panels = self.flix_api.get_panels(show_id, seq_id, seq_rev_number)
+    panels = self.wg_flix_ui.get_flix_api().get_panels(
+        show_id, seq_id, seq_rev_number)
     if panels is None:
         self.progress.hide()
         self.error(&#39;Could not retrieve panels&#39;)
@@ -2850,14 +1433,14 @@ will init the list of sequences from this show</p>
 
     if self.update_progress(&#39;Get Markers&#39;) is False:
         return
-    panels_per_markers = self.get_markers_per_panels(markers, panels)
+    panels_per_markers = self.wg_flix_ui.get_flix_api().get_markers_per_panels(markers, panels)
     if self.update_progress(&#39;Get Assets info&#39;) is False:
         return
-    mo_per_shots, ok = self.mo_per_shots(panels_per_markers,
-                                        show_id,
-                                        seq_id,
-                                        seq_rev_number,
-                                        episode_id)
+    mo_per_shots, ok = self.wg_flix_ui.get_flix_api().mo_per_shots(panels_per_markers,
+                                         show_id,
+                                         seq_id,
+                                         seq_rev_number,
+                                         episode_id)
     if mo_per_shots is None:
         self.progress.hide()
         self.error(&#39;Could not retrieve media objects per shots&#39;)
@@ -2915,8 +1498,8 @@ sg_password {str} &ndash; Shotgun password</p>
     Returns:
         bool -- State of the push to shotgun
     &#34;&#34;&#34;
-    _, _, show_name = self.get_selected_show()
-    _, seq_rev_number, seq_name = self.get_selected_sequence()
+    _, _, show_name = self.wg_flix_ui.get_selected_show()
+    _, seq_rev_number, seq_name = self.wg_flix_ui.get_selected_sequence()
     sg_show = self.shotgun.get_project(show_name)
     if sg_show is None:
         sg_show = self.shotgun.create_project(show_name)
@@ -2945,7 +1528,7 @@ sg_password {str} &ndash; Shotgun password</p>
         temp_quicktime_path = os.path.join(temp_folder, mov_name)
         if sys.platform == &#39;win32&#39; or sys.platform == &#39;cygwin&#39;:
             temp_quicktime_path = temp_quicktime_path.replace(&#39;\\&#39;, &#39;\\\\&#39;)
-        if self.flix_api.download_media_object(
+        if self.wg_flix_ui.get_flix_api().download_media_object(
                 temp_quicktime_path,
                 mo_per_shots[shot_name].get(&#39;mov&#39;)) is None:
             self.error(
@@ -2958,71 +1541,6 @@ sg_password {str} &ndash; Shotgun password</p>
             return False
         self.shotgun.upload_movie(version, temp_quicktime_path)
     return True</code></pre>
-</details>
-</dd>
-<dt id="main.main_dialogue.reset"><code class="name flex">
-<span>def <span class="ident">reset</span></span>(<span>self, action: str = 'Log Out')</span>
-</code></dt>
-<dd>
-<div class="desc"><p>reset will reset the login form / shows info for login / logout</p>
-<p>Keyword Arguments:
-action {str} &ndash; action to handle (default: {'Log Out'})</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def reset(self, action: str = &#39;Log Out&#39;):
-    &#34;&#34;&#34;reset will reset the login form / shows info for login / logout
-
-    Keyword Arguments:
-        action {str} -- action to handle (default: {&#39;Log Out&#39;})
-    &#34;&#34;&#34;
-    if action == &#39;Log Out&#39;:
-        self.hostname.setReadOnly(True)
-        self.login.setReadOnly(True)
-        self.password.setReadOnly(True)
-        self.submit.setText(&#39;Log Out&#39;)
-        return
-    self.hostname.setReadOnly(False)
-    self.login.setReadOnly(False)
-    self.password.setReadOnly(False)
-    self.show_list.clear()
-    self.sequence_list.clear()
-    self.episode_list.clear()
-    self.submit.setText(action)</code></pre>
-</details>
-</dd>
-<dt id="main.main_dialogue.sort_alphanumeric"><code class="name flex">
-<span>def <span class="ident">sort_alphanumeric</span></span>(<span>self, d: typing.Dict) -> typing.Dict</span>
-</code></dt>
-<dd>
-<div class="desc"><p>sort_alphanumeric will sort a dictionnary alphanumerically by keys</p>
-<h2 id="arguments">Arguments</h2>
-<p>d {Dict} &ndash; Dictionnary to sort</p>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code>Dict -- Sorted Dictionnary</code></dt>
-<dd>&nbsp;</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def sort_alphanumeric(self, d: Dict) -&gt; Dict:
-    &#34;&#34;&#34;sort_alphanumeric will sort a dictionnary alphanumerically by keys
-
-    Arguments:
-        d {Dict} -- Dictionnary to sort
-
-    Returns:
-        Dict -- Sorted Dictionnary
-    &#34;&#34;&#34;
-    def convert(text): return int(text) if text.isdigit() else text
-
-    def alphanum_key(key): return [convert(c)
-                                   for c in re.split(&#39;([0-9]+)&#39;, key)]
-    keys = sorted(d.keys(), key=alphanum_key)
-    return OrderedDict((k, d[k]) for k in keys)</code></pre>
 </details>
 </dd>
 <dt id="main.main_dialogue.update_progress"><code class="name flex">
@@ -3131,35 +1649,18 @@ of the handoff type</p>
 <li>
 <h4><code><a title="main.main_dialogue" href="#main.main_dialogue">main_dialogue</a></code></h4>
 <ul class="">
-<li><code><a title="main.main_dialogue.authenticate" href="#main.main_dialogue.authenticate">authenticate</a></code></li>
 <li><code><a title="main.main_dialogue.browse_export_path" href="#main.main_dialogue.browse_export_path">browse_export_path</a></code></li>
 <li><code><a title="main.main_dialogue.create_folder" href="#main.main_dialogue.create_folder">create_folder</a></code></li>
 <li><code><a title="main.main_dialogue.create_folders" href="#main.main_dialogue.create_folders">create_folders</a></code></li>
 <li><code><a title="main.main_dialogue.download_files" href="#main.main_dialogue.download_files">download_files</a></code></li>
 <li><code><a title="main.main_dialogue.error" href="#main.main_dialogue.error">error</a></code></li>
-<li><code><a title="main.main_dialogue.format_panel_for_revision" href="#main.main_dialogue.format_panel_for_revision">format_panel_for_revision</a></code></li>
 <li><code><a title="main.main_dialogue.get_default_image_name" href="#main.main_dialogue.get_default_image_name">get_default_image_name</a></code></li>
-<li><code><a title="main.main_dialogue.get_episode_tracking_code" href="#main.main_dialogue.get_episode_tracking_code">get_episode_tracking_code</a></code></li>
-<li><code><a title="main.main_dialogue.get_markers" href="#main.main_dialogue.get_markers">get_markers</a></code></li>
-<li><code><a title="main.main_dialogue.get_markers_per_panels" href="#main.main_dialogue.get_markers_per_panels">get_markers_per_panels</a></code></li>
-<li><code><a title="main.main_dialogue.get_selected_episode" href="#main.main_dialogue.get_selected_episode">get_selected_episode</a></code></li>
-<li><code><a title="main.main_dialogue.get_selected_sequence" href="#main.main_dialogue.get_selected_sequence">get_selected_sequence</a></code></li>
-<li><code><a title="main.main_dialogue.get_selected_show" href="#main.main_dialogue.get_selected_show">get_selected_show</a></code></li>
-<li><code><a title="main.main_dialogue.get_sequence_tracking_code" href="#main.main_dialogue.get_sequence_tracking_code">get_sequence_tracking_code</a></code></li>
-<li><code><a title="main.main_dialogue.get_show_tracking_code" href="#main.main_dialogue.get_show_tracking_code">get_show_tracking_code</a></code></li>
 <li><code><a title="main.main_dialogue.info" href="#main.main_dialogue.info">info</a></code></li>
 <li><code><a title="main.main_dialogue.init_local_export" href="#main.main_dialogue.init_local_export">init_local_export</a></code></li>
 <li><code><a title="main.main_dialogue.init_shotgun_export" href="#main.main_dialogue.init_shotgun_export">init_shotgun_export</a></code></li>
-<li><code><a title="main.main_dialogue.init_shows" href="#main.main_dialogue.init_shows">init_shows</a></code></li>
-<li><code><a title="main.main_dialogue.mo_per_shots" href="#main.main_dialogue.mo_per_shots">mo_per_shots</a></code></li>
-<li><code><a title="main.main_dialogue.on_episode_changed" href="#main.main_dialogue.on_episode_changed">on_episode_changed</a></code></li>
 <li><code><a title="main.main_dialogue.on_handoff_type_changed" href="#main.main_dialogue.on_handoff_type_changed">on_handoff_type_changed</a></code></li>
-<li><code><a title="main.main_dialogue.on_sequence_changed" href="#main.main_dialogue.on_sequence_changed">on_sequence_changed</a></code></li>
-<li><code><a title="main.main_dialogue.on_show_changed" href="#main.main_dialogue.on_show_changed">on_show_changed</a></code></li>
 <li><code><a title="main.main_dialogue.pull_latest" href="#main.main_dialogue.pull_latest">pull_latest</a></code></li>
 <li><code><a title="main.main_dialogue.push_to_sg" href="#main.main_dialogue.push_to_sg">push_to_sg</a></code></li>
-<li><code><a title="main.main_dialogue.reset" href="#main.main_dialogue.reset">reset</a></code></li>
-<li><code><a title="main.main_dialogue.sort_alphanumeric" href="#main.main_dialogue.sort_alphanumeric">sort_alphanumeric</a></code></li>
 <li><code><a title="main.main_dialogue.staticMetaObject" href="#main.main_dialogue.staticMetaObject">staticMetaObject</a></code></li>
 <li><code><a title="main.main_dialogue.update_progress" href="#main.main_dialogue.update_progress">update_progress</a></code></li>
 <li><code><a title="main.main_dialogue.update_ui_handoff_type" href="#main.main_dialogue.update_ui_handoff_type">update_ui_handoff_type</a></code></li>
