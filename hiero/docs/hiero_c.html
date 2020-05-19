@@ -1,0 +1,1269 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.8.1" />
+<title>hiero_c API documentation</title>
+<meta name="description" content="" />
+<link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
+<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>hiero_c</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">import re
+# from hiero.core import (Bin, BinItem, Format, Sequence, Tag, VideoTrack,
+#                         newProject, project, findProjectTags)
+# from hiero.ui import (activeSequence, windowManager)
+
+
+class hiero_c:
+    &#34;&#34;&#34;hiero_c is an interface with Hiero to create tags, project, bins etc.
+    &#34;&#34;&#34;
+
+    def __init__(self):
+        self.preset_comment_tag = self.get_project_tag(&#39;Comment&#39;)
+        self.preset_fr_tag_tag = self.get_project_tag(&#39;France&#39;)
+        self.preset_ready_to_start_tag = self.get_project_tag(
+            &#39;Ready To Start&#39;)
+        self.preset_ref_tag = self.get_project_tag(&#39;Reference&#39;)
+
+    def get_project_tag(self, tag_name):
+        &#34;&#34;&#34;get_project_tag will retreive a preset tag
+
+        Arguments:
+            tag_name {str} -- tag name
+
+        Returns:
+            Dict -- Hiero Tag
+        &#34;&#34;&#34;
+        tag = findProjectTags(
+            project(&#39;Tag Presets&#39;), tag_name)
+        if len(tag) &gt; 0:
+            return tag[0]
+        return tag
+
+    def get_project(self, project_name):
+        &#34;&#34;&#34;get_project will reuse existing project depending of the
+        project name or will create it
+
+        Arguments:
+            project_name {str} -- Project to find / create
+
+        Returns:
+            Dict -- Hiero Project
+        &#34;&#34;&#34;
+        my_project = project(project_name)
+        if my_project is None:
+            my_project = newProject(project_name)
+        f = Format(1000, 562, 1, &#39;flix&#39;)
+        my_project.setOutputFormat(f)
+        return my_project
+
+    def add_track_item(
+            self,
+            track,
+            track_item_name,
+            source_clip,
+            duration=12,
+            tags=[],
+            last_track_item=None):
+        &#34;&#34;&#34;add_track_item will add a trackitem to a track, it will
+        add a source and tags
+
+        Arguments:
+            track {Dict} -- Track to add the new track item
+
+            track_item_name {str} -- Name of the new track item
+
+            source_clip {Dict} -- Clip to link to the track item
+
+        Keyword Arguments:
+            duration {int} -- Duration of the clip (default: {12})
+
+            tags {list} -- list of tags to add (default: {[]})
+
+            last_track_item {[type]} -- previous track item (default: {None})
+
+        Returns:
+            Dict -- New Track Item
+        &#34;&#34;&#34;
+        track_item = track.createTrackItem(track_item_name)
+        track_item.setSource(source_clip)
+        for t in tags:
+            track_item.addTag(t)
+        if last_track_item:
+            track_item.setTimelineIn(last_track_item.timelineOut() + 1)
+            track_item.setTimelineOut(last_track_item.timelineOut() + duration)
+        else:
+            track_item.setTimelineIn(0)
+            track_item.setTimelineOut(duration - 1)
+
+        track.addTrackItem(track_item)
+        return track_item
+
+    def get_project_bin(self, project_bin, bin_name):
+        &#34;&#34;&#34;get_project_bin will try to reuse a bin from a project depending
+        on the bin_name or will create it
+
+        Arguments:
+            project_bin {Dict} -- Project Bin
+
+            bin_name {str} -- Bin&#39;s name to find
+
+        Returns:
+            Dict -- Hiero Project Bin
+        &#34;&#34;&#34;
+        b = project_bin.bins(bin_name)
+        if len(b) &gt; 0:
+            b = b[0]
+            return b, True
+        return Bin(bin_name), False
+
+    def get_seq_bin(self, host_b, bin_name):
+        &#34;&#34;&#34;get_seq_bin will try to reuse a bin from a project depending on
+        the bin_name or will create it
+
+        Arguments:
+            host_b {Dict} -- Host Bin
+
+            bin_name {[type]} -- Bin&#39;s name to find
+
+        Returns:
+            Dict -- Hiero Bin
+        &#34;&#34;&#34;
+        b = host_b.bins()
+        for seq_bin in b:
+            if seq_bin.name() == bin_name:
+                return seq_bin, True
+        return Bin(bin_name), False
+
+    def get_clips(self, seq_bin):
+        &#34;&#34;&#34;get_clips will retrieve all the clips from the bin
+
+        Arguments:
+            seq_bin {Dict} -- bin of the sequence
+
+        Returns:
+            [type] -- [description]
+        &#34;&#34;&#34;
+        clips = {}
+        for b in seq_bin.bins():
+            for c in b.clips():
+                clips[c.name()] = c.activeItem()
+        return clips
+
+    def create_comment_tag(self, comment):
+        &#34;&#34;&#34;create_comment_tag will create a comment tag
+
+        Arguments:
+            comment {str} -- Comment
+
+        Returns:
+            Dict -- Hiero Tag
+        &#34;&#34;&#34;
+        t = self.preset_comment_tag.copy()
+        cleanr = re.compile(
+            &#39;&lt;.*?&gt;|&amp;([a-z0-9]+|#[0-9]{1,6}|#x[0-9a-f]{1,6});&#39;)
+        comment = re.sub(cleanr, &#39;&#39;, comment)
+        t.setNote(comment)
+        return t
+
+    def create_marker_tag(self, in_time, marker_name):
+        &#34;&#34;&#34;create_comment_tag will create a marker tag
+
+        Arguments:
+            in_time {int} -- Start of the marker tag
+
+            marker_name {str} -- Marker Name
+
+        Returns:
+            Dict -- Hiero Tag
+        &#34;&#34;&#34;
+        t = self.preset_ready_to_start_tag.copy()
+        t.setNote(marker_name)
+        t.metadata().setValue(&#39;tag.start&#39;, &#39;{0}&#39;.format(in_time))
+        t.metadata().setValue(&#39;tag.length&#39;, &#39;{0}&#39;.format(1))
+        t.setInTime(in_time)
+        t.setOutTime(in_time + 1)
+        return t
+
+    def create_info_tag(self, note, visible=False):
+        &#34;&#34;&#34;create_info_tag will create an info tag
+
+        Arguments:
+            note {str} -- Content
+
+        Keyword Arguments:
+            visible {bool} -- Set tag bvisible or not (default: {False})
+
+        Returns:
+            Dict -- Hiero Tags
+        &#34;&#34;&#34;
+        t = self.preset_fr_tag_tag.copy()
+        t.setNote(note)
+        t.setVisible(False)
+        return t
+
+    def add_dialogue_track_effect(self, track, track_item, settings):
+        &#34;&#34;&#34;add_dialogue_track_effect will create a dialogue track effect
+        and set settings to his node
+
+        Arguments:
+            track {Dict} -- Track to add effect on
+
+            track_item {Dict} -- Track Item
+
+            settings {Dict} -- Settings to apply to the node
+        &#34;&#34;&#34;
+        node = track.createEffect(
+            effectType=&#39;Text2&#39;,
+            trackItem=track_item,
+            subTrackIndex=0).node()
+        for name, value in settings.iteritems():
+            node[name].setValue(value)
+
+    def add_burnin_track_effect(self, track, fr, to, settings):
+        &#34;&#34;&#34;add_burnin_track_effect will create a burnin track effect
+        and set settings to his node
+
+        Arguments:
+            track {Dict} -- Track to add effect on
+
+            fr {int} -- Start of the burnin
+
+            to {int} -- End of the burnin
+
+            settings {Dict} -- Settings to apply to the node
+        &#34;&#34;&#34;
+        node = track.createEffect(
+            effectType=&#39;BurnIn&#39;,
+            subTrackIndex=0,
+            timelineIn=fr,
+            timelineOut=to).node()
+        for name, value in settings.iteritems():
+            node[name].setValue(value)
+
+    def create_video_track(self, name):
+        &#34;&#34;&#34;create_video_track will create a video track
+
+        Arguments:
+            name {str} -- Video track name
+
+        Returns:
+            Dict -- Hiero Video Track
+        &#34;&#34;&#34;
+        return VideoTrack(name)
+
+    def create_sequence(self, name):
+        &#34;&#34;&#34;create_sequence will create a sequence
+
+        Arguments:
+            name {str} -- Sequence name
+
+        Returns:
+            Dict -- Hiero Sequence
+        &#34;&#34;&#34;
+        return Sequence(name)
+
+    def sequence_to_bin_item(self, seq):
+        &#34;&#34;&#34;sequence_to_bin_item will make an Sequence as bin item
+
+        Arguments:
+            seq {Dict} -- Sequence
+
+        Returns:
+            Dict -- Hiero Bin Item
+        &#34;&#34;&#34;
+        return BinItem(seq)
+
+    def get_item_tags_note(self, item, name):
+        &#34;&#34;&#34;get_item_tags_note will get items tag&#39;s notes depending
+        on the the tag name
+
+        Arguments:
+            items {Dict} -- Item
+
+            name {str} -- Tag&#39;s name to get
+
+        Returns:
+            List -- List of tags
+        &#34;&#34;&#34;
+        tags_notes = []
+        for tag in item.tags():
+            if tag.name() == name:
+                tags_notes.append(tag.note())
+        return tags_notes
+
+    def get_active_sequence(self):
+        &#34;&#34;&#34;get_active_sequence will return the active Sequence
+
+        Returns:
+            Dict -- Hiero Active Sequence
+        &#34;&#34;&#34;
+        return activeSequence()
+
+    def get_window_manager(self):
+        &#34;&#34;&#34;get_window_manager will return the window manager
+
+        Returns:
+            Dict -- Hiero Window Manager
+        &#34;&#34;&#34;
+        return windowManager()</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="hiero_c.hiero_c"><code class="flex name class">
+<span>class <span class="ident">hiero_c</span></span>
+</code></dt>
+<dd>
+<div class="desc"><p>hiero_c is an interface with Hiero to create tags, project, bins etc.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class hiero_c:
+    &#34;&#34;&#34;hiero_c is an interface with Hiero to create tags, project, bins etc.
+    &#34;&#34;&#34;
+
+    def __init__(self):
+        self.preset_comment_tag = self.get_project_tag(&#39;Comment&#39;)
+        self.preset_fr_tag_tag = self.get_project_tag(&#39;France&#39;)
+        self.preset_ready_to_start_tag = self.get_project_tag(
+            &#39;Ready To Start&#39;)
+        self.preset_ref_tag = self.get_project_tag(&#39;Reference&#39;)
+
+    def get_project_tag(self, tag_name):
+        &#34;&#34;&#34;get_project_tag will retreive a preset tag
+
+        Arguments:
+            tag_name {str} -- tag name
+
+        Returns:
+            Dict -- Hiero Tag
+        &#34;&#34;&#34;
+        tag = findProjectTags(
+            project(&#39;Tag Presets&#39;), tag_name)
+        if len(tag) &gt; 0:
+            return tag[0]
+        return tag
+
+    def get_project(self, project_name):
+        &#34;&#34;&#34;get_project will reuse existing project depending of the
+        project name or will create it
+
+        Arguments:
+            project_name {str} -- Project to find / create
+
+        Returns:
+            Dict -- Hiero Project
+        &#34;&#34;&#34;
+        my_project = project(project_name)
+        if my_project is None:
+            my_project = newProject(project_name)
+        f = Format(1000, 562, 1, &#39;flix&#39;)
+        my_project.setOutputFormat(f)
+        return my_project
+
+    def add_track_item(
+            self,
+            track,
+            track_item_name,
+            source_clip,
+            duration=12,
+            tags=[],
+            last_track_item=None):
+        &#34;&#34;&#34;add_track_item will add a trackitem to a track, it will
+        add a source and tags
+
+        Arguments:
+            track {Dict} -- Track to add the new track item
+
+            track_item_name {str} -- Name of the new track item
+
+            source_clip {Dict} -- Clip to link to the track item
+
+        Keyword Arguments:
+            duration {int} -- Duration of the clip (default: {12})
+
+            tags {list} -- list of tags to add (default: {[]})
+
+            last_track_item {[type]} -- previous track item (default: {None})
+
+        Returns:
+            Dict -- New Track Item
+        &#34;&#34;&#34;
+        track_item = track.createTrackItem(track_item_name)
+        track_item.setSource(source_clip)
+        for t in tags:
+            track_item.addTag(t)
+        if last_track_item:
+            track_item.setTimelineIn(last_track_item.timelineOut() + 1)
+            track_item.setTimelineOut(last_track_item.timelineOut() + duration)
+        else:
+            track_item.setTimelineIn(0)
+            track_item.setTimelineOut(duration - 1)
+
+        track.addTrackItem(track_item)
+        return track_item
+
+    def get_project_bin(self, project_bin, bin_name):
+        &#34;&#34;&#34;get_project_bin will try to reuse a bin from a project depending
+        on the bin_name or will create it
+
+        Arguments:
+            project_bin {Dict} -- Project Bin
+
+            bin_name {str} -- Bin&#39;s name to find
+
+        Returns:
+            Dict -- Hiero Project Bin
+        &#34;&#34;&#34;
+        b = project_bin.bins(bin_name)
+        if len(b) &gt; 0:
+            b = b[0]
+            return b, True
+        return Bin(bin_name), False
+
+    def get_seq_bin(self, host_b, bin_name):
+        &#34;&#34;&#34;get_seq_bin will try to reuse a bin from a project depending on
+        the bin_name or will create it
+
+        Arguments:
+            host_b {Dict} -- Host Bin
+
+            bin_name {[type]} -- Bin&#39;s name to find
+
+        Returns:
+            Dict -- Hiero Bin
+        &#34;&#34;&#34;
+        b = host_b.bins()
+        for seq_bin in b:
+            if seq_bin.name() == bin_name:
+                return seq_bin, True
+        return Bin(bin_name), False
+
+    def get_clips(self, seq_bin):
+        &#34;&#34;&#34;get_clips will retrieve all the clips from the bin
+
+        Arguments:
+            seq_bin {Dict} -- bin of the sequence
+
+        Returns:
+            [type] -- [description]
+        &#34;&#34;&#34;
+        clips = {}
+        for b in seq_bin.bins():
+            for c in b.clips():
+                clips[c.name()] = c.activeItem()
+        return clips
+
+    def create_comment_tag(self, comment):
+        &#34;&#34;&#34;create_comment_tag will create a comment tag
+
+        Arguments:
+            comment {str} -- Comment
+
+        Returns:
+            Dict -- Hiero Tag
+        &#34;&#34;&#34;
+        t = self.preset_comment_tag.copy()
+        cleanr = re.compile(
+            &#39;&lt;.*?&gt;|&amp;([a-z0-9]+|#[0-9]{1,6}|#x[0-9a-f]{1,6});&#39;)
+        comment = re.sub(cleanr, &#39;&#39;, comment)
+        t.setNote(comment)
+        return t
+
+    def create_marker_tag(self, in_time, marker_name):
+        &#34;&#34;&#34;create_comment_tag will create a marker tag
+
+        Arguments:
+            in_time {int} -- Start of the marker tag
+
+            marker_name {str} -- Marker Name
+
+        Returns:
+            Dict -- Hiero Tag
+        &#34;&#34;&#34;
+        t = self.preset_ready_to_start_tag.copy()
+        t.setNote(marker_name)
+        t.metadata().setValue(&#39;tag.start&#39;, &#39;{0}&#39;.format(in_time))
+        t.metadata().setValue(&#39;tag.length&#39;, &#39;{0}&#39;.format(1))
+        t.setInTime(in_time)
+        t.setOutTime(in_time + 1)
+        return t
+
+    def create_info_tag(self, note, visible=False):
+        &#34;&#34;&#34;create_info_tag will create an info tag
+
+        Arguments:
+            note {str} -- Content
+
+        Keyword Arguments:
+            visible {bool} -- Set tag bvisible or not (default: {False})
+
+        Returns:
+            Dict -- Hiero Tags
+        &#34;&#34;&#34;
+        t = self.preset_fr_tag_tag.copy()
+        t.setNote(note)
+        t.setVisible(False)
+        return t
+
+    def add_dialogue_track_effect(self, track, track_item, settings):
+        &#34;&#34;&#34;add_dialogue_track_effect will create a dialogue track effect
+        and set settings to his node
+
+        Arguments:
+            track {Dict} -- Track to add effect on
+
+            track_item {Dict} -- Track Item
+
+            settings {Dict} -- Settings to apply to the node
+        &#34;&#34;&#34;
+        node = track.createEffect(
+            effectType=&#39;Text2&#39;,
+            trackItem=track_item,
+            subTrackIndex=0).node()
+        for name, value in settings.iteritems():
+            node[name].setValue(value)
+
+    def add_burnin_track_effect(self, track, fr, to, settings):
+        &#34;&#34;&#34;add_burnin_track_effect will create a burnin track effect
+        and set settings to his node
+
+        Arguments:
+            track {Dict} -- Track to add effect on
+
+            fr {int} -- Start of the burnin
+
+            to {int} -- End of the burnin
+
+            settings {Dict} -- Settings to apply to the node
+        &#34;&#34;&#34;
+        node = track.createEffect(
+            effectType=&#39;BurnIn&#39;,
+            subTrackIndex=0,
+            timelineIn=fr,
+            timelineOut=to).node()
+        for name, value in settings.iteritems():
+            node[name].setValue(value)
+
+    def create_video_track(self, name):
+        &#34;&#34;&#34;create_video_track will create a video track
+
+        Arguments:
+            name {str} -- Video track name
+
+        Returns:
+            Dict -- Hiero Video Track
+        &#34;&#34;&#34;
+        return VideoTrack(name)
+
+    def create_sequence(self, name):
+        &#34;&#34;&#34;create_sequence will create a sequence
+
+        Arguments:
+            name {str} -- Sequence name
+
+        Returns:
+            Dict -- Hiero Sequence
+        &#34;&#34;&#34;
+        return Sequence(name)
+
+    def sequence_to_bin_item(self, seq):
+        &#34;&#34;&#34;sequence_to_bin_item will make an Sequence as bin item
+
+        Arguments:
+            seq {Dict} -- Sequence
+
+        Returns:
+            Dict -- Hiero Bin Item
+        &#34;&#34;&#34;
+        return BinItem(seq)
+
+    def get_item_tags_note(self, item, name):
+        &#34;&#34;&#34;get_item_tags_note will get items tag&#39;s notes depending
+        on the the tag name
+
+        Arguments:
+            items {Dict} -- Item
+
+            name {str} -- Tag&#39;s name to get
+
+        Returns:
+            List -- List of tags
+        &#34;&#34;&#34;
+        tags_notes = []
+        for tag in item.tags():
+            if tag.name() == name:
+                tags_notes.append(tag.note())
+        return tags_notes
+
+    def get_active_sequence(self):
+        &#34;&#34;&#34;get_active_sequence will return the active Sequence
+
+        Returns:
+            Dict -- Hiero Active Sequence
+        &#34;&#34;&#34;
+        return activeSequence()
+
+    def get_window_manager(self):
+        &#34;&#34;&#34;get_window_manager will return the window manager
+
+        Returns:
+            Dict -- Hiero Window Manager
+        &#34;&#34;&#34;
+        return windowManager()</code></pre>
+</details>
+<h3>Methods</h3>
+<dl>
+<dt id="hiero_c.hiero_c.add_burnin_track_effect"><code class="name flex">
+<span>def <span class="ident">add_burnin_track_effect</span></span>(<span>self, track, fr, to, settings)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>add_burnin_track_effect will create a burnin track effect
+and set settings to his node</p>
+<h2 id="arguments">Arguments</h2>
+<p>track {Dict} &ndash; Track to add effect on</p>
+<p>fr {int} &ndash; Start of the burnin</p>
+<p>to {int} &ndash; End of the burnin</p>
+<p>settings {Dict} &ndash; Settings to apply to the node</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def add_burnin_track_effect(self, track, fr, to, settings):
+    &#34;&#34;&#34;add_burnin_track_effect will create a burnin track effect
+    and set settings to his node
+
+    Arguments:
+        track {Dict} -- Track to add effect on
+
+        fr {int} -- Start of the burnin
+
+        to {int} -- End of the burnin
+
+        settings {Dict} -- Settings to apply to the node
+    &#34;&#34;&#34;
+    node = track.createEffect(
+        effectType=&#39;BurnIn&#39;,
+        subTrackIndex=0,
+        timelineIn=fr,
+        timelineOut=to).node()
+    for name, value in settings.iteritems():
+        node[name].setValue(value)</code></pre>
+</details>
+</dd>
+<dt id="hiero_c.hiero_c.add_dialogue_track_effect"><code class="name flex">
+<span>def <span class="ident">add_dialogue_track_effect</span></span>(<span>self, track, track_item, settings)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>add_dialogue_track_effect will create a dialogue track effect
+and set settings to his node</p>
+<h2 id="arguments">Arguments</h2>
+<p>track {Dict} &ndash; Track to add effect on</p>
+<p>track_item {Dict} &ndash; Track Item</p>
+<p>settings {Dict} &ndash; Settings to apply to the node</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def add_dialogue_track_effect(self, track, track_item, settings):
+    &#34;&#34;&#34;add_dialogue_track_effect will create a dialogue track effect
+    and set settings to his node
+
+    Arguments:
+        track {Dict} -- Track to add effect on
+
+        track_item {Dict} -- Track Item
+
+        settings {Dict} -- Settings to apply to the node
+    &#34;&#34;&#34;
+    node = track.createEffect(
+        effectType=&#39;Text2&#39;,
+        trackItem=track_item,
+        subTrackIndex=0).node()
+    for name, value in settings.iteritems():
+        node[name].setValue(value)</code></pre>
+</details>
+</dd>
+<dt id="hiero_c.hiero_c.add_track_item"><code class="name flex">
+<span>def <span class="ident">add_track_item</span></span>(<span>self, track, track_item_name, source_clip, duration=12, tags=[], last_track_item=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>add_track_item will add a trackitem to a track, it will
+add a source and tags</p>
+<h2 id="arguments">Arguments</h2>
+<p>track {Dict} &ndash; Track to add the new track item</p>
+<p>track_item_name {str} &ndash; Name of the new track item</p>
+<p>source_clip {Dict} &ndash; Clip to link to the track item</p>
+<p>Keyword Arguments:
+duration {int} &ndash; Duration of the clip (default: {12})</p>
+<pre><code>tags {list} -- list of tags to add (default: {[]})
+
+last_track_item {[type]} -- previous track item (default: {None})
+</code></pre>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict -- New Track Item</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def add_track_item(
+        self,
+        track,
+        track_item_name,
+        source_clip,
+        duration=12,
+        tags=[],
+        last_track_item=None):
+    &#34;&#34;&#34;add_track_item will add a trackitem to a track, it will
+    add a source and tags
+
+    Arguments:
+        track {Dict} -- Track to add the new track item
+
+        track_item_name {str} -- Name of the new track item
+
+        source_clip {Dict} -- Clip to link to the track item
+
+    Keyword Arguments:
+        duration {int} -- Duration of the clip (default: {12})
+
+        tags {list} -- list of tags to add (default: {[]})
+
+        last_track_item {[type]} -- previous track item (default: {None})
+
+    Returns:
+        Dict -- New Track Item
+    &#34;&#34;&#34;
+    track_item = track.createTrackItem(track_item_name)
+    track_item.setSource(source_clip)
+    for t in tags:
+        track_item.addTag(t)
+    if last_track_item:
+        track_item.setTimelineIn(last_track_item.timelineOut() + 1)
+        track_item.setTimelineOut(last_track_item.timelineOut() + duration)
+    else:
+        track_item.setTimelineIn(0)
+        track_item.setTimelineOut(duration - 1)
+
+    track.addTrackItem(track_item)
+    return track_item</code></pre>
+</details>
+</dd>
+<dt id="hiero_c.hiero_c.create_comment_tag"><code class="name flex">
+<span>def <span class="ident">create_comment_tag</span></span>(<span>self, comment)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>create_comment_tag will create a comment tag</p>
+<h2 id="arguments">Arguments</h2>
+<p>comment {str} &ndash; Comment</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict -- Hiero Tag</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def create_comment_tag(self, comment):
+    &#34;&#34;&#34;create_comment_tag will create a comment tag
+
+    Arguments:
+        comment {str} -- Comment
+
+    Returns:
+        Dict -- Hiero Tag
+    &#34;&#34;&#34;
+    t = self.preset_comment_tag.copy()
+    cleanr = re.compile(
+        &#39;&lt;.*?&gt;|&amp;([a-z0-9]+|#[0-9]{1,6}|#x[0-9a-f]{1,6});&#39;)
+    comment = re.sub(cleanr, &#39;&#39;, comment)
+    t.setNote(comment)
+    return t</code></pre>
+</details>
+</dd>
+<dt id="hiero_c.hiero_c.create_info_tag"><code class="name flex">
+<span>def <span class="ident">create_info_tag</span></span>(<span>self, note, visible=False)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>create_info_tag will create an info tag</p>
+<h2 id="arguments">Arguments</h2>
+<p>note {str} &ndash; Content</p>
+<p>Keyword Arguments:
+visible {bool} &ndash; Set tag bvisible or not (default: {False})</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict -- Hiero Tags</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def create_info_tag(self, note, visible=False):
+    &#34;&#34;&#34;create_info_tag will create an info tag
+
+    Arguments:
+        note {str} -- Content
+
+    Keyword Arguments:
+        visible {bool} -- Set tag bvisible or not (default: {False})
+
+    Returns:
+        Dict -- Hiero Tags
+    &#34;&#34;&#34;
+    t = self.preset_fr_tag_tag.copy()
+    t.setNote(note)
+    t.setVisible(False)
+    return t</code></pre>
+</details>
+</dd>
+<dt id="hiero_c.hiero_c.create_marker_tag"><code class="name flex">
+<span>def <span class="ident">create_marker_tag</span></span>(<span>self, in_time, marker_name)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>create_comment_tag will create a marker tag</p>
+<h2 id="arguments">Arguments</h2>
+<p>in_time {int} &ndash; Start of the marker tag</p>
+<p>marker_name {str} &ndash; Marker Name</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict -- Hiero Tag</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def create_marker_tag(self, in_time, marker_name):
+    &#34;&#34;&#34;create_comment_tag will create a marker tag
+
+    Arguments:
+        in_time {int} -- Start of the marker tag
+
+        marker_name {str} -- Marker Name
+
+    Returns:
+        Dict -- Hiero Tag
+    &#34;&#34;&#34;
+    t = self.preset_ready_to_start_tag.copy()
+    t.setNote(marker_name)
+    t.metadata().setValue(&#39;tag.start&#39;, &#39;{0}&#39;.format(in_time))
+    t.metadata().setValue(&#39;tag.length&#39;, &#39;{0}&#39;.format(1))
+    t.setInTime(in_time)
+    t.setOutTime(in_time + 1)
+    return t</code></pre>
+</details>
+</dd>
+<dt id="hiero_c.hiero_c.create_sequence"><code class="name flex">
+<span>def <span class="ident">create_sequence</span></span>(<span>self, name)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>create_sequence will create a sequence</p>
+<h2 id="arguments">Arguments</h2>
+<p>name {str} &ndash; Sequence name</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict -- Hiero Sequence</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def create_sequence(self, name):
+    &#34;&#34;&#34;create_sequence will create a sequence
+
+    Arguments:
+        name {str} -- Sequence name
+
+    Returns:
+        Dict -- Hiero Sequence
+    &#34;&#34;&#34;
+    return Sequence(name)</code></pre>
+</details>
+</dd>
+<dt id="hiero_c.hiero_c.create_video_track"><code class="name flex">
+<span>def <span class="ident">create_video_track</span></span>(<span>self, name)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>create_video_track will create a video track</p>
+<h2 id="arguments">Arguments</h2>
+<p>name {str} &ndash; Video track name</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict -- Hiero Video Track</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def create_video_track(self, name):
+    &#34;&#34;&#34;create_video_track will create a video track
+
+    Arguments:
+        name {str} -- Video track name
+
+    Returns:
+        Dict -- Hiero Video Track
+    &#34;&#34;&#34;
+    return VideoTrack(name)</code></pre>
+</details>
+</dd>
+<dt id="hiero_c.hiero_c.get_active_sequence"><code class="name flex">
+<span>def <span class="ident">get_active_sequence</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>get_active_sequence will return the active Sequence</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict -- Hiero Active Sequence</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_active_sequence(self):
+    &#34;&#34;&#34;get_active_sequence will return the active Sequence
+
+    Returns:
+        Dict -- Hiero Active Sequence
+    &#34;&#34;&#34;
+    return activeSequence()</code></pre>
+</details>
+</dd>
+<dt id="hiero_c.hiero_c.get_clips"><code class="name flex">
+<span>def <span class="ident">get_clips</span></span>(<span>self, seq_bin)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>get_clips will retrieve all the clips from the bin</p>
+<h2 id="arguments">Arguments</h2>
+<p>seq_bin {Dict} &ndash; bin of the sequence</p>
+<h2 id="returns">Returns</h2>
+<p>[type] &ndash; [description]</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_clips(self, seq_bin):
+    &#34;&#34;&#34;get_clips will retrieve all the clips from the bin
+
+    Arguments:
+        seq_bin {Dict} -- bin of the sequence
+
+    Returns:
+        [type] -- [description]
+    &#34;&#34;&#34;
+    clips = {}
+    for b in seq_bin.bins():
+        for c in b.clips():
+            clips[c.name()] = c.activeItem()
+    return clips</code></pre>
+</details>
+</dd>
+<dt id="hiero_c.hiero_c.get_item_tags_note"><code class="name flex">
+<span>def <span class="ident">get_item_tags_note</span></span>(<span>self, item, name)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>get_item_tags_note will get items tag's notes depending
+on the the tag name</p>
+<h2 id="arguments">Arguments</h2>
+<p>items {Dict} &ndash; Item</p>
+<p>name {str} &ndash; Tag's name to get</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>List -- List</code> of <code>tags</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_item_tags_note(self, item, name):
+    &#34;&#34;&#34;get_item_tags_note will get items tag&#39;s notes depending
+    on the the tag name
+
+    Arguments:
+        items {Dict} -- Item
+
+        name {str} -- Tag&#39;s name to get
+
+    Returns:
+        List -- List of tags
+    &#34;&#34;&#34;
+    tags_notes = []
+    for tag in item.tags():
+        if tag.name() == name:
+            tags_notes.append(tag.note())
+    return tags_notes</code></pre>
+</details>
+</dd>
+<dt id="hiero_c.hiero_c.get_project"><code class="name flex">
+<span>def <span class="ident">get_project</span></span>(<span>self, project_name)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>get_project will reuse existing project depending of the
+project name or will create it</p>
+<h2 id="arguments">Arguments</h2>
+<p>project_name {str} &ndash; Project to find / create</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict -- Hiero Project</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_project(self, project_name):
+    &#34;&#34;&#34;get_project will reuse existing project depending of the
+    project name or will create it
+
+    Arguments:
+        project_name {str} -- Project to find / create
+
+    Returns:
+        Dict -- Hiero Project
+    &#34;&#34;&#34;
+    my_project = project(project_name)
+    if my_project is None:
+        my_project = newProject(project_name)
+    f = Format(1000, 562, 1, &#39;flix&#39;)
+    my_project.setOutputFormat(f)
+    return my_project</code></pre>
+</details>
+</dd>
+<dt id="hiero_c.hiero_c.get_project_bin"><code class="name flex">
+<span>def <span class="ident">get_project_bin</span></span>(<span>self, project_bin, bin_name)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>get_project_bin will try to reuse a bin from a project depending
+on the bin_name or will create it</p>
+<h2 id="arguments">Arguments</h2>
+<p>project_bin {Dict} &ndash; Project Bin</p>
+<p>bin_name {str} &ndash; Bin's name to find</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict -- Hiero Project Bin</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_project_bin(self, project_bin, bin_name):
+    &#34;&#34;&#34;get_project_bin will try to reuse a bin from a project depending
+    on the bin_name or will create it
+
+    Arguments:
+        project_bin {Dict} -- Project Bin
+
+        bin_name {str} -- Bin&#39;s name to find
+
+    Returns:
+        Dict -- Hiero Project Bin
+    &#34;&#34;&#34;
+    b = project_bin.bins(bin_name)
+    if len(b) &gt; 0:
+        b = b[0]
+        return b, True
+    return Bin(bin_name), False</code></pre>
+</details>
+</dd>
+<dt id="hiero_c.hiero_c.get_project_tag"><code class="name flex">
+<span>def <span class="ident">get_project_tag</span></span>(<span>self, tag_name)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>get_project_tag will retreive a preset tag</p>
+<h2 id="arguments">Arguments</h2>
+<p>tag_name {str} &ndash; tag name</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict -- Hiero Tag</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_project_tag(self, tag_name):
+    &#34;&#34;&#34;get_project_tag will retreive a preset tag
+
+    Arguments:
+        tag_name {str} -- tag name
+
+    Returns:
+        Dict -- Hiero Tag
+    &#34;&#34;&#34;
+    tag = findProjectTags(
+        project(&#39;Tag Presets&#39;), tag_name)
+    if len(tag) &gt; 0:
+        return tag[0]
+    return tag</code></pre>
+</details>
+</dd>
+<dt id="hiero_c.hiero_c.get_seq_bin"><code class="name flex">
+<span>def <span class="ident">get_seq_bin</span></span>(<span>self, host_b, bin_name)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>get_seq_bin will try to reuse a bin from a project depending on
+the bin_name or will create it</p>
+<h2 id="arguments">Arguments</h2>
+<p>host_b {Dict} &ndash; Host Bin</p>
+<p>bin_name {[type]} &ndash; Bin's name to find</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict -- Hiero Bin</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_seq_bin(self, host_b, bin_name):
+    &#34;&#34;&#34;get_seq_bin will try to reuse a bin from a project depending on
+    the bin_name or will create it
+
+    Arguments:
+        host_b {Dict} -- Host Bin
+
+        bin_name {[type]} -- Bin&#39;s name to find
+
+    Returns:
+        Dict -- Hiero Bin
+    &#34;&#34;&#34;
+    b = host_b.bins()
+    for seq_bin in b:
+        if seq_bin.name() == bin_name:
+            return seq_bin, True
+    return Bin(bin_name), False</code></pre>
+</details>
+</dd>
+<dt id="hiero_c.hiero_c.get_window_manager"><code class="name flex">
+<span>def <span class="ident">get_window_manager</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>get_window_manager will return the window manager</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict -- Hiero Window Manager</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_window_manager(self):
+    &#34;&#34;&#34;get_window_manager will return the window manager
+
+    Returns:
+        Dict -- Hiero Window Manager
+    &#34;&#34;&#34;
+    return windowManager()</code></pre>
+</details>
+</dd>
+<dt id="hiero_c.hiero_c.sequence_to_bin_item"><code class="name flex">
+<span>def <span class="ident">sequence_to_bin_item</span></span>(<span>self, seq)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>sequence_to_bin_item will make an Sequence as bin item</p>
+<h2 id="arguments">Arguments</h2>
+<p>seq {Dict} &ndash; Sequence</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict -- Hiero Bin Item</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def sequence_to_bin_item(self, seq):
+    &#34;&#34;&#34;sequence_to_bin_item will make an Sequence as bin item
+
+    Arguments:
+        seq {Dict} -- Sequence
+
+    Returns:
+        Dict -- Hiero Bin Item
+    &#34;&#34;&#34;
+    return BinItem(seq)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="hiero_c.hiero_c" href="#hiero_c.hiero_c">hiero_c</a></code></h4>
+<ul class="">
+<li><code><a title="hiero_c.hiero_c.add_burnin_track_effect" href="#hiero_c.hiero_c.add_burnin_track_effect">add_burnin_track_effect</a></code></li>
+<li><code><a title="hiero_c.hiero_c.add_dialogue_track_effect" href="#hiero_c.hiero_c.add_dialogue_track_effect">add_dialogue_track_effect</a></code></li>
+<li><code><a title="hiero_c.hiero_c.add_track_item" href="#hiero_c.hiero_c.add_track_item">add_track_item</a></code></li>
+<li><code><a title="hiero_c.hiero_c.create_comment_tag" href="#hiero_c.hiero_c.create_comment_tag">create_comment_tag</a></code></li>
+<li><code><a title="hiero_c.hiero_c.create_info_tag" href="#hiero_c.hiero_c.create_info_tag">create_info_tag</a></code></li>
+<li><code><a title="hiero_c.hiero_c.create_marker_tag" href="#hiero_c.hiero_c.create_marker_tag">create_marker_tag</a></code></li>
+<li><code><a title="hiero_c.hiero_c.create_sequence" href="#hiero_c.hiero_c.create_sequence">create_sequence</a></code></li>
+<li><code><a title="hiero_c.hiero_c.create_video_track" href="#hiero_c.hiero_c.create_video_track">create_video_track</a></code></li>
+<li><code><a title="hiero_c.hiero_c.get_active_sequence" href="#hiero_c.hiero_c.get_active_sequence">get_active_sequence</a></code></li>
+<li><code><a title="hiero_c.hiero_c.get_clips" href="#hiero_c.hiero_c.get_clips">get_clips</a></code></li>
+<li><code><a title="hiero_c.hiero_c.get_item_tags_note" href="#hiero_c.hiero_c.get_item_tags_note">get_item_tags_note</a></code></li>
+<li><code><a title="hiero_c.hiero_c.get_project" href="#hiero_c.hiero_c.get_project">get_project</a></code></li>
+<li><code><a title="hiero_c.hiero_c.get_project_bin" href="#hiero_c.hiero_c.get_project_bin">get_project_bin</a></code></li>
+<li><code><a title="hiero_c.hiero_c.get_project_tag" href="#hiero_c.hiero_c.get_project_tag">get_project_tag</a></code></li>
+<li><code><a title="hiero_c.hiero_c.get_seq_bin" href="#hiero_c.hiero_c.get_seq_bin">get_seq_bin</a></code></li>
+<li><code><a title="hiero_c.hiero_c.get_window_manager" href="#hiero_c.hiero_c.get_window_manager">get_window_manager</a></code></li>
+<li><code><a title="hiero_c.hiero_c.sequence_to_bin_item" href="#hiero_c.hiero_c.sequence_to_bin_item">sequence_to_bin_item</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.8.1</a>.</p>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad()</script>
+</body>
+</html>
