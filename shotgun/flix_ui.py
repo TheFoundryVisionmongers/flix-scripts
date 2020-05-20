@@ -290,10 +290,11 @@ class flix_ui(QWidget):
 
         Arguments:
             name {str} -- Default value
+
             label {str} -- Label name
 
-        Keyword Arguments:
             min_width {int} -- Minium width (default: {200})
+
             echo_mode {bool} -- Stars for password (default: {False})
 
         Returns:
@@ -365,7 +366,7 @@ class flix_ui(QWidget):
     def __reset(self, action: str = 'Log Out'):
         """__reset will reset the login form / shows info for login / logout
 
-        Keyword Arguments:
+        Arguments:
             action {str} -- action to handle (default: {'Log Out'})
         """
         if action == 'Log Out':

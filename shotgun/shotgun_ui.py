@@ -109,7 +109,6 @@ class shotgun_ui(QWidget):
 
             seq_rev_nbr {int} -- Sequence revision number
 
-        Keyword Arguments:
             episode_tc {str} -- Episode tracking code (default: {None})
 
         Returns:
@@ -255,7 +254,6 @@ class shotgun_ui(QWidget):
 
             label {str} -- Label name
 
-        Keyword Arguments:
             min_width {int} -- Minium width (default: {200})
 
         Returns:

@@ -30,10 +30,11 @@ import hashlib
 import hmac
 import json
 import time
-import requests
-from datetime import datetime, timedelta
 from collections import OrderedDict
+from datetime import datetime, timedelta
 from typing import Dict, List, Tuple
+
+import requests
 
 
 class flix:
@@ -161,7 +162,6 @@ class flix:
         Arguments:
             show_id {int} -- Show ID
 
-        Keyword Arguments:
             episode_id {int} -- Episode ID (default: {None})
 
         Returns:
@@ -324,8 +324,8 @@ class flix:
 
             panel_revisions {List} -- List of panel revisions
 
-        Keyword Arguments:
             episode_id {int} -- Episode ID (default: {None})
+
             include_dialogue {bool} -- Include Dialogue (default: {False})
 
         Returns:
@@ -396,7 +396,6 @@ class flix:
 
             markers {List} -- List of Markers
 
-        Keyword Arguments:
             comment {str} -- Comment (default: {&#39;From Shotgun&#39;})
 
         Returns:
@@ -438,7 +437,6 @@ class flix:
 
             sequence_id {int} -- Sequence ID
 
-        Keyword Arguments:
             asset_id {int} -- Asset ID (default: {None})
 
             duration {int} -- Duration (default: {12})
@@ -486,11 +484,13 @@ class flix:
 
         Arguments:
             panels_per_markers {Dict} -- Panels per markers
+
             show_id {int} -- Show ID
+
             seq_id {int} -- Sequence ID
+
             seq_rev_number {int} -- Sequence Revision ID
 
-        Keyword Arguments:
             episode_id {int} -- Episode ID (default: {None})
 
         Returns:
@@ -563,6 +563,7 @@ class flix:
 
         Arguments:
             panel {object} -- Panel from Flix
+
             pos {int} -- Position in the Flix timeline
 
         Returns:
@@ -582,6 +583,7 @@ class flix:
 
         Arguments:
             markers {List} -- List of markers
+
             panels {List} -- List of panels
 
         Returns:
@@ -627,7 +629,7 @@ class flix:
             self.key = auth_id
             self.secret = auth_secret_token
             self.expiry = datetime.strptime(auth_expiry_date,
-                                           &#39;%Y-%m-%dT%H:%M:%S&#39;)
+                                            &#39;%Y-%m-%dT%H:%M:%S&#39;)
         return self.key, self.secret
 
     def __fn_sign(self,
@@ -700,7 +702,6 @@ class flix:
 
             url {str} -- Url to make the request
 
-        Keyword Arguments:
             method {str} -- Request method (default: {&#39;POST&#39;})
 
         Returns:
@@ -866,7 +867,6 @@ create shows etc.</p></div>
         Arguments:
             show_id {int} -- Show ID
 
-        Keyword Arguments:
             episode_id {int} -- Episode ID (default: {None})
 
         Returns:
@@ -1029,8 +1029,8 @@ create shows etc.</p></div>
 
             panel_revisions {List} -- List of panel revisions
 
-        Keyword Arguments:
             episode_id {int} -- Episode ID (default: {None})
+
             include_dialogue {bool} -- Include Dialogue (default: {False})
 
         Returns:
@@ -1101,7 +1101,6 @@ create shows etc.</p></div>
 
             markers {List} -- List of Markers
 
-        Keyword Arguments:
             comment {str} -- Comment (default: {&#39;From Shotgun&#39;})
 
         Returns:
@@ -1143,7 +1142,6 @@ create shows etc.</p></div>
 
             sequence_id {int} -- Sequence ID
 
-        Keyword Arguments:
             asset_id {int} -- Asset ID (default: {None})
 
             duration {int} -- Duration (default: {12})
@@ -1191,11 +1189,13 @@ create shows etc.</p></div>
 
         Arguments:
             panels_per_markers {Dict} -- Panels per markers
+
             show_id {int} -- Show ID
+
             seq_id {int} -- Sequence ID
+
             seq_rev_number {int} -- Sequence Revision ID
 
-        Keyword Arguments:
             episode_id {int} -- Episode ID (default: {None})
 
         Returns:
@@ -1268,6 +1268,7 @@ create shows etc.</p></div>
 
         Arguments:
             panel {object} -- Panel from Flix
+
             pos {int} -- Position in the Flix timeline
 
         Returns:
@@ -1287,6 +1288,7 @@ create shows etc.</p></div>
 
         Arguments:
             markers {List} -- List of markers
+
             panels {List} -- List of panels
 
         Returns:
@@ -1332,7 +1334,7 @@ create shows etc.</p></div>
             self.key = auth_id
             self.secret = auth_secret_token
             self.expiry = datetime.strptime(auth_expiry_date,
-                                           &#39;%Y-%m-%dT%H:%M:%S&#39;)
+                                            &#39;%Y-%m-%dT%H:%M:%S&#39;)
         return self.key, self.secret
 
     def __fn_sign(self,
@@ -1405,7 +1407,6 @@ create shows etc.</p></div>
 
             url {str} -- Url to make the request
 
-        Keyword Arguments:
             method {str} -- Request method (default: {&#39;POST&#39;})
 
         Returns:
@@ -1537,8 +1538,8 @@ create shows etc.</p></div>
 <div class="desc"><p>format_panel_for_revision will format the panel as
 revisionned panel</p>
 <h2 id="arguments">Arguments</h2>
-<p>panel {object} &ndash; Panel from Flix
-pos {int} &ndash; Position in the Flix timeline</p>
+<p>panel {object} &ndash; Panel from Flix</p>
+<p>pos {int} &ndash; Position in the Flix timeline</p>
 <h2 id="returns">Returns</h2>
 <dl>
 <dt><code>object -- Formatted panel</code></dt>
@@ -1554,6 +1555,7 @@ pos {int} &ndash; Position in the Flix timeline</p>
 
     Arguments:
         panel {object} -- Panel from Flix
+
         pos {int} -- Position in the Flix timeline
 
     Returns:
@@ -1786,8 +1788,8 @@ mapping of markers: start -&gt; marker_name</p>
 <dd>
 <div class="desc"><p>get_markers_per_panels will return a mapping of markers per panels</p>
 <h2 id="arguments">Arguments</h2>
-<p>markers {List} &ndash; List of markers
-panels {List} &ndash; List of panels</p>
+<p>markers {List} &ndash; List of markers</p>
+<p>panels {List} &ndash; List of panels</p>
 <h2 id="returns">Returns</h2>
 <dl>
 <dt><code>Dict -- Panels per markers</code></dt>
@@ -1802,6 +1804,7 @@ panels {List} &ndash; List of panels</p>
 
     Arguments:
         markers {List} -- List of markers
+
         panels {List} -- List of panels
 
     Returns:
@@ -1936,8 +1939,7 @@ panels {List} &ndash; List of panels</p>
 <div class="desc"><p>get_sequences retrieve the list of sequence from a show</p>
 <h2 id="arguments">Arguments</h2>
 <p>show_id {int} &ndash; Show ID</p>
-<p>Keyword Arguments:
-episode_id {int} &ndash; Episode ID (default: {None})</p>
+<p>episode_id {int} &ndash; Episode ID (default: {None})</p>
 <h2 id="returns">Returns</h2>
 <dl>
 <dt><code>Dict -- Sequences</code></dt>
@@ -1953,7 +1955,6 @@ episode_id {int} &ndash; Episode ID (default: {None})</p>
     Arguments:
         show_id {int} -- Show ID
 
-    Keyword Arguments:
         episode_id {int} -- Episode ID (default: {None})
 
     Returns:
@@ -2022,12 +2023,11 @@ episode_id {int} &ndash; Episode ID (default: {None})</p>
 <dd>
 <div class="desc"><p>mo_per_shots will make a mapping of all media objects per shots</p>
 <h2 id="arguments">Arguments</h2>
-<p>panels_per_markers {Dict} &ndash; Panels per markers
-show_id {int} &ndash; Show ID
-seq_id {int} &ndash; Sequence ID
-seq_rev_number {int} &ndash; Sequence Revision ID</p>
-<p>Keyword Arguments:
-episode_id {int} &ndash; Episode ID (default: {None})</p>
+<p>panels_per_markers {Dict} &ndash; Panels per markers</p>
+<p>show_id {int} &ndash; Show ID</p>
+<p>seq_id {int} &ndash; Sequence ID</p>
+<p>seq_rev_number {int} &ndash; Sequence Revision ID</p>
+<p>episode_id {int} &ndash; Episode ID (default: {None})</p>
 <h2 id="returns">Returns</h2>
 <dl>
 <dt><code>Dict -- Media objects per shots</code></dt>
@@ -2047,11 +2047,13 @@ episode_id {int} &ndash; Episode ID (default: {None})</p>
 
     Arguments:
         panels_per_markers {Dict} -- Panels per markers
+
         show_id {int} -- Show ID
+
         seq_id {int} -- Sequence ID
+
         seq_rev_number {int} -- Sequence Revision ID
 
-    Keyword Arguments:
         episode_id {int} -- Episode ID (default: {None})
 
     Returns:
@@ -2111,10 +2113,8 @@ episode_id {int} &ndash; Episode ID (default: {None})</p>
 <h2 id="arguments">Arguments</h2>
 <p>show_id {int} &ndash; Show ID</p>
 <p>sequence_id {int} &ndash; Sequence ID</p>
-<p>Keyword Arguments:
-asset_id {int} &ndash; Asset ID (default: {None})</p>
-<pre><code>duration {int} -- Duration (default: {12})
-</code></pre>
+<p>asset_id {int} &ndash; Asset ID (default: {None})</p>
+<p>duration {int} &ndash; Duration (default: {12})</p>
 <h2 id="returns">Returns</h2>
 <dl>
 <dt><code>Dict -- Panel</code></dt>
@@ -2134,7 +2134,6 @@ asset_id {int} &ndash; Asset ID (default: {None})</p>
 
         sequence_id {int} -- Sequence ID
 
-    Keyword Arguments:
         asset_id {int} -- Asset ID (default: {None})
 
         duration {int} -- Duration (default: {12})
@@ -2173,8 +2172,7 @@ asset_id {int} &ndash; Asset ID (default: {None})</p>
 <p>sequence_id {int} &ndash; Sequence ID</p>
 <p>revisioned_panels {List} &ndash; List of revisionned panels</p>
 <p>markers {List} &ndash; List of Markers</p>
-<p>Keyword Arguments:
-comment {str} &ndash; Comment (default: {'From Shotgun'})</p>
+<p>comment {str} &ndash; Comment (default: {'From Shotgun'})</p>
 <h2 id="returns">Returns</h2>
 <dl>
 <dt><code>Dict -- Sequence Revision</code></dt>
@@ -2201,7 +2199,6 @@ comment {str} &ndash; Comment (default: {'From Shotgun'})</p>
 
         markers {List} -- List of Markers
 
-    Keyword Arguments:
         comment {str} -- Comment (default: {&#39;From Shotgun&#39;})
 
     Returns:
@@ -2264,9 +2261,8 @@ comment {str} &ndash; Comment (default: {'From Shotgun'})</p>
 <p>sequence_id {int} &ndash; Sequence ID</p>
 <p>seq_rev_number {int} &ndash; Sequence Revision Number</p>
 <p>panel_revisions {List} &ndash; List of panel revisions</p>
-<p>Keyword Arguments:
-episode_id {int} &ndash; Episode ID (default: {None})
-include_dialogue {bool} &ndash; Include Dialogue (default: {False})</p>
+<p>episode_id {int} &ndash; Episode ID (default: {None})</p>
+<p>include_dialogue {bool} &ndash; Include Dialogue (default: {False})</p>
 <h2 id="returns">Returns</h2>
 <dl>
 <dt><code>Dict -- Export response</code></dt>
@@ -2294,8 +2290,8 @@ include_dialogue {bool} &ndash; Include Dialogue (default: {False})</p>
 
         panel_revisions {List} -- List of panel revisions
 
-    Keyword Arguments:
         episode_id {int} -- Episode ID (default: {None})
+
         include_dialogue {bool} -- Include Dialogue (default: {False})
 
     Returns:

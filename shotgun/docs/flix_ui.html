@@ -24,7 +24,8 @@
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">import re
+<pre><code class="python">import os
+import re
 import sys
 from collections import OrderedDict
 from typing import Dict, List, Tuple
@@ -147,6 +148,10 @@ class flix_ui(QWidget):
     def get_selected_show(self) -&gt; Tuple[int, bool, str]:
         &#34;&#34;&#34;get_selected_show will return the selected show info
 
+        Raises:
+            RuntimeError: Show not found
+            RuntimeError: Need authentication
+
         Returns:
             Tuple[int, bool, str] -- Show ID, Episodic, Show tracking code
         &#34;&#34;&#34;
@@ -163,6 +168,10 @@ class flix_ui(QWidget):
     def get_selected_episode(self) -&gt; Tuple[int, str]:
         &#34;&#34;&#34;get_selected_episode will return the selected episode info
 
+        Raises:
+            RuntimeError: Episode not found
+            RuntimeError: Need authentication
+
         Returns:
             Tuple[int, str] -- Episode ID, Episode tracking code
         &#34;&#34;&#34;
@@ -175,8 +184,114 @@ class flix_ui(QWidget):
         episode_id = self.episode_tracking_code[etc]
         return episode_id, etc
 
+    def get_default_image_name(
+            self,
+            seq_rev_number: int,
+            panel_pos: int,
+            panel_id: int,
+            panel_revision: int) -&gt; str:
+        &#34;&#34;&#34;get_default_image_name will format the image name
+
+        Arguments:
+            seq_rev_number {int} -- Sequence revision number
+
+            panel_pos {int} -- Panel position
+
+            panel_id {int} -- Panel ID
+
+            panel_revision {int} -- Panel revision
+
+        Returns:
+            str -- Formatted name
+        &#34;&#34;&#34;
+        _, _, show_tracking_code = self.get_selected_show()
+        _, _, seq_tracking_code = self.get_selected_sequence()
+        return &#39;{0}_{1}_v{2}_{3}_{4}_v{5}&#39;.format(
+            show_tracking_code,
+            seq_tracking_code,
+            seq_rev_number,
+            panel_pos,
+            panel_id,
+            panel_revision)
+
+    def local_download(self, base_path: str, mo: dict, seq_rev_nbr: int):
+        &#34;&#34;&#34;local_download will download a media object locally
+
+        Raises:
+            RuntimeError: Need authentication
+
+        Arguments:
+            base_path {str} -- Path to download the file
+
+            mo {Dict} -- Media object entity
+
+            seq_rev_nbr {int} -- Sequence revision number
+        &#34;&#34;&#34;
+        if not self.authenticated:
+            raise RuntimeError(self.__err_authenticate)
+
+        ext = os.path.splitext(mo.get(&#39;name&#39;))
+        filename = self.get_default_image_name(
+            seq_rev_nbr, mo.get(&#39;pos&#39;),
+            mo.get(&#39;id&#39;),
+            mo.get(&#39;revision_number&#39;))
+        file_path = os.path.join(
+            base_path, &#39;{0}{1}&#39;.format(filename, ext[1]))
+        if sys.platform == &#39;win32&#39; or sys.platform == &#39;cygwin&#39;:
+            file_path = file_path.replace(&#39;\\&#39;, &#39;\\\\&#39;)
+        self.get_flix_api().download_media_object(
+            file_path, mo.get(&#39;mo&#39;))
+
+    def get_media_object_per_shots(self):
+        &#34;&#34;&#34;get_media_object_per_shots will get the media objects per shotss
+
+        Raises:
+            RuntimeError: Need authentication
+
+        Returns:
+            Dict -- Mapping of media objects per shots
+        &#34;&#34;&#34;
+        if not self.authenticated:
+            raise RuntimeError(self.__err_authenticate)
+
+        show_id, episodic, _ = self.get_selected_show()
+        seq_id, seq_rev_number, _ = self.get_selected_sequence()
+        flix_api = self.get_flix_api()
+        seq_rev = flix_api.get_sequence_rev(show_id, seq_id, seq_rev_number)
+        episode_id = None
+        if episodic:
+            episode_id, _ = self.get_selected_episode()
+        if seq_rev is None:
+            self.__error(&#39;Could not retrieve sequence revision&#39;)
+            return None
+        markers = self.get_flix_api().get_markers(seq_rev)
+        if len(markers) &lt; 1:
+            self.__info(&#39;You need at least one shot&#39;)
+            return None
+        panels = self.get_flix_api().get_panels(
+            show_id, seq_id, seq_rev_number)
+        if panels is None:
+            self.__error(&#39;Could not retrieve panels&#39;)
+            return None
+        panels_per_markers = self.get_flix_api().get_markers_per_panels(markers, panels)
+        mo_per_shots, ok = self.get_flix_api().mo_per_shots(panels_per_markers,
+                                                            show_id,
+                                                            seq_id,
+                                                            seq_rev_number,
+                                                            episode_id)
+        if mo_per_shots is None:
+            self.__error(&#39;Could not retrieve media objects per shots&#39;)
+            return None
+        if ok is False:
+            return None
+        return mo_per_shots
+
     def get_selected_sequence(self) -&gt; Tuple[int, int, str]:
         &#34;&#34;&#34;get_selected_sequence will return the selected sequence info
+
+        Raises:
+            RuntimeError: Sequence not found
+            RuntimeError: Need authentication
 
         Returns:
             Tuple[int, int, str] -- Sequence ID, Seq rev ID, Seq tracking code
@@ -201,10 +316,11 @@ class flix_ui(QWidget):
 
         Arguments:
             name {str} -- Default value
+
             label {str} -- Label name
 
-        Keyword Arguments:
             min_width {int} -- Minium width (default: {200})
+
             echo_mode {bool} -- Stars for password (default: {False})
 
         Returns:
@@ -224,6 +340,7 @@ class flix_ui(QWidget):
 
         Arguments:
             label {str} -- Label name
+
             fn_text_changed {object} -- Callback function for text_changed
 
         Returns:
@@ -242,6 +359,7 @@ class flix_ui(QWidget):
 
         Arguments:
             layout {Dict} -- Layout to add widget to
+
             widgets {*Dict} -- All the widgets to add
         &#34;&#34;&#34;
 
@@ -274,7 +392,7 @@ class flix_ui(QWidget):
     def __reset(self, action: str = &#39;Log Out&#39;):
         &#34;&#34;&#34;__reset will reset the login form / shows info for login / logout
 
-        Keyword Arguments:
+        Arguments:
             action {str} -- action to handle (default: {&#39;Log Out&#39;})
         &#34;&#34;&#34;
         if action == &#39;Log Out&#39;:
@@ -483,7 +601,7 @@ class main_dialogue(QDialog):
         widget_flix_ui.e_show_changed.connect(self.on_show_changed)
         widget_flix_ui.e_episode_changed.connect(self.on_episode_changed)
         widget_flix_ui.e_sequence_changed.connect(self.on_sequence_changed)
-        
+
         # Add flix Ui widget
         main_layout.addWidget(widget_flix_ui)
         self.setLayout(main_layout)
@@ -647,6 +765,10 @@ e_sequence_changed: sequence ID, sequence Revision number, tracking code</p></di
     def get_selected_show(self) -&gt; Tuple[int, bool, str]:
         &#34;&#34;&#34;get_selected_show will return the selected show info
 
+        Raises:
+            RuntimeError: Show not found
+            RuntimeError: Need authentication
+
         Returns:
             Tuple[int, bool, str] -- Show ID, Episodic, Show tracking code
         &#34;&#34;&#34;
@@ -663,6 +785,10 @@ e_sequence_changed: sequence ID, sequence Revision number, tracking code</p></di
     def get_selected_episode(self) -&gt; Tuple[int, str]:
         &#34;&#34;&#34;get_selected_episode will return the selected episode info
 
+        Raises:
+            RuntimeError: Episode not found
+            RuntimeError: Need authentication
+
         Returns:
             Tuple[int, str] -- Episode ID, Episode tracking code
         &#34;&#34;&#34;
@@ -675,8 +801,114 @@ e_sequence_changed: sequence ID, sequence Revision number, tracking code</p></di
         episode_id = self.episode_tracking_code[etc]
         return episode_id, etc
 
+    def get_default_image_name(
+            self,
+            seq_rev_number: int,
+            panel_pos: int,
+            panel_id: int,
+            panel_revision: int) -&gt; str:
+        &#34;&#34;&#34;get_default_image_name will format the image name
+
+        Arguments:
+            seq_rev_number {int} -- Sequence revision number
+
+            panel_pos {int} -- Panel position
+
+            panel_id {int} -- Panel ID
+
+            panel_revision {int} -- Panel revision
+
+        Returns:
+            str -- Formatted name
+        &#34;&#34;&#34;
+        _, _, show_tracking_code = self.get_selected_show()
+        _, _, seq_tracking_code = self.get_selected_sequence()
+        return &#39;{0}_{1}_v{2}_{3}_{4}_v{5}&#39;.format(
+            show_tracking_code,
+            seq_tracking_code,
+            seq_rev_number,
+            panel_pos,
+            panel_id,
+            panel_revision)
+
+    def local_download(self, base_path: str, mo: dict, seq_rev_nbr: int):
+        &#34;&#34;&#34;local_download will download a media object locally
+
+        Raises:
+            RuntimeError: Need authentication
+
+        Arguments:
+            base_path {str} -- Path to download the file
+
+            mo {Dict} -- Media object entity
+
+            seq_rev_nbr {int} -- Sequence revision number
+        &#34;&#34;&#34;
+        if not self.authenticated:
+            raise RuntimeError(self.__err_authenticate)
+
+        ext = os.path.splitext(mo.get(&#39;name&#39;))
+        filename = self.get_default_image_name(
+            seq_rev_nbr, mo.get(&#39;pos&#39;),
+            mo.get(&#39;id&#39;),
+            mo.get(&#39;revision_number&#39;))
+        file_path = os.path.join(
+            base_path, &#39;{0}{1}&#39;.format(filename, ext[1]))
+        if sys.platform == &#39;win32&#39; or sys.platform == &#39;cygwin&#39;:
+            file_path = file_path.replace(&#39;\\&#39;, &#39;\\\\&#39;)
+        self.get_flix_api().download_media_object(
+            file_path, mo.get(&#39;mo&#39;))
+
+    def get_media_object_per_shots(self):
+        &#34;&#34;&#34;get_media_object_per_shots will get the media objects per shotss
+
+        Raises:
+            RuntimeError: Need authentication
+
+        Returns:
+            Dict -- Mapping of media objects per shots
+        &#34;&#34;&#34;
+        if not self.authenticated:
+            raise RuntimeError(self.__err_authenticate)
+
+        show_id, episodic, _ = self.get_selected_show()
+        seq_id, seq_rev_number, _ = self.get_selected_sequence()
+        flix_api = self.get_flix_api()
+        seq_rev = flix_api.get_sequence_rev(show_id, seq_id, seq_rev_number)
+        episode_id = None
+        if episodic:
+            episode_id, _ = self.get_selected_episode()
+        if seq_rev is None:
+            self.__error(&#39;Could not retrieve sequence revision&#39;)
+            return None
+        markers = self.get_flix_api().get_markers(seq_rev)
+        if len(markers) &lt; 1:
+            self.__info(&#39;You need at least one shot&#39;)
+            return None
+        panels = self.get_flix_api().get_panels(
+            show_id, seq_id, seq_rev_number)
+        if panels is None:
+            self.__error(&#39;Could not retrieve panels&#39;)
+            return None
+        panels_per_markers = self.get_flix_api().get_markers_per_panels(markers, panels)
+        mo_per_shots, ok = self.get_flix_api().mo_per_shots(panels_per_markers,
+                                                            show_id,
+                                                            seq_id,
+                                                            seq_rev_number,
+                                                            episode_id)
+        if mo_per_shots is None:
+            self.__error(&#39;Could not retrieve media objects per shots&#39;)
+            return None
+        if ok is False:
+            return None
+        return mo_per_shots
+
     def get_selected_sequence(self) -&gt; Tuple[int, int, str]:
         &#34;&#34;&#34;get_selected_sequence will return the selected sequence info
+
+        Raises:
+            RuntimeError: Sequence not found
+            RuntimeError: Need authentication
 
         Returns:
             Tuple[int, int, str] -- Sequence ID, Seq rev ID, Seq tracking code
@@ -701,10 +933,11 @@ e_sequence_changed: sequence ID, sequence Revision number, tracking code</p></di
 
         Arguments:
             name {str} -- Default value
+
             label {str} -- Label name
 
-        Keyword Arguments:
             min_width {int} -- Minium width (default: {200})
+
             echo_mode {bool} -- Stars for password (default: {False})
 
         Returns:
@@ -724,6 +957,7 @@ e_sequence_changed: sequence ID, sequence Revision number, tracking code</p></di
 
         Arguments:
             label {str} -- Label name
+
             fn_text_changed {object} -- Callback function for text_changed
 
         Returns:
@@ -742,6 +976,7 @@ e_sequence_changed: sequence ID, sequence Revision number, tracking code</p></di
 
         Arguments:
             layout {Dict} -- Layout to add widget to
+
             widgets {*Dict} -- All the widgets to add
         &#34;&#34;&#34;
 
@@ -774,7 +1009,7 @@ e_sequence_changed: sequence ID, sequence Revision number, tracking code</p></di
     def __reset(self, action: str = &#39;Log Out&#39;):
         &#34;&#34;&#34;__reset will reset the login form / shows info for login / logout
 
-        Keyword Arguments:
+        Arguments:
             action {str} -- action to handle (default: {&#39;Log Out&#39;})
         &#34;&#34;&#34;
         if action == &#39;Log Out&#39;:
@@ -1005,6 +1240,56 @@ e_sequence_changed: sequence ID, sequence Revision number, tracking code</p></di
 </dl>
 <h3>Methods</h3>
 <dl>
+<dt id="flix_ui.flix_ui.get_default_image_name"><code class="name flex">
+<span>def <span class="ident">get_default_image_name</span></span>(<span>self, seq_rev_number: int, panel_pos: int, panel_id: int, panel_revision: int) -> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>get_default_image_name will format the image name</p>
+<h2 id="arguments">Arguments</h2>
+<p>seq_rev_number {int} &ndash; Sequence revision number</p>
+<p>panel_pos {int} &ndash; Panel position</p>
+<p>panel_id {int} &ndash; Panel ID</p>
+<p>panel_revision {int} &ndash; Panel revision</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>str -- Formatted name</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_default_image_name(
+        self,
+        seq_rev_number: int,
+        panel_pos: int,
+        panel_id: int,
+        panel_revision: int) -&gt; str:
+    &#34;&#34;&#34;get_default_image_name will format the image name
+
+    Arguments:
+        seq_rev_number {int} -- Sequence revision number
+
+        panel_pos {int} -- Panel position
+
+        panel_id {int} -- Panel ID
+
+        panel_revision {int} -- Panel revision
+
+    Returns:
+        str -- Formatted name
+    &#34;&#34;&#34;
+    _, _, show_tracking_code = self.get_selected_show()
+    _, _, seq_tracking_code = self.get_selected_sequence()
+    return &#39;{0}_{1}_v{2}_{3}_{4}_v{5}&#39;.format(
+        show_tracking_code,
+        seq_tracking_code,
+        seq_rev_number,
+        panel_pos,
+        panel_id,
+        panel_revision)</code></pre>
+</details>
+</dd>
 <dt id="flix_ui.flix_ui.get_flix_api"><code class="name flex">
 <span>def <span class="ident">get_flix_api</span></span>(<span>self) -> object</span>
 </code></dt>
@@ -1028,11 +1313,82 @@ e_sequence_changed: sequence ID, sequence Revision number, tracking code</p></di
     return self.flix_api</code></pre>
 </details>
 </dd>
+<dt id="flix_ui.flix_ui.get_media_object_per_shots"><code class="name flex">
+<span>def <span class="ident">get_media_object_per_shots</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>get_media_object_per_shots will get the media objects per shotss</p>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code>RuntimeError</code></dt>
+<dd>Need authentication</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict -- Mapping</code> of <code>media objects per shots</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_media_object_per_shots(self):
+    &#34;&#34;&#34;get_media_object_per_shots will get the media objects per shotss
+
+    Raises:
+        RuntimeError: Need authentication
+
+    Returns:
+        Dict -- Mapping of media objects per shots
+    &#34;&#34;&#34;
+    if not self.authenticated:
+        raise RuntimeError(self.__err_authenticate)
+
+    show_id, episodic, _ = self.get_selected_show()
+    seq_id, seq_rev_number, _ = self.get_selected_sequence()
+    flix_api = self.get_flix_api()
+    seq_rev = flix_api.get_sequence_rev(show_id, seq_id, seq_rev_number)
+    episode_id = None
+    if episodic:
+        episode_id, _ = self.get_selected_episode()
+    if seq_rev is None:
+        self.__error(&#39;Could not retrieve sequence revision&#39;)
+        return None
+    markers = self.get_flix_api().get_markers(seq_rev)
+    if len(markers) &lt; 1:
+        self.__info(&#39;You need at least one shot&#39;)
+        return None
+    panels = self.get_flix_api().get_panels(
+        show_id, seq_id, seq_rev_number)
+    if panels is None:
+        self.__error(&#39;Could not retrieve panels&#39;)
+        return None
+    panels_per_markers = self.get_flix_api().get_markers_per_panels(markers, panels)
+    mo_per_shots, ok = self.get_flix_api().mo_per_shots(panels_per_markers,
+                                                        show_id,
+                                                        seq_id,
+                                                        seq_rev_number,
+                                                        episode_id)
+    if mo_per_shots is None:
+        self.__error(&#39;Could not retrieve media objects per shots&#39;)
+        return None
+    if ok is False:
+        return None
+    return mo_per_shots</code></pre>
+</details>
+</dd>
 <dt id="flix_ui.flix_ui.get_selected_episode"><code class="name flex">
 <span>def <span class="ident">get_selected_episode</span></span>(<span>self) -> typing.Tuple[int, str]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>get_selected_episode will return the selected episode info</p>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code>RuntimeError</code></dt>
+<dd>Episode not found</dd>
+<dt><code>RuntimeError</code></dt>
+<dd>Need authentication</dd>
+</dl>
 <h2 id="returns">Returns</h2>
 <dl>
 <dt><code>Tuple[int, str] -- Episode ID, Episode tracking code</code></dt>
@@ -1044,6 +1400,10 @@ e_sequence_changed: sequence ID, sequence Revision number, tracking code</p></di
 </summary>
 <pre><code class="python">def get_selected_episode(self) -&gt; Tuple[int, str]:
     &#34;&#34;&#34;get_selected_episode will return the selected episode info
+
+    Raises:
+        RuntimeError: Episode not found
+        RuntimeError: Need authentication
 
     Returns:
         Tuple[int, str] -- Episode ID, Episode tracking code
@@ -1063,6 +1423,13 @@ e_sequence_changed: sequence ID, sequence Revision number, tracking code</p></di
 </code></dt>
 <dd>
 <div class="desc"><p>get_selected_sequence will return the selected sequence info</p>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code>RuntimeError</code></dt>
+<dd>Sequence not found</dd>
+<dt><code>RuntimeError</code></dt>
+<dd>Need authentication</dd>
+</dl>
 <h2 id="returns">Returns</h2>
 <dl>
 <dt><code>Tuple[int, int, str] -- Sequence ID, Seq rev ID, Seq tracking code</code></dt>
@@ -1074,6 +1441,10 @@ e_sequence_changed: sequence ID, sequence Revision number, tracking code</p></di
 </summary>
 <pre><code class="python">def get_selected_sequence(self) -&gt; Tuple[int, int, str]:
     &#34;&#34;&#34;get_selected_sequence will return the selected sequence info
+
+    Raises:
+        RuntimeError: Sequence not found
+        RuntimeError: Need authentication
 
     Returns:
         Tuple[int, int, str] -- Sequence ID, Seq rev ID, Seq tracking code
@@ -1094,6 +1465,13 @@ e_sequence_changed: sequence ID, sequence Revision number, tracking code</p></di
 </code></dt>
 <dd>
 <div class="desc"><p>get_selected_show will return the selected show info</p>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code>RuntimeError</code></dt>
+<dd>Show not found</dd>
+<dt><code>RuntimeError</code></dt>
+<dd>Need authentication</dd>
+</dl>
 <h2 id="returns">Returns</h2>
 <dl>
 <dt><code>Tuple[int, bool, str] -- Show ID, Episodic, Show tracking code</code></dt>
@@ -1105,6 +1483,10 @@ e_sequence_changed: sequence ID, sequence Revision number, tracking code</p></di
 </summary>
 <pre><code class="python">def get_selected_show(self) -&gt; Tuple[int, bool, str]:
     &#34;&#34;&#34;get_selected_show will return the selected show info
+
+    Raises:
+        RuntimeError: Show not found
+        RuntimeError: Need authentication
 
     Returns:
         Tuple[int, bool, str] -- Show ID, Episodic, Show tracking code
@@ -1143,6 +1525,53 @@ e_sequence_changed: sequence ID, sequence Revision number, tracking code</p></di
     return self.authenticated</code></pre>
 </details>
 </dd>
+<dt id="flix_ui.flix_ui.local_download"><code class="name flex">
+<span>def <span class="ident">local_download</span></span>(<span>self, base_path: str, mo: dict, seq_rev_nbr: int)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>local_download will download a media object locally</p>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code>RuntimeError</code></dt>
+<dd>Need authentication</dd>
+</dl>
+<h2 id="arguments">Arguments</h2>
+<p>base_path {str} &ndash; Path to download the file</p>
+<p>mo {Dict} &ndash; Media object entity</p>
+<p>seq_rev_nbr {int} &ndash; Sequence revision number</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def local_download(self, base_path: str, mo: dict, seq_rev_nbr: int):
+    &#34;&#34;&#34;local_download will download a media object locally
+
+    Raises:
+        RuntimeError: Need authentication
+
+    Arguments:
+        base_path {str} -- Path to download the file
+
+        mo {Dict} -- Media object entity
+
+        seq_rev_nbr {int} -- Sequence revision number
+    &#34;&#34;&#34;
+    if not self.authenticated:
+        raise RuntimeError(self.__err_authenticate)
+
+    ext = os.path.splitext(mo.get(&#39;name&#39;))
+    filename = self.get_default_image_name(
+        seq_rev_nbr, mo.get(&#39;pos&#39;),
+        mo.get(&#39;id&#39;),
+        mo.get(&#39;revision_number&#39;))
+    file_path = os.path.join(
+        base_path, &#39;{0}{1}&#39;.format(filename, ext[1]))
+    if sys.platform == &#39;win32&#39; or sys.platform == &#39;cygwin&#39;:
+        file_path = file_path.replace(&#39;\\&#39;, &#39;\\\\&#39;)
+    self.get_flix_api().download_media_object(
+        file_path, mo.get(&#39;mo&#39;))</code></pre>
+</details>
+</dd>
 </dl>
 </dd>
 <dt id="flix_ui.main_dialogue"><code class="flex name class">
@@ -1168,7 +1597,7 @@ e_sequence_changed: sequence ID, sequence Revision number, tracking code</p></di
         widget_flix_ui.e_show_changed.connect(self.on_show_changed)
         widget_flix_ui.e_episode_changed.connect(self.on_episode_changed)
         widget_flix_ui.e_sequence_changed.connect(self.on_sequence_changed)
-        
+
         # Add flix Ui widget
         main_layout.addWidget(widget_flix_ui)
         self.setLayout(main_layout)
@@ -1293,11 +1722,14 @@ e_sequence_changed: sequence ID, sequence Revision number, tracking code</p></di
 <li><code><a title="flix_ui.flix_ui.e_logout" href="#flix_ui.flix_ui.e_logout">e_logout</a></code></li>
 <li><code><a title="flix_ui.flix_ui.e_sequence_changed" href="#flix_ui.flix_ui.e_sequence_changed">e_sequence_changed</a></code></li>
 <li><code><a title="flix_ui.flix_ui.e_show_changed" href="#flix_ui.flix_ui.e_show_changed">e_show_changed</a></code></li>
+<li><code><a title="flix_ui.flix_ui.get_default_image_name" href="#flix_ui.flix_ui.get_default_image_name">get_default_image_name</a></code></li>
 <li><code><a title="flix_ui.flix_ui.get_flix_api" href="#flix_ui.flix_ui.get_flix_api">get_flix_api</a></code></li>
+<li><code><a title="flix_ui.flix_ui.get_media_object_per_shots" href="#flix_ui.flix_ui.get_media_object_per_shots">get_media_object_per_shots</a></code></li>
 <li><code><a title="flix_ui.flix_ui.get_selected_episode" href="#flix_ui.flix_ui.get_selected_episode">get_selected_episode</a></code></li>
 <li><code><a title="flix_ui.flix_ui.get_selected_sequence" href="#flix_ui.flix_ui.get_selected_sequence">get_selected_sequence</a></code></li>
 <li><code><a title="flix_ui.flix_ui.get_selected_show" href="#flix_ui.flix_ui.get_selected_show">get_selected_show</a></code></li>
 <li><code><a title="flix_ui.flix_ui.is_authenticated" href="#flix_ui.flix_ui.is_authenticated">is_authenticated</a></code></li>
+<li><code><a title="flix_ui.flix_ui.local_download" href="#flix_ui.flix_ui.local_download">local_download</a></code></li>
 <li><code><a title="flix_ui.flix_ui.staticMetaObject" href="#flix_ui.flix_ui.staticMetaObject">staticMetaObject</a></code></li>
 </ul>
 </li>

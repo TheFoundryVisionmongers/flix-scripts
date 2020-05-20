@@ -136,7 +136,6 @@ class flix:
         Arguments:
             show_id {int} -- Show ID
 
-        Keyword Arguments:
             episode_id {int} -- Episode ID (default: {None})
 
         Returns:
@@ -299,8 +298,8 @@ class flix:
 
             panel_revisions {List} -- List of panel revisions
 
-        Keyword Arguments:
             episode_id {int} -- Episode ID (default: {None})
+
             include_dialogue {bool} -- Include Dialogue (default: {False})
 
         Returns:
@@ -371,7 +370,6 @@ class flix:
 
             markers {List} -- List of Markers
 
-        Keyword Arguments:
             comment {str} -- Comment (default: {'From Shotgun'})
 
         Returns:
@@ -413,7 +411,6 @@ class flix:
 
             sequence_id {int} -- Sequence ID
 
-        Keyword Arguments:
             asset_id {int} -- Asset ID (default: {None})
 
             duration {int} -- Duration (default: {12})
@@ -468,7 +465,6 @@ class flix:
 
             seq_rev_number {int} -- Sequence Revision ID
 
-        Keyword Arguments:
             episode_id {int} -- Episode ID (default: {None})
 
         Returns:
@@ -680,7 +676,6 @@ class flix:
 
             url {str} -- Url to make the request
 
-        Keyword Arguments:
             method {str} -- Request method (default: {'POST'})
 
         Returns:
