@@ -111,11 +111,11 @@ class flix_ui(QWidget):
         """
         return self.authenticated
 
-    def get_flix_api(self) -> object:
+    def get_flix_api(self) -> flix_api.flix:
         """get_flix_api will return the flix_api
 
         Returns:
-            object -- Flix api entity
+            flix_api.flix -- Flix api entity
         """
         return self.flix_api
 

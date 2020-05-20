@@ -137,11 +137,11 @@ class flix_ui(QWidget):
         &#34;&#34;&#34;
         return self.authenticated
 
-    def get_flix_api(self) -&gt; object:
+    def get_flix_api(self) -&gt; flix_api.flix:
         &#34;&#34;&#34;get_flix_api will return the flix_api
 
         Returns:
-            object -- Flix api entity
+            flix_api.flix -- Flix api entity
         &#34;&#34;&#34;
         return self.flix_api
 
@@ -754,11 +754,11 @@ e_sequence_changed: sequence ID, sequence Revision number, tracking code</p></di
         &#34;&#34;&#34;
         return self.authenticated
 
-    def get_flix_api(self) -&gt; object:
+    def get_flix_api(self) -&gt; flix_api.flix:
         &#34;&#34;&#34;get_flix_api will return the flix_api
 
         Returns:
-            object -- Flix api entity
+            flix_api.flix -- Flix api entity
         &#34;&#34;&#34;
         return self.flix_api
 
@@ -1291,24 +1291,24 @@ e_sequence_changed: sequence ID, sequence Revision number, tracking code</p></di
 </details>
 </dd>
 <dt id="flix_ui.flix_ui.get_flix_api"><code class="name flex">
-<span>def <span class="ident">get_flix_api</span></span>(<span>self) -> object</span>
+<span>def <span class="ident">get_flix_api</span></span>(<span>self) -> <a title="flix.flix" href="flix.html#flix.flix">flix</a></span>
 </code></dt>
 <dd>
 <div class="desc"><p>get_flix_api will return the flix_api</p>
 <h2 id="returns">Returns</h2>
 <dl>
-<dt><code>object -- Flix api entity</code></dt>
+<dt><code>flix_api.flix -- Flix api entity</code></dt>
 <dd>&nbsp;</dd>
 </dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def get_flix_api(self) -&gt; object:
+<pre><code class="python">def get_flix_api(self) -&gt; flix_api.flix:
     &#34;&#34;&#34;get_flix_api will return the flix_api
 
     Returns:
-        object -- Flix api entity
+        flix_api.flix -- Flix api entity
     &#34;&#34;&#34;
     return self.flix_api</code></pre>
 </details>

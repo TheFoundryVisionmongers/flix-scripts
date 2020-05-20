@@ -1,0 +1,1127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.8.1" />
+<title>shotgun_ui API documentation</title>
+<meta name="description" content="" />
+<link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
+<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>shotgun_ui</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">import os
+import re
+import sys
+import tempfile
+import time
+from collections import OrderedDict
+from typing import Dict, List, Tuple
+
+from PySide2.QtCore import QCoreApplication, QSize, Qt, Signal
+from PySide2.QtGui import QPixmap
+from PySide2.QtWidgets import (QApplication, QComboBox, QDialog, QErrorMessage,
+                               QFileDialog, QHBoxLayout, QInputDialog, QLabel,
+                               QLineEdit, QMessageBox, QProgressDialog,
+                               QPushButton, QSizePolicy, QVBoxLayout, QWidget)
+
+import flix_ui as flix_widget
+import shotgun as shotgun_api
+
+
+class shotgun_ui(QWidget):
+
+    e_local_export = Signal()
+    e_shotgun_export = Signal(str)
+    export_path = None
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setSizePolicy(
+            QSizePolicy.MinimumExpanding,
+            QSizePolicy.MinimumExpanding
+        )
+
+        # Setup UI view
+        v_main_box = QVBoxLayout()
+
+        # Setup list for production handoff export option
+        self.handoff_type_list = QComboBox()
+        self.handoff_type_list.addItems([&#39;Local Export&#39;, &#39;Shotgun Export&#39;])
+        self.handoff_type_label = QLabel(&#39;Handoff Type&#39;)
+        self.handoff_type_label.setBuddy(self.handoff_type_list)
+        self.handoff_type_list.currentTextChanged.connect(
+            self.__on_handoff_type_changed)
+
+        # Setup Local Export option
+        self.export_layout = QHBoxLayout()
+        self.export_path_button = QPushButton(&#39;Browse&#39;)
+        self.export_path_button.clicked.connect(self.__browse_export_path)
+
+        self.export_path, self.export_path_label = self.__create_line_label(
+            &#39;&#39;,
+            &#39;Export Path&#39;,
+            200
+        )
+        self.__add_widget_to_layout(self.export_layout,
+                                    self.export_path,
+                                    self.export_path_button)
+
+        # Setup Shotgun export option
+        self.sg_hostname, self.sg_hostname_label = self.__create_line_label(
+            &#39;https://thomaslacroix.shotgunstudio.com&#39;,
+            &#39;Shotgun URL&#39;,
+            350
+        )
+        self.sg_login, self.sg_login_label = self.__create_line_label(
+            &#39;thomas.lacroix@epitech.eu&#39;,
+            &#39;Username&#39;,
+            200
+        )
+
+        pull = QPushButton(&#39;Export Latest&#39;)
+        pull.clicked.connect(self.__pull_latest)
+
+        self.__add_widget_to_layout(v_main_box,
+                                    self.handoff_type_label,
+                                    self.handoff_type_list,
+                                    self.export_path_label)
+        v_main_box.addLayout(self.export_layout)
+        self.__add_widget_to_layout(v_main_box,
+                                    self.sg_hostname_label,
+                                    self.sg_hostname,
+                                    self.sg_login_label,
+                                    self.sg_login,
+                                    pull)
+
+        self.__update_ui_handoff_type(&#39;Local Export&#39;)
+        self.setLayout(v_main_box)
+
+    def get_shotgun_api(self) -&gt; shotgun_api.shotgun:
+        &#34;&#34;&#34;get_shotgun_api will return the shotgun_api
+
+        Returns:
+            shotgun_api.shotgun -- Shotgun api
+        &#34;&#34;&#34;
+        return self.shotgun
+
+    def create_folders(
+            self,
+            show_tc: str,
+            seq_tc: str,
+            seq_rev_nbr: int,
+            episode_tc: str = None) -&gt; str:
+        &#34;&#34;&#34;create_folders will create the structure of folders from
+        shows to sequence revision
+
+        Arguments:
+            show_tc {str} -- Show tracking code
+
+            seq_tc {str} -- Sequence tracking code
+
+            seq_rev_nbr {int} -- Sequence revision number
+
+            episode_tc {str} -- Episode tracking code (default: {None})
+
+        Returns:
+            str -- Sequence revision path
+        &#34;&#34;&#34;
+        show_path = os.path.join(self.export_path.text(), show_tc)
+        self.__create_folder(show_path)
+        sequence_path = os.path.join(show_path, seq_tc)
+        if episode_tc is not None:
+            episode_path = os.path.join(show_path, episode_tc)
+            self.__create_folder(episode_path)
+            sequence_path = os.path.join(episode_path, seq_tc)
+        self.__create_folder(sequence_path)
+        sequence_revision_path = os.path.join(
+            sequence_path, &#39;v{0}&#39;.format(seq_rev_nbr))
+        self.__create_folder(sequence_revision_path)
+        return sequence_revision_path
+
+    def get_shot_download_paths(
+            self, export_path: str, shot: str) -&gt; Tuple[str, str, str]:
+        &#34;&#34;&#34;get_shot_download_paths will create folders for show, artwork and thumbnails
+        and return those paths
+
+        Arguments:
+            export_path {str} -- Base export path
+
+            shot {str} -- Shot name
+
+        Returns:
+            Tuple[str, str, str] -- show_path, artwork_path, thumb_path
+        &#34;&#34;&#34;
+        show_folder_path = os.path.join(export_path, shot)
+        self.__create_folder(show_folder_path)
+        artwork_folder_path = os.path.join(show_folder_path, &#39;artwork&#39;)
+        self.__create_folder(artwork_folder_path)
+        thumb_folder_path = os.path.join(show_folder_path, &#39;thumbnail&#39;)
+        self.__create_folder(thumb_folder_path)
+        return show_folder_path, artwork_folder_path, thumb_folder_path
+
+    def export_to_version(
+            self,
+            shots: List,
+            sg_password: str,
+            show_tc,
+            seq_rev_nbr,
+            seq_tc) -&gt; Dict:
+        &#34;&#34;&#34;export_to_version will export to shotgun a project, a sequence, a shot and version
+
+        Arguments:
+            shots {List} -- List of shots
+
+            sg_password {str} -- Shotgun password
+
+            show_tc {str} -- Show tracking code
+
+            seq_rev_nbr {int} -- Sequence revision number
+
+            seq_tc {str} -- Sequence tracking code
+
+        Returns:
+            Dict -- Mapping of shot to quicktime info with his corresponding shotgun version
+        &#34;&#34;&#34;
+        sg_show = self.shotgun.get_project(show_tc)
+        if sg_show is None:
+            sg_show = self.shotgun.create_project(show_tc)
+        sg_seq = self.shotgun.get_sequence(sg_show, seq_tc)
+        if sg_seq is None:
+            sg_seq = self.shotgun.create_seq(sg_show, seq_tc)
+
+        shot_to_file = {}
+        for shot_name in shots:
+            sg_shot = self.shotgun.get_shot(sg_show, sg_seq, shot_name)
+            if sg_shot is None:
+                sg_shot = self.shotgun.create_shot(sg_show, sg_seq, shot_name)
+            version = self.shotgun.get_version(sg_show, sg_shot)
+            if version is None:
+                new_version = 1
+            else:
+                ver = re.search(&#39;(.*)v([0-9]+)&#39;, version[&#39;code&#39;])
+                new_version = int(ver.group(2)) + 1
+            version = self.shotgun.create_version(
+                sg_show, sg_shot, new_version)
+            mov_name = &#39;{0}_v{1}_{2}.mov&#39;.format(
+                seq_tc, seq_rev_nbr, shot_name)
+            shot_to_file[shot_name] = {
+                &#39;mov_name&#39;: mov_name, &#39;version&#39;: version}
+        return shot_to_file
+
+    def init_local_export(self) -&gt; bool:
+        &#34;&#34;&#34;init_local_export will initialise the export
+
+        Returns:
+            bool -- If the export path is valid or not
+        &#34;&#34;&#34;
+        if len(self.export_path.text()) &lt;= 0:
+            self.__info(&#39;You need to select an export path&#39;)
+            return False
+        if os.path.exists(self.export_path.text()) is False:
+            self.__info(&#39;Invalid export path&#39;)
+            return False
+        return True
+
+    def init_shotgun_export(self) -&gt; bool:
+        &#34;&#34;&#34;init_shotgun_export will init the shotgun export
+
+        Returns:
+            bool -- Can login to shotgun
+        &#34;&#34;&#34;
+        if self.sg_login.text() == &#39;&#39; or self.sg_hostname.text() == &#39;&#39;:
+            self.__info(&#39;You need to enter your shotgun info&#39;)
+            return &#39;&#39;, False
+        sg_password, ok = QInputDialog().getText(self,
+                                                 &#39;Shotgun password&#39;,
+                                                 &#39;Shotgun password:&#39;,
+                                                 QLineEdit.Password)
+        if ok is False:
+            return &#39;&#39;, False
+        self.shotgun = shotgun_api.shotgun(self.sg_hostname.text(),
+                                           self.sg_login.text(),
+                                           sg_password)
+        return sg_password, True
+
+    def __pull_latest(self):
+        &#34;&#34;&#34;__pull_latest will export the latest sequence revision
+        &#34;&#34;&#34;
+        if self.selected_handoff_type == &#39;Local Export&#39;:
+            if self.init_local_export():
+                self.e_local_export.emit()
+        else:
+            sg_password, ok = self.init_shotgun_export()
+            if ok:
+                self.e_shotgun_export.emit(sg_password)
+
+    def __create_line_label(self,
+                            name: str,
+                            label: str,
+                            min_width: int = 200) -&gt; Tuple[Dict,
+                                                           Dict]:
+        &#34;&#34;&#34;__create_line_label will create a line edit button and his label
+
+        Arguments:
+            name {str} -- Default value
+
+            label {str} -- Label name
+
+            min_width {int} -- Minium width (default: {200})
+
+        Returns:
+            Tuple[Dict, Dict] -- Line Edit, Label
+        &#34;&#34;&#34;
+        line_edit = QLineEdit(name)
+        line_edit.setMinimumWidth(min_width)
+        label = QLabel(label)
+        label.setBuddy(line_edit)
+        return line_edit, label
+
+    def __add_widget_to_layout(self, layout: Dict, *widgets: Dict):
+        &#34;&#34;&#34;__add_widget_to_layout will add all the widget to a layout
+        __add_widget_to_layout(layout, widget1, widget2, widget3)
+
+        Arguments:
+            layout {Dict} -- Layout to add widget to
+
+            widgets {*Dict} -- All the widgets to add
+        &#34;&#34;&#34;
+
+        for w in widgets:
+            layout.addWidget(w)
+
+    def __error(self, message: str):
+        &#34;&#34;&#34;__error will show a error message with a given message
+
+        Arguments:
+            message {str} -- Message to show
+        &#34;&#34;&#34;
+        err = QErrorMessage(self.parent())
+        err.setWindowTitle(&#39;Flix&#39;)
+        err.showMessage(message)
+        err.exec_()
+
+    def __info(self, message: str):
+        &#34;&#34;&#34;__info will show a message with a given message
+
+        Arguments:
+            message {str} -- Message to show
+        &#34;&#34;&#34;
+        msgbox = QMessageBox(self.parent())
+        msgbox.setWindowTitle(&#39;Flix&#39;)
+        msgbox.setText(message)
+        msgbox.exec_()
+
+    def __on_handoff_type_changed(self, handoff_type: str):
+        &#34;&#34;&#34;__on_handoff_type_changed triggered when the handoff type changed
+
+        Arguments:
+            handoff_type {str} -- Handoff type from the event
+        &#34;&#34;&#34;
+        self.__update_ui_handoff_type(handoff_type)
+
+    def __browse_export_path(self):
+        &#34;&#34;&#34;__browse_export_path will create a dialog window to
+        browse and set an export path
+        &#34;&#34;&#34;
+        dialog = QFileDialog()
+        export_p = None
+        if self.export_path.text() is not &#39;&#39;:
+            if os.path.exists(self.export_path.text()):
+                export_p = self.export_path.text()
+        export_p = dialog.getExistingDirectory(dir=export_p)
+        if len(export_p) &lt; 1:
+            return
+        self.export_path.setText(export_p)
+
+    def __update_ui_handoff_type(self, handoff_type: str):
+        &#34;&#34;&#34;__update_ui_handoff_type will update the UI depending
+        of the handoff type
+
+        Arguments:
+            handoff_type {str} -- Handoff type
+        &#34;&#34;&#34;
+        if handoff_type == &#39;Local Export&#39;:
+            self.sg_hostname.hide()
+            self.sg_hostname_label.hide()
+            self.sg_login.hide()
+            self.sg_login_label.hide()
+            self.export_path_label.show()
+            self.export_path.show()
+            self.export_path_button.show()
+        else:
+            self.sg_hostname.show()
+            self.sg_hostname_label.show()
+            self.sg_login.show()
+            self.sg_login_label.show()
+            self.export_path_label.hide()
+            self.export_path.hide()
+            self.export_path_button.hide()
+        self.selected_handoff_type = handoff_type
+
+    def __create_folder(self, path: str):
+        &#34;&#34;&#34;__create_folder will create a folder if it does not exist
+
+        Arguments:
+            path {str} -- Path to create the folder
+        &#34;&#34;&#34;
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+
+class main_dialogue(QDialog):
+    def __init__(self, parent=None):
+        super(main_dialogue, self).__init__(parent)
+        self.setWindowTitle(&#39;Shotgun&#39;)
+
+        main_layout = QVBoxLayout()
+        widget_shotgun_ui = shotgun_ui()
+
+        # Add shotgun Ui widget
+        main_layout.addWidget(widget_shotgun_ui)
+        self.setLayout(main_layout)
+
+
+if __name__ == &#39;__main__&#39;:
+    app = QApplication(sys.argv)
+    main_view = main_dialogue()
+    main_view.show()
+    sys.exit(app.exec_())</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="shotgun_ui.main_dialogue"><code class="flex name class">
+<span>class <span class="ident">main_dialogue</span></span>
+<span>(</span><span>parent=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>QDialog(self, parent: typing.Union[PySide2.QtWidgets.QWidget, NoneType] = None, f: PySide2.QtCore.Qt.WindowFlags = Default(Qt.WindowFlags))</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class main_dialogue(QDialog):
+    def __init__(self, parent=None):
+        super(main_dialogue, self).__init__(parent)
+        self.setWindowTitle(&#39;Shotgun&#39;)
+
+        main_layout = QVBoxLayout()
+        widget_shotgun_ui = shotgun_ui()
+
+        # Add shotgun Ui widget
+        main_layout.addWidget(widget_shotgun_ui)
+        self.setLayout(main_layout)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>PySide2.QtWidgets.QDialog</li>
+<li>PySide2.QtWidgets.QWidget</li>
+<li>PySide2.QtCore.QObject</li>
+<li>PySide2.QtGui.QPaintDevice</li>
+<li>Shiboken.Object</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="shotgun_ui.main_dialogue.staticMetaObject"><code class="name">var <span class="ident">staticMetaObject</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="shotgun_ui.shotgun_ui"><code class="flex name class">
+<span>class <span class="ident">shotgun_ui</span></span>
+<span>(</span><span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>QWidget(self, parent: typing.Union[PySide2.QtWidgets.QWidget, NoneType] = None, f: PySide2.QtCore.Qt.WindowFlags = Default(Qt.WindowFlags))</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class shotgun_ui(QWidget):
+
+    e_local_export = Signal()
+    e_shotgun_export = Signal(str)
+    export_path = None
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setSizePolicy(
+            QSizePolicy.MinimumExpanding,
+            QSizePolicy.MinimumExpanding
+        )
+
+        # Setup UI view
+        v_main_box = QVBoxLayout()
+
+        # Setup list for production handoff export option
+        self.handoff_type_list = QComboBox()
+        self.handoff_type_list.addItems([&#39;Local Export&#39;, &#39;Shotgun Export&#39;])
+        self.handoff_type_label = QLabel(&#39;Handoff Type&#39;)
+        self.handoff_type_label.setBuddy(self.handoff_type_list)
+        self.handoff_type_list.currentTextChanged.connect(
+            self.__on_handoff_type_changed)
+
+        # Setup Local Export option
+        self.export_layout = QHBoxLayout()
+        self.export_path_button = QPushButton(&#39;Browse&#39;)
+        self.export_path_button.clicked.connect(self.__browse_export_path)
+
+        self.export_path, self.export_path_label = self.__create_line_label(
+            &#39;&#39;,
+            &#39;Export Path&#39;,
+            200
+        )
+        self.__add_widget_to_layout(self.export_layout,
+                                    self.export_path,
+                                    self.export_path_button)
+
+        # Setup Shotgun export option
+        self.sg_hostname, self.sg_hostname_label = self.__create_line_label(
+            &#39;https://thomaslacroix.shotgunstudio.com&#39;,
+            &#39;Shotgun URL&#39;,
+            350
+        )
+        self.sg_login, self.sg_login_label = self.__create_line_label(
+            &#39;thomas.lacroix@epitech.eu&#39;,
+            &#39;Username&#39;,
+            200
+        )
+
+        pull = QPushButton(&#39;Export Latest&#39;)
+        pull.clicked.connect(self.__pull_latest)
+
+        self.__add_widget_to_layout(v_main_box,
+                                    self.handoff_type_label,
+                                    self.handoff_type_list,
+                                    self.export_path_label)
+        v_main_box.addLayout(self.export_layout)
+        self.__add_widget_to_layout(v_main_box,
+                                    self.sg_hostname_label,
+                                    self.sg_hostname,
+                                    self.sg_login_label,
+                                    self.sg_login,
+                                    pull)
+
+        self.__update_ui_handoff_type(&#39;Local Export&#39;)
+        self.setLayout(v_main_box)
+
+    def get_shotgun_api(self) -&gt; shotgun_api.shotgun:
+        &#34;&#34;&#34;get_shotgun_api will return the shotgun_api
+
+        Returns:
+            shotgun_api.shotgun -- Shotgun api
+        &#34;&#34;&#34;
+        return self.shotgun
+
+    def create_folders(
+            self,
+            show_tc: str,
+            seq_tc: str,
+            seq_rev_nbr: int,
+            episode_tc: str = None) -&gt; str:
+        &#34;&#34;&#34;create_folders will create the structure of folders from
+        shows to sequence revision
+
+        Arguments:
+            show_tc {str} -- Show tracking code
+
+            seq_tc {str} -- Sequence tracking code
+
+            seq_rev_nbr {int} -- Sequence revision number
+
+            episode_tc {str} -- Episode tracking code (default: {None})
+
+        Returns:
+            str -- Sequence revision path
+        &#34;&#34;&#34;
+        show_path = os.path.join(self.export_path.text(), show_tc)
+        self.__create_folder(show_path)
+        sequence_path = os.path.join(show_path, seq_tc)
+        if episode_tc is not None:
+            episode_path = os.path.join(show_path, episode_tc)
+            self.__create_folder(episode_path)
+            sequence_path = os.path.join(episode_path, seq_tc)
+        self.__create_folder(sequence_path)
+        sequence_revision_path = os.path.join(
+            sequence_path, &#39;v{0}&#39;.format(seq_rev_nbr))
+        self.__create_folder(sequence_revision_path)
+        return sequence_revision_path
+
+    def get_shot_download_paths(
+            self, export_path: str, shot: str) -&gt; Tuple[str, str, str]:
+        &#34;&#34;&#34;get_shot_download_paths will create folders for show, artwork and thumbnails
+        and return those paths
+
+        Arguments:
+            export_path {str} -- Base export path
+
+            shot {str} -- Shot name
+
+        Returns:
+            Tuple[str, str, str] -- show_path, artwork_path, thumb_path
+        &#34;&#34;&#34;
+        show_folder_path = os.path.join(export_path, shot)
+        self.__create_folder(show_folder_path)
+        artwork_folder_path = os.path.join(show_folder_path, &#39;artwork&#39;)
+        self.__create_folder(artwork_folder_path)
+        thumb_folder_path = os.path.join(show_folder_path, &#39;thumbnail&#39;)
+        self.__create_folder(thumb_folder_path)
+        return show_folder_path, artwork_folder_path, thumb_folder_path
+
+    def export_to_version(
+            self,
+            shots: List,
+            sg_password: str,
+            show_tc,
+            seq_rev_nbr,
+            seq_tc) -&gt; Dict:
+        &#34;&#34;&#34;export_to_version will export to shotgun a project, a sequence, a shot and version
+
+        Arguments:
+            shots {List} -- List of shots
+
+            sg_password {str} -- Shotgun password
+
+            show_tc {str} -- Show tracking code
+
+            seq_rev_nbr {int} -- Sequence revision number
+
+            seq_tc {str} -- Sequence tracking code
+
+        Returns:
+            Dict -- Mapping of shot to quicktime info with his corresponding shotgun version
+        &#34;&#34;&#34;
+        sg_show = self.shotgun.get_project(show_tc)
+        if sg_show is None:
+            sg_show = self.shotgun.create_project(show_tc)
+        sg_seq = self.shotgun.get_sequence(sg_show, seq_tc)
+        if sg_seq is None:
+            sg_seq = self.shotgun.create_seq(sg_show, seq_tc)
+
+        shot_to_file = {}
+        for shot_name in shots:
+            sg_shot = self.shotgun.get_shot(sg_show, sg_seq, shot_name)
+            if sg_shot is None:
+                sg_shot = self.shotgun.create_shot(sg_show, sg_seq, shot_name)
+            version = self.shotgun.get_version(sg_show, sg_shot)
+            if version is None:
+                new_version = 1
+            else:
+                ver = re.search(&#39;(.*)v([0-9]+)&#39;, version[&#39;code&#39;])
+                new_version = int(ver.group(2)) + 1
+            version = self.shotgun.create_version(
+                sg_show, sg_shot, new_version)
+            mov_name = &#39;{0}_v{1}_{2}.mov&#39;.format(
+                seq_tc, seq_rev_nbr, shot_name)
+            shot_to_file[shot_name] = {
+                &#39;mov_name&#39;: mov_name, &#39;version&#39;: version}
+        return shot_to_file
+
+    def init_local_export(self) -&gt; bool:
+        &#34;&#34;&#34;init_local_export will initialise the export
+
+        Returns:
+            bool -- If the export path is valid or not
+        &#34;&#34;&#34;
+        if len(self.export_path.text()) &lt;= 0:
+            self.__info(&#39;You need to select an export path&#39;)
+            return False
+        if os.path.exists(self.export_path.text()) is False:
+            self.__info(&#39;Invalid export path&#39;)
+            return False
+        return True
+
+    def init_shotgun_export(self) -&gt; bool:
+        &#34;&#34;&#34;init_shotgun_export will init the shotgun export
+
+        Returns:
+            bool -- Can login to shotgun
+        &#34;&#34;&#34;
+        if self.sg_login.text() == &#39;&#39; or self.sg_hostname.text() == &#39;&#39;:
+            self.__info(&#39;You need to enter your shotgun info&#39;)
+            return &#39;&#39;, False
+        sg_password, ok = QInputDialog().getText(self,
+                                                 &#39;Shotgun password&#39;,
+                                                 &#39;Shotgun password:&#39;,
+                                                 QLineEdit.Password)
+        if ok is False:
+            return &#39;&#39;, False
+        self.shotgun = shotgun_api.shotgun(self.sg_hostname.text(),
+                                           self.sg_login.text(),
+                                           sg_password)
+        return sg_password, True
+
+    def __pull_latest(self):
+        &#34;&#34;&#34;__pull_latest will export the latest sequence revision
+        &#34;&#34;&#34;
+        if self.selected_handoff_type == &#39;Local Export&#39;:
+            if self.init_local_export():
+                self.e_local_export.emit()
+        else:
+            sg_password, ok = self.init_shotgun_export()
+            if ok:
+                self.e_shotgun_export.emit(sg_password)
+
+    def __create_line_label(self,
+                            name: str,
+                            label: str,
+                            min_width: int = 200) -&gt; Tuple[Dict,
+                                                           Dict]:
+        &#34;&#34;&#34;__create_line_label will create a line edit button and his label
+
+        Arguments:
+            name {str} -- Default value
+
+            label {str} -- Label name
+
+            min_width {int} -- Minium width (default: {200})
+
+        Returns:
+            Tuple[Dict, Dict] -- Line Edit, Label
+        &#34;&#34;&#34;
+        line_edit = QLineEdit(name)
+        line_edit.setMinimumWidth(min_width)
+        label = QLabel(label)
+        label.setBuddy(line_edit)
+        return line_edit, label
+
+    def __add_widget_to_layout(self, layout: Dict, *widgets: Dict):
+        &#34;&#34;&#34;__add_widget_to_layout will add all the widget to a layout
+        __add_widget_to_layout(layout, widget1, widget2, widget3)
+
+        Arguments:
+            layout {Dict} -- Layout to add widget to
+
+            widgets {*Dict} -- All the widgets to add
+        &#34;&#34;&#34;
+
+        for w in widgets:
+            layout.addWidget(w)
+
+    def __error(self, message: str):
+        &#34;&#34;&#34;__error will show a error message with a given message
+
+        Arguments:
+            message {str} -- Message to show
+        &#34;&#34;&#34;
+        err = QErrorMessage(self.parent())
+        err.setWindowTitle(&#39;Flix&#39;)
+        err.showMessage(message)
+        err.exec_()
+
+    def __info(self, message: str):
+        &#34;&#34;&#34;__info will show a message with a given message
+
+        Arguments:
+            message {str} -- Message to show
+        &#34;&#34;&#34;
+        msgbox = QMessageBox(self.parent())
+        msgbox.setWindowTitle(&#39;Flix&#39;)
+        msgbox.setText(message)
+        msgbox.exec_()
+
+    def __on_handoff_type_changed(self, handoff_type: str):
+        &#34;&#34;&#34;__on_handoff_type_changed triggered when the handoff type changed
+
+        Arguments:
+            handoff_type {str} -- Handoff type from the event
+        &#34;&#34;&#34;
+        self.__update_ui_handoff_type(handoff_type)
+
+    def __browse_export_path(self):
+        &#34;&#34;&#34;__browse_export_path will create a dialog window to
+        browse and set an export path
+        &#34;&#34;&#34;
+        dialog = QFileDialog()
+        export_p = None
+        if self.export_path.text() is not &#39;&#39;:
+            if os.path.exists(self.export_path.text()):
+                export_p = self.export_path.text()
+        export_p = dialog.getExistingDirectory(dir=export_p)
+        if len(export_p) &lt; 1:
+            return
+        self.export_path.setText(export_p)
+
+    def __update_ui_handoff_type(self, handoff_type: str):
+        &#34;&#34;&#34;__update_ui_handoff_type will update the UI depending
+        of the handoff type
+
+        Arguments:
+            handoff_type {str} -- Handoff type
+        &#34;&#34;&#34;
+        if handoff_type == &#39;Local Export&#39;:
+            self.sg_hostname.hide()
+            self.sg_hostname_label.hide()
+            self.sg_login.hide()
+            self.sg_login_label.hide()
+            self.export_path_label.show()
+            self.export_path.show()
+            self.export_path_button.show()
+        else:
+            self.sg_hostname.show()
+            self.sg_hostname_label.show()
+            self.sg_login.show()
+            self.sg_login_label.show()
+            self.export_path_label.hide()
+            self.export_path.hide()
+            self.export_path_button.hide()
+        self.selected_handoff_type = handoff_type
+
+    def __create_folder(self, path: str):
+        &#34;&#34;&#34;__create_folder will create a folder if it does not exist
+
+        Arguments:
+            path {str} -- Path to create the folder
+        &#34;&#34;&#34;
+        if not os.path.exists(path):
+            os.makedirs(path)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>PySide2.QtWidgets.QWidget</li>
+<li>PySide2.QtCore.QObject</li>
+<li>PySide2.QtGui.QPaintDevice</li>
+<li>Shiboken.Object</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="shotgun_ui.shotgun_ui.e_local_export"><code class="name">var <span class="ident">e_local_export</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="shotgun_ui.shotgun_ui.e_shotgun_export"><code class="name">var <span class="ident">e_shotgun_export</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="shotgun_ui.shotgun_ui.export_path"><code class="name">var <span class="ident">export_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="shotgun_ui.shotgun_ui.staticMetaObject"><code class="name">var <span class="ident">staticMetaObject</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="shotgun_ui.shotgun_ui.create_folders"><code class="name flex">
+<span>def <span class="ident">create_folders</span></span>(<span>self, show_tc: str, seq_tc: str, seq_rev_nbr: int, episode_tc: str = None) -> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>create_folders will create the structure of folders from
+shows to sequence revision</p>
+<h2 id="arguments">Arguments</h2>
+<p>show_tc {str} &ndash; Show tracking code</p>
+<p>seq_tc {str} &ndash; Sequence tracking code</p>
+<p>seq_rev_nbr {int} &ndash; Sequence revision number</p>
+<p>episode_tc {str} &ndash; Episode tracking code (default: {None})</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>str -- Sequence revision path</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def create_folders(
+        self,
+        show_tc: str,
+        seq_tc: str,
+        seq_rev_nbr: int,
+        episode_tc: str = None) -&gt; str:
+    &#34;&#34;&#34;create_folders will create the structure of folders from
+    shows to sequence revision
+
+    Arguments:
+        show_tc {str} -- Show tracking code
+
+        seq_tc {str} -- Sequence tracking code
+
+        seq_rev_nbr {int} -- Sequence revision number
+
+        episode_tc {str} -- Episode tracking code (default: {None})
+
+    Returns:
+        str -- Sequence revision path
+    &#34;&#34;&#34;
+    show_path = os.path.join(self.export_path.text(), show_tc)
+    self.__create_folder(show_path)
+    sequence_path = os.path.join(show_path, seq_tc)
+    if episode_tc is not None:
+        episode_path = os.path.join(show_path, episode_tc)
+        self.__create_folder(episode_path)
+        sequence_path = os.path.join(episode_path, seq_tc)
+    self.__create_folder(sequence_path)
+    sequence_revision_path = os.path.join(
+        sequence_path, &#39;v{0}&#39;.format(seq_rev_nbr))
+    self.__create_folder(sequence_revision_path)
+    return sequence_revision_path</code></pre>
+</details>
+</dd>
+<dt id="shotgun_ui.shotgun_ui.export_to_version"><code class="name flex">
+<span>def <span class="ident">export_to_version</span></span>(<span>self, shots: typing.List, sg_password: str, show_tc, seq_rev_nbr, seq_tc) -> typing.Dict</span>
+</code></dt>
+<dd>
+<div class="desc"><p>export_to_version will export to shotgun a project, a sequence, a shot and version</p>
+<h2 id="arguments">Arguments</h2>
+<p>shots {List} &ndash; List of shots</p>
+<p>sg_password {str} &ndash; Shotgun password</p>
+<p>show_tc {str} &ndash; Show tracking code</p>
+<p>seq_rev_nbr {int} &ndash; Sequence revision number</p>
+<p>seq_tc {str} &ndash; Sequence tracking code</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict -- Mapping</code> of <code>shot to quicktime info with his corresponding <a title="shotgun" href="shotgun.html">shotgun</a> version</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def export_to_version(
+        self,
+        shots: List,
+        sg_password: str,
+        show_tc,
+        seq_rev_nbr,
+        seq_tc) -&gt; Dict:
+    &#34;&#34;&#34;export_to_version will export to shotgun a project, a sequence, a shot and version
+
+    Arguments:
+        shots {List} -- List of shots
+
+        sg_password {str} -- Shotgun password
+
+        show_tc {str} -- Show tracking code
+
+        seq_rev_nbr {int} -- Sequence revision number
+
+        seq_tc {str} -- Sequence tracking code
+
+    Returns:
+        Dict -- Mapping of shot to quicktime info with his corresponding shotgun version
+    &#34;&#34;&#34;
+    sg_show = self.shotgun.get_project(show_tc)
+    if sg_show is None:
+        sg_show = self.shotgun.create_project(show_tc)
+    sg_seq = self.shotgun.get_sequence(sg_show, seq_tc)
+    if sg_seq is None:
+        sg_seq = self.shotgun.create_seq(sg_show, seq_tc)
+
+    shot_to_file = {}
+    for shot_name in shots:
+        sg_shot = self.shotgun.get_shot(sg_show, sg_seq, shot_name)
+        if sg_shot is None:
+            sg_shot = self.shotgun.create_shot(sg_show, sg_seq, shot_name)
+        version = self.shotgun.get_version(sg_show, sg_shot)
+        if version is None:
+            new_version = 1
+        else:
+            ver = re.search(&#39;(.*)v([0-9]+)&#39;, version[&#39;code&#39;])
+            new_version = int(ver.group(2)) + 1
+        version = self.shotgun.create_version(
+            sg_show, sg_shot, new_version)
+        mov_name = &#39;{0}_v{1}_{2}.mov&#39;.format(
+            seq_tc, seq_rev_nbr, shot_name)
+        shot_to_file[shot_name] = {
+            &#39;mov_name&#39;: mov_name, &#39;version&#39;: version}
+    return shot_to_file</code></pre>
+</details>
+</dd>
+<dt id="shotgun_ui.shotgun_ui.get_shot_download_paths"><code class="name flex">
+<span>def <span class="ident">get_shot_download_paths</span></span>(<span>self, export_path: str, shot: str) -> typing.Tuple[str, str, str]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>get_shot_download_paths will create folders for show, artwork and thumbnails
+and return those paths</p>
+<h2 id="arguments">Arguments</h2>
+<p>export_path {str} &ndash; Base export path</p>
+<p>shot {str} &ndash; Shot name</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Tuple[str, str, str] -- show_path, artwork_path, thumb_path</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_shot_download_paths(
+        self, export_path: str, shot: str) -&gt; Tuple[str, str, str]:
+    &#34;&#34;&#34;get_shot_download_paths will create folders for show, artwork and thumbnails
+    and return those paths
+
+    Arguments:
+        export_path {str} -- Base export path
+
+        shot {str} -- Shot name
+
+    Returns:
+        Tuple[str, str, str] -- show_path, artwork_path, thumb_path
+    &#34;&#34;&#34;
+    show_folder_path = os.path.join(export_path, shot)
+    self.__create_folder(show_folder_path)
+    artwork_folder_path = os.path.join(show_folder_path, &#39;artwork&#39;)
+    self.__create_folder(artwork_folder_path)
+    thumb_folder_path = os.path.join(show_folder_path, &#39;thumbnail&#39;)
+    self.__create_folder(thumb_folder_path)
+    return show_folder_path, artwork_folder_path, thumb_folder_path</code></pre>
+</details>
+</dd>
+<dt id="shotgun_ui.shotgun_ui.get_shotgun_api"><code class="name flex">
+<span>def <span class="ident">get_shotgun_api</span></span>(<span>self) -> <a title="shotgun.shotgun" href="shotgun.html#shotgun.shotgun">shotgun</a></span>
+</code></dt>
+<dd>
+<div class="desc"><p>get_shotgun_api will return the shotgun_api</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>shotgun_api.shotgun -- Shotgun api</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_shotgun_api(self) -&gt; shotgun_api.shotgun:
+    &#34;&#34;&#34;get_shotgun_api will return the shotgun_api
+
+    Returns:
+        shotgun_api.shotgun -- Shotgun api
+    &#34;&#34;&#34;
+    return self.shotgun</code></pre>
+</details>
+</dd>
+<dt id="shotgun_ui.shotgun_ui.init_local_export"><code class="name flex">
+<span>def <span class="ident">init_local_export</span></span>(<span>self) -> bool</span>
+</code></dt>
+<dd>
+<div class="desc"><p>init_local_export will initialise the export</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool -- If the export path is valid</code> or <code>not</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def init_local_export(self) -&gt; bool:
+    &#34;&#34;&#34;init_local_export will initialise the export
+
+    Returns:
+        bool -- If the export path is valid or not
+    &#34;&#34;&#34;
+    if len(self.export_path.text()) &lt;= 0:
+        self.__info(&#39;You need to select an export path&#39;)
+        return False
+    if os.path.exists(self.export_path.text()) is False:
+        self.__info(&#39;Invalid export path&#39;)
+        return False
+    return True</code></pre>
+</details>
+</dd>
+<dt id="shotgun_ui.shotgun_ui.init_shotgun_export"><code class="name flex">
+<span>def <span class="ident">init_shotgun_export</span></span>(<span>self) -> bool</span>
+</code></dt>
+<dd>
+<div class="desc"><p>init_shotgun_export will init the shotgun export</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool -- Can login to shotgun</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def init_shotgun_export(self) -&gt; bool:
+    &#34;&#34;&#34;init_shotgun_export will init the shotgun export
+
+    Returns:
+        bool -- Can login to shotgun
+    &#34;&#34;&#34;
+    if self.sg_login.text() == &#39;&#39; or self.sg_hostname.text() == &#39;&#39;:
+        self.__info(&#39;You need to enter your shotgun info&#39;)
+        return &#39;&#39;, False
+    sg_password, ok = QInputDialog().getText(self,
+                                             &#39;Shotgun password&#39;,
+                                             &#39;Shotgun password:&#39;,
+                                             QLineEdit.Password)
+    if ok is False:
+        return &#39;&#39;, False
+    self.shotgun = shotgun_api.shotgun(self.sg_hostname.text(),
+                                       self.sg_login.text(),
+                                       sg_password)
+    return sg_password, True</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="shotgun_ui.main_dialogue" href="#shotgun_ui.main_dialogue">main_dialogue</a></code></h4>
+<ul class="">
+<li><code><a title="shotgun_ui.main_dialogue.staticMetaObject" href="#shotgun_ui.main_dialogue.staticMetaObject">staticMetaObject</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="shotgun_ui.shotgun_ui" href="#shotgun_ui.shotgun_ui">shotgun_ui</a></code></h4>
+<ul class="">
+<li><code><a title="shotgun_ui.shotgun_ui.create_folders" href="#shotgun_ui.shotgun_ui.create_folders">create_folders</a></code></li>
+<li><code><a title="shotgun_ui.shotgun_ui.e_local_export" href="#shotgun_ui.shotgun_ui.e_local_export">e_local_export</a></code></li>
+<li><code><a title="shotgun_ui.shotgun_ui.e_shotgun_export" href="#shotgun_ui.shotgun_ui.e_shotgun_export">e_shotgun_export</a></code></li>
+<li><code><a title="shotgun_ui.shotgun_ui.export_path" href="#shotgun_ui.shotgun_ui.export_path">export_path</a></code></li>
+<li><code><a title="shotgun_ui.shotgun_ui.export_to_version" href="#shotgun_ui.shotgun_ui.export_to_version">export_to_version</a></code></li>
+<li><code><a title="shotgun_ui.shotgun_ui.get_shot_download_paths" href="#shotgun_ui.shotgun_ui.get_shot_download_paths">get_shot_download_paths</a></code></li>
+<li><code><a title="shotgun_ui.shotgun_ui.get_shotgun_api" href="#shotgun_ui.shotgun_ui.get_shotgun_api">get_shotgun_api</a></code></li>
+<li><code><a title="shotgun_ui.shotgun_ui.init_local_export" href="#shotgun_ui.shotgun_ui.init_local_export">init_local_export</a></code></li>
+<li><code><a title="shotgun_ui.shotgun_ui.init_shotgun_export" href="#shotgun_ui.shotgun_ui.init_shotgun_export">init_shotgun_export</a></code></li>
+<li><code><a title="shotgun_ui.shotgun_ui.staticMetaObject" href="#shotgun_ui.shotgun_ui.staticMetaObject">staticMetaObject</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.8.1</a>.</p>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad()</script>
+</body>
+</html>

@@ -85,11 +85,11 @@ class shotgun_ui(QWidget):
         self.__update_ui_handoff_type('Local Export')
         self.setLayout(v_main_box)
 
-    def get_shotgun_api(self):
+    def get_shotgun_api(self) -> shotgun_api.shotgun:
         """get_shotgun_api will return the shotgun_api
 
         Returns:
-            object -- Shotgun api
+            shotgun_api.shotgun -- Shotgun api
         """
         return self.shotgun
 
