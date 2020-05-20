@@ -86,6 +86,11 @@ class shotgun_ui(QWidget):
         self.setLayout(v_main_box)
 
     def get_shotgun_api(self):
+        """get_shotgun_api will return the shotgun_api
+
+        Returns:
+            object -- Shotgun api
+        """
         return self.shotgun
 
     def create_folders(self, show_tc: str, seq_tc: str, seq_rev_nbr: int, episode_tc: str = None) -> str:
@@ -111,7 +116,17 @@ class shotgun_ui(QWidget):
         self.__create_folder(sequence_revision_path)
         return sequence_revision_path
 
-    def get_shot_download_paths(self, export_path, shot):
+    def get_shot_download_paths(self, export_path: str, shot: str) -> Tuple[str, str, str]:
+        """get_shot_download_paths will create folders for show, artwork and thumbnails
+        and return those paths
+
+        Arguments:
+            export_path {str} -- Base export path
+            shot {str} -- Shot name
+
+        Returns:
+            Tuple[str, str, str] -- show_path, artwork_path, thumb_path
+        """
         show_folder_path = os.path.join(export_path, shot)
         self.__create_folder(show_folder_path)
         artwork_folder_path = os.path.join(show_folder_path, 'artwork')
@@ -120,7 +135,19 @@ class shotgun_ui(QWidget):
         self.__create_folder(thumb_folder_path)
         return show_folder_path, artwork_folder_path, thumb_folder_path
 
-    def export_to_version(self, shots: List, sg_password: str, show_tc, seq_rev_nbr, seq_tc) -> bool:
+    def export_to_version(self, shots: List, sg_password: str, show_tc, seq_rev_nbr, seq_tc) -> Dict:
+        """export_to_version will export to shotgun a project, a sequence, a shot and version
+
+        Arguments:
+            shots {List} -- List of shots
+            sg_password {str} -- Shotgun password
+            show_tc {str} -- Show tracking code
+            seq_rev_nbr {int} -- Sequence revision number
+            seq_tc {str} -- Sequence tracking code
+
+        Returns:
+            Dict -- Mapping of shot to quicktime info with his corresponding shotgun version
+        """
         sg_show = self.shotgun.get_project(show_tc)
         if sg_show is None:
             sg_show = self.shotgun.create_project(show_tc)
