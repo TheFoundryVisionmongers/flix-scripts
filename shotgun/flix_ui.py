@@ -1,5 +1,5 @@
-import re
 import os
+import re
 import sys
 from collections import OrderedDict
 from typing import Dict, List, Tuple
@@ -168,8 +168,11 @@ class flix_ui(QWidget):
 
         Arguments:
             seq_rev_number {int} -- Sequence revision number
+
             panel_pos {int} -- Panel position
+
             panel_id {int} -- Panel ID
+
             panel_revision {int} -- Panel revision
 
         Returns:
@@ -193,7 +196,9 @@ class flix_ui(QWidget):
 
         Arguments:
             base_path {str} -- Path to download the file
+
             mo {Dict} -- Media object entity
+
             seq_rev_nbr {int} -- Sequence revision number
         """
         if not self.authenticated:
@@ -244,10 +249,10 @@ class flix_ui(QWidget):
             return None
         panels_per_markers = self.get_flix_api().get_markers_per_panels(markers, panels)
         mo_per_shots, ok = self.get_flix_api().mo_per_shots(panels_per_markers,
-                                             show_id,
-                                             seq_id,
-                                             seq_rev_number,
-                                             episode_id)
+                                                            show_id,
+                                                            seq_id,
+                                                            seq_rev_number,
+                                                            episode_id)
         if mo_per_shots is None:
             self.__error('Could not retrieve media objects per shots')
             return None
@@ -308,6 +313,7 @@ class flix_ui(QWidget):
 
         Arguments:
             label {str} -- Label name
+
             fn_text_changed {object} -- Callback function for text_changed
 
         Returns:
@@ -326,6 +332,7 @@ class flix_ui(QWidget):
 
         Arguments:
             layout {Dict} -- Layout to add widget to
+
             widgets {*Dict} -- All the widgets to add
         """
 
@@ -567,7 +574,7 @@ class main_dialogue(QDialog):
         widget_flix_ui.e_show_changed.connect(self.on_show_changed)
         widget_flix_ui.e_episode_changed.connect(self.on_episode_changed)
         widget_flix_ui.e_sequence_changed.connect(self.on_sequence_changed)
-        
+
         # Add flix Ui widget
         main_layout.addWidget(widget_flix_ui)
         self.setLayout(main_layout)

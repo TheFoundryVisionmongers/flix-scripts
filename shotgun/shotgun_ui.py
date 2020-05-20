@@ -93,12 +93,24 @@ class shotgun_ui(QWidget):
         """
         return self.shotgun
 
-    def create_folders(self, show_tc: str, seq_tc: str, seq_rev_nbr: int, episode_tc: str = None) -> str:
+    def create_folders(
+            self,
+            show_tc: str,
+            seq_tc: str,
+            seq_rev_nbr: int,
+            episode_tc: str = None) -> str:
         """create_folders will create the structure of folders from
         shows to sequence revision
 
         Arguments:
-            base {str} -- base of the folder creation
+            show_tc {str} -- Show tracking code
+
+            seq_tc {str} -- Sequence tracking code
+
+            seq_rev_nbr {int} -- Sequence revision number
+
+        Keyword Arguments:
+            episode_tc {str} -- Episode tracking code (default: {None})
 
         Returns:
             str -- Sequence revision path
@@ -116,12 +128,14 @@ class shotgun_ui(QWidget):
         self.__create_folder(sequence_revision_path)
         return sequence_revision_path
 
-    def get_shot_download_paths(self, export_path: str, shot: str) -> Tuple[str, str, str]:
+    def get_shot_download_paths(
+            self, export_path: str, shot: str) -> Tuple[str, str, str]:
         """get_shot_download_paths will create folders for show, artwork and thumbnails
         and return those paths
 
         Arguments:
             export_path {str} -- Base export path
+
             shot {str} -- Shot name
 
         Returns:
@@ -135,14 +149,24 @@ class shotgun_ui(QWidget):
         self.__create_folder(thumb_folder_path)
         return show_folder_path, artwork_folder_path, thumb_folder_path
 
-    def export_to_version(self, shots: List, sg_password: str, show_tc, seq_rev_nbr, seq_tc) -> Dict:
+    def export_to_version(
+            self,
+            shots: List,
+            sg_password: str,
+            show_tc,
+            seq_rev_nbr,
+            seq_tc) -> Dict:
         """export_to_version will export to shotgun a project, a sequence, a shot and version
 
         Arguments:
             shots {List} -- List of shots
+
             sg_password {str} -- Shotgun password
+
             show_tc {str} -- Show tracking code
+
             seq_rev_nbr {int} -- Sequence revision number
+
             seq_tc {str} -- Sequence tracking code
 
         Returns:
@@ -170,7 +194,8 @@ class shotgun_ui(QWidget):
                 sg_show, sg_shot, new_version)
             mov_name = '{0}_v{1}_{2}.mov'.format(
                 seq_tc, seq_rev_nbr, shot_name)
-            shot_to_file[shot_name] = { 'mov_name': mov_name, 'version': version }
+            shot_to_file[shot_name] = {
+                'mov_name': mov_name, 'version': version}
         return shot_to_file
 
     def init_local_export(self) -> bool:
@@ -222,11 +247,12 @@ class shotgun_ui(QWidget):
                             name: str,
                             label: str,
                             min_width: int = 200) -> Tuple[Dict,
-                                                              Dict]:
+                                                           Dict]:
         """__create_line_label will create a line edit button and his label
 
         Arguments:
             name {str} -- Default value
+
             label {str} -- Label name
 
         Keyword Arguments:
@@ -247,6 +273,7 @@ class shotgun_ui(QWidget):
 
         Arguments:
             layout {Dict} -- Layout to add widget to
+
             widgets {*Dict} -- All the widgets to add
         """
 

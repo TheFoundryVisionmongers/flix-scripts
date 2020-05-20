@@ -4,10 +4,11 @@ import hashlib
 import hmac
 import json
 import time
-import requests
-from datetime import datetime, timedelta
 from collections import OrderedDict
+from datetime import datetime, timedelta
 from typing import Dict, List, Tuple
+
+import requests
 
 
 class flix:
@@ -460,8 +461,11 @@ class flix:
 
         Arguments:
             panels_per_markers {Dict} -- Panels per markers
+
             show_id {int} -- Show ID
+
             seq_id {int} -- Sequence ID
+
             seq_rev_number {int} -- Sequence Revision ID
 
         Keyword Arguments:
@@ -537,6 +541,7 @@ class flix:
 
         Arguments:
             panel {object} -- Panel from Flix
+
             pos {int} -- Position in the Flix timeline
 
         Returns:
@@ -556,6 +561,7 @@ class flix:
 
         Arguments:
             markers {List} -- List of markers
+
             panels {List} -- List of panels
 
         Returns:
@@ -601,7 +607,7 @@ class flix:
             self.key = auth_id
             self.secret = auth_secret_token
             self.expiry = datetime.strptime(auth_expiry_date,
-                                           '%Y-%m-%dT%H:%M:%S')
+                                            '%Y-%m-%dT%H:%M:%S')
         return self.key, self.secret
 
     def __fn_sign(self,

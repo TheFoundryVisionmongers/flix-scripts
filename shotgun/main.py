@@ -1,16 +1,9 @@
 import os
-import re
 import sys
 import tempfile
-import time
-from collections import OrderedDict
-from typing import Dict, List, Tuple
 
-from PySide2.QtCore import QCoreApplication
-from PySide2.QtWidgets import (QApplication, QComboBox, QDialog, QErrorMessage,
-                               QFileDialog, QHBoxLayout, QInputDialog, QLabel,
-                               QLineEdit, QMessageBox, QProgressDialog,
-                               QPushButton, QVBoxLayout)
+from PySide2.QtWidgets import (QApplication, QDialog, QErrorMessage,
+                               QHBoxLayout, QMessageBox)
 
 import flix_ui as flix_widget
 import shotgun_ui as shotgun_widget
@@ -59,7 +52,7 @@ class main_dialogue(QDialog):
     def on_local_export(self):
         """on_local_export will export the latest sequence revision locally
         It is going to fetch the needed information from Flix_ui and will
-        create folders from shotgun_ui associated to the show / episode / sequence, will 
+        create folders from shotgun_ui associated to the show / episode / sequence, will
         generate a quicktime per shot and will download it as well as the
         artworks and thumbnails
         """
@@ -70,7 +63,7 @@ class main_dialogue(QDialog):
         mo_per_shots = self.wg_flix_ui.get_media_object_per_shots()
         if mo_per_shots is None:
             return
-        
+
         _, episodic, show_tc = self.wg_flix_ui.get_selected_show()
         _, seq_rev_nbr, seq_tc = self.wg_flix_ui.get_selected_sequence()
         episode_tc = None
@@ -78,11 +71,13 @@ class main_dialogue(QDialog):
             _, episode_tc = self.wg_flix_ui.get_selected_episode()
 
         # Create folders for export
-        seq_rev_path = self.wg_shotgun_ui.create_folders(show_tc, seq_tc, seq_rev_nbr, episode_tc)
+        seq_rev_path = self.wg_shotgun_ui.create_folders(
+            show_tc, seq_tc, seq_rev_nbr, episode_tc)
 
         for shot in mo_per_shots:
             # Create / retrieve path for local export per shot
-            show_path, art_path, thumb_path = self.wg_shotgun_ui.get_shot_download_paths(seq_rev_path, shot)
+            show_path, art_path, thumb_path = self.wg_shotgun_ui.get_shot_download_paths(
+                seq_rev_path, shot)
 
             # Quicktime:
             mov_name = '{0}_v{1}_{2}.mov'.format(
@@ -120,19 +115,21 @@ class main_dialogue(QDialog):
         _, _, show_tc = self.wg_flix_ui.get_selected_show()
         _, seq_rev_nbr, seq_tc = self.wg_flix_ui.get_selected_sequence()
         # Create project / sequence / shot and version in Shotgun
-        shot_to_file = self.wg_shotgun_ui.export_to_version(mo_per_shots.keys(), sg_password, show_tc, seq_rev_nbr, seq_tc)
+        shot_to_file = self.wg_shotgun_ui.export_to_version(
+            mo_per_shots.keys(), sg_password, show_tc, seq_rev_nbr, seq_tc)
 
         temp_folder = tempfile.gettempdir()
         for shot in shot_to_file:
-            mov_path = os.path.join(temp_folder, shot_to_file[shot]['mov_name'])
+            mov_path = os.path.join(
+                temp_folder, shot_to_file[shot]['mov_name'])
             if sys.platform == 'win32' or sys.platform == 'cygwin':
                 mov_path = mov_path.replace('\\', '\\\\')
             # Download quictime from Flix
             self.wg_flix_ui.get_flix_api().download_media_object(
                 mov_path, mo_per_shots[shot].get('mov'))
             # Upload quicktime to shotgun version
-            self.wg_shotgun_ui.get_shotgun_api().upload_movie(shot_to_file[shot]['version'],
-                                                              mov_path)
+            self.wg_shotgun_ui.get_shotgun_api().upload_movie(
+                shot_to_file[shot]['version'], mov_path)
 
 
 if __name__ == '__main__':
