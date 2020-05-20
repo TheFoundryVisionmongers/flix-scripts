@@ -57,6 +57,12 @@ class main_dialogue(QDialog):
         msgbox.exec_()
 
     def on_local_export(self):
+        """on_local_export will export the latest sequence revision locally
+        It is going to fetch the needed information from Flix_ui and will
+        create folders from shotgun_ui associated to the show / episode / sequence, will 
+        generate a quicktime per shot and will download it as well as the
+        artworks and thumbnails
+        """
         if self.wg_flix_ui.is_authenticated() is False:
             self.__error('you need to be authenticated to Flix')
             return
@@ -94,7 +100,15 @@ class main_dialogue(QDialog):
             for mo in mo_per_shots[shot].get('thumbnails', []):
                 self.wg_flix_ui.local_download(thumb_path, mo, seq_rev_nbr)
 
-    def on_shotgun_export(self, sg_password):
+    def on_shotgun_export(self, sg_password: str):
+        """on_shotgun_export will export a the latest sequence revision to
+        shotgun. Will first retrieve all the media info per shots from flix_ui,
+        and will start creating or reusing projects / sequence / shots and version per shot from
+        shotgun_ui, It will then export a quicktime per shot from flix_ui and will upload it to shotgun
+
+        Arguments:
+            sg_password {str} -- Shotgun password
+        """
         if self.wg_flix_ui.is_authenticated() is False:
             self.__error('you need to be authenticated to Flix')
             return
