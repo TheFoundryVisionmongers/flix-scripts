@@ -122,6 +122,10 @@ class flix_ui(QWidget):
     def get_selected_show(self) -> Tuple[int, bool, str]:
         """get_selected_show will return the selected show info
 
+        Raises:
+            RuntimeError: Show not found
+            RuntimeError: Need authentication
+
         Returns:
             Tuple[int, bool, str] -- Show ID, Episodic, Show tracking code
         """
@@ -137,6 +141,10 @@ class flix_ui(QWidget):
 
     def get_selected_episode(self) -> Tuple[int, str]:
         """get_selected_episode will return the selected episode info
+
+        Raises:
+            RuntimeError: Episode not found
+            RuntimeError: Need authentication
 
         Returns:
             Tuple[int, str] -- Episode ID, Episode tracking code
@@ -177,7 +185,20 @@ class flix_ui(QWidget):
             panel_id,
             panel_revision)
 
-    def local_download(self, base_path, mo, seq_rev_nbr):
+    def local_download(self, base_path: str, mo: dict, seq_rev_nbr: int):
+        """local_download will download a media object locally
+
+        Raises:
+            RuntimeError: Need authentication
+
+        Arguments:
+            base_path {str} -- Path to download the file
+            mo {Dict} -- Media object entity
+            seq_rev_nbr {int} -- Sequence revision number
+        """
+        if not self.authenticated:
+            raise RuntimeError(self.__err_authenticate)
+
         ext = os.path.splitext(mo.get('name'))
         filename = self.get_default_image_name(
             seq_rev_nbr, mo.get('pos'),
@@ -191,6 +212,17 @@ class flix_ui(QWidget):
             file_path, mo.get('mo'))
 
     def get_media_object_per_shots(self):
+        """get_media_object_per_shots will get the media objects per shotss
+
+        Raises:
+            RuntimeError: Need authentication
+
+        Returns:
+            Dict -- Mapping of media objects per shots
+        """
+        if not self.authenticated:
+            raise RuntimeError(self.__err_authenticate)
+
         show_id, episodic, _ = self.get_selected_show()
         seq_id, seq_rev_number, _ = self.get_selected_sequence()
         flix_api = self.get_flix_api()
@@ -225,6 +257,10 @@ class flix_ui(QWidget):
 
     def get_selected_sequence(self) -> Tuple[int, int, str]:
         """get_selected_sequence will return the selected sequence info
+
+        Raises:
+            RuntimeError: Sequence not found
+            RuntimeError: Need authentication
 
         Returns:
             Tuple[int, int, str] -- Sequence ID, Seq rev ID, Seq tracking code
