@@ -6,7 +6,7 @@ import json
 import time
 from collections import OrderedDict
 from datetime import datetime, timedelta
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Callable
 
 import requests
 
@@ -454,7 +454,8 @@ class flix:
                      seq_id: int,
                      seq_rev_number: int,
                      episode_id: int = None) -> Dict:
-        """mo_per_shots will make a mapping of all media objects per shots
+        """mo_per_shots will make a mapping of all media objects per shots and
+        will start the quicktime export per shot
 
         Arguments:
             panels_per_markers {Dict} -- Panels per markers
@@ -495,25 +496,50 @@ class flix:
                      'pos': p.get('pos'),
                      'mo': asset.get('media_objects', {}).get('thumbnail')
                      [0].get('id')})
-            chain_id = self.start_quicktime_export(
-                show_id, seq_id, seq_rev_number, panels, episode_id, False)
-            while True:
-                res = self.get_chain(chain_id)
-                if res is None or res.get('status') == 'errored' or res.get(
-                        'status') == 'timed out':
-                    return None, False
-                if res.get('status') == 'in progress':
-                    time.sleep(1)
-                    continue
-                if res.get('status') == 'completed':
-                    asset = self.get_asset(
-                        res.get('results', {}).get('assetID'))
-                    if asset is None:
-                        return None, False
-                    mo_per_shots[shot_name]['mov'] = asset.get(
-                        'media_objects', {}).get('artwork', [])[0].get('id')
-                    break
         return mo_per_shots, True
+
+    def get_mo_quicktime_export(self, shot_name: str, panels: List, show_id: int, seq_id: int, seq_rev_number: int, episode_id: int, on_retry: Callable[[int], None]):
+        """get_mo_quicktime_export will start the quicktime export and wait until it
+        is completed and retrieve the asset from it to return his media object ID
+
+        Arguments:
+            shot_name {str} -- Shot name
+
+            panels {List} -- List of panels to export
+
+            show_id {int} -- Show ID
+
+            seq_id {int} -- Sequence ID
+
+            seq_rev_number {int} -- Sequence Revision Number
+
+            episode_id {int} -- Episode ID
+
+            on_retry {Callable[[int], None]} -- Callback for the on retry
+
+        Returns:
+            int -- Media Object ID of the quicktime
+        """
+
+        chain_id = self.start_quicktime_export(show_id, seq_id, seq_rev_number, panels, episode_id, False)
+        retry = 0
+        while True:
+            res = self.get_chain(chain_id)
+            if res is None or res.get('status') == 'errored' or res.get(
+                    'status') == 'timed out':
+                return None
+            if res.get('status') == 'in progress':
+                on_retry(retry)
+                retry = retry + 1
+                time.sleep(1)
+                continue
+            if res.get('status') == 'completed':
+                asset = self.get_asset(
+                    res.get('results', {}).get('assetID'))
+                if asset is None:
+                    return None
+                return asset.get(
+                    'media_objects', {}).get('artwork', [])[0].get('id')
 
     def get_markers(self, sequence_revision: object) -> Dict:
         """get_markers will format the sequence_revision to have a
