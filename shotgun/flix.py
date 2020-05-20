@@ -6,7 +6,7 @@ import json
 import time
 from collections import OrderedDict
 from datetime import datetime, timedelta
-from typing import Dict, List, Tuple, Callable
+from typing import Callable, Dict, List, Tuple
 
 import requests
 
@@ -498,7 +498,11 @@ class flix:
                      [0].get('id')})
         return mo_per_shots, True
 
-    def get_mo_quicktime_export(self, shot_name: str, panels: List, show_id: int, seq_id: int, seq_rev_number: int, episode_id: int, on_retry: Callable[[int], None]):
+    def get_mo_quicktime_export(
+            self, shot_name: str, panels: List, show_id: int, seq_id: int,
+            seq_rev_number: int, episode_id: int,
+            on_retry: Callable[[int],
+                               None]):
         """get_mo_quicktime_export will start the quicktime export and wait until it
         is completed and retrieve the asset from it to return his media object ID
 
@@ -521,7 +525,8 @@ class flix:
             int -- Media Object ID of the quicktime
         """
 
-        chain_id = self.start_quicktime_export(show_id, seq_id, seq_rev_number, panels, episode_id, False)
+        chain_id = self.start_quicktime_export(
+            show_id, seq_id, seq_rev_number, panels, episode_id, False)
         retry = 0
         while True:
             res = self.get_chain(chain_id)

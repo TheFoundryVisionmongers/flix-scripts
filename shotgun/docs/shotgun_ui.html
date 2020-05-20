@@ -30,7 +30,7 @@ import sys
 import tempfile
 import time
 from collections import OrderedDict
-from typing import Dict, List, Tuple
+from typing import Callable, Dict, List, Tuple
 
 from PySide2.QtCore import QCoreApplication, QSize, Qt, Signal
 from PySide2.QtGui import QPixmap
@@ -178,9 +178,10 @@ class shotgun_ui(QWidget):
             self,
             shots: List,
             sg_password: str,
-            show_tc,
-            seq_rev_nbr,
-            seq_tc) -&gt; Dict:
+            show_tc: str,
+            seq_rev_nbr: int,
+            seq_tc: str,
+            fn_progress: Callable[[str], None]) -&gt; Dict:
         &#34;&#34;&#34;export_to_version will export to shotgun a project, a sequence, a shot and version
 
         Arguments:
@@ -194,21 +195,29 @@ class shotgun_ui(QWidget):
 
             seq_tc {str} -- Sequence tracking code
 
+            Callable[[str], None]) -- fn_progress is a progress function
+
         Returns:
             Dict -- Mapping of shot to quicktime info with his corresponding shotgun version
         &#34;&#34;&#34;
+        fn_progress(&#39;get or create shotgun project&#39;)
         sg_show = self.shotgun.get_project(show_tc)
         if sg_show is None:
             sg_show = self.shotgun.create_project(show_tc)
+        fn_progress(&#39;get or create shotgun sequence&#39;)
         sg_seq = self.shotgun.get_sequence(sg_show, seq_tc)
         if sg_seq is None:
             sg_seq = self.shotgun.create_seq(sg_show, seq_tc)
 
         shot_to_file = {}
         for shot_name in shots:
+            fn_progress(
+                &#39;get or create shotgun shot for shot {0}&#39;.format(shot_name))
             sg_shot = self.shotgun.get_shot(sg_show, sg_seq, shot_name)
             if sg_shot is None:
                 sg_shot = self.shotgun.create_shot(sg_show, sg_seq, shot_name)
+            fn_progress(
+                &#39;get or create shotgun version for shot {0}&#39;.format(shot_name))
             version = self.shotgun.get_version(sg_show, sg_shot)
             if version is None:
                 new_version = 1
@@ -595,9 +604,10 @@ if __name__ == &#39;__main__&#39;:
             self,
             shots: List,
             sg_password: str,
-            show_tc,
-            seq_rev_nbr,
-            seq_tc) -&gt; Dict:
+            show_tc: str,
+            seq_rev_nbr: int,
+            seq_tc: str,
+            fn_progress: Callable[[str], None]) -&gt; Dict:
         &#34;&#34;&#34;export_to_version will export to shotgun a project, a sequence, a shot and version
 
         Arguments:
@@ -611,21 +621,29 @@ if __name__ == &#39;__main__&#39;:
 
             seq_tc {str} -- Sequence tracking code
 
+            Callable[[str], None]) -- fn_progress is a progress function
+
         Returns:
             Dict -- Mapping of shot to quicktime info with his corresponding shotgun version
         &#34;&#34;&#34;
+        fn_progress(&#39;get or create shotgun project&#39;)
         sg_show = self.shotgun.get_project(show_tc)
         if sg_show is None:
             sg_show = self.shotgun.create_project(show_tc)
+        fn_progress(&#39;get or create shotgun sequence&#39;)
         sg_seq = self.shotgun.get_sequence(sg_show, seq_tc)
         if sg_seq is None:
             sg_seq = self.shotgun.create_seq(sg_show, seq_tc)
 
         shot_to_file = {}
         for shot_name in shots:
+            fn_progress(
+                &#39;get or create shotgun shot for shot {0}&#39;.format(shot_name))
             sg_shot = self.shotgun.get_shot(sg_show, sg_seq, shot_name)
             if sg_shot is None:
                 sg_shot = self.shotgun.create_shot(sg_show, sg_seq, shot_name)
+            fn_progress(
+                &#39;get or create shotgun version for shot {0}&#39;.format(shot_name))
             version = self.shotgun.get_version(sg_show, sg_shot)
             if version is None:
                 new_version = 1
@@ -883,7 +901,7 @@ shows to sequence revision</p>
 </details>
 </dd>
 <dt id="shotgun_ui.shotgun_ui.export_to_version"><code class="name flex">
-<span>def <span class="ident">export_to_version</span></span>(<span>self, shots: typing.List, sg_password: str, show_tc, seq_rev_nbr, seq_tc) -> typing.Dict</span>
+<span>def <span class="ident">export_to_version</span></span>(<span>self, shots: typing.List, sg_password: str, show_tc: str, seq_rev_nbr: int, seq_tc: str, fn_progress: typing.Callable[[str], NoneType]) -> typing.Dict</span>
 </code></dt>
 <dd>
 <div class="desc"><p>export_to_version will export to shotgun a project, a sequence, a shot and version</p>
@@ -893,6 +911,7 @@ shows to sequence revision</p>
 <p>show_tc {str} &ndash; Show tracking code</p>
 <p>seq_rev_nbr {int} &ndash; Sequence revision number</p>
 <p>seq_tc {str} &ndash; Sequence tracking code</p>
+<p>Callable[[str], None]) &ndash; fn_progress is a progress function</p>
 <h2 id="returns">Returns</h2>
 <dl>
 <dt><code>Dict -- Mapping</code> of <code>shot to quicktime info with his corresponding <a title="shotgun" href="shotgun.html">shotgun</a> version</code></dt>
@@ -906,9 +925,10 @@ shows to sequence revision</p>
         self,
         shots: List,
         sg_password: str,
-        show_tc,
-        seq_rev_nbr,
-        seq_tc) -&gt; Dict:
+        show_tc: str,
+        seq_rev_nbr: int,
+        seq_tc: str,
+        fn_progress: Callable[[str], None]) -&gt; Dict:
     &#34;&#34;&#34;export_to_version will export to shotgun a project, a sequence, a shot and version
 
     Arguments:
@@ -922,21 +942,29 @@ shows to sequence revision</p>
 
         seq_tc {str} -- Sequence tracking code
 
+        Callable[[str], None]) -- fn_progress is a progress function
+
     Returns:
         Dict -- Mapping of shot to quicktime info with his corresponding shotgun version
     &#34;&#34;&#34;
+    fn_progress(&#39;get or create shotgun project&#39;)
     sg_show = self.shotgun.get_project(show_tc)
     if sg_show is None:
         sg_show = self.shotgun.create_project(show_tc)
+    fn_progress(&#39;get or create shotgun sequence&#39;)
     sg_seq = self.shotgun.get_sequence(sg_show, seq_tc)
     if sg_seq is None:
         sg_seq = self.shotgun.create_seq(sg_show, seq_tc)
 
     shot_to_file = {}
     for shot_name in shots:
+        fn_progress(
+            &#39;get or create shotgun shot for shot {0}&#39;.format(shot_name))
         sg_shot = self.shotgun.get_shot(sg_show, sg_seq, shot_name)
         if sg_shot is None:
             sg_shot = self.shotgun.create_shot(sg_show, sg_seq, shot_name)
+        fn_progress(
+            &#39;get or create shotgun version for shot {0}&#39;.format(shot_name))
         version = self.shotgun.get_version(sg_show, sg_shot)
         if version is None:
             new_version = 1

@@ -4,7 +4,7 @@ import sys
 import tempfile
 import time
 from collections import OrderedDict
-from typing import Dict, List, Tuple
+from typing import Callable, Dict, List, Tuple
 
 from PySide2.QtCore import QCoreApplication, QSize, Qt, Signal
 from PySide2.QtGui import QPixmap
@@ -152,9 +152,10 @@ class shotgun_ui(QWidget):
             self,
             shots: List,
             sg_password: str,
-            show_tc,
-            seq_rev_nbr,
-            seq_tc) -> Dict:
+            show_tc: str,
+            seq_rev_nbr: int,
+            seq_tc: str,
+            fn_progress: Callable[[str], None]) -> Dict:
         """export_to_version will export to shotgun a project, a sequence, a shot and version
 
         Arguments:
@@ -168,21 +169,29 @@ class shotgun_ui(QWidget):
 
             seq_tc {str} -- Sequence tracking code
 
+            Callable[[str], None]) -- fn_progress is a progress function
+
         Returns:
             Dict -- Mapping of shot to quicktime info with his corresponding shotgun version
         """
+        fn_progress('get or create shotgun project')
         sg_show = self.shotgun.get_project(show_tc)
         if sg_show is None:
             sg_show = self.shotgun.create_project(show_tc)
+        fn_progress('get or create shotgun sequence')
         sg_seq = self.shotgun.get_sequence(sg_show, seq_tc)
         if sg_seq is None:
             sg_seq = self.shotgun.create_seq(sg_show, seq_tc)
 
         shot_to_file = {}
         for shot_name in shots:
+            fn_progress(
+                'get or create shotgun shot for shot {0}'.format(shot_name))
             sg_shot = self.shotgun.get_shot(sg_show, sg_seq, shot_name)
             if sg_shot is None:
                 sg_shot = self.shotgun.create_shot(sg_show, sg_seq, shot_name)
+            fn_progress(
+                'get or create shotgun version for shot {0}'.format(shot_name))
             version = self.shotgun.get_version(sg_show, sg_shot)
             if version is None:
                 new_version = 1

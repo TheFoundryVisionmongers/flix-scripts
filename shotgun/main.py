@@ -9,10 +9,12 @@ from PySide2.QtWidgets import (QApplication, QDialog, QErrorMessage,
 import flix_ui as flix_widget
 import shotgun_ui as shotgun_widget
 
+
 class progress_canceled(Exception):
     """progress_canceled is an exception for the progress cancelled
     """
     pass
+
 
 class main_dialogue(QDialog):
 
@@ -55,8 +57,8 @@ class main_dialogue(QDialog):
         msgbox.exec_()
 
     def __update_progress(self,
-                        message: str,
-                        skip_step: bool = True):
+                          message: str,
+                          skip_step: bool = True):
         """update_progress will update the progress message
         and will return False if the progress is 'canceled' by the user
 
@@ -106,10 +108,11 @@ class main_dialogue(QDialog):
 
         try:
             self.__update_progress('get media objects per shots', False)
-            mo_per_shots = self.wg_flix_ui.get_media_object_per_shots(self.__update_progress)
+            mo_per_shots = self.wg_flix_ui.get_media_object_per_shots(
+                self.__update_progress)
             if mo_per_shots is None:
                 return
-            
+
             self.progress.setRange(0, 3 + len(mo_per_shots) * 4)
             self.progress.repaint()
             QCoreApplication.processEvents()
@@ -128,12 +131,14 @@ class main_dialogue(QDialog):
 
             for shot in mo_per_shots:
                 # Create / retrieve path for local export per shot
-                self.__update_progress('create path for shot {0}'.format(shot), False)
+                self.__update_progress(
+                    'create path for shot {0}'.format(shot), False)
                 show_path, art_path, thumb_path = self.wg_shotgun_ui.get_shot_download_paths(
                     seq_rev_path, shot)
 
                 # Quicktime:
-                self.__update_progress('download quicktime for shot {0}'.format(shot), False)
+                self.__update_progress(
+                    'download quicktime for shot {0}'.format(shot), False)
                 mov_name = '{0}_v{1}_{2}.mov'.format(
                     seq_tc, seq_rev_nbr, shot)
                 mov_path = os.path.join(show_path, mov_name)
@@ -143,16 +148,19 @@ class main_dialogue(QDialog):
                     mov_path, mo_per_shots[shot].get('mov'))
 
                 # Artworks:
-                self.__update_progress('download artworks for shot {0}'.format(shot), False)
+                self.__update_progress(
+                    'download artworks for shot {0}'.format(shot), False)
                 for mo in mo_per_shots[shot].get('artwork', []):
                     self.wg_flix_ui.local_download(art_path, mo, seq_rev_nbr)
                 # Thumbnails:
-                self.__update_progress('download thumbnails for shot {0}'.format(shot), False)
+                self.__update_progress(
+                    'download thumbnails for shot {0}'.format(shot), False)
                 for mo in mo_per_shots[shot].get('thumbnails', []):
                     self.wg_flix_ui.local_download(thumb_path, mo, seq_rev_nbr)
         except progress_canceled:
             print('progress cancelled')
             return
+        self.__info('Latest sequence revision exported locally')
 
     def on_shotgun_export(self, sg_password: str):
         """on_shotgun_export will export a the latest sequence revision to
@@ -167,21 +175,35 @@ class main_dialogue(QDialog):
             self.__error('you need to be authenticated to Flix')
             return
 
-        self.__init_progress(10)
+        self.__init_progress(2)
 
         try:
-            mo_per_shots = self.wg_flix_ui.get_media_object_per_shots()
+            self.__update_progress('get media object per shots', False)
+            mo_per_shots = self.wg_flix_ui.get_media_object_per_shots(
+                self.__update_progress)
             if mo_per_shots is None:
                 return
+
+            self.progress.setRange(0, 2 + len(mo_per_shots) * 2)
+            self.progress.repaint()
+            QCoreApplication.processEvents()
 
             _, _, show_tc = self.wg_flix_ui.get_selected_show()
             _, seq_rev_nbr, seq_tc = self.wg_flix_ui.get_selected_sequence()
             # Create project / sequence / shot and version in Shotgun
+            self.__update_progress('push to shotgun', False)
             shot_to_file = self.wg_shotgun_ui.export_to_version(
-                mo_per_shots.keys(), sg_password, show_tc, seq_rev_nbr, seq_tc)
+                mo_per_shots.keys(),
+                sg_password,
+                show_tc,
+                seq_rev_nbr,
+                seq_tc,
+                self.__update_progress)
 
             temp_folder = tempfile.gettempdir()
             for shot in shot_to_file:
+                self.__update_progress(
+                    'download quicktime for shot {0}'.format(shot), False)
                 mov_path = os.path.join(
                     temp_folder, shot_to_file[shot]['mov_name'])
                 if sys.platform == 'win32' or sys.platform == 'cygwin':
@@ -190,11 +212,14 @@ class main_dialogue(QDialog):
                 self.wg_flix_ui.get_flix_api().download_media_object(
                     mov_path, mo_per_shots[shot].get('mov'))
                 # Upload quicktime to shotgun version
+                self.__update_progress(
+                    'upload quicktime to shotgun for shot {0}'.format(shot), False)
                 self.wg_shotgun_ui.get_shotgun_api().upload_movie(
                     shot_to_file[shot]['version'], mov_path)
         except progress_canceled:
             print('progress cancelled')
             return
+        self.__info('Latest sequence revision exported to shotgun')
 
 
 if __name__ == '__main__':

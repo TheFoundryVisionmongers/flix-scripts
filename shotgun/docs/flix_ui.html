@@ -28,7 +28,7 @@
 import re
 import sys
 from collections import OrderedDict
-from typing import Dict, List, Tuple
+from typing import Callable, Dict, List, Tuple
 
 from PySide2.QtCore import QSize, Qt, Signal
 from PySide2.QtGui import QPixmap
@@ -242,11 +242,14 @@ class flix_ui(QWidget):
         self.get_flix_api().download_media_object(
             file_path, mo.get(&#39;mo&#39;))
 
-    def get_media_object_per_shots(self):
+    def get_media_object_per_shots(self, fn_progress: Callable[[str], None]):
         &#34;&#34;&#34;get_media_object_per_shots will get the media objects per shotss
 
         Raises:
             RuntimeError: Need authentication
+
+        Arguments:
+            Callable[[str], None] -- fn_progress is a progress function
 
         Returns:
             Dict -- Mapping of media objects per shots
@@ -257,6 +260,7 @@ class flix_ui(QWidget):
         show_id, episodic, _ = self.get_selected_show()
         seq_id, seq_rev_number, _ = self.get_selected_sequence()
         flix_api = self.get_flix_api()
+        fn_progress(&#39;get sequence revision&#39;)
         seq_rev = flix_api.get_sequence_rev(show_id, seq_id, seq_rev_number)
         episode_id = None
         if episodic:
@@ -264,21 +268,36 @@ class flix_ui(QWidget):
         if seq_rev is None:
             self.__error(&#39;Could not retrieve sequence revision&#39;)
             return None
+        fn_progress(&#39;get markers&#39;)
         markers = self.get_flix_api().get_markers(seq_rev)
         if len(markers) &lt; 1:
             self.__info(&#39;You need at least one shot&#39;)
             return None
+        fn_progress(&#39;get panels&#39;)
         panels = self.get_flix_api().get_panels(
             show_id, seq_id, seq_rev_number)
         if panels is None:
             self.__error(&#39;Could not retrieve panels&#39;)
             return None
+        fn_progress(&#39;get markers per panels&#39;)
         panels_per_markers = self.get_flix_api().get_markers_per_panels(markers, panels)
         mo_per_shots, ok = self.get_flix_api().mo_per_shots(panels_per_markers,
                                                             show_id,
                                                             seq_id,
                                                             seq_rev_number,
                                                             episode_id)
+
+        # Split export quicktime
+        for shot_name in mo_per_shots:
+            def on_retry(r): return fn_progress(
+                &#39;export quicktime for shot {0}{1}&#39;.format(
+                    shot_name, &#39;.&#39; * (r % 4)))
+            fn_progress(&#39;export quicktime for shot {0}&#39;.format(shot_name))
+            mo = self.get_flix_api().get_mo_quicktime_export(
+                shot_name, panels_per_markers[shot_name],
+                show_id, seq_id, seq_rev_number, episode_id, on_retry)
+            mo_per_shots[shot_name][&#39;mov&#39;] = mo
+
         if mo_per_shots is None:
             self.__error(&#39;Could not retrieve media objects per shots&#39;)
             return None
@@ -859,11 +878,14 @@ e_sequence_changed: sequence ID, sequence Revision number, tracking code</p></di
         self.get_flix_api().download_media_object(
             file_path, mo.get(&#39;mo&#39;))
 
-    def get_media_object_per_shots(self):
+    def get_media_object_per_shots(self, fn_progress: Callable[[str], None]):
         &#34;&#34;&#34;get_media_object_per_shots will get the media objects per shotss
 
         Raises:
             RuntimeError: Need authentication
+
+        Arguments:
+            Callable[[str], None] -- fn_progress is a progress function
 
         Returns:
             Dict -- Mapping of media objects per shots
@@ -874,6 +896,7 @@ e_sequence_changed: sequence ID, sequence Revision number, tracking code</p></di
         show_id, episodic, _ = self.get_selected_show()
         seq_id, seq_rev_number, _ = self.get_selected_sequence()
         flix_api = self.get_flix_api()
+        fn_progress(&#39;get sequence revision&#39;)
         seq_rev = flix_api.get_sequence_rev(show_id, seq_id, seq_rev_number)
         episode_id = None
         if episodic:
@@ -881,21 +904,36 @@ e_sequence_changed: sequence ID, sequence Revision number, tracking code</p></di
         if seq_rev is None:
             self.__error(&#39;Could not retrieve sequence revision&#39;)
             return None
+        fn_progress(&#39;get markers&#39;)
         markers = self.get_flix_api().get_markers(seq_rev)
         if len(markers) &lt; 1:
             self.__info(&#39;You need at least one shot&#39;)
             return None
+        fn_progress(&#39;get panels&#39;)
         panels = self.get_flix_api().get_panels(
             show_id, seq_id, seq_rev_number)
         if panels is None:
             self.__error(&#39;Could not retrieve panels&#39;)
             return None
+        fn_progress(&#39;get markers per panels&#39;)
         panels_per_markers = self.get_flix_api().get_markers_per_panels(markers, panels)
         mo_per_shots, ok = self.get_flix_api().mo_per_shots(panels_per_markers,
                                                             show_id,
                                                             seq_id,
                                                             seq_rev_number,
                                                             episode_id)
+
+        # Split export quicktime
+        for shot_name in mo_per_shots:
+            def on_retry(r): return fn_progress(
+                &#39;export quicktime for shot {0}{1}&#39;.format(
+                    shot_name, &#39;.&#39; * (r % 4)))
+            fn_progress(&#39;export quicktime for shot {0}&#39;.format(shot_name))
+            mo = self.get_flix_api().get_mo_quicktime_export(
+                shot_name, panels_per_markers[shot_name],
+                show_id, seq_id, seq_rev_number, episode_id, on_retry)
+            mo_per_shots[shot_name][&#39;mov&#39;] = mo
+
         if mo_per_shots is None:
             self.__error(&#39;Could not retrieve media objects per shots&#39;)
             return None
@@ -1314,7 +1352,7 @@ e_sequence_changed: sequence ID, sequence Revision number, tracking code</p></di
 </details>
 </dd>
 <dt id="flix_ui.flix_ui.get_media_object_per_shots"><code class="name flex">
-<span>def <span class="ident">get_media_object_per_shots</span></span>(<span>self)</span>
+<span>def <span class="ident">get_media_object_per_shots</span></span>(<span>self, fn_progress: typing.Callable[[str], NoneType])</span>
 </code></dt>
 <dd>
 <div class="desc"><p>get_media_object_per_shots will get the media objects per shotss</p>
@@ -1323,6 +1361,8 @@ e_sequence_changed: sequence ID, sequence Revision number, tracking code</p></di
 <dt><code>RuntimeError</code></dt>
 <dd>Need authentication</dd>
 </dl>
+<h2 id="arguments">Arguments</h2>
+<p>Callable[[str], None] &ndash; fn_progress is a progress function</p>
 <h2 id="returns">Returns</h2>
 <dl>
 <dt><code>Dict -- Mapping</code> of <code>media objects per shots</code></dt>
@@ -1332,11 +1372,14 @@ e_sequence_changed: sequence ID, sequence Revision number, tracking code</p></di
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def get_media_object_per_shots(self):
+<pre><code class="python">def get_media_object_per_shots(self, fn_progress: Callable[[str], None]):
     &#34;&#34;&#34;get_media_object_per_shots will get the media objects per shotss
 
     Raises:
         RuntimeError: Need authentication
+
+    Arguments:
+        Callable[[str], None] -- fn_progress is a progress function
 
     Returns:
         Dict -- Mapping of media objects per shots
@@ -1347,6 +1390,7 @@ e_sequence_changed: sequence ID, sequence Revision number, tracking code</p></di
     show_id, episodic, _ = self.get_selected_show()
     seq_id, seq_rev_number, _ = self.get_selected_sequence()
     flix_api = self.get_flix_api()
+    fn_progress(&#39;get sequence revision&#39;)
     seq_rev = flix_api.get_sequence_rev(show_id, seq_id, seq_rev_number)
     episode_id = None
     if episodic:
@@ -1354,21 +1398,36 @@ e_sequence_changed: sequence ID, sequence Revision number, tracking code</p></di
     if seq_rev is None:
         self.__error(&#39;Could not retrieve sequence revision&#39;)
         return None
+    fn_progress(&#39;get markers&#39;)
     markers = self.get_flix_api().get_markers(seq_rev)
     if len(markers) &lt; 1:
         self.__info(&#39;You need at least one shot&#39;)
         return None
+    fn_progress(&#39;get panels&#39;)
     panels = self.get_flix_api().get_panels(
         show_id, seq_id, seq_rev_number)
     if panels is None:
         self.__error(&#39;Could not retrieve panels&#39;)
         return None
+    fn_progress(&#39;get markers per panels&#39;)
     panels_per_markers = self.get_flix_api().get_markers_per_panels(markers, panels)
     mo_per_shots, ok = self.get_flix_api().mo_per_shots(panels_per_markers,
                                                         show_id,
                                                         seq_id,
                                                         seq_rev_number,
                                                         episode_id)
+
+    # Split export quicktime
+    for shot_name in mo_per_shots:
+        def on_retry(r): return fn_progress(
+            &#39;export quicktime for shot {0}{1}&#39;.format(
+                shot_name, &#39;.&#39; * (r % 4)))
+        fn_progress(&#39;export quicktime for shot {0}&#39;.format(shot_name))
+        mo = self.get_flix_api().get_mo_quicktime_export(
+            shot_name, panels_per_markers[shot_name],
+            show_id, seq_id, seq_rev_number, episode_id, on_retry)
+        mo_per_shots[shot_name][&#39;mov&#39;] = mo
+
     if mo_per_shots is None:
         self.__error(&#39;Could not retrieve media objects per shots&#39;)
         return None

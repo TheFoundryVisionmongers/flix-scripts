@@ -2,7 +2,7 @@ import os
 import re
 import sys
 from collections import OrderedDict
-from typing import Dict, List, Tuple, Callable
+from typing import Callable, Dict, List, Tuple
 
 from PySide2.QtCore import QSize, Qt, Signal
 from PySide2.QtGui import QPixmap
@@ -260,20 +260,18 @@ class flix_ui(QWidget):
                                                             seq_id,
                                                             seq_rev_number,
                                                             episode_id)
-        
+
         # Split export quicktime
         for shot_name in mo_per_shots:
-            on_retry = lambda r : fn_progress('export quicktime for shot {0}{1}'.format(shot_name, '.' * (r % 4)))
+            def on_retry(r): return fn_progress(
+                'export quicktime for shot {0}{1}'.format(
+                    shot_name, '.' * (r % 4)))
             fn_progress('export quicktime for shot {0}'.format(shot_name))
-            mo = self.get_flix_api().get_mo_quicktime_export(shot_name,
-                                                             panels_per_markers[shot_name],
-                                                             show_id,
-                                                             seq_id,
-                                                             seq_rev_number,
-                                                             episode_id,
-                                                             on_retry)
+            mo = self.get_flix_api().get_mo_quicktime_export(
+                shot_name, panels_per_markers[shot_name],
+                show_id, seq_id, seq_rev_number, episode_id, on_retry)
             mo_per_shots[shot_name]['mov'] = mo
-        
+
         if mo_per_shots is None:
             self.__error('Could not retrieve media objects per shots')
             return None
