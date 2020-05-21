@@ -24,12 +24,9 @@
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">import json
-import os
+<pre><code class="python">import os
 import re
 import sys
-import tempfile
-import uuid
 from collections import OrderedDict
 
 from PySide2.QtWidgets import (QApplication, QComboBox, QDialog, QErrorMessage,
@@ -37,100 +34,27 @@ from PySide2.QtWidgets import (QApplication, QComboBox, QDialog, QErrorMessage,
                                QMessageBox, QPushButton, QStackedWidget,
                                QVBoxLayout)
 
-# import flix as flix_api
-# import hiero_c as hiero_api
+import flix_ui as flix_widget
+import hiero_c as hiero_api
+import hiero_ui as hiero_widget
 
 
 class main_dialogue(QDialog):
+
     def __init__(self, parent=None):
         super(main_dialogue, self).__init__(parent)
-        self.flix_api = flix_api.flix()
-        self.hiero_api = hiero_api.hiero_c()
-        self.authenticated = False
-        self.setWindowTitle(&#34;Flix&#34;)
+        self.setWindowTitle(&#39;Flix&#39;)
+        self.wg_flix_ui = flix_widget.flix_ui()
+        self.wg_hiero_ui = hiero_widget.hiero_ui()
 
-        h_main_box = QHBoxLayout()
-        v_login_box = QVBoxLayout()
-        v_sequence_box = QVBoxLayout()
+        self.wg_hiero_ui.e_update_in_flix.connect(self.on_update_in_flix)
+        self.wg_hiero_ui.e_pull_latest.connect(self.on_pull_latest)
 
-        self.hostname = QLineEdit(&#39;http://localhost:1234&#39;)
-        self.hostname.setMinimumWidth(200)
-        hostname_label = QLabel(&#39;Flix Server&#39;)
-        hostname_label.setBuddy(self.hostname)
-        self.login = QLineEdit(&#39;admin&#39;)
-        self.login.setMinimumWidth(200)
-        login_label = QLabel(&#39;Username&#39;)
-        login_label.setBuddy(self.login)
-        self.password = QLineEdit(&#39;admin&#39;)
-        self.password.setMinimumWidth(200)
-        self.password.setEchoMode(QLineEdit.Password)
-        password_label = QLabel(&#39;Password&#39;)
-        password_label.setBuddy(self.password)
-        self.submit = QPushButton(&#39;Log In&#39;)
-
-        v_login_box.addWidget(hostname_label)
-        v_login_box.addWidget(self.hostname)
-        v_login_box.addWidget(login_label)
-        v_login_box.addWidget(self.login)
-        v_login_box.addWidget(password_label)
-        v_login_box.addWidget(self.password)
-        v_login_box.addWidget(self.submit)
-        self.submit.clicked.connect(self.authenticate)
-
-        self.show_list = QComboBox()
-        show_label = QLabel(&#39;Show&#39;)
-        show_label.setBuddy(self.show_list)
-        self.show_list.currentTextChanged.connect(self.on_show_changed)
-        self.episode_list = QComboBox()
-        self.episode_label = QLabel(&#39;Episode&#39;)
-        self.episode_label.setBuddy(self.episode_list)
-        self.episode_list.currentTextChanged.connect(self.on_episode_changed)
-        self.sequence_list = QComboBox()
-        sequence_label = QLabel(&#39;Sequence&#39;)
-        sequence_label.setBuddy(self.sequence_list)
-        self.sequence_list.currentTextChanged.connect(self.on_sequence_changed)
-        h_action = QHBoxLayout()
-        pull = QPushButton(&#34;Pull Latest&#34;)
-        pull.clicked.connect(self.pull_latest)
-        update = QPushButton(&#34;Update in Flix&#34;)
-        update.clicked.connect(self.update_in_flix)
-        h_action.addWidget(pull)
-        h_action.addWidget(update)
-        v_sequence_box.addWidget(show_label)
-        v_sequence_box.addWidget(self.show_list)
-        v_sequence_box.addWidget(self.episode_label)
-        v_sequence_box.addWidget(self.episode_list)
-        v_sequence_box.addWidget(sequence_label)
-        v_sequence_box.addWidget(self.sequence_list)
-        v_sequence_box.addLayout(h_action)
-
-        h_main_box.addLayout(v_login_box)
-        h_main_box.addLayout(v_sequence_box)
-
-        self.setLayout(h_main_box)
-
-    def authenticate(self):
-        &#34;&#34;&#34;authenticate will authenticate a user and update the view
-        &#34;&#34;&#34;
-        if self.authenticated:
-            self.flix_api.reset()
-            self.authenticated = False
-            self.reset(&#39;Log In&#39;)
-            return
-
-        credentials = self.flix_api.authenticate(
-            self.hostname.text(),
-            self.login.text(),
-            self.password.text())
-        if credentials is None:
-            self.error(&#39;Could not authenticate user&#39;)
-            self.login.clear()
-            self.password.clear()
-            return
-
-        self.init_shows()
-        self.authenticated = True
-        self.reset(&#39;Log Out&#39;)
+        # Setup UI view
+        v_main_box = QVBoxLayout()
+        v_main_box.addWidget(self.wg_flix_ui)
+        v_main_box.addWidget(self.wg_hiero_ui)
+        self.setLayout(v_main_box)
 
     def error(self, message):
         &#34;&#34;&#34;error will show a error message with a given message
@@ -154,210 +78,6 @@ class main_dialogue(QDialog):
         msgbox.setText(message)
         msgbox.exec_()
 
-    def reset(self, action=&#39;Log Out&#39;):
-        &#34;&#34;&#34;reset will reset the login form / shows info for login / logout
-
-        Keyword Arguments:
-            action {str} -- action to handle (default: {&#39;Log Out&#39;})
-        &#34;&#34;&#34;
-        if action == &#39;Log Out&#39;:
-            self.hostname.setReadOnly(True)
-            self.login.setReadOnly(True)
-            self.password.setReadOnly(True)
-            self.submit.setText(&#39;Log Out&#39;)
-            return
-        self.hostname.setReadOnly(False)
-        self.login.setReadOnly(False)
-        self.password.setReadOnly(False)
-        self.show_list.clear()
-        self.sequence_list.clear()
-        self.episode_list.clear()
-        self.submit.setText(action)
-
-    def on_show_changed(self, tracking_code):
-        &#34;&#34;&#34;on_show_changed triggered after a show is selected,
-        will init the list of sequences from this show
-
-        Arguments:
-            tracking_code {str} -- show_tracking_code from the event
-        &#34;&#34;&#34;
-        self.selected_show_tracking_code = tracking_code
-        show_id, episodic, _ = self.get_selected_show()
-
-        self.sequence_list.clear()
-        self.episode_list.clear()
-        if episodic is True:
-            self.episode_list.show()
-            self.episode_label.show()
-            episodes = self.flix_api.get_episodes(show_id)
-            if episodes is None:
-                self.error(&#39;Could not retrieve episodes&#39;)
-            self.episode_tracking_code = self.get_episode_tracking_code(
-                episodes)
-            for e in self.episode_tracking_code:
-                self.episode_list.addItem(e)
-            self.episode_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
-        else:
-            self.episode_list.hide()
-            self.episode_label.hide()
-            sequences = self.flix_api.get_sequences(show_id)
-            if sequences is None:
-                self.error(&#39;Could not retreive sequences&#39;)
-                return
-            self.sequence_tracking_code = self.get_sequence_tracking_code(
-                sequences)
-            self.sequence_list.addItem(&#39;All Sequences&#39;)
-            for s in self.sequence_tracking_code:
-                self.sequence_list.addItem(s)
-            self.sequence_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
-
-    def on_episode_changed(self, tracking_code):
-        &#34;&#34;&#34;on_episode_changed triggered after an episode is selected,
-        will store the selected episode
-
-        Arguments:
-            tracking_code {str} -- episode_tracking_code from the event
-        &#34;&#34;&#34;
-        if tracking_code == &#39;&#39;:
-            return
-        self.selected_episode_tracking_code = tracking_code
-        show_id, _, _ = self.get_selected_show()
-        episode_id, _ = self.get_selected_episode()
-        sequences = self.flix_api.get_sequences(show_id, episode_id)
-        if sequences is None:
-            self.error(&#39;Could not retreive sequences&#39;)
-            return
-        self.sequence_tracking_code = self.get_sequence_tracking_code(
-            sequences)
-        self.sequence_list.clear()
-        for s in self.sequence_tracking_code:
-            self.sequence_list.addItem(s)
-        self.sequence_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
-
-    def on_sequence_changed(self, tracking_code):
-        &#34;&#34;&#34;on_sequence_changed triggered after a sequence is selected,
-        will store the selected sequence
-
-        Arguments:
-            tracking_code {str} -- sequence_tracking_code from the event
-        &#34;&#34;&#34;
-        self.selected_sequence_tracking_code = tracking_code
-
-    def init_shows(self):
-        &#34;&#34;&#34;init_shows will retrieve the list of show and update the UI
-        &#34;&#34;&#34;
-        shows = self.flix_api.get_shows()
-        if shows is None:
-            self.error(&#39;Could not retreive shows&#39;)
-            return
-        self.show_tracking_code = self.get_show_tracking_code(shows)
-        self.show_list.clear()
-        for s in self.show_tracking_code:
-            self.show_list.addItem(s)
-        self.show_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
-
-    def sort_alphanumeric(self, d):
-        &#34;&#34;&#34;sort_alphanumeric will sort a dictionnary alphanumerically by keys
-
-        Arguments:
-            d {Dict} -- Dictionnary to sort
-
-        Returns:
-            Dict -- Sorted Dictionnary
-        &#34;&#34;&#34;
-        def convert(text): return int(text) if text.isdigit() else text
-        def alphanum_key(key): return [convert(c)
-                                       for c in re.split(&#39;([0-9]+)&#39;, key)]
-        keys = sorted(d.keys(), key=alphanum_key)
-        return OrderedDict((k, d[k]) for k in keys)
-
-    def get_show_tracking_code(self, shows):
-        &#34;&#34;&#34;get_show_tracking_code will format the shows to have a mapping:
-        tracking_code -&gt; [show_id, episodic]
-
-        Arguments:
-            shows {List} -- List of shows
-
-        Returns:
-            Dict -- Shows by tracking code
-        &#34;&#34;&#34;
-        show_tracking_codes = {}
-        if shows is None:
-            return show_tracking_codes
-        for s in shows:
-            if s.get(&#39;hidden&#39;, False) is False:
-                show_tracking_codes[s.get(&#39;tracking_code&#39;)] = [
-                    s.get(&#39;id&#39;), s.get(&#39;episodic&#39;)]
-        return self.sort_alphanumeric(show_tracking_codes)
-
-    def get_sequence_tracking_code(self, sequences):
-        &#34;&#34;&#34;get_sequence_tracking_code will format the sequences to have
-        a mapping: tracking_code -&gt; [sequence_id, last_seq_rev_id]
-
-        Arguments:
-            sequences {List} -- List of sequences
-
-        Returns:
-            Dict -- sequence ID and last seq rev by tracking code
-        &#34;&#34;&#34;
-        sequence_tracking_codes = {}
-        if sequences is None:
-            return sequence_tracking_codes
-        for s in sequences:
-            if s.get(&#39;revisions_count&#39;) &gt; 0:
-                sequence_tracking_codes[s.get(&#39;tracking_code&#39;)] = [
-                    s.get(&#39;id&#39;), s.get(&#39;revisions_count&#39;)]
-        return self.sort_alphanumeric(sequence_tracking_codes)
-
-    def get_episode_tracking_code(self, episodes):
-        &#34;&#34;&#34;get_episode_tracking_code will format the episodes to have a
-        mapping: tracking_code -&gt; episode_id
-
-        Arguments:
-            episodes {List} -- List of episodes
-
-        Returns:
-            Dict -- Episodes by tracking code
-        &#34;&#34;&#34;
-        episode_tracking_codes = {}
-        if episodes is None:
-            return episode_tracking_codes
-        for s in episodes:
-            episode_tracking_codes[s.get(&#39;tracking_code&#39;)] = s.get(&#39;id&#39;)
-        return self.sort_alphanumeric(episode_tracking_codes)
-
-    def get_dialogues_by_panel_id(self, dialogues):
-        &#34;&#34;&#34;get_dialogues_by_panel_id will format the dialogues to have
-        a mapping panel_id -&gt; dialogue
-
-        Arguments:
-            dialogues {List} -- List of Dialogues
-
-        Returns:
-            Dict -- Mapping panel_id to dialogue
-        &#34;&#34;&#34;
-        mapped_dialogues = {}
-        cleanr = re.compile(&#39;&lt;.*?&gt;|&amp;([a-z0-9]+|#[0-9]{1,6}|#x[0-9a-f]{1,6});&#39;)
-        for d in dialogues:
-            t = d.get(&#39;text&#39;, &#39;&#39;).replace(&#39;&lt;/p&gt;&#39;, &#39;\n&#39;)
-            mapped_dialogues[d.get(&#39;panel_id&#39;)] = re.sub(cleanr, &#39;&#39;, t)
-        return mapped_dialogues
-
-    def update_sequence_items(self):
-        &#34;&#34;&#34;update_sequence_items will refresh the list of sequence
-        from the selected show
-        &#34;&#34;&#34;
-        show_id, episodic, _ = self.get_selected_show()
-        episode_id = None
-        if episodic:
-            episode_id, _ = self.get_selected_episode()
-        sequences = self.flix_api.get_sequences(show_id, episode_id)
-        if sequences is None:
-            self.error(&#39;Could not retreive sequences&#39;)
-            return
-        self.sequence_tracking_code = self.get_sequence_tracking_code(
-            sequences)
-
     def create_clip(self, seq_rev, p, clip_name, clips):
         &#34;&#34;&#34;create_clip will create a clip or reuse one and download image
 
@@ -374,224 +94,11 @@ class main_dialogue(QDialog):
             Dict -- Clip created / reused
         &#34;&#34;&#34;
         if clip_name not in clips:
-            temp_path = tempfile.mkdtemp()
-            thumb_mo = p.get(
-                &#39;asset&#39;, {}).get(
-                &#39;media_objects&#39;, {}).get(
-                &#39;thumbnail&#39;, [])
-            thumb_mo_id = None if len(thumb_mo) &lt; 1 else thumb_mo[0].get(&#39;id&#39;)
-            if thumb_mo_id is None:
-                self.error(&#39;Could not retrieve thumbnail ID&#39;)
-                return None
-            _, _, seq_tracking_code = self.get_selected_sequence()
-            temp_filepath = os.path.join(
-                temp_path,
-                &#39;{0}_{1}_{2}_.png&#39;.format(
-                    seq_tracking_code,
-                    p.get(&#39;panel_id&#39;),
-                    p.get(&#39;revision_counter&#39;)))
-            if sys.platform == &#39;win32&#39; or sys.platform == &#39;cygwin&#39;:
-                temp_filepath = temp_filepath.replace(&#39;\\&#39;, &#39;\\\\&#39;)
-            if self.flix_api.download_media_object(
-                    temp_filepath, thumb_mo_id) is None:
-                self.error(&#39;Could not download thumbnail&#39;)
-                return None
+            temp_filepath = self.wg_flix_ui.download_first_thumb(p)
+            if temp_filepath is None:
+                return
             return seq_rev.createClip(temp_filepath)
         return clips[clip_name]
-
-    def get_comment_tag(self, p):
-        &#34;&#34;&#34;get_comment_tag will make a copy of a comment tag and set
-        his comment as a note
-
-        Arguments:
-            p {Dict} -- Panel
-
-        Returns:
-            Dict -- Hiero Tag
-        &#34;&#34;&#34;
-        comment = p.get(&#39;latest_open_note&#39;, {}).get(&#39;body&#39;, None)
-        t = None
-        if comment is not None:
-            t = self.hiero_api.create_comment_tag(comment)
-        return t
-
-    def add_dialogue(self, mapped_dialogue, panel_id, track, prev):
-        &#34;&#34;&#34;add_dialogue will create a dialogue and add it to the track
-
-        Arguments:
-            mapped_dialogue {Dict} -- mapping of dialogue to ensure there is a
-            dialogue for the panel
-
-            panel_id {int} -- Panel ID
-
-            track {dict} -- Track to add the dialogue
-
-            prev {Dict} -- Previous trackitem
-        &#34;&#34;&#34;
-        if panel_id in mapped_dialogue:
-            settings = {
-                &#39;name&#39;: &#39;dialogue-[{0}]&#39;.format(uuid.uuid4()),
-                &#39;message&#39;: mapped_dialogue[panel_id],
-                &#39;opacity&#39;: .6,
-                &#39;global_font_scale&#39;: .3,
-                &#39;enable_background&#39;: True,
-                &#39;background_opacity&#39;: .6,
-                &#39;box&#39;: (0, 0, 1000, 562),
-                &#39;xjustify&#39;: 1,
-                &#39;yjustify&#39;: 2
-            }
-            self.hiero_api.add_dialogue_track_effect(track, prev, settings)
-
-    def create_burnin(self, track, fr, to, burnin_name):
-        &#34;&#34;&#34;create_burnin will create a burnin and add it to the track
-
-        Arguments:
-            track {Dict} -- Hiero Track
-
-            fr {int} -- Start of the burnin
-
-            to {int} -- End of the burnin
-
-            burnin_name {str} -- Burnin Name
-        &#34;&#34;&#34;
-        settings = {
-            &#39;name&#39;: &#39;{0}-[{1}]&#39;.format(burnin_name, uuid.uuid4()),
-            &#39;burnIn_textScale&#39;: .25,
-            &#39;burnIn_topLeft&#39;: &#39;hiero/clip&#39;,
-            &#39;burnIn_topMiddle&#39;: &#39;none&#39;,
-            &#39;burnIn_topRight&#39;: &#39;hiero/sequence/timecode&#39;,
-            &#39;burnIn_bottomLeft&#39;: &#39;none&#39;,
-            &#39;burnIn_bottomMiddle&#39;: &#39;none&#39;,
-            &#39;burnIn_bottomRight&#39;: &#39;none&#39;,
-            &#39;burnIn_backgroundEnable&#39;: &#39;true&#39;,
-            &#39;burnIn_backgroundXBorder&#39;: 10,
-            &#39;burnIn_backgroundYBorder&#39;: 10,
-            &#39;burnIn_backgroundOpacity&#39;: .6,
-        }
-        self.hiero_api.add_burnin_track_effect(track, fr, to, settings)
-
-    def get_markers(self, sequence_revision):
-        &#34;&#34;&#34;get_markers will format the sequence_revision to have a
-        mapping of markers: start -&gt; marker_name
-
-        Arguments:
-            sequence_revision {Dict} -- Sequence revision
-
-        Returns:
-            Dict -- Mapping start -&gt; marker_name
-        &#34;&#34;&#34;
-        markers_mapping = {}
-        markers = sequence_revision.get(&#39;meta_data&#39;, {}).get(&#39;markers&#39;, [])
-        for m in markers:
-            markers_mapping[m.get(&#39;start&#39;)] = m.get(&#39;name&#39;)
-        return OrderedDict(sorted(markers_mapping.items()))
-
-    def add_burnin(
-            self,
-            panels,
-            panel_in,
-            markers_map,
-            current_marker,
-            marker_in,
-            shots,
-            p,
-            i):
-        &#34;&#34;&#34;add_burnin will add a burnin in a VideoTrack
-
-        Arguments:
-            panels {List} -- List of Panels
-
-            panel_in {int} -- First frame of the panel (from whole timeline)
-
-            markers_map {Dict} -- Mapping of markers
-
-            current_marker {str} -- Current Marker
-
-            marker_in {int} -- First frame of the marker to add as burnin
-
-            shots {Dict} -- Video track to add the burnin
-
-            p {Dict} -- Panel
-
-            i {int} -- Posiion of the panel
-
-        Returns:
-            [type] -- [description]
-        &#34;&#34;&#34;
-        &#34;&#34;&#34;add_burnin will add a burnin in a VideoTrack
-        panels: list of panels
-        panel_in: first frame of the panel (from the whole timeline)
-        markers_map: mapping of markers
-        marker_in: first frame of the marker to add as burnin
-        shots: video track to add the burnin
-        p: actual panel
-        i: position of the panel
-        &#34;&#34;&#34;
-        if panel_in in markers_map and markers_map[panel_in] != current_marker:
-            if marker_in is not None:
-                self.create_burnin(
-                    shots,
-                    marker_in,
-                    panel_in - 1,
-                    markers_map[panel_in])
-            marker_in = panel_in
-        if len(panels) - 1 == i and marker_in is not None:
-            self.create_burnin(
-                shots,
-                marker_in,
-                panel_in +
-                p.get(&#39;duration&#39;) -
-                1,
-                current_marker)
-        return marker_in
-
-    def add_comment(self, p, tags):
-        &#34;&#34;&#34;add_comment will add a tag comment to the list
-
-        Arguments:
-            p {Dict} -- Panel
-
-            tags {List} -- List of all tags
-
-        Returns:
-            List -- List of all tags
-        &#34;&#34;&#34;
-        comment_tag = self.get_comment_tag(p)
-        if comment_tag is not None:
-            tags.append(comment_tag)
-        return tags
-
-    def add_panel_info_tag(self, p, tags):
-        &#34;&#34;&#34;add_panel_info_tag will add a tag of the panel info
-
-        Arguments:
-            p {Dict} -- Panel
-
-            tags {List} -- List of all tags
-
-        Returns:
-            List -- List of all tags
-        &#34;&#34;&#34;
-        t = self.hiero_api.create_info_tag(json.dumps(p))
-        tags.append(t)
-        return tags
-
-    def add_marker(self, markers_mapping, panel_in, sequence):
-        &#34;&#34;&#34;add_marker will add a marker in the sequence
-
-        Arguments:
-            markers_mapping {Dict} -- Mapping of markers
-
-            panel_in {int} -- First frame of the panel
-            (from the whole sequence)
-
-            sequence {Dict} -- Hiero Sequence
-        &#34;&#34;&#34;
-        if panel_in in markers_mapping:
-            tag = self.hiero_api.create_marker_tag(
-                panel_in,
-                markers_mapping[panel_in])
-            sequence.addTagToRange(tag, panel_in, panel_in + 1)
 
     def create_video_track(
             self,
@@ -617,38 +124,30 @@ class main_dialogue(QDialog):
         Returns:
             Tuple[Dict, Dict] -- VideoTrack, ShotTrack
         &#34;&#34;&#34;
-        _, _, seq_tracking_code = self.get_selected_sequence()
-        track = self.hiero_api.create_video_track(
-            &#39;Flix_{0}_v{1}&#39;.format(
-                seq_tracking_code,
-                seq_rev_number))
-        show_id, _, _ = self.get_selected_show()
-        dialogues = self.flix_api.get_dialogues(
-            show_id, seq_id, seq_rev_number)
-        mapped_dialogue = self.get_dialogues_by_panel_id(dialogues)
-        sequence_revision = self.flix_api.get_sequence_rev(
-            show_id, seq_id, seq_rev_number)
-        if sequence_revision is None:
-            self.error(&#39;Could not retreive sequence revision&#39;)
-            return
-        markers_mapping = self.get_markers(sequence_revision)
-        shots = self.hiero_api.create_video_track(
-            &#39;Shots&#39;) if len(markers_mapping) &gt; 0 else None
-        clips = self.hiero_api.get_clips(seq_bin)
-        panels = self.flix_api.get_panels(show_id, seq_id, seq_rev_number)
+        _, seq_rev_nbr, seq_tc = self.wg_flix_ui.get_selected_sequence()
+        mapped_dialogue = self.wg_flix_ui.get_dialogues_by_panel_id()
+        markers_mapping = self.wg_flix_ui.get_markers_by_name()
+        panels = self.wg_flix_ui.get_panels()
         if panels is None:
             self.error(&#39;Could not retreive panels&#39;)
             return
+
+        vt_track_name = &#39;Flix_{0}_v{1}&#39;.format(
+            seq_tc, seq_rev_nbr)
+        vt_shot_name = &#39;Shots&#39; if len(markers_mapping) &gt; 0 else None
+        track, shots = self.wg_hiero_ui.create_video_tracks(vt_track_name,
+                                                            vt_shot_name)
+        clips = self.wg_hiero_ui.hiero_api.get_clips(seq_bin)
+
         prev = None
         panel_in = 0
         marker_in = None
         prev_marker_name = None
-        _, _, seq_tracking_code = self.get_selected_sequence()
         for i, p in enumerate(panels):
             tags = []
             panel_id = p.get(&#39;panel_id&#39;)
             clip_name = &#39;{0}_{1}_{2}_&#39;.format(
-                seq_tracking_code, panel_id, p.get(
+                seq_tc, panel_id, p.get(
                     &#39;revision_counter&#39;))
             clip = self.create_clip(seq_rev_bin, p, clip_name, clips)
             if clip is None:
@@ -656,18 +155,18 @@ class main_dialogue(QDialog):
                 return track, shots
 
             # Add comment
-            tags = self.add_comment(p, tags)
+            tags = self.wg_hiero_ui.add_comment(p, tags)
             # Add panel info
-            tags = self.add_panel_info_tag(p, tags)
+            tags = self.wg_hiero_ui.add_panel_info_tag(p, tags)
             # Add marker
-            self.add_marker(markers_mapping, panel_in, sequence)
+            self.wg_hiero_ui.add_marker(markers_mapping, panel_in, sequence)
             # Add track item
-            prev = self.hiero_api.add_track_item(
+            prev = self.wg_hiero_ui.hiero_api.add_track_item(
                 track, clip_name, clip, p.get(&#39;duration&#39;), tags, prev)
             # Add dialogue
-            self.add_dialogue(mapped_dialogue, panel_id, track, prev)
+            self.wg_hiero_ui.add_dialogue(mapped_dialogue, panel_id, track, prev)
             # Add burnin
-            marker_in = self.add_burnin(
+            marker_in = self.wg_hiero_ui.add_burnin(
                 panels,
                 panel_in,
                 markers_mapping,
@@ -686,30 +185,11 @@ class main_dialogue(QDialog):
         &#34;&#34;&#34;pull_taltest_seq_rev will pull one latest sequence revision and send
         it to hiero
         &#34;&#34;&#34;
-        self.update_sequence_items()
-        _, _, show_tc = self.get_selected_show()
-        seq_id, seq_rev_tc, seq_tracking_code = self.get_selected_sequence()
-        my_project = self.hiero_api.get_project(
-            &#39;Flix_{0}&#39;.format(
-                show_tc))
-        seq, seq_bin_reused = self.hiero_api.get_project_bin(
-            my_project, &#39;Flix_{0}&#39;.format(
-                seq_tracking_code))
-        if seq_bin_reused is False:
-            clipsBin = my_project.clipsBin()
-            clipsBin.addItem(seq)
-
-        seq_rev_bin, seq_rev_bin_reused = self.hiero_api.get_seq_bin(
-            seq, &#39;v{0}&#39;.format(seq_rev_tc))
-        if seq_rev_bin_reused is False:
-            seq.addItem(seq_rev_bin)
-
-        sequence = self.hiero_api.create_sequence(
-            &#39;Flix_{0}_v{1}&#39;.format(
-                seq_tracking_code,
-                seq_rev_tc))
-        seq_item = self.hiero_api.sequence_to_bin_item(sequence)
-        seq_rev_bin.addItem(seq_item)
+        _, _, show_tc = self.wg_flix_ui.get_selected_show()
+        seq_id, seq_rev_tc, seq_tc = self.wg_flix_ui.get_selected_sequence()
+        sequence, seq, seq_rev_bin = self.wg_hiero_ui.pull_to_sequence(show_tc,
+                                                                       seq_rev_tc,
+                                                                       seq_tc)
         track, shots = self.create_video_track(
             sequence, seq, seq_rev_bin, seq_id, seq_rev_tc)
         if track is None:
@@ -718,210 +198,50 @@ class main_dialogue(QDialog):
         if shots is not None:
             sequence.addTrack(shots)
 
-    def pull_latest(self):
-        &#34;&#34;&#34;pull_latest will retrieve the last sequence revision from Flix and
+    def on_pull_latest(self):
+        &#34;&#34;&#34;on_pull_latest will retrieve the last sequence revision from Flix and
         will create / reuse bins, sequences, clips
         Depending on the selection it will pull only one or all of them
         &#34;&#34;&#34;
-        if self.selected_sequence_tracking_code == &#39;All Sequences&#39;:
-            for count in range(self.sequence_list.count()):
-                if self.sequence_list.itemText(count) == &#39;All Sequences&#39;:
+        _, _, selected_seq_tc = self.wg_flix_ui.get_selected_sequence()
+        if selected_seq_tc == &#39;All Sequences&#39;:
+            for count in range(self.wg_flix_ui.sequence_list.count()):
+                if self.wg_flix_ui.sequence_list.itemText(count) == &#39;All Sequences&#39;:
                     continue
-                select_seq_tracking_code = self.sequence_list.itemText(
+                select_seq_tracking_code = self.wg_flix_ui.sequence_list.itemText(
                     count)
-                self.selected_sequence_tracking_code = select_seq_tracking_code
+                self.wg_flix_ui.on_sequence_changed(select_seq_tracking_code)
                 self.pull_latest_seq_rev()
-            self.selected_sequence_tracking_code = &#39;All Sequences&#39;
+            self.wg_flix_ui.on_sequence_changed(&#39;All Sequences&#39;)
         else:
             self.pull_latest_seq_rev()
 
         self.info(&#39;Sequence revision imported successfully&#39;)
 
-    def get_panels_from_sequence(self, sequence, show_id, sequence_id):
-        &#34;&#34;&#34;get_panels_from_sequence will retrieve all the clips and format
-        them as panels from a hiero sequence
-
-        Arguments:
-            sequence {Dict} -- Video Track Sequence
-
-            show_id {int} -- Show ID
-
-            sequence_id {int} -- Sequence ID
-
-        Returns:
-            List -- List of panels
+    def on_update_in_flix(self):
+        &#34;&#34;&#34;on_update_in_flix will send a sequence to Flix
         &#34;&#34;&#34;
-        panels = []
-        for track_item in sequence.items():
-            panel_info = None
-            tags_note = self.hiero_api.get_item_tags_note(track_item, &#39;France&#39;)
-            if len(tags_note) &gt; 0:
-                panel_info = tags_note[0]
-            if panel_info is None:
-                blank_panel = self.flix_api.new_panel(show_id, sequence_id)
-                blank_panel[&#39;panel_id&#39;] = blank_panel.get(&#39;id&#39;)
-                blank_panel[&#39;revision_number&#39;] = 1
-                panels.append(json.dumps(blank_panel))
-            else:
-                panels.append(panel_info)
-        return panels
-
-    def update_panel_from_sequence(self, sequence, panels):
-        &#34;&#34;&#34;update_panel_from_sequence will update panels depending
-        on hiero sequence
-
-        Arguments:
-            sequence {Dict} -- Video Track Sequence
-
-            panels {List} -- List of Panels
-
-        Returns:
-            List -- List of Panels
-        &#34;&#34;&#34;
-        for i, track_item in enumerate(sequence.items()):
-            panel = json.loads(panels[i])
-            panel[&#39;duration&#39;] = int(track_item.duration())
-            panels[i] = panel
-        return panels
-
-    def get_selected_show(self):
-        &#34;&#34;&#34;get_selected_show will return the selected show info
-
-        Returns:
-            Tuple[int, bool, str] -- Show ID, Episodic, Show tracking code
-        &#34;&#34;&#34;
-        stc = self.selected_show_tracking_code
-        show_id = self.show_tracking_code[stc][0]
-        episodic = self.show_tracking_code[stc][1]
-        return show_id, episodic, stc
-
-    def get_selected_episode(self):
-        &#34;&#34;&#34;get_selected_episode will return the selected episode info
-
-        Returns:
-            Tuple[int, str] -- Episode ID, Episode tracking code
-        &#34;&#34;&#34;
-        etc = self.selected_episode_tracking_code
-        episode_id = self.episode_tracking_code[etc]
-        return episode_id, etc
-
-    def get_selected_sequence(self):
-        &#34;&#34;&#34;get_selected_sequence will return the selected sequence info
-
-        Returns:
-            Tuple[int, int, str] -- Sequence ID, Seq rev ID, seq tracking code
-        &#34;&#34;&#34;
-        stc = self.selected_sequence_tracking_code
-        seq_id = self.sequence_tracking_code[stc][0]
-        seq_rev = self.sequence_tracking_code[stc][1]
-        return seq_id, seq_rev, stc
-
-    def format_panel_for_revision(self, panels):
-        &#34;&#34;&#34;format_panel_for_revision will format the panels as
-        revisioned panels
-
-        Arguments:
-            panels {List} -- List of panels
-
-        Returns:
-            List -- Formatted list of panels
-        &#34;&#34;&#34;
-        revisioned_panels = []
-        for p in panels:
-            revisioned_panels.append({
-                &#39;dialogue&#39;: p.get(&#39;dialogue&#39;),
-                &#39;duration&#39;: p.get(&#39;duration&#39;),
-                &#39;id&#39;: p.get(&#39;panel_id&#39;),
-                &#39;revision_number&#39;: p.get(&#39;revision_number&#39;)
-            })
-        return revisioned_panels
-
-    def get_markers_from_sequence(self, sequence):
-        &#34;&#34;&#34;get_markers_from_sequence will retrieve all the
-        markers from a sequence
-
-        Arguments:
-            sequence {Dict} -- Video Track Shots
-
-        Returns:
-            List -- List of markers
-        &#34;&#34;&#34;
-        markers = []
-        for mrks in sequence.subTrackItems():
-            for marker in mrks:
-                name = marker.name()
-                if len(name) &gt; 36:
-                    name = name[:-39]
-                markers.append({
-                    &#39;name&#39;: name,
-                    &#39;start&#39;: marker.timelineIn()
-                })
-        return markers
-
-    def duplicate_panel(self, show_id, sequence_id, p):
-        &#34;&#34;&#34;duplicate_panel wil duplicate a panel and reuse his asset
-
-        Arguments:
-            show_id {int} -- Show ID
-
-            sequence_id {int} -- Sequence ID
-
-            p {Dict} -- Panel to duplicate
-
-        Returns:
-            Dict -- New Duplicated Panel
-        &#34;&#34;&#34;
-        new_panel = self.flix_api.new_panel(
-            show_id, sequence_id, p[&#39;asset&#39;][&#39;asset_id&#39;], p[&#39;duration&#39;])
-        new_panel[&#39;panel_id&#39;] = new_panel.get(&#39;id&#39;)
-        new_panel[&#39;revision_number&#39;] = 1
-        new_panel[&#39;duration&#39;] = p[&#39;duration&#39;]
-        return new_panel
-
-    def handle_duplicate_panels(self, panels, show_id, seq_id):
-        &#34;&#34;&#34;handle_duplicate_panels will handle duplicate panels
-        and create new ones
-
-        Arguments:
-            panels {List} -- List of Panels
-
-            show_id {int} -- Show ID
-
-            seq_id {int} -- Sequence ID
-
-        Returns:
-            List -- List of panels
-        &#34;&#34;&#34;
-        uniq_p = {}
-        for i, p in enumerate(panels):
-            uid = &#39;{0}-{1}&#39;.format(p.get(&#39;panel_id&#39;), p.get(&#39;revision_number&#39;))
-            if uid in uniq_p:
-                panels[i] = self.duplicate_panel(show_id, seq_id, p)
-                continue
-            uniq_p[uid] = True
-        return panels
-
-    def update_in_flix(self):
-        &#34;&#34;&#34;update_in_flix will send a sequence to Flix
-        &#34;&#34;&#34;
-        show_id, _, _ = self.get_selected_show()
-        seq_id, _, _ = self.get_selected_sequence()
+        show_id, _, _ = self.wg_flix_ui.get_selected_show()
+        seq_id, _, _ = self.wg_flix_ui.get_selected_sequence()
         revisioned_panels = []
         markers = []
 
-        sequence = self.hiero_api.get_active_sequence()
+        sequence = self.wg_hiero_ui.hiero_api.get_active_sequence()
         if sequence is None:
             self.error(&#39;could not find any sequence selected&#39;)
             return
         for tr in sequence.items():
             if tr.name() == &#39;Shots&#39;:
-                markers = self.get_markers_from_sequence(tr)
+                markers = self.wg_hiero_ui.get_markers_from_sequence(tr)
             else:
-                panels = self.get_panels_from_sequence(tr, show_id, seq_id)
-                panels = self.update_panel_from_sequence(tr, panels)
-                panels = self.handle_duplicate_panels(panels, show_id, seq_id)
+                panels = self.wg_hiero_ui.get_panels_from_sequence(tr,
+                                                       show_id,
+                                                       seq_id,
+                                                       self.wg_flix_ui.create_blank_panel)
+                panels = self.wg_hiero_ui.update_panel_from_sequence(tr, panels)
+                panels = self.wg_flix_ui.handle_duplicate_panels(panels)
                 if len(panels) &gt; 0 and len(revisioned_panels) &lt; 1:
-                    revisioned_panels = self.format_panel_for_revision(panels)
+                    revisioned_panels = self.wg_flix_ui.get_flix_api().format_panel_for_revision(panels)
 
         if len(revisioned_panels) &lt; 1:
             self.error(
@@ -933,7 +253,7 @@ class main_dialogue(QDialog):
         if ok is False:
             return
 
-        new_seq_rev = self.flix_api.new_sequence_revision(
+        new_seq_rev = self.wg_flix_ui.get_flix_api().new_sequence_revision(
             show_id, seq_id, revisioned_panels, markers, comment)
         if new_seq_rev is None:
             self.error(&#39;Could not save sequence revision&#39;)
@@ -967,95 +287,21 @@ class main_dialogue(QDialog):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class main_dialogue(QDialog):
+
     def __init__(self, parent=None):
         super(main_dialogue, self).__init__(parent)
-        self.flix_api = flix_api.flix()
-        self.hiero_api = hiero_api.hiero_c()
-        self.authenticated = False
-        self.setWindowTitle(&#34;Flix&#34;)
+        self.setWindowTitle(&#39;Flix&#39;)
+        self.wg_flix_ui = flix_widget.flix_ui()
+        self.wg_hiero_ui = hiero_widget.hiero_ui()
 
-        h_main_box = QHBoxLayout()
-        v_login_box = QVBoxLayout()
-        v_sequence_box = QVBoxLayout()
+        self.wg_hiero_ui.e_update_in_flix.connect(self.on_update_in_flix)
+        self.wg_hiero_ui.e_pull_latest.connect(self.on_pull_latest)
 
-        self.hostname = QLineEdit(&#39;http://localhost:1234&#39;)
-        self.hostname.setMinimumWidth(200)
-        hostname_label = QLabel(&#39;Flix Server&#39;)
-        hostname_label.setBuddy(self.hostname)
-        self.login = QLineEdit(&#39;admin&#39;)
-        self.login.setMinimumWidth(200)
-        login_label = QLabel(&#39;Username&#39;)
-        login_label.setBuddy(self.login)
-        self.password = QLineEdit(&#39;admin&#39;)
-        self.password.setMinimumWidth(200)
-        self.password.setEchoMode(QLineEdit.Password)
-        password_label = QLabel(&#39;Password&#39;)
-        password_label.setBuddy(self.password)
-        self.submit = QPushButton(&#39;Log In&#39;)
-
-        v_login_box.addWidget(hostname_label)
-        v_login_box.addWidget(self.hostname)
-        v_login_box.addWidget(login_label)
-        v_login_box.addWidget(self.login)
-        v_login_box.addWidget(password_label)
-        v_login_box.addWidget(self.password)
-        v_login_box.addWidget(self.submit)
-        self.submit.clicked.connect(self.authenticate)
-
-        self.show_list = QComboBox()
-        show_label = QLabel(&#39;Show&#39;)
-        show_label.setBuddy(self.show_list)
-        self.show_list.currentTextChanged.connect(self.on_show_changed)
-        self.episode_list = QComboBox()
-        self.episode_label = QLabel(&#39;Episode&#39;)
-        self.episode_label.setBuddy(self.episode_list)
-        self.episode_list.currentTextChanged.connect(self.on_episode_changed)
-        self.sequence_list = QComboBox()
-        sequence_label = QLabel(&#39;Sequence&#39;)
-        sequence_label.setBuddy(self.sequence_list)
-        self.sequence_list.currentTextChanged.connect(self.on_sequence_changed)
-        h_action = QHBoxLayout()
-        pull = QPushButton(&#34;Pull Latest&#34;)
-        pull.clicked.connect(self.pull_latest)
-        update = QPushButton(&#34;Update in Flix&#34;)
-        update.clicked.connect(self.update_in_flix)
-        h_action.addWidget(pull)
-        h_action.addWidget(update)
-        v_sequence_box.addWidget(show_label)
-        v_sequence_box.addWidget(self.show_list)
-        v_sequence_box.addWidget(self.episode_label)
-        v_sequence_box.addWidget(self.episode_list)
-        v_sequence_box.addWidget(sequence_label)
-        v_sequence_box.addWidget(self.sequence_list)
-        v_sequence_box.addLayout(h_action)
-
-        h_main_box.addLayout(v_login_box)
-        h_main_box.addLayout(v_sequence_box)
-
-        self.setLayout(h_main_box)
-
-    def authenticate(self):
-        &#34;&#34;&#34;authenticate will authenticate a user and update the view
-        &#34;&#34;&#34;
-        if self.authenticated:
-            self.flix_api.reset()
-            self.authenticated = False
-            self.reset(&#39;Log In&#39;)
-            return
-
-        credentials = self.flix_api.authenticate(
-            self.hostname.text(),
-            self.login.text(),
-            self.password.text())
-        if credentials is None:
-            self.error(&#39;Could not authenticate user&#39;)
-            self.login.clear()
-            self.password.clear()
-            return
-
-        self.init_shows()
-        self.authenticated = True
-        self.reset(&#39;Log Out&#39;)
+        # Setup UI view
+        v_main_box = QVBoxLayout()
+        v_main_box.addWidget(self.wg_flix_ui)
+        v_main_box.addWidget(self.wg_hiero_ui)
+        self.setLayout(v_main_box)
 
     def error(self, message):
         &#34;&#34;&#34;error will show a error message with a given message
@@ -1079,210 +325,6 @@ class main_dialogue(QDialog):
         msgbox.setText(message)
         msgbox.exec_()
 
-    def reset(self, action=&#39;Log Out&#39;):
-        &#34;&#34;&#34;reset will reset the login form / shows info for login / logout
-
-        Keyword Arguments:
-            action {str} -- action to handle (default: {&#39;Log Out&#39;})
-        &#34;&#34;&#34;
-        if action == &#39;Log Out&#39;:
-            self.hostname.setReadOnly(True)
-            self.login.setReadOnly(True)
-            self.password.setReadOnly(True)
-            self.submit.setText(&#39;Log Out&#39;)
-            return
-        self.hostname.setReadOnly(False)
-        self.login.setReadOnly(False)
-        self.password.setReadOnly(False)
-        self.show_list.clear()
-        self.sequence_list.clear()
-        self.episode_list.clear()
-        self.submit.setText(action)
-
-    def on_show_changed(self, tracking_code):
-        &#34;&#34;&#34;on_show_changed triggered after a show is selected,
-        will init the list of sequences from this show
-
-        Arguments:
-            tracking_code {str} -- show_tracking_code from the event
-        &#34;&#34;&#34;
-        self.selected_show_tracking_code = tracking_code
-        show_id, episodic, _ = self.get_selected_show()
-
-        self.sequence_list.clear()
-        self.episode_list.clear()
-        if episodic is True:
-            self.episode_list.show()
-            self.episode_label.show()
-            episodes = self.flix_api.get_episodes(show_id)
-            if episodes is None:
-                self.error(&#39;Could not retrieve episodes&#39;)
-            self.episode_tracking_code = self.get_episode_tracking_code(
-                episodes)
-            for e in self.episode_tracking_code:
-                self.episode_list.addItem(e)
-            self.episode_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
-        else:
-            self.episode_list.hide()
-            self.episode_label.hide()
-            sequences = self.flix_api.get_sequences(show_id)
-            if sequences is None:
-                self.error(&#39;Could not retreive sequences&#39;)
-                return
-            self.sequence_tracking_code = self.get_sequence_tracking_code(
-                sequences)
-            self.sequence_list.addItem(&#39;All Sequences&#39;)
-            for s in self.sequence_tracking_code:
-                self.sequence_list.addItem(s)
-            self.sequence_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
-
-    def on_episode_changed(self, tracking_code):
-        &#34;&#34;&#34;on_episode_changed triggered after an episode is selected,
-        will store the selected episode
-
-        Arguments:
-            tracking_code {str} -- episode_tracking_code from the event
-        &#34;&#34;&#34;
-        if tracking_code == &#39;&#39;:
-            return
-        self.selected_episode_tracking_code = tracking_code
-        show_id, _, _ = self.get_selected_show()
-        episode_id, _ = self.get_selected_episode()
-        sequences = self.flix_api.get_sequences(show_id, episode_id)
-        if sequences is None:
-            self.error(&#39;Could not retreive sequences&#39;)
-            return
-        self.sequence_tracking_code = self.get_sequence_tracking_code(
-            sequences)
-        self.sequence_list.clear()
-        for s in self.sequence_tracking_code:
-            self.sequence_list.addItem(s)
-        self.sequence_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
-
-    def on_sequence_changed(self, tracking_code):
-        &#34;&#34;&#34;on_sequence_changed triggered after a sequence is selected,
-        will store the selected sequence
-
-        Arguments:
-            tracking_code {str} -- sequence_tracking_code from the event
-        &#34;&#34;&#34;
-        self.selected_sequence_tracking_code = tracking_code
-
-    def init_shows(self):
-        &#34;&#34;&#34;init_shows will retrieve the list of show and update the UI
-        &#34;&#34;&#34;
-        shows = self.flix_api.get_shows()
-        if shows is None:
-            self.error(&#39;Could not retreive shows&#39;)
-            return
-        self.show_tracking_code = self.get_show_tracking_code(shows)
-        self.show_list.clear()
-        for s in self.show_tracking_code:
-            self.show_list.addItem(s)
-        self.show_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
-
-    def sort_alphanumeric(self, d):
-        &#34;&#34;&#34;sort_alphanumeric will sort a dictionnary alphanumerically by keys
-
-        Arguments:
-            d {Dict} -- Dictionnary to sort
-
-        Returns:
-            Dict -- Sorted Dictionnary
-        &#34;&#34;&#34;
-        def convert(text): return int(text) if text.isdigit() else text
-        def alphanum_key(key): return [convert(c)
-                                       for c in re.split(&#39;([0-9]+)&#39;, key)]
-        keys = sorted(d.keys(), key=alphanum_key)
-        return OrderedDict((k, d[k]) for k in keys)
-
-    def get_show_tracking_code(self, shows):
-        &#34;&#34;&#34;get_show_tracking_code will format the shows to have a mapping:
-        tracking_code -&gt; [show_id, episodic]
-
-        Arguments:
-            shows {List} -- List of shows
-
-        Returns:
-            Dict -- Shows by tracking code
-        &#34;&#34;&#34;
-        show_tracking_codes = {}
-        if shows is None:
-            return show_tracking_codes
-        for s in shows:
-            if s.get(&#39;hidden&#39;, False) is False:
-                show_tracking_codes[s.get(&#39;tracking_code&#39;)] = [
-                    s.get(&#39;id&#39;), s.get(&#39;episodic&#39;)]
-        return self.sort_alphanumeric(show_tracking_codes)
-
-    def get_sequence_tracking_code(self, sequences):
-        &#34;&#34;&#34;get_sequence_tracking_code will format the sequences to have
-        a mapping: tracking_code -&gt; [sequence_id, last_seq_rev_id]
-
-        Arguments:
-            sequences {List} -- List of sequences
-
-        Returns:
-            Dict -- sequence ID and last seq rev by tracking code
-        &#34;&#34;&#34;
-        sequence_tracking_codes = {}
-        if sequences is None:
-            return sequence_tracking_codes
-        for s in sequences:
-            if s.get(&#39;revisions_count&#39;) &gt; 0:
-                sequence_tracking_codes[s.get(&#39;tracking_code&#39;)] = [
-                    s.get(&#39;id&#39;), s.get(&#39;revisions_count&#39;)]
-        return self.sort_alphanumeric(sequence_tracking_codes)
-
-    def get_episode_tracking_code(self, episodes):
-        &#34;&#34;&#34;get_episode_tracking_code will format the episodes to have a
-        mapping: tracking_code -&gt; episode_id
-
-        Arguments:
-            episodes {List} -- List of episodes
-
-        Returns:
-            Dict -- Episodes by tracking code
-        &#34;&#34;&#34;
-        episode_tracking_codes = {}
-        if episodes is None:
-            return episode_tracking_codes
-        for s in episodes:
-            episode_tracking_codes[s.get(&#39;tracking_code&#39;)] = s.get(&#39;id&#39;)
-        return self.sort_alphanumeric(episode_tracking_codes)
-
-    def get_dialogues_by_panel_id(self, dialogues):
-        &#34;&#34;&#34;get_dialogues_by_panel_id will format the dialogues to have
-        a mapping panel_id -&gt; dialogue
-
-        Arguments:
-            dialogues {List} -- List of Dialogues
-
-        Returns:
-            Dict -- Mapping panel_id to dialogue
-        &#34;&#34;&#34;
-        mapped_dialogues = {}
-        cleanr = re.compile(&#39;&lt;.*?&gt;|&amp;([a-z0-9]+|#[0-9]{1,6}|#x[0-9a-f]{1,6});&#39;)
-        for d in dialogues:
-            t = d.get(&#39;text&#39;, &#39;&#39;).replace(&#39;&lt;/p&gt;&#39;, &#39;\n&#39;)
-            mapped_dialogues[d.get(&#39;panel_id&#39;)] = re.sub(cleanr, &#39;&#39;, t)
-        return mapped_dialogues
-
-    def update_sequence_items(self):
-        &#34;&#34;&#34;update_sequence_items will refresh the list of sequence
-        from the selected show
-        &#34;&#34;&#34;
-        show_id, episodic, _ = self.get_selected_show()
-        episode_id = None
-        if episodic:
-            episode_id, _ = self.get_selected_episode()
-        sequences = self.flix_api.get_sequences(show_id, episode_id)
-        if sequences is None:
-            self.error(&#39;Could not retreive sequences&#39;)
-            return
-        self.sequence_tracking_code = self.get_sequence_tracking_code(
-            sequences)
-
     def create_clip(self, seq_rev, p, clip_name, clips):
         &#34;&#34;&#34;create_clip will create a clip or reuse one and download image
 
@@ -1299,224 +341,11 @@ class main_dialogue(QDialog):
             Dict -- Clip created / reused
         &#34;&#34;&#34;
         if clip_name not in clips:
-            temp_path = tempfile.mkdtemp()
-            thumb_mo = p.get(
-                &#39;asset&#39;, {}).get(
-                &#39;media_objects&#39;, {}).get(
-                &#39;thumbnail&#39;, [])
-            thumb_mo_id = None if len(thumb_mo) &lt; 1 else thumb_mo[0].get(&#39;id&#39;)
-            if thumb_mo_id is None:
-                self.error(&#39;Could not retrieve thumbnail ID&#39;)
-                return None
-            _, _, seq_tracking_code = self.get_selected_sequence()
-            temp_filepath = os.path.join(
-                temp_path,
-                &#39;{0}_{1}_{2}_.png&#39;.format(
-                    seq_tracking_code,
-                    p.get(&#39;panel_id&#39;),
-                    p.get(&#39;revision_counter&#39;)))
-            if sys.platform == &#39;win32&#39; or sys.platform == &#39;cygwin&#39;:
-                temp_filepath = temp_filepath.replace(&#39;\\&#39;, &#39;\\\\&#39;)
-            if self.flix_api.download_media_object(
-                    temp_filepath, thumb_mo_id) is None:
-                self.error(&#39;Could not download thumbnail&#39;)
-                return None
+            temp_filepath = self.wg_flix_ui.download_first_thumb(p)
+            if temp_filepath is None:
+                return
             return seq_rev.createClip(temp_filepath)
         return clips[clip_name]
-
-    def get_comment_tag(self, p):
-        &#34;&#34;&#34;get_comment_tag will make a copy of a comment tag and set
-        his comment as a note
-
-        Arguments:
-            p {Dict} -- Panel
-
-        Returns:
-            Dict -- Hiero Tag
-        &#34;&#34;&#34;
-        comment = p.get(&#39;latest_open_note&#39;, {}).get(&#39;body&#39;, None)
-        t = None
-        if comment is not None:
-            t = self.hiero_api.create_comment_tag(comment)
-        return t
-
-    def add_dialogue(self, mapped_dialogue, panel_id, track, prev):
-        &#34;&#34;&#34;add_dialogue will create a dialogue and add it to the track
-
-        Arguments:
-            mapped_dialogue {Dict} -- mapping of dialogue to ensure there is a
-            dialogue for the panel
-
-            panel_id {int} -- Panel ID
-
-            track {dict} -- Track to add the dialogue
-
-            prev {Dict} -- Previous trackitem
-        &#34;&#34;&#34;
-        if panel_id in mapped_dialogue:
-            settings = {
-                &#39;name&#39;: &#39;dialogue-[{0}]&#39;.format(uuid.uuid4()),
-                &#39;message&#39;: mapped_dialogue[panel_id],
-                &#39;opacity&#39;: .6,
-                &#39;global_font_scale&#39;: .3,
-                &#39;enable_background&#39;: True,
-                &#39;background_opacity&#39;: .6,
-                &#39;box&#39;: (0, 0, 1000, 562),
-                &#39;xjustify&#39;: 1,
-                &#39;yjustify&#39;: 2
-            }
-            self.hiero_api.add_dialogue_track_effect(track, prev, settings)
-
-    def create_burnin(self, track, fr, to, burnin_name):
-        &#34;&#34;&#34;create_burnin will create a burnin and add it to the track
-
-        Arguments:
-            track {Dict} -- Hiero Track
-
-            fr {int} -- Start of the burnin
-
-            to {int} -- End of the burnin
-
-            burnin_name {str} -- Burnin Name
-        &#34;&#34;&#34;
-        settings = {
-            &#39;name&#39;: &#39;{0}-[{1}]&#39;.format(burnin_name, uuid.uuid4()),
-            &#39;burnIn_textScale&#39;: .25,
-            &#39;burnIn_topLeft&#39;: &#39;hiero/clip&#39;,
-            &#39;burnIn_topMiddle&#39;: &#39;none&#39;,
-            &#39;burnIn_topRight&#39;: &#39;hiero/sequence/timecode&#39;,
-            &#39;burnIn_bottomLeft&#39;: &#39;none&#39;,
-            &#39;burnIn_bottomMiddle&#39;: &#39;none&#39;,
-            &#39;burnIn_bottomRight&#39;: &#39;none&#39;,
-            &#39;burnIn_backgroundEnable&#39;: &#39;true&#39;,
-            &#39;burnIn_backgroundXBorder&#39;: 10,
-            &#39;burnIn_backgroundYBorder&#39;: 10,
-            &#39;burnIn_backgroundOpacity&#39;: .6,
-        }
-        self.hiero_api.add_burnin_track_effect(track, fr, to, settings)
-
-    def get_markers(self, sequence_revision):
-        &#34;&#34;&#34;get_markers will format the sequence_revision to have a
-        mapping of markers: start -&gt; marker_name
-
-        Arguments:
-            sequence_revision {Dict} -- Sequence revision
-
-        Returns:
-            Dict -- Mapping start -&gt; marker_name
-        &#34;&#34;&#34;
-        markers_mapping = {}
-        markers = sequence_revision.get(&#39;meta_data&#39;, {}).get(&#39;markers&#39;, [])
-        for m in markers:
-            markers_mapping[m.get(&#39;start&#39;)] = m.get(&#39;name&#39;)
-        return OrderedDict(sorted(markers_mapping.items()))
-
-    def add_burnin(
-            self,
-            panels,
-            panel_in,
-            markers_map,
-            current_marker,
-            marker_in,
-            shots,
-            p,
-            i):
-        &#34;&#34;&#34;add_burnin will add a burnin in a VideoTrack
-
-        Arguments:
-            panels {List} -- List of Panels
-
-            panel_in {int} -- First frame of the panel (from whole timeline)
-
-            markers_map {Dict} -- Mapping of markers
-
-            current_marker {str} -- Current Marker
-
-            marker_in {int} -- First frame of the marker to add as burnin
-
-            shots {Dict} -- Video track to add the burnin
-
-            p {Dict} -- Panel
-
-            i {int} -- Posiion of the panel
-
-        Returns:
-            [type] -- [description]
-        &#34;&#34;&#34;
-        &#34;&#34;&#34;add_burnin will add a burnin in a VideoTrack
-        panels: list of panels
-        panel_in: first frame of the panel (from the whole timeline)
-        markers_map: mapping of markers
-        marker_in: first frame of the marker to add as burnin
-        shots: video track to add the burnin
-        p: actual panel
-        i: position of the panel
-        &#34;&#34;&#34;
-        if panel_in in markers_map and markers_map[panel_in] != current_marker:
-            if marker_in is not None:
-                self.create_burnin(
-                    shots,
-                    marker_in,
-                    panel_in - 1,
-                    markers_map[panel_in])
-            marker_in = panel_in
-        if len(panels) - 1 == i and marker_in is not None:
-            self.create_burnin(
-                shots,
-                marker_in,
-                panel_in +
-                p.get(&#39;duration&#39;) -
-                1,
-                current_marker)
-        return marker_in
-
-    def add_comment(self, p, tags):
-        &#34;&#34;&#34;add_comment will add a tag comment to the list
-
-        Arguments:
-            p {Dict} -- Panel
-
-            tags {List} -- List of all tags
-
-        Returns:
-            List -- List of all tags
-        &#34;&#34;&#34;
-        comment_tag = self.get_comment_tag(p)
-        if comment_tag is not None:
-            tags.append(comment_tag)
-        return tags
-
-    def add_panel_info_tag(self, p, tags):
-        &#34;&#34;&#34;add_panel_info_tag will add a tag of the panel info
-
-        Arguments:
-            p {Dict} -- Panel
-
-            tags {List} -- List of all tags
-
-        Returns:
-            List -- List of all tags
-        &#34;&#34;&#34;
-        t = self.hiero_api.create_info_tag(json.dumps(p))
-        tags.append(t)
-        return tags
-
-    def add_marker(self, markers_mapping, panel_in, sequence):
-        &#34;&#34;&#34;add_marker will add a marker in the sequence
-
-        Arguments:
-            markers_mapping {Dict} -- Mapping of markers
-
-            panel_in {int} -- First frame of the panel
-            (from the whole sequence)
-
-            sequence {Dict} -- Hiero Sequence
-        &#34;&#34;&#34;
-        if panel_in in markers_mapping:
-            tag = self.hiero_api.create_marker_tag(
-                panel_in,
-                markers_mapping[panel_in])
-            sequence.addTagToRange(tag, panel_in, panel_in + 1)
 
     def create_video_track(
             self,
@@ -1542,38 +371,30 @@ class main_dialogue(QDialog):
         Returns:
             Tuple[Dict, Dict] -- VideoTrack, ShotTrack
         &#34;&#34;&#34;
-        _, _, seq_tracking_code = self.get_selected_sequence()
-        track = self.hiero_api.create_video_track(
-            &#39;Flix_{0}_v{1}&#39;.format(
-                seq_tracking_code,
-                seq_rev_number))
-        show_id, _, _ = self.get_selected_show()
-        dialogues = self.flix_api.get_dialogues(
-            show_id, seq_id, seq_rev_number)
-        mapped_dialogue = self.get_dialogues_by_panel_id(dialogues)
-        sequence_revision = self.flix_api.get_sequence_rev(
-            show_id, seq_id, seq_rev_number)
-        if sequence_revision is None:
-            self.error(&#39;Could not retreive sequence revision&#39;)
-            return
-        markers_mapping = self.get_markers(sequence_revision)
-        shots = self.hiero_api.create_video_track(
-            &#39;Shots&#39;) if len(markers_mapping) &gt; 0 else None
-        clips = self.hiero_api.get_clips(seq_bin)
-        panels = self.flix_api.get_panels(show_id, seq_id, seq_rev_number)
+        _, seq_rev_nbr, seq_tc = self.wg_flix_ui.get_selected_sequence()
+        mapped_dialogue = self.wg_flix_ui.get_dialogues_by_panel_id()
+        markers_mapping = self.wg_flix_ui.get_markers_by_name()
+        panels = self.wg_flix_ui.get_panels()
         if panels is None:
             self.error(&#39;Could not retreive panels&#39;)
             return
+
+        vt_track_name = &#39;Flix_{0}_v{1}&#39;.format(
+            seq_tc, seq_rev_nbr)
+        vt_shot_name = &#39;Shots&#39; if len(markers_mapping) &gt; 0 else None
+        track, shots = self.wg_hiero_ui.create_video_tracks(vt_track_name,
+                                                            vt_shot_name)
+        clips = self.wg_hiero_ui.hiero_api.get_clips(seq_bin)
+
         prev = None
         panel_in = 0
         marker_in = None
         prev_marker_name = None
-        _, _, seq_tracking_code = self.get_selected_sequence()
         for i, p in enumerate(panels):
             tags = []
             panel_id = p.get(&#39;panel_id&#39;)
             clip_name = &#39;{0}_{1}_{2}_&#39;.format(
-                seq_tracking_code, panel_id, p.get(
+                seq_tc, panel_id, p.get(
                     &#39;revision_counter&#39;))
             clip = self.create_clip(seq_rev_bin, p, clip_name, clips)
             if clip is None:
@@ -1581,18 +402,18 @@ class main_dialogue(QDialog):
                 return track, shots
 
             # Add comment
-            tags = self.add_comment(p, tags)
+            tags = self.wg_hiero_ui.add_comment(p, tags)
             # Add panel info
-            tags = self.add_panel_info_tag(p, tags)
+            tags = self.wg_hiero_ui.add_panel_info_tag(p, tags)
             # Add marker
-            self.add_marker(markers_mapping, panel_in, sequence)
+            self.wg_hiero_ui.add_marker(markers_mapping, panel_in, sequence)
             # Add track item
-            prev = self.hiero_api.add_track_item(
+            prev = self.wg_hiero_ui.hiero_api.add_track_item(
                 track, clip_name, clip, p.get(&#39;duration&#39;), tags, prev)
             # Add dialogue
-            self.add_dialogue(mapped_dialogue, panel_id, track, prev)
+            self.wg_hiero_ui.add_dialogue(mapped_dialogue, panel_id, track, prev)
             # Add burnin
-            marker_in = self.add_burnin(
+            marker_in = self.wg_hiero_ui.add_burnin(
                 panels,
                 panel_in,
                 markers_mapping,
@@ -1611,30 +432,11 @@ class main_dialogue(QDialog):
         &#34;&#34;&#34;pull_taltest_seq_rev will pull one latest sequence revision and send
         it to hiero
         &#34;&#34;&#34;
-        self.update_sequence_items()
-        _, _, show_tc = self.get_selected_show()
-        seq_id, seq_rev_tc, seq_tracking_code = self.get_selected_sequence()
-        my_project = self.hiero_api.get_project(
-            &#39;Flix_{0}&#39;.format(
-                show_tc))
-        seq, seq_bin_reused = self.hiero_api.get_project_bin(
-            my_project, &#39;Flix_{0}&#39;.format(
-                seq_tracking_code))
-        if seq_bin_reused is False:
-            clipsBin = my_project.clipsBin()
-            clipsBin.addItem(seq)
-
-        seq_rev_bin, seq_rev_bin_reused = self.hiero_api.get_seq_bin(
-            seq, &#39;v{0}&#39;.format(seq_rev_tc))
-        if seq_rev_bin_reused is False:
-            seq.addItem(seq_rev_bin)
-
-        sequence = self.hiero_api.create_sequence(
-            &#39;Flix_{0}_v{1}&#39;.format(
-                seq_tracking_code,
-                seq_rev_tc))
-        seq_item = self.hiero_api.sequence_to_bin_item(sequence)
-        seq_rev_bin.addItem(seq_item)
+        _, _, show_tc = self.wg_flix_ui.get_selected_show()
+        seq_id, seq_rev_tc, seq_tc = self.wg_flix_ui.get_selected_sequence()
+        sequence, seq, seq_rev_bin = self.wg_hiero_ui.pull_to_sequence(show_tc,
+                                                                       seq_rev_tc,
+                                                                       seq_tc)
         track, shots = self.create_video_track(
             sequence, seq, seq_rev_bin, seq_id, seq_rev_tc)
         if track is None:
@@ -1643,210 +445,50 @@ class main_dialogue(QDialog):
         if shots is not None:
             sequence.addTrack(shots)
 
-    def pull_latest(self):
-        &#34;&#34;&#34;pull_latest will retrieve the last sequence revision from Flix and
+    def on_pull_latest(self):
+        &#34;&#34;&#34;on_pull_latest will retrieve the last sequence revision from Flix and
         will create / reuse bins, sequences, clips
         Depending on the selection it will pull only one or all of them
         &#34;&#34;&#34;
-        if self.selected_sequence_tracking_code == &#39;All Sequences&#39;:
-            for count in range(self.sequence_list.count()):
-                if self.sequence_list.itemText(count) == &#39;All Sequences&#39;:
+        _, _, selected_seq_tc = self.wg_flix_ui.get_selected_sequence()
+        if selected_seq_tc == &#39;All Sequences&#39;:
+            for count in range(self.wg_flix_ui.sequence_list.count()):
+                if self.wg_flix_ui.sequence_list.itemText(count) == &#39;All Sequences&#39;:
                     continue
-                select_seq_tracking_code = self.sequence_list.itemText(
+                select_seq_tracking_code = self.wg_flix_ui.sequence_list.itemText(
                     count)
-                self.selected_sequence_tracking_code = select_seq_tracking_code
+                self.wg_flix_ui.on_sequence_changed(select_seq_tracking_code)
                 self.pull_latest_seq_rev()
-            self.selected_sequence_tracking_code = &#39;All Sequences&#39;
+            self.wg_flix_ui.on_sequence_changed(&#39;All Sequences&#39;)
         else:
             self.pull_latest_seq_rev()
 
         self.info(&#39;Sequence revision imported successfully&#39;)
 
-    def get_panels_from_sequence(self, sequence, show_id, sequence_id):
-        &#34;&#34;&#34;get_panels_from_sequence will retrieve all the clips and format
-        them as panels from a hiero sequence
-
-        Arguments:
-            sequence {Dict} -- Video Track Sequence
-
-            show_id {int} -- Show ID
-
-            sequence_id {int} -- Sequence ID
-
-        Returns:
-            List -- List of panels
+    def on_update_in_flix(self):
+        &#34;&#34;&#34;on_update_in_flix will send a sequence to Flix
         &#34;&#34;&#34;
-        panels = []
-        for track_item in sequence.items():
-            panel_info = None
-            tags_note = self.hiero_api.get_item_tags_note(track_item, &#39;France&#39;)
-            if len(tags_note) &gt; 0:
-                panel_info = tags_note[0]
-            if panel_info is None:
-                blank_panel = self.flix_api.new_panel(show_id, sequence_id)
-                blank_panel[&#39;panel_id&#39;] = blank_panel.get(&#39;id&#39;)
-                blank_panel[&#39;revision_number&#39;] = 1
-                panels.append(json.dumps(blank_panel))
-            else:
-                panels.append(panel_info)
-        return panels
-
-    def update_panel_from_sequence(self, sequence, panels):
-        &#34;&#34;&#34;update_panel_from_sequence will update panels depending
-        on hiero sequence
-
-        Arguments:
-            sequence {Dict} -- Video Track Sequence
-
-            panels {List} -- List of Panels
-
-        Returns:
-            List -- List of Panels
-        &#34;&#34;&#34;
-        for i, track_item in enumerate(sequence.items()):
-            panel = json.loads(panels[i])
-            panel[&#39;duration&#39;] = int(track_item.duration())
-            panels[i] = panel
-        return panels
-
-    def get_selected_show(self):
-        &#34;&#34;&#34;get_selected_show will return the selected show info
-
-        Returns:
-            Tuple[int, bool, str] -- Show ID, Episodic, Show tracking code
-        &#34;&#34;&#34;
-        stc = self.selected_show_tracking_code
-        show_id = self.show_tracking_code[stc][0]
-        episodic = self.show_tracking_code[stc][1]
-        return show_id, episodic, stc
-
-    def get_selected_episode(self):
-        &#34;&#34;&#34;get_selected_episode will return the selected episode info
-
-        Returns:
-            Tuple[int, str] -- Episode ID, Episode tracking code
-        &#34;&#34;&#34;
-        etc = self.selected_episode_tracking_code
-        episode_id = self.episode_tracking_code[etc]
-        return episode_id, etc
-
-    def get_selected_sequence(self):
-        &#34;&#34;&#34;get_selected_sequence will return the selected sequence info
-
-        Returns:
-            Tuple[int, int, str] -- Sequence ID, Seq rev ID, seq tracking code
-        &#34;&#34;&#34;
-        stc = self.selected_sequence_tracking_code
-        seq_id = self.sequence_tracking_code[stc][0]
-        seq_rev = self.sequence_tracking_code[stc][1]
-        return seq_id, seq_rev, stc
-
-    def format_panel_for_revision(self, panels):
-        &#34;&#34;&#34;format_panel_for_revision will format the panels as
-        revisioned panels
-
-        Arguments:
-            panels {List} -- List of panels
-
-        Returns:
-            List -- Formatted list of panels
-        &#34;&#34;&#34;
-        revisioned_panels = []
-        for p in panels:
-            revisioned_panels.append({
-                &#39;dialogue&#39;: p.get(&#39;dialogue&#39;),
-                &#39;duration&#39;: p.get(&#39;duration&#39;),
-                &#39;id&#39;: p.get(&#39;panel_id&#39;),
-                &#39;revision_number&#39;: p.get(&#39;revision_number&#39;)
-            })
-        return revisioned_panels
-
-    def get_markers_from_sequence(self, sequence):
-        &#34;&#34;&#34;get_markers_from_sequence will retrieve all the
-        markers from a sequence
-
-        Arguments:
-            sequence {Dict} -- Video Track Shots
-
-        Returns:
-            List -- List of markers
-        &#34;&#34;&#34;
-        markers = []
-        for mrks in sequence.subTrackItems():
-            for marker in mrks:
-                name = marker.name()
-                if len(name) &gt; 36:
-                    name = name[:-39]
-                markers.append({
-                    &#39;name&#39;: name,
-                    &#39;start&#39;: marker.timelineIn()
-                })
-        return markers
-
-    def duplicate_panel(self, show_id, sequence_id, p):
-        &#34;&#34;&#34;duplicate_panel wil duplicate a panel and reuse his asset
-
-        Arguments:
-            show_id {int} -- Show ID
-
-            sequence_id {int} -- Sequence ID
-
-            p {Dict} -- Panel to duplicate
-
-        Returns:
-            Dict -- New Duplicated Panel
-        &#34;&#34;&#34;
-        new_panel = self.flix_api.new_panel(
-            show_id, sequence_id, p[&#39;asset&#39;][&#39;asset_id&#39;], p[&#39;duration&#39;])
-        new_panel[&#39;panel_id&#39;] = new_panel.get(&#39;id&#39;)
-        new_panel[&#39;revision_number&#39;] = 1
-        new_panel[&#39;duration&#39;] = p[&#39;duration&#39;]
-        return new_panel
-
-    def handle_duplicate_panels(self, panels, show_id, seq_id):
-        &#34;&#34;&#34;handle_duplicate_panels will handle duplicate panels
-        and create new ones
-
-        Arguments:
-            panels {List} -- List of Panels
-
-            show_id {int} -- Show ID
-
-            seq_id {int} -- Sequence ID
-
-        Returns:
-            List -- List of panels
-        &#34;&#34;&#34;
-        uniq_p = {}
-        for i, p in enumerate(panels):
-            uid = &#39;{0}-{1}&#39;.format(p.get(&#39;panel_id&#39;), p.get(&#39;revision_number&#39;))
-            if uid in uniq_p:
-                panels[i] = self.duplicate_panel(show_id, seq_id, p)
-                continue
-            uniq_p[uid] = True
-        return panels
-
-    def update_in_flix(self):
-        &#34;&#34;&#34;update_in_flix will send a sequence to Flix
-        &#34;&#34;&#34;
-        show_id, _, _ = self.get_selected_show()
-        seq_id, _, _ = self.get_selected_sequence()
+        show_id, _, _ = self.wg_flix_ui.get_selected_show()
+        seq_id, _, _ = self.wg_flix_ui.get_selected_sequence()
         revisioned_panels = []
         markers = []
 
-        sequence = self.hiero_api.get_active_sequence()
+        sequence = self.wg_hiero_ui.hiero_api.get_active_sequence()
         if sequence is None:
             self.error(&#39;could not find any sequence selected&#39;)
             return
         for tr in sequence.items():
             if tr.name() == &#39;Shots&#39;:
-                markers = self.get_markers_from_sequence(tr)
+                markers = self.wg_hiero_ui.get_markers_from_sequence(tr)
             else:
-                panels = self.get_panels_from_sequence(tr, show_id, seq_id)
-                panels = self.update_panel_from_sequence(tr, panels)
-                panels = self.handle_duplicate_panels(panels, show_id, seq_id)
+                panels = self.wg_hiero_ui.get_panels_from_sequence(tr,
+                                                       show_id,
+                                                       seq_id,
+                                                       self.wg_flix_ui.create_blank_panel)
+                panels = self.wg_hiero_ui.update_panel_from_sequence(tr, panels)
+                panels = self.wg_flix_ui.handle_duplicate_panels(panels)
                 if len(panels) &gt; 0 and len(revisioned_panels) &lt; 1:
-                    revisioned_panels = self.format_panel_for_revision(panels)
+                    revisioned_panels = self.wg_flix_ui.get_flix_api().format_panel_for_revision(panels)
 
         if len(revisioned_panels) &lt; 1:
             self.error(
@@ -1858,7 +500,7 @@ class main_dialogue(QDialog):
         if ok is False:
             return
 
-        new_seq_rev = self.flix_api.new_sequence_revision(
+        new_seq_rev = self.wg_flix_ui.get_flix_api().new_sequence_revision(
             show_id, seq_id, revisioned_panels, markers, comment)
         if new_seq_rev is None:
             self.error(&#39;Could not save sequence revision&#39;)
@@ -1882,304 +524,6 @@ class main_dialogue(QDialog):
 </dl>
 <h3>Methods</h3>
 <dl>
-<dt id="main.main_dialogue.add_burnin"><code class="name flex">
-<span>def <span class="ident">add_burnin</span></span>(<span>self, panels, panel_in, markers_map, current_marker, marker_in, shots, p, i)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>add_burnin will add a burnin in a VideoTrack</p>
-<h2 id="arguments">Arguments</h2>
-<p>panels {List} &ndash; List of Panels</p>
-<p>panel_in {int} &ndash; First frame of the panel (from whole timeline)</p>
-<p>markers_map {Dict} &ndash; Mapping of markers</p>
-<p>current_marker {str} &ndash; Current Marker</p>
-<p>marker_in {int} &ndash; First frame of the marker to add as burnin</p>
-<p>shots {Dict} &ndash; Video track to add the burnin</p>
-<p>p {Dict} &ndash; Panel</p>
-<p>i {int} &ndash; Posiion of the panel</p>
-<h2 id="returns">Returns</h2>
-<p>[type] &ndash; [description]</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def add_burnin(
-        self,
-        panels,
-        panel_in,
-        markers_map,
-        current_marker,
-        marker_in,
-        shots,
-        p,
-        i):
-    &#34;&#34;&#34;add_burnin will add a burnin in a VideoTrack
-
-    Arguments:
-        panels {List} -- List of Panels
-
-        panel_in {int} -- First frame of the panel (from whole timeline)
-
-        markers_map {Dict} -- Mapping of markers
-
-        current_marker {str} -- Current Marker
-
-        marker_in {int} -- First frame of the marker to add as burnin
-
-        shots {Dict} -- Video track to add the burnin
-
-        p {Dict} -- Panel
-
-        i {int} -- Posiion of the panel
-
-    Returns:
-        [type] -- [description]
-    &#34;&#34;&#34;
-    &#34;&#34;&#34;add_burnin will add a burnin in a VideoTrack
-    panels: list of panels
-    panel_in: first frame of the panel (from the whole timeline)
-    markers_map: mapping of markers
-    marker_in: first frame of the marker to add as burnin
-    shots: video track to add the burnin
-    p: actual panel
-    i: position of the panel
-    &#34;&#34;&#34;
-    if panel_in in markers_map and markers_map[panel_in] != current_marker:
-        if marker_in is not None:
-            self.create_burnin(
-                shots,
-                marker_in,
-                panel_in - 1,
-                markers_map[panel_in])
-        marker_in = panel_in
-    if len(panels) - 1 == i and marker_in is not None:
-        self.create_burnin(
-            shots,
-            marker_in,
-            panel_in +
-            p.get(&#39;duration&#39;) -
-            1,
-            current_marker)
-    return marker_in</code></pre>
-</details>
-</dd>
-<dt id="main.main_dialogue.add_comment"><code class="name flex">
-<span>def <span class="ident">add_comment</span></span>(<span>self, p, tags)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>add_comment will add a tag comment to the list</p>
-<h2 id="arguments">Arguments</h2>
-<p>p {Dict} &ndash; Panel</p>
-<p>tags {List} &ndash; List of all tags</p>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code>List -- List</code> of <code>all tags</code></dt>
-<dd>&nbsp;</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def add_comment(self, p, tags):
-    &#34;&#34;&#34;add_comment will add a tag comment to the list
-
-    Arguments:
-        p {Dict} -- Panel
-
-        tags {List} -- List of all tags
-
-    Returns:
-        List -- List of all tags
-    &#34;&#34;&#34;
-    comment_tag = self.get_comment_tag(p)
-    if comment_tag is not None:
-        tags.append(comment_tag)
-    return tags</code></pre>
-</details>
-</dd>
-<dt id="main.main_dialogue.add_dialogue"><code class="name flex">
-<span>def <span class="ident">add_dialogue</span></span>(<span>self, mapped_dialogue, panel_id, track, prev)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>add_dialogue will create a dialogue and add it to the track</p>
-<h2 id="arguments">Arguments</h2>
-<p>mapped_dialogue {Dict} &ndash; mapping of dialogue to ensure there is a
-dialogue for the panel</p>
-<p>panel_id {int} &ndash; Panel ID</p>
-<p>track {dict} &ndash; Track to add the dialogue</p>
-<p>prev {Dict} &ndash; Previous trackitem</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def add_dialogue(self, mapped_dialogue, panel_id, track, prev):
-    &#34;&#34;&#34;add_dialogue will create a dialogue and add it to the track
-
-    Arguments:
-        mapped_dialogue {Dict} -- mapping of dialogue to ensure there is a
-        dialogue for the panel
-
-        panel_id {int} -- Panel ID
-
-        track {dict} -- Track to add the dialogue
-
-        prev {Dict} -- Previous trackitem
-    &#34;&#34;&#34;
-    if panel_id in mapped_dialogue:
-        settings = {
-            &#39;name&#39;: &#39;dialogue-[{0}]&#39;.format(uuid.uuid4()),
-            &#39;message&#39;: mapped_dialogue[panel_id],
-            &#39;opacity&#39;: .6,
-            &#39;global_font_scale&#39;: .3,
-            &#39;enable_background&#39;: True,
-            &#39;background_opacity&#39;: .6,
-            &#39;box&#39;: (0, 0, 1000, 562),
-            &#39;xjustify&#39;: 1,
-            &#39;yjustify&#39;: 2
-        }
-        self.hiero_api.add_dialogue_track_effect(track, prev, settings)</code></pre>
-</details>
-</dd>
-<dt id="main.main_dialogue.add_marker"><code class="name flex">
-<span>def <span class="ident">add_marker</span></span>(<span>self, markers_mapping, panel_in, sequence)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>add_marker will add a marker in the sequence</p>
-<h2 id="arguments">Arguments</h2>
-<p>markers_mapping {Dict} &ndash; Mapping of markers</p>
-<p>panel_in {int} &ndash; First frame of the panel
-(from the whole sequence)</p>
-<p>sequence {Dict} &ndash; Hiero Sequence</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def add_marker(self, markers_mapping, panel_in, sequence):
-    &#34;&#34;&#34;add_marker will add a marker in the sequence
-
-    Arguments:
-        markers_mapping {Dict} -- Mapping of markers
-
-        panel_in {int} -- First frame of the panel
-        (from the whole sequence)
-
-        sequence {Dict} -- Hiero Sequence
-    &#34;&#34;&#34;
-    if panel_in in markers_mapping:
-        tag = self.hiero_api.create_marker_tag(
-            panel_in,
-            markers_mapping[panel_in])
-        sequence.addTagToRange(tag, panel_in, panel_in + 1)</code></pre>
-</details>
-</dd>
-<dt id="main.main_dialogue.add_panel_info_tag"><code class="name flex">
-<span>def <span class="ident">add_panel_info_tag</span></span>(<span>self, p, tags)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>add_panel_info_tag will add a tag of the panel info</p>
-<h2 id="arguments">Arguments</h2>
-<p>p {Dict} &ndash; Panel</p>
-<p>tags {List} &ndash; List of all tags</p>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code>List -- List</code> of <code>all tags</code></dt>
-<dd>&nbsp;</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def add_panel_info_tag(self, p, tags):
-    &#34;&#34;&#34;add_panel_info_tag will add a tag of the panel info
-
-    Arguments:
-        p {Dict} -- Panel
-
-        tags {List} -- List of all tags
-
-    Returns:
-        List -- List of all tags
-    &#34;&#34;&#34;
-    t = self.hiero_api.create_info_tag(json.dumps(p))
-    tags.append(t)
-    return tags</code></pre>
-</details>
-</dd>
-<dt id="main.main_dialogue.authenticate"><code class="name flex">
-<span>def <span class="ident">authenticate</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>authenticate will authenticate a user and update the view</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def authenticate(self):
-    &#34;&#34;&#34;authenticate will authenticate a user and update the view
-    &#34;&#34;&#34;
-    if self.authenticated:
-        self.flix_api.reset()
-        self.authenticated = False
-        self.reset(&#39;Log In&#39;)
-        return
-
-    credentials = self.flix_api.authenticate(
-        self.hostname.text(),
-        self.login.text(),
-        self.password.text())
-    if credentials is None:
-        self.error(&#39;Could not authenticate user&#39;)
-        self.login.clear()
-        self.password.clear()
-        return
-
-    self.init_shows()
-    self.authenticated = True
-    self.reset(&#39;Log Out&#39;)</code></pre>
-</details>
-</dd>
-<dt id="main.main_dialogue.create_burnin"><code class="name flex">
-<span>def <span class="ident">create_burnin</span></span>(<span>self, track, fr, to, burnin_name)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>create_burnin will create a burnin and add it to the track</p>
-<h2 id="arguments">Arguments</h2>
-<p>track {Dict} &ndash; Hiero Track</p>
-<p>fr {int} &ndash; Start of the burnin</p>
-<p>to {int} &ndash; End of the burnin</p>
-<p>burnin_name {str} &ndash; Burnin Name</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def create_burnin(self, track, fr, to, burnin_name):
-    &#34;&#34;&#34;create_burnin will create a burnin and add it to the track
-
-    Arguments:
-        track {Dict} -- Hiero Track
-
-        fr {int} -- Start of the burnin
-
-        to {int} -- End of the burnin
-
-        burnin_name {str} -- Burnin Name
-    &#34;&#34;&#34;
-    settings = {
-        &#39;name&#39;: &#39;{0}-[{1}]&#39;.format(burnin_name, uuid.uuid4()),
-        &#39;burnIn_textScale&#39;: .25,
-        &#39;burnIn_topLeft&#39;: &#39;hiero/clip&#39;,
-        &#39;burnIn_topMiddle&#39;: &#39;none&#39;,
-        &#39;burnIn_topRight&#39;: &#39;hiero/sequence/timecode&#39;,
-        &#39;burnIn_bottomLeft&#39;: &#39;none&#39;,
-        &#39;burnIn_bottomMiddle&#39;: &#39;none&#39;,
-        &#39;burnIn_bottomRight&#39;: &#39;none&#39;,
-        &#39;burnIn_backgroundEnable&#39;: &#39;true&#39;,
-        &#39;burnIn_backgroundXBorder&#39;: 10,
-        &#39;burnIn_backgroundYBorder&#39;: 10,
-        &#39;burnIn_backgroundOpacity&#39;: .6,
-    }
-    self.hiero_api.add_burnin_track_effect(track, fr, to, settings)</code></pre>
-</details>
-</dd>
 <dt id="main.main_dialogue.create_clip"><code class="name flex">
 <span>def <span class="ident">create_clip</span></span>(<span>self, seq_rev, p, clip_name, clips)</span>
 </code></dt>
@@ -2215,28 +559,9 @@ dialogue for the panel</p>
         Dict -- Clip created / reused
     &#34;&#34;&#34;
     if clip_name not in clips:
-        temp_path = tempfile.mkdtemp()
-        thumb_mo = p.get(
-            &#39;asset&#39;, {}).get(
-            &#39;media_objects&#39;, {}).get(
-            &#39;thumbnail&#39;, [])
-        thumb_mo_id = None if len(thumb_mo) &lt; 1 else thumb_mo[0].get(&#39;id&#39;)
-        if thumb_mo_id is None:
-            self.error(&#39;Could not retrieve thumbnail ID&#39;)
-            return None
-        _, _, seq_tracking_code = self.get_selected_sequence()
-        temp_filepath = os.path.join(
-            temp_path,
-            &#39;{0}_{1}_{2}_.png&#39;.format(
-                seq_tracking_code,
-                p.get(&#39;panel_id&#39;),
-                p.get(&#39;revision_counter&#39;)))
-        if sys.platform == &#39;win32&#39; or sys.platform == &#39;cygwin&#39;:
-            temp_filepath = temp_filepath.replace(&#39;\\&#39;, &#39;\\\\&#39;)
-        if self.flix_api.download_media_object(
-                temp_filepath, thumb_mo_id) is None:
-            self.error(&#39;Could not download thumbnail&#39;)
-            return None
+        temp_filepath = self.wg_flix_ui.download_first_thumb(p)
+        if temp_filepath is None:
+            return
         return seq_rev.createClip(temp_filepath)
     return clips[clip_name]</code></pre>
 </details>
@@ -2286,38 +611,30 @@ sequence and one for shots</p>
     Returns:
         Tuple[Dict, Dict] -- VideoTrack, ShotTrack
     &#34;&#34;&#34;
-    _, _, seq_tracking_code = self.get_selected_sequence()
-    track = self.hiero_api.create_video_track(
-        &#39;Flix_{0}_v{1}&#39;.format(
-            seq_tracking_code,
-            seq_rev_number))
-    show_id, _, _ = self.get_selected_show()
-    dialogues = self.flix_api.get_dialogues(
-        show_id, seq_id, seq_rev_number)
-    mapped_dialogue = self.get_dialogues_by_panel_id(dialogues)
-    sequence_revision = self.flix_api.get_sequence_rev(
-        show_id, seq_id, seq_rev_number)
-    if sequence_revision is None:
-        self.error(&#39;Could not retreive sequence revision&#39;)
-        return
-    markers_mapping = self.get_markers(sequence_revision)
-    shots = self.hiero_api.create_video_track(
-        &#39;Shots&#39;) if len(markers_mapping) &gt; 0 else None
-    clips = self.hiero_api.get_clips(seq_bin)
-    panels = self.flix_api.get_panels(show_id, seq_id, seq_rev_number)
+    _, seq_rev_nbr, seq_tc = self.wg_flix_ui.get_selected_sequence()
+    mapped_dialogue = self.wg_flix_ui.get_dialogues_by_panel_id()
+    markers_mapping = self.wg_flix_ui.get_markers_by_name()
+    panels = self.wg_flix_ui.get_panels()
     if panels is None:
         self.error(&#39;Could not retreive panels&#39;)
         return
+
+    vt_track_name = &#39;Flix_{0}_v{1}&#39;.format(
+        seq_tc, seq_rev_nbr)
+    vt_shot_name = &#39;Shots&#39; if len(markers_mapping) &gt; 0 else None
+    track, shots = self.wg_hiero_ui.create_video_tracks(vt_track_name,
+                                                        vt_shot_name)
+    clips = self.wg_hiero_ui.hiero_api.get_clips(seq_bin)
+
     prev = None
     panel_in = 0
     marker_in = None
     prev_marker_name = None
-    _, _, seq_tracking_code = self.get_selected_sequence()
     for i, p in enumerate(panels):
         tags = []
         panel_id = p.get(&#39;panel_id&#39;)
         clip_name = &#39;{0}_{1}_{2}_&#39;.format(
-            seq_tracking_code, panel_id, p.get(
+            seq_tc, panel_id, p.get(
                 &#39;revision_counter&#39;))
         clip = self.create_clip(seq_rev_bin, p, clip_name, clips)
         if clip is None:
@@ -2325,18 +642,18 @@ sequence and one for shots</p>
             return track, shots
 
         # Add comment
-        tags = self.add_comment(p, tags)
+        tags = self.wg_hiero_ui.add_comment(p, tags)
         # Add panel info
-        tags = self.add_panel_info_tag(p, tags)
+        tags = self.wg_hiero_ui.add_panel_info_tag(p, tags)
         # Add marker
-        self.add_marker(markers_mapping, panel_in, sequence)
+        self.wg_hiero_ui.add_marker(markers_mapping, panel_in, sequence)
         # Add track item
-        prev = self.hiero_api.add_track_item(
+        prev = self.wg_hiero_ui.hiero_api.add_track_item(
             track, clip_name, clip, p.get(&#39;duration&#39;), tags, prev)
         # Add dialogue
-        self.add_dialogue(mapped_dialogue, panel_id, track, prev)
+        self.wg_hiero_ui.add_dialogue(mapped_dialogue, panel_id, track, prev)
         # Add burnin
-        marker_in = self.add_burnin(
+        marker_in = self.wg_hiero_ui.add_burnin(
             panels,
             panel_in,
             markers_mapping,
@@ -2350,45 +667,6 @@ sequence and one for shots</p>
             prev_marker_name = markers_mapping[panel_in]
         panel_in = panel_in + p.get(&#39;duration&#39;)
     return track, shots</code></pre>
-</details>
-</dd>
-<dt id="main.main_dialogue.duplicate_panel"><code class="name flex">
-<span>def <span class="ident">duplicate_panel</span></span>(<span>self, show_id, sequence_id, p)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>duplicate_panel wil duplicate a panel and reuse his asset</p>
-<h2 id="arguments">Arguments</h2>
-<p>show_id {int} &ndash; Show ID</p>
-<p>sequence_id {int} &ndash; Sequence ID</p>
-<p>p {Dict} &ndash; Panel to duplicate</p>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code>Dict -- New Duplicated Panel</code></dt>
-<dd>&nbsp;</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def duplicate_panel(self, show_id, sequence_id, p):
-    &#34;&#34;&#34;duplicate_panel wil duplicate a panel and reuse his asset
-
-    Arguments:
-        show_id {int} -- Show ID
-
-        sequence_id {int} -- Sequence ID
-
-        p {Dict} -- Panel to duplicate
-
-    Returns:
-        Dict -- New Duplicated Panel
-    &#34;&#34;&#34;
-    new_panel = self.flix_api.new_panel(
-        show_id, sequence_id, p[&#39;asset&#39;][&#39;asset_id&#39;], p[&#39;duration&#39;])
-    new_panel[&#39;panel_id&#39;] = new_panel.get(&#39;id&#39;)
-    new_panel[&#39;revision_number&#39;] = 1
-    new_panel[&#39;duration&#39;] = p[&#39;duration&#39;]
-    return new_panel</code></pre>
 </details>
 </dd>
 <dt id="main.main_dialogue.error"><code class="name flex">
@@ -2414,465 +692,6 @@ sequence and one for shots</p>
     err.exec_()</code></pre>
 </details>
 </dd>
-<dt id="main.main_dialogue.format_panel_for_revision"><code class="name flex">
-<span>def <span class="ident">format_panel_for_revision</span></span>(<span>self, panels)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>format_panel_for_revision will format the panels as
-revisioned panels</p>
-<h2 id="arguments">Arguments</h2>
-<p>panels {List} &ndash; List of panels</p>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code>List -- Formatted list</code> of <code>panels</code></dt>
-<dd>&nbsp;</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def format_panel_for_revision(self, panels):
-    &#34;&#34;&#34;format_panel_for_revision will format the panels as
-    revisioned panels
-
-    Arguments:
-        panels {List} -- List of panels
-
-    Returns:
-        List -- Formatted list of panels
-    &#34;&#34;&#34;
-    revisioned_panels = []
-    for p in panels:
-        revisioned_panels.append({
-            &#39;dialogue&#39;: p.get(&#39;dialogue&#39;),
-            &#39;duration&#39;: p.get(&#39;duration&#39;),
-            &#39;id&#39;: p.get(&#39;panel_id&#39;),
-            &#39;revision_number&#39;: p.get(&#39;revision_number&#39;)
-        })
-    return revisioned_panels</code></pre>
-</details>
-</dd>
-<dt id="main.main_dialogue.get_comment_tag"><code class="name flex">
-<span>def <span class="ident">get_comment_tag</span></span>(<span>self, p)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>get_comment_tag will make a copy of a comment tag and set
-his comment as a note</p>
-<h2 id="arguments">Arguments</h2>
-<p>p {Dict} &ndash; Panel</p>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code>Dict -- Hiero Tag</code></dt>
-<dd>&nbsp;</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def get_comment_tag(self, p):
-    &#34;&#34;&#34;get_comment_tag will make a copy of a comment tag and set
-    his comment as a note
-
-    Arguments:
-        p {Dict} -- Panel
-
-    Returns:
-        Dict -- Hiero Tag
-    &#34;&#34;&#34;
-    comment = p.get(&#39;latest_open_note&#39;, {}).get(&#39;body&#39;, None)
-    t = None
-    if comment is not None:
-        t = self.hiero_api.create_comment_tag(comment)
-    return t</code></pre>
-</details>
-</dd>
-<dt id="main.main_dialogue.get_dialogues_by_panel_id"><code class="name flex">
-<span>def <span class="ident">get_dialogues_by_panel_id</span></span>(<span>self, dialogues)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>get_dialogues_by_panel_id will format the dialogues to have
-a mapping panel_id -&gt; dialogue</p>
-<h2 id="arguments">Arguments</h2>
-<p>dialogues {List} &ndash; List of Dialogues</p>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code>Dict -- Mapping panel_id to dialogue</code></dt>
-<dd>&nbsp;</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def get_dialogues_by_panel_id(self, dialogues):
-    &#34;&#34;&#34;get_dialogues_by_panel_id will format the dialogues to have
-    a mapping panel_id -&gt; dialogue
-
-    Arguments:
-        dialogues {List} -- List of Dialogues
-
-    Returns:
-        Dict -- Mapping panel_id to dialogue
-    &#34;&#34;&#34;
-    mapped_dialogues = {}
-    cleanr = re.compile(&#39;&lt;.*?&gt;|&amp;([a-z0-9]+|#[0-9]{1,6}|#x[0-9a-f]{1,6});&#39;)
-    for d in dialogues:
-        t = d.get(&#39;text&#39;, &#39;&#39;).replace(&#39;&lt;/p&gt;&#39;, &#39;\n&#39;)
-        mapped_dialogues[d.get(&#39;panel_id&#39;)] = re.sub(cleanr, &#39;&#39;, t)
-    return mapped_dialogues</code></pre>
-</details>
-</dd>
-<dt id="main.main_dialogue.get_episode_tracking_code"><code class="name flex">
-<span>def <span class="ident">get_episode_tracking_code</span></span>(<span>self, episodes)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>get_episode_tracking_code will format the episodes to have a
-mapping: tracking_code -&gt; episode_id</p>
-<h2 id="arguments">Arguments</h2>
-<p>episodes {List} &ndash; List of episodes</p>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code>Dict -- Episodes by tracking code</code></dt>
-<dd>&nbsp;</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def get_episode_tracking_code(self, episodes):
-    &#34;&#34;&#34;get_episode_tracking_code will format the episodes to have a
-    mapping: tracking_code -&gt; episode_id
-
-    Arguments:
-        episodes {List} -- List of episodes
-
-    Returns:
-        Dict -- Episodes by tracking code
-    &#34;&#34;&#34;
-    episode_tracking_codes = {}
-    if episodes is None:
-        return episode_tracking_codes
-    for s in episodes:
-        episode_tracking_codes[s.get(&#39;tracking_code&#39;)] = s.get(&#39;id&#39;)
-    return self.sort_alphanumeric(episode_tracking_codes)</code></pre>
-</details>
-</dd>
-<dt id="main.main_dialogue.get_markers"><code class="name flex">
-<span>def <span class="ident">get_markers</span></span>(<span>self, sequence_revision)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>get_markers will format the sequence_revision to have a
-mapping of markers: start -&gt; marker_name</p>
-<h2 id="arguments">Arguments</h2>
-<p>sequence_revision {Dict} &ndash; Sequence revision</p>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code>Dict -- Mapping start -&gt; marker_name</code></dt>
-<dd>&nbsp;</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def get_markers(self, sequence_revision):
-    &#34;&#34;&#34;get_markers will format the sequence_revision to have a
-    mapping of markers: start -&gt; marker_name
-
-    Arguments:
-        sequence_revision {Dict} -- Sequence revision
-
-    Returns:
-        Dict -- Mapping start -&gt; marker_name
-    &#34;&#34;&#34;
-    markers_mapping = {}
-    markers = sequence_revision.get(&#39;meta_data&#39;, {}).get(&#39;markers&#39;, [])
-    for m in markers:
-        markers_mapping[m.get(&#39;start&#39;)] = m.get(&#39;name&#39;)
-    return OrderedDict(sorted(markers_mapping.items()))</code></pre>
-</details>
-</dd>
-<dt id="main.main_dialogue.get_markers_from_sequence"><code class="name flex">
-<span>def <span class="ident">get_markers_from_sequence</span></span>(<span>self, sequence)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>get_markers_from_sequence will retrieve all the
-markers from a sequence</p>
-<h2 id="arguments">Arguments</h2>
-<p>sequence {Dict} &ndash; Video Track Shots</p>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code>List -- List</code> of <code>markers</code></dt>
-<dd>&nbsp;</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def get_markers_from_sequence(self, sequence):
-    &#34;&#34;&#34;get_markers_from_sequence will retrieve all the
-    markers from a sequence
-
-    Arguments:
-        sequence {Dict} -- Video Track Shots
-
-    Returns:
-        List -- List of markers
-    &#34;&#34;&#34;
-    markers = []
-    for mrks in sequence.subTrackItems():
-        for marker in mrks:
-            name = marker.name()
-            if len(name) &gt; 36:
-                name = name[:-39]
-            markers.append({
-                &#39;name&#39;: name,
-                &#39;start&#39;: marker.timelineIn()
-            })
-    return markers</code></pre>
-</details>
-</dd>
-<dt id="main.main_dialogue.get_panels_from_sequence"><code class="name flex">
-<span>def <span class="ident">get_panels_from_sequence</span></span>(<span>self, sequence, show_id, sequence_id)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>get_panels_from_sequence will retrieve all the clips and format
-them as panels from a hiero sequence</p>
-<h2 id="arguments">Arguments</h2>
-<p>sequence {Dict} &ndash; Video Track Sequence</p>
-<p>show_id {int} &ndash; Show ID</p>
-<p>sequence_id {int} &ndash; Sequence ID</p>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code>List -- List</code> of <code>panels</code></dt>
-<dd>&nbsp;</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def get_panels_from_sequence(self, sequence, show_id, sequence_id):
-    &#34;&#34;&#34;get_panels_from_sequence will retrieve all the clips and format
-    them as panels from a hiero sequence
-
-    Arguments:
-        sequence {Dict} -- Video Track Sequence
-
-        show_id {int} -- Show ID
-
-        sequence_id {int} -- Sequence ID
-
-    Returns:
-        List -- List of panels
-    &#34;&#34;&#34;
-    panels = []
-    for track_item in sequence.items():
-        panel_info = None
-        tags_note = self.hiero_api.get_item_tags_note(track_item, &#39;France&#39;)
-        if len(tags_note) &gt; 0:
-            panel_info = tags_note[0]
-        if panel_info is None:
-            blank_panel = self.flix_api.new_panel(show_id, sequence_id)
-            blank_panel[&#39;panel_id&#39;] = blank_panel.get(&#39;id&#39;)
-            blank_panel[&#39;revision_number&#39;] = 1
-            panels.append(json.dumps(blank_panel))
-        else:
-            panels.append(panel_info)
-    return panels</code></pre>
-</details>
-</dd>
-<dt id="main.main_dialogue.get_selected_episode"><code class="name flex">
-<span>def <span class="ident">get_selected_episode</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>get_selected_episode will return the selected episode info</p>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code>Tuple[int, str] -- Episode ID, Episode tracking code</code></dt>
-<dd>&nbsp;</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def get_selected_episode(self):
-    &#34;&#34;&#34;get_selected_episode will return the selected episode info
-
-    Returns:
-        Tuple[int, str] -- Episode ID, Episode tracking code
-    &#34;&#34;&#34;
-    etc = self.selected_episode_tracking_code
-    episode_id = self.episode_tracking_code[etc]
-    return episode_id, etc</code></pre>
-</details>
-</dd>
-<dt id="main.main_dialogue.get_selected_sequence"><code class="name flex">
-<span>def <span class="ident">get_selected_sequence</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>get_selected_sequence will return the selected sequence info</p>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code>Tuple[int, int, str] -- Sequence ID, Seq rev ID, seq tracking code</code></dt>
-<dd>&nbsp;</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def get_selected_sequence(self):
-    &#34;&#34;&#34;get_selected_sequence will return the selected sequence info
-
-    Returns:
-        Tuple[int, int, str] -- Sequence ID, Seq rev ID, seq tracking code
-    &#34;&#34;&#34;
-    stc = self.selected_sequence_tracking_code
-    seq_id = self.sequence_tracking_code[stc][0]
-    seq_rev = self.sequence_tracking_code[stc][1]
-    return seq_id, seq_rev, stc</code></pre>
-</details>
-</dd>
-<dt id="main.main_dialogue.get_selected_show"><code class="name flex">
-<span>def <span class="ident">get_selected_show</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>get_selected_show will return the selected show info</p>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code>Tuple[int, bool, str] -- Show ID, Episodic, Show tracking code</code></dt>
-<dd>&nbsp;</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def get_selected_show(self):
-    &#34;&#34;&#34;get_selected_show will return the selected show info
-
-    Returns:
-        Tuple[int, bool, str] -- Show ID, Episodic, Show tracking code
-    &#34;&#34;&#34;
-    stc = self.selected_show_tracking_code
-    show_id = self.show_tracking_code[stc][0]
-    episodic = self.show_tracking_code[stc][1]
-    return show_id, episodic, stc</code></pre>
-</details>
-</dd>
-<dt id="main.main_dialogue.get_sequence_tracking_code"><code class="name flex">
-<span>def <span class="ident">get_sequence_tracking_code</span></span>(<span>self, sequences)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>get_sequence_tracking_code will format the sequences to have
-a mapping: tracking_code -&gt; [sequence_id, last_seq_rev_id]</p>
-<h2 id="arguments">Arguments</h2>
-<p>sequences {List} &ndash; List of sequences</p>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code>Dict -- sequence ID and last seq rev by tracking code</code></dt>
-<dd>&nbsp;</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def get_sequence_tracking_code(self, sequences):
-    &#34;&#34;&#34;get_sequence_tracking_code will format the sequences to have
-    a mapping: tracking_code -&gt; [sequence_id, last_seq_rev_id]
-
-    Arguments:
-        sequences {List} -- List of sequences
-
-    Returns:
-        Dict -- sequence ID and last seq rev by tracking code
-    &#34;&#34;&#34;
-    sequence_tracking_codes = {}
-    if sequences is None:
-        return sequence_tracking_codes
-    for s in sequences:
-        if s.get(&#39;revisions_count&#39;) &gt; 0:
-            sequence_tracking_codes[s.get(&#39;tracking_code&#39;)] = [
-                s.get(&#39;id&#39;), s.get(&#39;revisions_count&#39;)]
-    return self.sort_alphanumeric(sequence_tracking_codes)</code></pre>
-</details>
-</dd>
-<dt id="main.main_dialogue.get_show_tracking_code"><code class="name flex">
-<span>def <span class="ident">get_show_tracking_code</span></span>(<span>self, shows)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>get_show_tracking_code will format the shows to have a mapping:
-tracking_code -&gt; [show_id, episodic]</p>
-<h2 id="arguments">Arguments</h2>
-<p>shows {List} &ndash; List of shows</p>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code>Dict -- Shows by tracking code</code></dt>
-<dd>&nbsp;</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def get_show_tracking_code(self, shows):
-    &#34;&#34;&#34;get_show_tracking_code will format the shows to have a mapping:
-    tracking_code -&gt; [show_id, episodic]
-
-    Arguments:
-        shows {List} -- List of shows
-
-    Returns:
-        Dict -- Shows by tracking code
-    &#34;&#34;&#34;
-    show_tracking_codes = {}
-    if shows is None:
-        return show_tracking_codes
-    for s in shows:
-        if s.get(&#39;hidden&#39;, False) is False:
-            show_tracking_codes[s.get(&#39;tracking_code&#39;)] = [
-                s.get(&#39;id&#39;), s.get(&#39;episodic&#39;)]
-    return self.sort_alphanumeric(show_tracking_codes)</code></pre>
-</details>
-</dd>
-<dt id="main.main_dialogue.handle_duplicate_panels"><code class="name flex">
-<span>def <span class="ident">handle_duplicate_panels</span></span>(<span>self, panels, show_id, seq_id)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>handle_duplicate_panels will handle duplicate panels
-and create new ones</p>
-<h2 id="arguments">Arguments</h2>
-<p>panels {List} &ndash; List of Panels</p>
-<p>show_id {int} &ndash; Show ID</p>
-<p>seq_id {int} &ndash; Sequence ID</p>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code>List -- List</code> of <code>panels</code></dt>
-<dd>&nbsp;</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def handle_duplicate_panels(self, panels, show_id, seq_id):
-    &#34;&#34;&#34;handle_duplicate_panels will handle duplicate panels
-    and create new ones
-
-    Arguments:
-        panels {List} -- List of Panels
-
-        show_id {int} -- Show ID
-
-        seq_id {int} -- Sequence ID
-
-    Returns:
-        List -- List of panels
-    &#34;&#34;&#34;
-    uniq_p = {}
-    for i, p in enumerate(panels):
-        uid = &#39;{0}-{1}&#39;.format(p.get(&#39;panel_id&#39;), p.get(&#39;revision_number&#39;))
-        if uid in uniq_p:
-            panels[i] = self.duplicate_panel(show_id, seq_id, p)
-            continue
-        uniq_p[uid] = True
-    return panels</code></pre>
-</details>
-</dd>
 <dt id="main.main_dialogue.info"><code class="name flex">
 <span>def <span class="ident">info</span></span>(<span>self, message)</span>
 </code></dt>
@@ -2896,166 +715,88 @@ and create new ones</p>
     msgbox.exec_()</code></pre>
 </details>
 </dd>
-<dt id="main.main_dialogue.init_shows"><code class="name flex">
-<span>def <span class="ident">init_shows</span></span>(<span>self)</span>
+<dt id="main.main_dialogue.on_pull_latest"><code class="name flex">
+<span>def <span class="ident">on_pull_latest</span></span>(<span>self)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>init_shows will retrieve the list of show and update the UI</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def init_shows(self):
-    &#34;&#34;&#34;init_shows will retrieve the list of show and update the UI
-    &#34;&#34;&#34;
-    shows = self.flix_api.get_shows()
-    if shows is None:
-        self.error(&#39;Could not retreive shows&#39;)
-        return
-    self.show_tracking_code = self.get_show_tracking_code(shows)
-    self.show_list.clear()
-    for s in self.show_tracking_code:
-        self.show_list.addItem(s)
-    self.show_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)</code></pre>
-</details>
-</dd>
-<dt id="main.main_dialogue.on_episode_changed"><code class="name flex">
-<span>def <span class="ident">on_episode_changed</span></span>(<span>self, tracking_code)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>on_episode_changed triggered after an episode is selected,
-will store the selected episode</p>
-<h2 id="arguments">Arguments</h2>
-<p>tracking_code {str} &ndash; episode_tracking_code from the event</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def on_episode_changed(self, tracking_code):
-    &#34;&#34;&#34;on_episode_changed triggered after an episode is selected,
-    will store the selected episode
-
-    Arguments:
-        tracking_code {str} -- episode_tracking_code from the event
-    &#34;&#34;&#34;
-    if tracking_code == &#39;&#39;:
-        return
-    self.selected_episode_tracking_code = tracking_code
-    show_id, _, _ = self.get_selected_show()
-    episode_id, _ = self.get_selected_episode()
-    sequences = self.flix_api.get_sequences(show_id, episode_id)
-    if sequences is None:
-        self.error(&#39;Could not retreive sequences&#39;)
-        return
-    self.sequence_tracking_code = self.get_sequence_tracking_code(
-        sequences)
-    self.sequence_list.clear()
-    for s in self.sequence_tracking_code:
-        self.sequence_list.addItem(s)
-    self.sequence_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)</code></pre>
-</details>
-</dd>
-<dt id="main.main_dialogue.on_sequence_changed"><code class="name flex">
-<span>def <span class="ident">on_sequence_changed</span></span>(<span>self, tracking_code)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>on_sequence_changed triggered after a sequence is selected,
-will store the selected sequence</p>
-<h2 id="arguments">Arguments</h2>
-<p>tracking_code {str} &ndash; sequence_tracking_code from the event</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def on_sequence_changed(self, tracking_code):
-    &#34;&#34;&#34;on_sequence_changed triggered after a sequence is selected,
-    will store the selected sequence
-
-    Arguments:
-        tracking_code {str} -- sequence_tracking_code from the event
-    &#34;&#34;&#34;
-    self.selected_sequence_tracking_code = tracking_code</code></pre>
-</details>
-</dd>
-<dt id="main.main_dialogue.on_show_changed"><code class="name flex">
-<span>def <span class="ident">on_show_changed</span></span>(<span>self, tracking_code)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>on_show_changed triggered after a show is selected,
-will init the list of sequences from this show</p>
-<h2 id="arguments">Arguments</h2>
-<p>tracking_code {str} &ndash; show_tracking_code from the event</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def on_show_changed(self, tracking_code):
-    &#34;&#34;&#34;on_show_changed triggered after a show is selected,
-    will init the list of sequences from this show
-
-    Arguments:
-        tracking_code {str} -- show_tracking_code from the event
-    &#34;&#34;&#34;
-    self.selected_show_tracking_code = tracking_code
-    show_id, episodic, _ = self.get_selected_show()
-
-    self.sequence_list.clear()
-    self.episode_list.clear()
-    if episodic is True:
-        self.episode_list.show()
-        self.episode_label.show()
-        episodes = self.flix_api.get_episodes(show_id)
-        if episodes is None:
-            self.error(&#39;Could not retrieve episodes&#39;)
-        self.episode_tracking_code = self.get_episode_tracking_code(
-            episodes)
-        for e in self.episode_tracking_code:
-            self.episode_list.addItem(e)
-        self.episode_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
-    else:
-        self.episode_list.hide()
-        self.episode_label.hide()
-        sequences = self.flix_api.get_sequences(show_id)
-        if sequences is None:
-            self.error(&#39;Could not retreive sequences&#39;)
-            return
-        self.sequence_tracking_code = self.get_sequence_tracking_code(
-            sequences)
-        self.sequence_list.addItem(&#39;All Sequences&#39;)
-        for s in self.sequence_tracking_code:
-            self.sequence_list.addItem(s)
-        self.sequence_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)</code></pre>
-</details>
-</dd>
-<dt id="main.main_dialogue.pull_latest"><code class="name flex">
-<span>def <span class="ident">pull_latest</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>pull_latest will retrieve the last sequence revision from Flix and
+<div class="desc"><p>on_pull_latest will retrieve the last sequence revision from Flix and
 will create / reuse bins, sequences, clips
 Depending on the selection it will pull only one or all of them</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def pull_latest(self):
-    &#34;&#34;&#34;pull_latest will retrieve the last sequence revision from Flix and
+<pre><code class="python">def on_pull_latest(self):
+    &#34;&#34;&#34;on_pull_latest will retrieve the last sequence revision from Flix and
     will create / reuse bins, sequences, clips
     Depending on the selection it will pull only one or all of them
     &#34;&#34;&#34;
-    if self.selected_sequence_tracking_code == &#39;All Sequences&#39;:
-        for count in range(self.sequence_list.count()):
-            if self.sequence_list.itemText(count) == &#39;All Sequences&#39;:
+    _, _, selected_seq_tc = self.wg_flix_ui.get_selected_sequence()
+    if selected_seq_tc == &#39;All Sequences&#39;:
+        for count in range(self.wg_flix_ui.sequence_list.count()):
+            if self.wg_flix_ui.sequence_list.itemText(count) == &#39;All Sequences&#39;:
                 continue
-            select_seq_tracking_code = self.sequence_list.itemText(
+            select_seq_tracking_code = self.wg_flix_ui.sequence_list.itemText(
                 count)
-            self.selected_sequence_tracking_code = select_seq_tracking_code
+            self.wg_flix_ui.on_sequence_changed(select_seq_tracking_code)
             self.pull_latest_seq_rev()
-        self.selected_sequence_tracking_code = &#39;All Sequences&#39;
+        self.wg_flix_ui.on_sequence_changed(&#39;All Sequences&#39;)
     else:
         self.pull_latest_seq_rev()
 
     self.info(&#39;Sequence revision imported successfully&#39;)</code></pre>
+</details>
+</dd>
+<dt id="main.main_dialogue.on_update_in_flix"><code class="name flex">
+<span>def <span class="ident">on_update_in_flix</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>on_update_in_flix will send a sequence to Flix</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def on_update_in_flix(self):
+    &#34;&#34;&#34;on_update_in_flix will send a sequence to Flix
+    &#34;&#34;&#34;
+    show_id, _, _ = self.wg_flix_ui.get_selected_show()
+    seq_id, _, _ = self.wg_flix_ui.get_selected_sequence()
+    revisioned_panels = []
+    markers = []
+
+    sequence = self.wg_hiero_ui.hiero_api.get_active_sequence()
+    if sequence is None:
+        self.error(&#39;could not find any sequence selected&#39;)
+        return
+    for tr in sequence.items():
+        if tr.name() == &#39;Shots&#39;:
+            markers = self.wg_hiero_ui.get_markers_from_sequence(tr)
+        else:
+            panels = self.wg_hiero_ui.get_panels_from_sequence(tr,
+                                                   show_id,
+                                                   seq_id,
+                                                   self.wg_flix_ui.create_blank_panel)
+            panels = self.wg_hiero_ui.update_panel_from_sequence(tr, panels)
+            panels = self.wg_flix_ui.handle_duplicate_panels(panels)
+            if len(panels) &gt; 0 and len(revisioned_panels) &lt; 1:
+                revisioned_panels = self.wg_flix_ui.get_flix_api().format_panel_for_revision(panels)
+
+    if len(revisioned_panels) &lt; 1:
+        self.error(
+            &#39;could not create a sequence revision, need at least one clip&#39;)
+        return
+
+    comment, ok = QInputDialog.getText(
+        self, &#39;Update to Flix&#39;, &#39;Sequence revision comment:&#39;)
+    if ok is False:
+        return
+
+    new_seq_rev = self.wg_flix_ui.get_flix_api().new_sequence_revision(
+        show_id, seq_id, revisioned_panels, markers, comment)
+    if new_seq_rev is None:
+        self.error(&#39;Could not save sequence revision&#39;)
+    else:
+        self.info(&#39;Sequence revision successfully created&#39;)</code></pre>
 </details>
 </dd>
 <dt id="main.main_dialogue.pull_latest_seq_rev"><code class="name flex">
@@ -3072,30 +813,11 @@ it to hiero</p></div>
     &#34;&#34;&#34;pull_taltest_seq_rev will pull one latest sequence revision and send
     it to hiero
     &#34;&#34;&#34;
-    self.update_sequence_items()
-    _, _, show_tc = self.get_selected_show()
-    seq_id, seq_rev_tc, seq_tracking_code = self.get_selected_sequence()
-    my_project = self.hiero_api.get_project(
-        &#39;Flix_{0}&#39;.format(
-            show_tc))
-    seq, seq_bin_reused = self.hiero_api.get_project_bin(
-        my_project, &#39;Flix_{0}&#39;.format(
-            seq_tracking_code))
-    if seq_bin_reused is False:
-        clipsBin = my_project.clipsBin()
-        clipsBin.addItem(seq)
-
-    seq_rev_bin, seq_rev_bin_reused = self.hiero_api.get_seq_bin(
-        seq, &#39;v{0}&#39;.format(seq_rev_tc))
-    if seq_rev_bin_reused is False:
-        seq.addItem(seq_rev_bin)
-
-    sequence = self.hiero_api.create_sequence(
-        &#39;Flix_{0}_v{1}&#39;.format(
-            seq_tracking_code,
-            seq_rev_tc))
-    seq_item = self.hiero_api.sequence_to_bin_item(sequence)
-    seq_rev_bin.addItem(seq_item)
+    _, _, show_tc = self.wg_flix_ui.get_selected_show()
+    seq_id, seq_rev_tc, seq_tc = self.wg_flix_ui.get_selected_sequence()
+    sequence, seq, seq_rev_bin = self.wg_hiero_ui.pull_to_sequence(show_tc,
+                                                                   seq_rev_tc,
+                                                                   seq_tc)
     track, shots = self.create_video_track(
         sequence, seq, seq_rev_bin, seq_id, seq_rev_tc)
     if track is None:
@@ -3103,182 +825,6 @@ it to hiero</p></div>
     sequence.addTrack(track)
     if shots is not None:
         sequence.addTrack(shots)</code></pre>
-</details>
-</dd>
-<dt id="main.main_dialogue.reset"><code class="name flex">
-<span>def <span class="ident">reset</span></span>(<span>self, action='Log Out')</span>
-</code></dt>
-<dd>
-<div class="desc"><p>reset will reset the login form / shows info for login / logout</p>
-<p>Keyword Arguments:
-action {str} &ndash; action to handle (default: {'Log Out'})</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def reset(self, action=&#39;Log Out&#39;):
-    &#34;&#34;&#34;reset will reset the login form / shows info for login / logout
-
-    Keyword Arguments:
-        action {str} -- action to handle (default: {&#39;Log Out&#39;})
-    &#34;&#34;&#34;
-    if action == &#39;Log Out&#39;:
-        self.hostname.setReadOnly(True)
-        self.login.setReadOnly(True)
-        self.password.setReadOnly(True)
-        self.submit.setText(&#39;Log Out&#39;)
-        return
-    self.hostname.setReadOnly(False)
-    self.login.setReadOnly(False)
-    self.password.setReadOnly(False)
-    self.show_list.clear()
-    self.sequence_list.clear()
-    self.episode_list.clear()
-    self.submit.setText(action)</code></pre>
-</details>
-</dd>
-<dt id="main.main_dialogue.sort_alphanumeric"><code class="name flex">
-<span>def <span class="ident">sort_alphanumeric</span></span>(<span>self, d)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>sort_alphanumeric will sort a dictionnary alphanumerically by keys</p>
-<h2 id="arguments">Arguments</h2>
-<p>d {Dict} &ndash; Dictionnary to sort</p>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code>Dict -- Sorted Dictionnary</code></dt>
-<dd>&nbsp;</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def sort_alphanumeric(self, d):
-    &#34;&#34;&#34;sort_alphanumeric will sort a dictionnary alphanumerically by keys
-
-    Arguments:
-        d {Dict} -- Dictionnary to sort
-
-    Returns:
-        Dict -- Sorted Dictionnary
-    &#34;&#34;&#34;
-    def convert(text): return int(text) if text.isdigit() else text
-    def alphanum_key(key): return [convert(c)
-                                   for c in re.split(&#39;([0-9]+)&#39;, key)]
-    keys = sorted(d.keys(), key=alphanum_key)
-    return OrderedDict((k, d[k]) for k in keys)</code></pre>
-</details>
-</dd>
-<dt id="main.main_dialogue.update_in_flix"><code class="name flex">
-<span>def <span class="ident">update_in_flix</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>update_in_flix will send a sequence to Flix</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def update_in_flix(self):
-    &#34;&#34;&#34;update_in_flix will send a sequence to Flix
-    &#34;&#34;&#34;
-    show_id, _, _ = self.get_selected_show()
-    seq_id, _, _ = self.get_selected_sequence()
-    revisioned_panels = []
-    markers = []
-
-    sequence = self.hiero_api.get_active_sequence()
-    if sequence is None:
-        self.error(&#39;could not find any sequence selected&#39;)
-        return
-    for tr in sequence.items():
-        if tr.name() == &#39;Shots&#39;:
-            markers = self.get_markers_from_sequence(tr)
-        else:
-            panels = self.get_panels_from_sequence(tr, show_id, seq_id)
-            panels = self.update_panel_from_sequence(tr, panels)
-            panels = self.handle_duplicate_panels(panels, show_id, seq_id)
-            if len(panels) &gt; 0 and len(revisioned_panels) &lt; 1:
-                revisioned_panels = self.format_panel_for_revision(panels)
-
-    if len(revisioned_panels) &lt; 1:
-        self.error(
-            &#39;could not create a sequence revision, need at least one clip&#39;)
-        return
-
-    comment, ok = QInputDialog.getText(
-        self, &#39;Update to Flix&#39;, &#39;Sequence revision comment:&#39;)
-    if ok is False:
-        return
-
-    new_seq_rev = self.flix_api.new_sequence_revision(
-        show_id, seq_id, revisioned_panels, markers, comment)
-    if new_seq_rev is None:
-        self.error(&#39;Could not save sequence revision&#39;)
-    else:
-        self.info(&#39;Sequence revision successfully created&#39;)</code></pre>
-</details>
-</dd>
-<dt id="main.main_dialogue.update_panel_from_sequence"><code class="name flex">
-<span>def <span class="ident">update_panel_from_sequence</span></span>(<span>self, sequence, panels)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>update_panel_from_sequence will update panels depending
-on hiero sequence</p>
-<h2 id="arguments">Arguments</h2>
-<p>sequence {Dict} &ndash; Video Track Sequence</p>
-<p>panels {List} &ndash; List of Panels</p>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code>List -- List</code> of <code>Panels</code></dt>
-<dd>&nbsp;</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def update_panel_from_sequence(self, sequence, panels):
-    &#34;&#34;&#34;update_panel_from_sequence will update panels depending
-    on hiero sequence
-
-    Arguments:
-        sequence {Dict} -- Video Track Sequence
-
-        panels {List} -- List of Panels
-
-    Returns:
-        List -- List of Panels
-    &#34;&#34;&#34;
-    for i, track_item in enumerate(sequence.items()):
-        panel = json.loads(panels[i])
-        panel[&#39;duration&#39;] = int(track_item.duration())
-        panels[i] = panel
-    return panels</code></pre>
-</details>
-</dd>
-<dt id="main.main_dialogue.update_sequence_items"><code class="name flex">
-<span>def <span class="ident">update_sequence_items</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>update_sequence_items will refresh the list of sequence
-from the selected show</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def update_sequence_items(self):
-    &#34;&#34;&#34;update_sequence_items will refresh the list of sequence
-    from the selected show
-    &#34;&#34;&#34;
-    show_id, episodic, _ = self.get_selected_show()
-    episode_id = None
-    if episodic:
-        episode_id, _ = self.get_selected_episode()
-    sequences = self.flix_api.get_sequences(show_id, episode_id)
-    if sequences is None:
-        self.error(&#39;Could not retreive sequences&#39;)
-        return
-    self.sequence_tracking_code = self.get_sequence_tracking_code(
-        sequences)</code></pre>
 </details>
 </dd>
 </dl>
@@ -3296,44 +842,15 @@ from the selected show</p></div>
 <ul>
 <li>
 <h4><code><a title="main.main_dialogue" href="#main.main_dialogue">main_dialogue</a></code></h4>
-<ul class="">
-<li><code><a title="main.main_dialogue.add_burnin" href="#main.main_dialogue.add_burnin">add_burnin</a></code></li>
-<li><code><a title="main.main_dialogue.add_comment" href="#main.main_dialogue.add_comment">add_comment</a></code></li>
-<li><code><a title="main.main_dialogue.add_dialogue" href="#main.main_dialogue.add_dialogue">add_dialogue</a></code></li>
-<li><code><a title="main.main_dialogue.add_marker" href="#main.main_dialogue.add_marker">add_marker</a></code></li>
-<li><code><a title="main.main_dialogue.add_panel_info_tag" href="#main.main_dialogue.add_panel_info_tag">add_panel_info_tag</a></code></li>
-<li><code><a title="main.main_dialogue.authenticate" href="#main.main_dialogue.authenticate">authenticate</a></code></li>
-<li><code><a title="main.main_dialogue.create_burnin" href="#main.main_dialogue.create_burnin">create_burnin</a></code></li>
+<ul class="two-column">
 <li><code><a title="main.main_dialogue.create_clip" href="#main.main_dialogue.create_clip">create_clip</a></code></li>
 <li><code><a title="main.main_dialogue.create_video_track" href="#main.main_dialogue.create_video_track">create_video_track</a></code></li>
-<li><code><a title="main.main_dialogue.duplicate_panel" href="#main.main_dialogue.duplicate_panel">duplicate_panel</a></code></li>
 <li><code><a title="main.main_dialogue.error" href="#main.main_dialogue.error">error</a></code></li>
-<li><code><a title="main.main_dialogue.format_panel_for_revision" href="#main.main_dialogue.format_panel_for_revision">format_panel_for_revision</a></code></li>
-<li><code><a title="main.main_dialogue.get_comment_tag" href="#main.main_dialogue.get_comment_tag">get_comment_tag</a></code></li>
-<li><code><a title="main.main_dialogue.get_dialogues_by_panel_id" href="#main.main_dialogue.get_dialogues_by_panel_id">get_dialogues_by_panel_id</a></code></li>
-<li><code><a title="main.main_dialogue.get_episode_tracking_code" href="#main.main_dialogue.get_episode_tracking_code">get_episode_tracking_code</a></code></li>
-<li><code><a title="main.main_dialogue.get_markers" href="#main.main_dialogue.get_markers">get_markers</a></code></li>
-<li><code><a title="main.main_dialogue.get_markers_from_sequence" href="#main.main_dialogue.get_markers_from_sequence">get_markers_from_sequence</a></code></li>
-<li><code><a title="main.main_dialogue.get_panels_from_sequence" href="#main.main_dialogue.get_panels_from_sequence">get_panels_from_sequence</a></code></li>
-<li><code><a title="main.main_dialogue.get_selected_episode" href="#main.main_dialogue.get_selected_episode">get_selected_episode</a></code></li>
-<li><code><a title="main.main_dialogue.get_selected_sequence" href="#main.main_dialogue.get_selected_sequence">get_selected_sequence</a></code></li>
-<li><code><a title="main.main_dialogue.get_selected_show" href="#main.main_dialogue.get_selected_show">get_selected_show</a></code></li>
-<li><code><a title="main.main_dialogue.get_sequence_tracking_code" href="#main.main_dialogue.get_sequence_tracking_code">get_sequence_tracking_code</a></code></li>
-<li><code><a title="main.main_dialogue.get_show_tracking_code" href="#main.main_dialogue.get_show_tracking_code">get_show_tracking_code</a></code></li>
-<li><code><a title="main.main_dialogue.handle_duplicate_panels" href="#main.main_dialogue.handle_duplicate_panels">handle_duplicate_panels</a></code></li>
 <li><code><a title="main.main_dialogue.info" href="#main.main_dialogue.info">info</a></code></li>
-<li><code><a title="main.main_dialogue.init_shows" href="#main.main_dialogue.init_shows">init_shows</a></code></li>
-<li><code><a title="main.main_dialogue.on_episode_changed" href="#main.main_dialogue.on_episode_changed">on_episode_changed</a></code></li>
-<li><code><a title="main.main_dialogue.on_sequence_changed" href="#main.main_dialogue.on_sequence_changed">on_sequence_changed</a></code></li>
-<li><code><a title="main.main_dialogue.on_show_changed" href="#main.main_dialogue.on_show_changed">on_show_changed</a></code></li>
-<li><code><a title="main.main_dialogue.pull_latest" href="#main.main_dialogue.pull_latest">pull_latest</a></code></li>
+<li><code><a title="main.main_dialogue.on_pull_latest" href="#main.main_dialogue.on_pull_latest">on_pull_latest</a></code></li>
+<li><code><a title="main.main_dialogue.on_update_in_flix" href="#main.main_dialogue.on_update_in_flix">on_update_in_flix</a></code></li>
 <li><code><a title="main.main_dialogue.pull_latest_seq_rev" href="#main.main_dialogue.pull_latest_seq_rev">pull_latest_seq_rev</a></code></li>
-<li><code><a title="main.main_dialogue.reset" href="#main.main_dialogue.reset">reset</a></code></li>
-<li><code><a title="main.main_dialogue.sort_alphanumeric" href="#main.main_dialogue.sort_alphanumeric">sort_alphanumeric</a></code></li>
 <li><code><a title="main.main_dialogue.staticMetaObject" href="#main.main_dialogue.staticMetaObject">staticMetaObject</a></code></li>
-<li><code><a title="main.main_dialogue.update_in_flix" href="#main.main_dialogue.update_in_flix">update_in_flix</a></code></li>
-<li><code><a title="main.main_dialogue.update_panel_from_sequence" href="#main.main_dialogue.update_panel_from_sequence">update_panel_from_sequence</a></code></li>
-<li><code><a title="main.main_dialogue.update_sequence_items" href="#main.main_dialogue.update_sequence_items">update_sequence_items</a></code></li>
 </ul>
 </li>
 </ul>

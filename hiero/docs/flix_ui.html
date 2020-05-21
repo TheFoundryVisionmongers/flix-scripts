@@ -1,0 +1,2181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.8.1" />
+<title>flix_ui API documentation</title>
+<meta name="description" content="" />
+<link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
+<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>flix_ui</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">import os
+import re
+import sys
+import tempfile
+from collections import OrderedDict
+
+from PySide2.QtCore import QSize, Signal
+from PySide2.QtWidgets import (QApplication, QComboBox, QDialog, QErrorMessage,
+                               QHBoxLayout, QLabel, QLineEdit, QPushButton,
+                               QSizePolicy, QVBoxLayout, QWidget)
+
+import flix as flix_api
+
+
+class flix_ui(QWidget):
+    &#34;&#34;&#34;flix_ui is a widget that allow you to login / logout
+    Select a show, episode and sequences
+    There is some exported events:
+    e_login: dict representing the credentials
+    e_logout: event representing the logout
+    e_show_changed: show ID, Tracking code, episodic
+    e_episode_changed: episode ID, tracking code
+    e_sequence_changed: sequence ID, sequence Revision number, tracking code
+    &#34;&#34;&#34;
+
+    e_login = Signal(dict)
+    e_logout = Signal()
+    e_show_changed = Signal(int, str, bool)
+    e_episode_changed = Signal(int, str)
+    e_sequence_changed = Signal(int, int, str)
+
+    __selected_show_tracking_code = &#39;&#39;
+    __selected_episode_tracking_code = &#39;&#39;
+    __selected_sequence_tracking_code = &#39;&#39;
+
+    __err_authenticate = &#39;You need to be authenticated&#39;
+    __err_show_not_found = &#39;Could not find show&#39;
+    __err_episode_not_found = &#39;Could not find episode&#39;
+    __err_sequence_not_found = &#39;Could not find sequence&#39;
+
+    def __init__(self, *args, **kwargs):
+        super(flix_ui, self).__init__(*args, **kwargs)
+        self.flix_api = flix_api.flix()
+        self.authenticated = False
+        self.setSizePolicy(
+            QSizePolicy.MinimumExpanding,
+            QSizePolicy.MinimumExpanding
+        )
+
+        # Setup UI view
+        v_main_box = QVBoxLayout()
+        h_login_sequence = QHBoxLayout()
+        v_login_layout = QVBoxLayout()
+        v_sequence_box = QVBoxLayout()
+
+        # Setup Flix Login view
+        self.hostname, hostname_label = self.__create_line_label(
+            &#39;http://localhost:1234&#39;, &#39;Flix Server&#39;)
+        self.login, login_label = self.__create_line_label(&#39;admin&#39;, &#39;Username&#39;)
+        self.password, password_label = self.__create_line_label(
+            &#39;admin&#39;, &#39;Password&#39;, echo_mode=True)
+        self.submit = QPushButton(&#39;Log In&#39;)
+        self.submit.clicked.connect(self.__authenticate)
+
+        # Add Login view to layout
+        self.__add_widget_to_layout(v_login_layout,
+                                    hostname_label,
+                                    self.hostname,
+                                    login_label,
+                                    self.login,
+                                    password_label,
+                                    self.password,
+                                    self.submit)
+
+        # Setup lists for shows / episodes and sequences
+        self.show_list, show_label = self.__create_combo_label(
+            &#39;Show&#39;, self.__on_show_changed)
+        self.episode_list, self.episode_label = self.__create_combo_label(
+            &#39;Episode&#39;, self.__on_episode_changed)
+        self.sequence_list, sequence_label = self.__create_combo_label(
+            &#39;Sequence&#39;, self.on_sequence_changed)
+
+        self.__add_widget_to_layout(v_sequence_box,
+                                    show_label,
+                                    self.show_list,
+                                    self.episode_label,
+                                    self.episode_list,
+                                    sequence_label,
+                                    self.sequence_list)
+
+        h_login_sequence.addLayout(v_login_layout)
+        h_login_sequence.addLayout(v_sequence_box)
+
+        v_main_box.addLayout(h_login_sequence)
+
+        self.setLayout(v_main_box)
+
+    def is_authenticated(self):
+        &#34;&#34;&#34;is_authenticated will return the state of the authentication
+
+        Returns:
+            bool -- Authenticated or not
+        &#34;&#34;&#34;
+        return self.authenticated
+
+    def get_flix_api(self):
+        &#34;&#34;&#34;get_flix_api will return the flix_api
+
+        Returns:
+            flix_api.flix -- Flix api entity
+        &#34;&#34;&#34;
+        return self.flix_api
+
+    def get_selected_show(self):
+        &#34;&#34;&#34;get_selected_show will return the selected show info
+
+        Raises:
+            RuntimeError: Show not found
+            RuntimeError: Need authentication
+
+        Returns:
+            Tuple[int, bool, str] -- Show ID, Episodic, Show tracking code
+        &#34;&#34;&#34;
+        if not self.authenticated:
+            raise RuntimeError(self.__err_authenticate)
+
+        stc = self.__selected_show_tracking_code
+        if not (stc in self.show_tracking_code):
+            raise RuntimeError(self.__err_show_not_found)
+        show_id = self.show_tracking_code[stc][0]
+        episodic = self.show_tracking_code[stc][1]
+        return show_id, episodic, stc
+
+    def get_selected_episode(self):
+        &#34;&#34;&#34;get_selected_episode will return the selected episode info
+
+        Raises:
+            RuntimeError: Episode not found
+            RuntimeError: Need authentication
+
+        Returns:
+            Tuple[int, str] -- Episode ID, Episode tracking code
+        &#34;&#34;&#34;
+        if not self.authenticated:
+            raise RuntimeError(self.__err_authenticate)
+
+        etc = self.__selected_episode_tracking_code
+        if not (etc in self.episode_tracking_code):
+            raise RuntimeError(self.__err_episode_not_found)
+        episode_id = self.episode_tracking_code[etc]
+        return episode_id, etc
+
+    def get_markers_by_name(self):
+        &#34;&#34;&#34;get_markers will get the sequence_revision to have a
+        mapping of markers: start -&gt; marker_name
+
+        Returns:
+            Dict -- Mapping start -&gt; marker_name
+        &#34;&#34;&#34;
+        seq_id, seq_rev_number, _ = self.get_selected_sequence()
+        show_id, _, _ = self.get_selected_show()
+        sequence_revision = self.flix_api.get_sequence_rev(
+            show_id, seq_id, seq_rev_number)
+        if sequence_revision is None:
+            self.__error(&#39;Could not retreive sequence revision&#39;)
+            return []
+        markers_mapping = {}
+        markers = sequence_revision.get(&#39;meta_data&#39;, {}).get(&#39;markers&#39;, [])
+        for m in markers:
+            markers_mapping[m.get(&#39;start&#39;)] = m.get(&#39;name&#39;)
+        return OrderedDict(sorted(markers_mapping.items()))
+
+    def get_dialogues_by_panel_id(self):
+        &#34;&#34;&#34;get_dialogues_by_panel_id will get the dialogues to have
+        a mapping panel_id -&gt; dialogue
+
+        Returns:
+            Dict -- Mapping panel_id to dialogue
+        &#34;&#34;&#34;
+        seq_id, seq_rev_number, _ = self.get_selected_sequence()
+        show_id, _, _ = self.get_selected_show()
+        dialogues = self.get_flix_api().get_dialogues(
+            show_id, seq_id, seq_rev_number)
+
+        mapped_dialogues = {}
+        cleanr = re.compile(&#39;&lt;.*?&gt;|&amp;([a-z0-9]+|#[0-9]{1,6}|#x[0-9a-f]{1,6});&#39;)
+        for d in dialogues:
+            t = d.get(&#39;text&#39;, &#39;&#39;).replace(&#39;&lt;/p&gt;&#39;, &#39;\n&#39;)
+            mapped_dialogues[d.get(&#39;panel_id&#39;)] = re.sub(cleanr, &#39;&#39;, t)
+        return mapped_dialogues
+
+    def get_default_image_name(
+            self,
+            seq_rev_number,
+            panel_pos,
+            panel_id,
+            panel_revision):
+        &#34;&#34;&#34;get_default_image_name will format the image name
+
+        Arguments:
+            seq_rev_number {int} -- Sequence revision number
+
+            panel_pos {int} -- Panel position
+
+            panel_id {int} -- Panel ID
+
+            panel_revision {int} -- Panel revision
+
+        Returns:
+            str -- Formatted name
+        &#34;&#34;&#34;
+        _, _, show_tracking_code = self.get_selected_show()
+        _, _, seq_tracking_code = self.get_selected_sequence()
+        return &#39;{0}_{1}_v{2}_{3}_{4}_v{5}&#39;.format(
+            show_tracking_code,
+            seq_tracking_code,
+            seq_rev_number,
+            panel_pos,
+            panel_id,
+            panel_revision)
+
+    def download_first_thumb(self, p):
+        temp_path = tempfile.mkdtemp()
+        thumb_mo = p.get(
+            &#39;asset&#39;, {}).get(
+            &#39;media_objects&#39;, {}).get(
+            &#39;thumbnail&#39;, [])
+        thumb_mo_id = None if len(thumb_mo) &lt; 1 else thumb_mo[0].get(&#39;id&#39;)
+        if thumb_mo_id is None:
+            self.__error(&#39;Could not retrieve thumbnail ID&#39;)
+            return None
+        _, _, seq_tracking_code = self.get_selected_sequence()
+        temp_filepath = os.path.join(
+            temp_path,
+            &#39;{0}_{1}_{2}_.png&#39;.format(
+                seq_tracking_code,
+                p.get(&#39;panel_id&#39;),
+                p.get(&#39;revision_counter&#39;)))
+        if sys.platform == &#39;win32&#39; or sys.platform == &#39;cygwin&#39;:
+            temp_filepath = temp_filepath.replace(&#39;\\&#39;, &#39;\\\\&#39;)
+        if self.flix_api.download_media_object(
+                temp_filepath, thumb_mo_id) is None:
+            self.__error(&#39;Could not download thumbnail&#39;)
+            return None
+        return temp_filepath
+
+    def get_panels(self):
+        show_id, _, _ = self.get_selected_show()
+        seq_id, seq_rev_number, _ = self.get_selected_sequence()
+        return self.get_flix_api().get_panels(show_id,
+                                              seq_id,
+                                              seq_rev_number)
+
+    def handle_duplicate_panels(self, panels):
+        &#34;&#34;&#34;handle_duplicate_panels will handle duplicate panels
+        and create new ones
+
+        Arguments:
+            panels {List} -- List of Panels
+
+        Returns:
+            List -- List of panels
+        &#34;&#34;&#34;
+        show_id, _, _ = self.get_selected_show()
+        seq_id, _, _ = self.get_selected_sequence()
+        uniq_p = {}
+        for i, p in enumerate(panels):
+            uid = &#39;{0}-{1}&#39;.format(p.get(&#39;panel_id&#39;), p.get(&#39;revision_number&#39;))
+            if uid in uniq_p:
+                panels[i] = self.duplicate_panel(show_id, seq_id, p)
+                continue
+            uniq_p[uid] = True
+        return panels
+
+    def create_blank_panel(self):
+        blank_panel = self.flix_api.new_panel(show_id, sequence_id)
+        blank_panel[&#39;panel_id&#39;] = blank_panel.get(&#39;id&#39;)
+        blank_panel[&#39;revision_number&#39;] = 1
+        return blank_panel
+
+    def duplicate_panel(self, show_id, sequence_id, p):
+        &#34;&#34;&#34;duplicate_panel wil duplicate a panel and reuse his asset
+
+        Arguments:
+            show_id {int} -- Show ID
+
+            sequence_id {int} -- Sequence ID
+
+            p {Dict} -- Panel to duplicate
+
+        Returns:
+            Dict -- New Duplicated Panel
+        &#34;&#34;&#34;
+        new_panel = self.flix_api.new_panel(
+            show_id, sequence_id, p[&#39;asset&#39;][&#39;asset_id&#39;], p[&#39;duration&#39;])
+        new_panel[&#39;panel_id&#39;] = new_panel.get(&#39;id&#39;)
+        new_panel[&#39;revision_number&#39;] = 1
+        new_panel[&#39;duration&#39;] = p[&#39;duration&#39;]
+        return new_panel
+
+    def get_media_object_per_shots(self, fn_progress):
+        &#34;&#34;&#34;get_media_object_per_shots will get the media objects per shotss
+
+        Raises:
+            RuntimeError: Need authentication
+
+        Arguments:
+            Callable[[str], None] -- fn_progress is a progress function
+
+        Returns:
+            Dict -- Mapping of media objects per shots
+        &#34;&#34;&#34;
+        if not self.authenticated:
+            raise RuntimeError(self.__err_authenticate)
+
+        show_id, episodic, _ = self.get_selected_show()
+        seq_id, seq_rev_number, _ = self.get_selected_sequence()
+        flix_api = self.get_flix_api()
+        fn_progress(&#39;get sequence revision&#39;)
+        seq_rev = flix_api.get_sequence_rev(show_id, seq_id, seq_rev_number)
+        episode_id = None
+        if episodic:
+            episode_id, _ = self.get_selected_episode()
+        if seq_rev is None:
+            self.__error(&#39;Could not retrieve sequence revision&#39;)
+            return None
+        fn_progress(&#39;get markers&#39;)
+        markers = self.get_flix_api().get_markers(seq_rev)
+        if len(markers) &lt; 1:
+            self.__info(&#39;You need at least one shot&#39;)
+            return None
+        fn_progress(&#39;get panels&#39;)
+        panels = self.get_flix_api().get_panels(
+            show_id, seq_id, seq_rev_number)
+        if panels is None:
+            self.__error(&#39;Could not retrieve panels&#39;)
+            return None
+        fn_progress(&#39;get markers per panels&#39;)
+        panels_per_markers = self.get_flix_api().get_markers_per_panels(markers, panels)
+        mo_per_shots, ok = self.get_flix_api().mo_per_shots(panels_per_markers,
+                                                            show_id,
+                                                            seq_id,
+                                                            seq_rev_number,
+                                                            episode_id)
+
+        # Split export quicktime
+        for shot_name in mo_per_shots:
+            def on_retry(r): return fn_progress(
+                &#39;export quicktime for shot {0}{1}&#39;.format(
+                    shot_name, &#39;.&#39; * (r % 4)))
+            fn_progress(&#39;export quicktime for shot {0}&#39;.format(shot_name))
+            mo = self.get_flix_api().get_mo_quicktime_export(
+                shot_name, panels_per_markers[shot_name],
+                show_id, seq_id, seq_rev_number, episode_id, on_retry)
+            mo_per_shots[shot_name][&#39;mov&#39;] = mo
+
+        if mo_per_shots is None:
+            self.__error(&#39;Could not retrieve media objects per shots&#39;)
+            return None
+        if ok is False:
+            return None
+        return mo_per_shots
+
+    def get_selected_sequence(self):
+        &#34;&#34;&#34;get_selected_sequence will return the selected sequence info
+
+        Raises:
+            RuntimeError: Sequence not found
+            RuntimeError: Need authentication
+
+        Returns:
+            Tuple[int, int, str] -- Sequence ID, Seq rev ID, Seq tracking code
+        &#34;&#34;&#34;
+        if not self.authenticated:
+            raise RuntimeError(self.__err_authenticate)
+
+        stc = self.__selected_sequence_tracking_code
+        if not (stc in self.sequence_tracking_code):
+            raise RuntimeError(self.__err_sequence_not_found)
+        seq_id = self.sequence_tracking_code[stc][0]
+        seq_rev = self.sequence_tracking_code[stc][1]
+        return seq_id, seq_rev, stc
+
+    def __create_line_label(self,
+                            name,
+                            label,
+                            min_width=200,
+                            echo_mode=False):
+        &#34;&#34;&#34;__create_line_label will create a line edit button and his label
+
+        Arguments:
+            name {str} -- Default value
+
+            label {str} -- Label name
+
+            min_width {int} -- Minium width (default: {200})
+
+            echo_mode {bool} -- Stars for password (default: {False})
+
+        Returns:
+            Tuple[Dict, Dict] -- Line Edit, Label
+        &#34;&#34;&#34;
+        line_edit = QLineEdit(name)
+        line_edit.setMinimumWidth(min_width)
+        if echo_mode:
+            line_edit.setEchoMode(QLineEdit.Password)
+        label = QLabel(label)
+        label.setBuddy(line_edit)
+        return line_edit, label
+
+    def __create_combo_label(self, label, fn_text_changed):
+        &#34;&#34;&#34;__create_combo_label will create a combo box and his label
+
+        Arguments:
+            label {str} -- Label name
+
+            fn_text_changed {object} -- Callback function for text_changed
+
+        Returns:
+            Tuple[Dict, Dict] -- ComboBox, Label
+        &#34;&#34;&#34;
+        combo = QComboBox()
+        label = QLabel(label)
+        label.setMinimumWidth(300)
+        label.setBuddy(combo)
+        combo.currentTextChanged.connect(fn_text_changed)
+        return combo, label
+
+    def __add_widget_to_layout(self, layout, *widgets):
+        &#34;&#34;&#34;__add_widget_to_layout will add all the widget to a layout
+        __add_widget_to_layout(layout, widget1, widget2, widget3)
+
+        Arguments:
+            layout {Dict} -- Layout to add widget to
+
+            widgets {*Dict} -- All the widgets to add
+        &#34;&#34;&#34;
+
+        for w in widgets:
+            layout.addWidget(w)
+
+    def __authenticate(self):
+        &#34;&#34;&#34;__authenticate will authenticate a user and update the view
+        &#34;&#34;&#34;
+        if self.authenticated:
+            self.flix_api.reset()
+            self.e_logout.emit()
+            self.__reset(&#39;Log In&#39;)
+            self.authenticated = False
+            return
+
+        credentials = self.flix_api.authenticate(self.hostname.text(),
+                                                 self.login.text(),
+                                                 self.password.text())
+        if credentials is None:
+            self.__error(&#39;Could not authenticate user&#39;)
+            self.login.clear()
+            self.password.clear()
+            return
+        self.e_login.emit(credentials)
+        self.authenticated = True
+        self.__init_shows()
+        self.__reset(&#39;Log Out&#39;)
+
+    def __reset(self, action=&#39;Log Out&#39;):
+        &#34;&#34;&#34;__reset will reset the login form / shows info for login / logout
+
+        Arguments:
+            action {str} -- action to handle (default: {&#39;Log Out&#39;})
+        &#34;&#34;&#34;
+        if action == &#39;Log Out&#39;:
+            self.hostname.setReadOnly(True)
+            self.login.setReadOnly(True)
+            self.password.setReadOnly(True)
+            self.submit.setText(&#39;Log Out&#39;)
+            return
+        self.hostname.setReadOnly(False)
+        self.login.setReadOnly(False)
+        self.password.setReadOnly(False)
+        self.show_list.clear()
+        self.sequence_list.clear()
+        self.episode_list.clear()
+        self.submit.setText(action)
+
+    def __on_show_changed(self, tracking_code):
+        &#34;&#34;&#34;__on_show_changed triggered after a show is selected,
+        will init the list of sequences from this show
+
+        Arguments:
+            tracking_code {str} -- show_tracking_code from the event
+        &#34;&#34;&#34;
+        if tracking_code == &#39;&#39;:
+            return
+        self.__selected_show_tracking_code = tracking_code
+        show_id, episodic, _ = self.get_selected_show()
+        self.e_show_changed.emit(show_id, tracking_code, episodic)
+
+        self.sequence_list.clear()
+        self.episode_list.clear()
+        # If the show is episodic we show the episode list and update his list
+        if episodic is True:
+            self.episode_list.show()
+            self.episode_label.show()
+            episodes = self.flix_api.get_episodes(show_id)
+            if episodes is None:
+                self.__error(&#39;Could not retrieve episodes&#39;)
+                return
+            self.episode_tracking_code = self.__get_episode_tracking_code(
+                episodes)
+            for e in self.episode_tracking_code:
+                self.episode_list.addItem(e)
+            self.episode_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
+            return
+        # If not episodic we hide the episode list and update the sequence list
+        self.episode_list.hide()
+        self.episode_label.hide()
+        sequences = self.flix_api.get_sequences(show_id)
+        if sequences is None:
+            self.__error(&#39;Could not retreive sequences&#39;)
+            return
+        self.sequence_tracking_code = self.__get_sequence_tracking_code(
+            sequences)
+        for s in self.sequence_tracking_code:
+            self.sequence_list.addItem(s)
+        self.sequence_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
+
+    def __on_episode_changed(self, tracking_code):
+        &#34;&#34;&#34;__on_episode_changed triggered after an episode is selected,
+        will store the selected episode
+
+        Arguments:
+            tracking_code {str} -- episode_tracking_code from the event
+        &#34;&#34;&#34;
+        if tracking_code == &#39;&#39;:
+            return
+        self.__selected_episode_tracking_code = tracking_code
+        show_id, _, _ = self.get_selected_show()
+        episode_id, _ = self.get_selected_episode()
+        self.e_episode_changed.emit(episode_id, tracking_code)
+        sequences = self.flix_api.get_sequences(show_id, episode_id)
+        if sequences is None:
+            self.__error(&#39;Could not retreive sequences&#39;)
+            return
+        self.sequence_tracking_code = self.__get_sequence_tracking_code(
+            sequences)
+        self.sequence_list.clear()
+        for s in self.sequence_tracking_code:
+            self.sequence_list.addItem(s)
+        self.sequence_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
+
+    def on_sequence_changed(self, tracking_code):
+        &#34;&#34;&#34;on_sequence_changed triggered after a sequence is selected,
+        will store the selected sequence
+
+        Arguments:
+            tracking_code {str} -- sequence_tracking_code from the event
+        &#34;&#34;&#34;
+        if tracking_code == &#39;&#39;:
+            return
+        self.__selected_sequence_tracking_code = tracking_code
+        seq_id, seq_rev, _ = self.get_selected_sequence()
+        self.e_sequence_changed.emit(seq_id, seq_rev, tracking_code)
+
+    def __init_shows(self):
+        &#34;&#34;&#34;__init_shows will retrieve the list of show and update the UI
+        &#34;&#34;&#34;
+        shows = self.flix_api.get_shows()
+        if shows is None:
+            self.__error(&#39;Could not retreive shows&#39;)
+            return
+        self.show_tracking_code = self.__get_show_tracking_code(shows)
+        self.show_list.clear()
+        for s in self.show_tracking_code:
+            self.show_list.addItem(s)
+        self.show_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
+
+    def __sort_alphanumeric(self, d):
+        &#34;&#34;&#34;__sort_alphanumeric will sort a dictionnary alphanumerically by keys
+
+        Arguments:
+            d {Dict} -- Dictionnary to sort
+
+        Returns:
+            Dict -- Sorted Dictionnary
+        &#34;&#34;&#34;
+        def convert(text): return int(text) if text.isdigit() else text
+
+        def alphanum_key(key): return [convert(c)
+                                       for c in re.split(&#39;([0-9]+)&#39;, key)]
+        keys = sorted(d.keys(), key=alphanum_key)
+        return OrderedDict((k, d[k]) for k in keys)
+
+    def __get_show_tracking_code(self, shows):
+        &#34;&#34;&#34;__get_show_tracking_code will format the shows to have a mapping:
+        tracking_code -&gt; [show_id, episodic]
+
+        Arguments:
+            shows {List} -- List of shows
+
+        Returns:
+            Dict -- Shows by tracking code
+        &#34;&#34;&#34;
+        show_tracking_codes = {}
+        if shows is None:
+            return show_tracking_codes
+        for s in shows:
+            if s.get(&#39;hidden&#39;, False) is False:
+                show_tracking_codes[s.get(&#39;tracking_code&#39;)] = [
+                    s.get(&#39;id&#39;),
+                    s.get(&#39;episodic&#39;)
+                ]
+        return self.__sort_alphanumeric(show_tracking_codes)
+
+    def __get_sequence_tracking_code(self, sequences):
+        &#34;&#34;&#34;__get_sequence_tracking_code will format the sequences to have
+        a mapping: tracking_code -&gt; [sequence_id, last_seq_rev_id]
+
+        Arguments:
+            sequences {List} -- List of sequences
+
+        Returns:
+            Dict -- sequence ID and last seq rev by tracking code
+        &#34;&#34;&#34;
+        sequence_tracking_codes = {}
+        if sequences is None:
+            return sequence_tracking_codes
+        for s in sequences:
+            if s.get(&#39;revisions_count&#39;) &gt; 0:
+                sequence_tracking_codes[s.get(&#39;tracking_code&#39;)] = [
+                    s.get(&#39;id&#39;),
+                    s.get(&#39;revisions_count&#39;)
+                ]
+        return self.__sort_alphanumeric(sequence_tracking_codes)
+
+    def __get_episode_tracking_code(self, episodes):
+        &#34;&#34;&#34;__get_episode_tracking_code will format the episodes to have a
+        mapping: tracking_code -&gt; episode_id
+
+        Arguments:
+            episodes {List} -- List of episodes
+
+        Returns:
+            Dict -- Episodes by tracking code
+        &#34;&#34;&#34;
+        episode_tracking_codes = {}
+        if episodes is None:
+            return episode_tracking_codes
+        for s in episodes:
+            episode_tracking_codes[s.get(&#39;tracking_code&#39;)] = s.get(&#39;id&#39;)
+        return self.__sort_alphanumeric(episode_tracking_codes)
+
+    def __error(self, message):
+        &#34;&#34;&#34;__error will show a error message with a given message
+
+        Arguments:
+            message {str} -- Message to show
+        &#34;&#34;&#34;
+        err = QErrorMessage(self.parent())
+        err.setWindowTitle(&#39;Flix&#39;)
+        err.showMessage(message)
+        err.exec_()
+
+
+class main_dialogue(QDialog):
+    def __init__(self, parent=None):
+        super(main_dialogue, self).__init__(parent)
+        self.setWindowTitle(&#39;Flix Production Handoff&#39;)
+
+        main_layout = QVBoxLayout()
+        widget_flix_ui = flix_ui()
+        # Bind event from flix
+        widget_flix_ui.e_login.connect(self.on_login)
+        widget_flix_ui.e_logout.connect(self.on_logout)
+        widget_flix_ui.e_show_changed.connect(self.on_show_changed)
+        widget_flix_ui.e_episode_changed.connect(self.on_episode_changed)
+        widget_flix_ui.e_sequence_changed.connect(self.on_sequence_changed)
+
+        # Add flix Ui widget
+        main_layout.addWidget(widget_flix_ui)
+        self.setLayout(main_layout)
+
+    def on_login(self, credentials):
+        print(&#39;logged in&#39;, credentials)
+
+    def on_logout(self):
+        print(&#39;logged out&#39;)
+
+    def on_show_changed(self, show_id, tracking_code, episodic):
+        print(&#39;show selected&#39;, show_id, tracking_code, episodic)
+
+    def on_episode_changed(self, episode_id, tracking_code):
+        print(&#39;episode selected&#39;, episode_id, tracking_code)
+
+    def on_sequence_changed(self, sequence_id, seq_rev, tracking_code):
+        print(&#39;sequence selected&#39;, sequence_id, seq_rev, tracking_code)
+        print(sequence_id, seq_rev, tracking_code)
+
+
+if __name__ == &#39;__main__&#39;:
+    app = QApplication(sys.argv)
+    main_view = main_dialogue()
+    main_view.show()
+    sys.exit(app.exec_())</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="flix_ui.flix_ui"><code class="flex name class">
+<span>class <span class="ident">flix_ui</span></span>
+<span>(</span><span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>flix_ui is a widget that allow you to login / logout
+Select a show, episode and sequences
+There is some exported events:
+e_login: dict representing the credentials
+e_logout: event representing the logout
+e_show_changed: show ID, Tracking code, episodic
+e_episode_changed: episode ID, tracking code
+e_sequence_changed: sequence ID, sequence Revision number, tracking code</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class flix_ui(QWidget):
+    &#34;&#34;&#34;flix_ui is a widget that allow you to login / logout
+    Select a show, episode and sequences
+    There is some exported events:
+    e_login: dict representing the credentials
+    e_logout: event representing the logout
+    e_show_changed: show ID, Tracking code, episodic
+    e_episode_changed: episode ID, tracking code
+    e_sequence_changed: sequence ID, sequence Revision number, tracking code
+    &#34;&#34;&#34;
+
+    e_login = Signal(dict)
+    e_logout = Signal()
+    e_show_changed = Signal(int, str, bool)
+    e_episode_changed = Signal(int, str)
+    e_sequence_changed = Signal(int, int, str)
+
+    __selected_show_tracking_code = &#39;&#39;
+    __selected_episode_tracking_code = &#39;&#39;
+    __selected_sequence_tracking_code = &#39;&#39;
+
+    __err_authenticate = &#39;You need to be authenticated&#39;
+    __err_show_not_found = &#39;Could not find show&#39;
+    __err_episode_not_found = &#39;Could not find episode&#39;
+    __err_sequence_not_found = &#39;Could not find sequence&#39;
+
+    def __init__(self, *args, **kwargs):
+        super(flix_ui, self).__init__(*args, **kwargs)
+        self.flix_api = flix_api.flix()
+        self.authenticated = False
+        self.setSizePolicy(
+            QSizePolicy.MinimumExpanding,
+            QSizePolicy.MinimumExpanding
+        )
+
+        # Setup UI view
+        v_main_box = QVBoxLayout()
+        h_login_sequence = QHBoxLayout()
+        v_login_layout = QVBoxLayout()
+        v_sequence_box = QVBoxLayout()
+
+        # Setup Flix Login view
+        self.hostname, hostname_label = self.__create_line_label(
+            &#39;http://localhost:1234&#39;, &#39;Flix Server&#39;)
+        self.login, login_label = self.__create_line_label(&#39;admin&#39;, &#39;Username&#39;)
+        self.password, password_label = self.__create_line_label(
+            &#39;admin&#39;, &#39;Password&#39;, echo_mode=True)
+        self.submit = QPushButton(&#39;Log In&#39;)
+        self.submit.clicked.connect(self.__authenticate)
+
+        # Add Login view to layout
+        self.__add_widget_to_layout(v_login_layout,
+                                    hostname_label,
+                                    self.hostname,
+                                    login_label,
+                                    self.login,
+                                    password_label,
+                                    self.password,
+                                    self.submit)
+
+        # Setup lists for shows / episodes and sequences
+        self.show_list, show_label = self.__create_combo_label(
+            &#39;Show&#39;, self.__on_show_changed)
+        self.episode_list, self.episode_label = self.__create_combo_label(
+            &#39;Episode&#39;, self.__on_episode_changed)
+        self.sequence_list, sequence_label = self.__create_combo_label(
+            &#39;Sequence&#39;, self.on_sequence_changed)
+
+        self.__add_widget_to_layout(v_sequence_box,
+                                    show_label,
+                                    self.show_list,
+                                    self.episode_label,
+                                    self.episode_list,
+                                    sequence_label,
+                                    self.sequence_list)
+
+        h_login_sequence.addLayout(v_login_layout)
+        h_login_sequence.addLayout(v_sequence_box)
+
+        v_main_box.addLayout(h_login_sequence)
+
+        self.setLayout(v_main_box)
+
+    def is_authenticated(self):
+        &#34;&#34;&#34;is_authenticated will return the state of the authentication
+
+        Returns:
+            bool -- Authenticated or not
+        &#34;&#34;&#34;
+        return self.authenticated
+
+    def get_flix_api(self):
+        &#34;&#34;&#34;get_flix_api will return the flix_api
+
+        Returns:
+            flix_api.flix -- Flix api entity
+        &#34;&#34;&#34;
+        return self.flix_api
+
+    def get_selected_show(self):
+        &#34;&#34;&#34;get_selected_show will return the selected show info
+
+        Raises:
+            RuntimeError: Show not found
+            RuntimeError: Need authentication
+
+        Returns:
+            Tuple[int, bool, str] -- Show ID, Episodic, Show tracking code
+        &#34;&#34;&#34;
+        if not self.authenticated:
+            raise RuntimeError(self.__err_authenticate)
+
+        stc = self.__selected_show_tracking_code
+        if not (stc in self.show_tracking_code):
+            raise RuntimeError(self.__err_show_not_found)
+        show_id = self.show_tracking_code[stc][0]
+        episodic = self.show_tracking_code[stc][1]
+        return show_id, episodic, stc
+
+    def get_selected_episode(self):
+        &#34;&#34;&#34;get_selected_episode will return the selected episode info
+
+        Raises:
+            RuntimeError: Episode not found
+            RuntimeError: Need authentication
+
+        Returns:
+            Tuple[int, str] -- Episode ID, Episode tracking code
+        &#34;&#34;&#34;
+        if not self.authenticated:
+            raise RuntimeError(self.__err_authenticate)
+
+        etc = self.__selected_episode_tracking_code
+        if not (etc in self.episode_tracking_code):
+            raise RuntimeError(self.__err_episode_not_found)
+        episode_id = self.episode_tracking_code[etc]
+        return episode_id, etc
+
+    def get_markers_by_name(self):
+        &#34;&#34;&#34;get_markers will get the sequence_revision to have a
+        mapping of markers: start -&gt; marker_name
+
+        Returns:
+            Dict -- Mapping start -&gt; marker_name
+        &#34;&#34;&#34;
+        seq_id, seq_rev_number, _ = self.get_selected_sequence()
+        show_id, _, _ = self.get_selected_show()
+        sequence_revision = self.flix_api.get_sequence_rev(
+            show_id, seq_id, seq_rev_number)
+        if sequence_revision is None:
+            self.__error(&#39;Could not retreive sequence revision&#39;)
+            return []
+        markers_mapping = {}
+        markers = sequence_revision.get(&#39;meta_data&#39;, {}).get(&#39;markers&#39;, [])
+        for m in markers:
+            markers_mapping[m.get(&#39;start&#39;)] = m.get(&#39;name&#39;)
+        return OrderedDict(sorted(markers_mapping.items()))
+
+    def get_dialogues_by_panel_id(self):
+        &#34;&#34;&#34;get_dialogues_by_panel_id will get the dialogues to have
+        a mapping panel_id -&gt; dialogue
+
+        Returns:
+            Dict -- Mapping panel_id to dialogue
+        &#34;&#34;&#34;
+        seq_id, seq_rev_number, _ = self.get_selected_sequence()
+        show_id, _, _ = self.get_selected_show()
+        dialogues = self.get_flix_api().get_dialogues(
+            show_id, seq_id, seq_rev_number)
+
+        mapped_dialogues = {}
+        cleanr = re.compile(&#39;&lt;.*?&gt;|&amp;([a-z0-9]+|#[0-9]{1,6}|#x[0-9a-f]{1,6});&#39;)
+        for d in dialogues:
+            t = d.get(&#39;text&#39;, &#39;&#39;).replace(&#39;&lt;/p&gt;&#39;, &#39;\n&#39;)
+            mapped_dialogues[d.get(&#39;panel_id&#39;)] = re.sub(cleanr, &#39;&#39;, t)
+        return mapped_dialogues
+
+    def get_default_image_name(
+            self,
+            seq_rev_number,
+            panel_pos,
+            panel_id,
+            panel_revision):
+        &#34;&#34;&#34;get_default_image_name will format the image name
+
+        Arguments:
+            seq_rev_number {int} -- Sequence revision number
+
+            panel_pos {int} -- Panel position
+
+            panel_id {int} -- Panel ID
+
+            panel_revision {int} -- Panel revision
+
+        Returns:
+            str -- Formatted name
+        &#34;&#34;&#34;
+        _, _, show_tracking_code = self.get_selected_show()
+        _, _, seq_tracking_code = self.get_selected_sequence()
+        return &#39;{0}_{1}_v{2}_{3}_{4}_v{5}&#39;.format(
+            show_tracking_code,
+            seq_tracking_code,
+            seq_rev_number,
+            panel_pos,
+            panel_id,
+            panel_revision)
+
+    def download_first_thumb(self, p):
+        temp_path = tempfile.mkdtemp()
+        thumb_mo = p.get(
+            &#39;asset&#39;, {}).get(
+            &#39;media_objects&#39;, {}).get(
+            &#39;thumbnail&#39;, [])
+        thumb_mo_id = None if len(thumb_mo) &lt; 1 else thumb_mo[0].get(&#39;id&#39;)
+        if thumb_mo_id is None:
+            self.__error(&#39;Could not retrieve thumbnail ID&#39;)
+            return None
+        _, _, seq_tracking_code = self.get_selected_sequence()
+        temp_filepath = os.path.join(
+            temp_path,
+            &#39;{0}_{1}_{2}_.png&#39;.format(
+                seq_tracking_code,
+                p.get(&#39;panel_id&#39;),
+                p.get(&#39;revision_counter&#39;)))
+        if sys.platform == &#39;win32&#39; or sys.platform == &#39;cygwin&#39;:
+            temp_filepath = temp_filepath.replace(&#39;\\&#39;, &#39;\\\\&#39;)
+        if self.flix_api.download_media_object(
+                temp_filepath, thumb_mo_id) is None:
+            self.__error(&#39;Could not download thumbnail&#39;)
+            return None
+        return temp_filepath
+
+    def get_panels(self):
+        show_id, _, _ = self.get_selected_show()
+        seq_id, seq_rev_number, _ = self.get_selected_sequence()
+        return self.get_flix_api().get_panels(show_id,
+                                              seq_id,
+                                              seq_rev_number)
+
+    def handle_duplicate_panels(self, panels):
+        &#34;&#34;&#34;handle_duplicate_panels will handle duplicate panels
+        and create new ones
+
+        Arguments:
+            panels {List} -- List of Panels
+
+        Returns:
+            List -- List of panels
+        &#34;&#34;&#34;
+        show_id, _, _ = self.get_selected_show()
+        seq_id, _, _ = self.get_selected_sequence()
+        uniq_p = {}
+        for i, p in enumerate(panels):
+            uid = &#39;{0}-{1}&#39;.format(p.get(&#39;panel_id&#39;), p.get(&#39;revision_number&#39;))
+            if uid in uniq_p:
+                panels[i] = self.duplicate_panel(show_id, seq_id, p)
+                continue
+            uniq_p[uid] = True
+        return panels
+
+    def create_blank_panel(self):
+        blank_panel = self.flix_api.new_panel(show_id, sequence_id)
+        blank_panel[&#39;panel_id&#39;] = blank_panel.get(&#39;id&#39;)
+        blank_panel[&#39;revision_number&#39;] = 1
+        return blank_panel
+
+    def duplicate_panel(self, show_id, sequence_id, p):
+        &#34;&#34;&#34;duplicate_panel wil duplicate a panel and reuse his asset
+
+        Arguments:
+            show_id {int} -- Show ID
+
+            sequence_id {int} -- Sequence ID
+
+            p {Dict} -- Panel to duplicate
+
+        Returns:
+            Dict -- New Duplicated Panel
+        &#34;&#34;&#34;
+        new_panel = self.flix_api.new_panel(
+            show_id, sequence_id, p[&#39;asset&#39;][&#39;asset_id&#39;], p[&#39;duration&#39;])
+        new_panel[&#39;panel_id&#39;] = new_panel.get(&#39;id&#39;)
+        new_panel[&#39;revision_number&#39;] = 1
+        new_panel[&#39;duration&#39;] = p[&#39;duration&#39;]
+        return new_panel
+
+    def get_media_object_per_shots(self, fn_progress):
+        &#34;&#34;&#34;get_media_object_per_shots will get the media objects per shotss
+
+        Raises:
+            RuntimeError: Need authentication
+
+        Arguments:
+            Callable[[str], None] -- fn_progress is a progress function
+
+        Returns:
+            Dict -- Mapping of media objects per shots
+        &#34;&#34;&#34;
+        if not self.authenticated:
+            raise RuntimeError(self.__err_authenticate)
+
+        show_id, episodic, _ = self.get_selected_show()
+        seq_id, seq_rev_number, _ = self.get_selected_sequence()
+        flix_api = self.get_flix_api()
+        fn_progress(&#39;get sequence revision&#39;)
+        seq_rev = flix_api.get_sequence_rev(show_id, seq_id, seq_rev_number)
+        episode_id = None
+        if episodic:
+            episode_id, _ = self.get_selected_episode()
+        if seq_rev is None:
+            self.__error(&#39;Could not retrieve sequence revision&#39;)
+            return None
+        fn_progress(&#39;get markers&#39;)
+        markers = self.get_flix_api().get_markers(seq_rev)
+        if len(markers) &lt; 1:
+            self.__info(&#39;You need at least one shot&#39;)
+            return None
+        fn_progress(&#39;get panels&#39;)
+        panels = self.get_flix_api().get_panels(
+            show_id, seq_id, seq_rev_number)
+        if panels is None:
+            self.__error(&#39;Could not retrieve panels&#39;)
+            return None
+        fn_progress(&#39;get markers per panels&#39;)
+        panels_per_markers = self.get_flix_api().get_markers_per_panels(markers, panels)
+        mo_per_shots, ok = self.get_flix_api().mo_per_shots(panels_per_markers,
+                                                            show_id,
+                                                            seq_id,
+                                                            seq_rev_number,
+                                                            episode_id)
+
+        # Split export quicktime
+        for shot_name in mo_per_shots:
+            def on_retry(r): return fn_progress(
+                &#39;export quicktime for shot {0}{1}&#39;.format(
+                    shot_name, &#39;.&#39; * (r % 4)))
+            fn_progress(&#39;export quicktime for shot {0}&#39;.format(shot_name))
+            mo = self.get_flix_api().get_mo_quicktime_export(
+                shot_name, panels_per_markers[shot_name],
+                show_id, seq_id, seq_rev_number, episode_id, on_retry)
+            mo_per_shots[shot_name][&#39;mov&#39;] = mo
+
+        if mo_per_shots is None:
+            self.__error(&#39;Could not retrieve media objects per shots&#39;)
+            return None
+        if ok is False:
+            return None
+        return mo_per_shots
+
+    def get_selected_sequence(self):
+        &#34;&#34;&#34;get_selected_sequence will return the selected sequence info
+
+        Raises:
+            RuntimeError: Sequence not found
+            RuntimeError: Need authentication
+
+        Returns:
+            Tuple[int, int, str] -- Sequence ID, Seq rev ID, Seq tracking code
+        &#34;&#34;&#34;
+        if not self.authenticated:
+            raise RuntimeError(self.__err_authenticate)
+
+        stc = self.__selected_sequence_tracking_code
+        if not (stc in self.sequence_tracking_code):
+            raise RuntimeError(self.__err_sequence_not_found)
+        seq_id = self.sequence_tracking_code[stc][0]
+        seq_rev = self.sequence_tracking_code[stc][1]
+        return seq_id, seq_rev, stc
+
+    def __create_line_label(self,
+                            name,
+                            label,
+                            min_width=200,
+                            echo_mode=False):
+        &#34;&#34;&#34;__create_line_label will create a line edit button and his label
+
+        Arguments:
+            name {str} -- Default value
+
+            label {str} -- Label name
+
+            min_width {int} -- Minium width (default: {200})
+
+            echo_mode {bool} -- Stars for password (default: {False})
+
+        Returns:
+            Tuple[Dict, Dict] -- Line Edit, Label
+        &#34;&#34;&#34;
+        line_edit = QLineEdit(name)
+        line_edit.setMinimumWidth(min_width)
+        if echo_mode:
+            line_edit.setEchoMode(QLineEdit.Password)
+        label = QLabel(label)
+        label.setBuddy(line_edit)
+        return line_edit, label
+
+    def __create_combo_label(self, label, fn_text_changed):
+        &#34;&#34;&#34;__create_combo_label will create a combo box and his label
+
+        Arguments:
+            label {str} -- Label name
+
+            fn_text_changed {object} -- Callback function for text_changed
+
+        Returns:
+            Tuple[Dict, Dict] -- ComboBox, Label
+        &#34;&#34;&#34;
+        combo = QComboBox()
+        label = QLabel(label)
+        label.setMinimumWidth(300)
+        label.setBuddy(combo)
+        combo.currentTextChanged.connect(fn_text_changed)
+        return combo, label
+
+    def __add_widget_to_layout(self, layout, *widgets):
+        &#34;&#34;&#34;__add_widget_to_layout will add all the widget to a layout
+        __add_widget_to_layout(layout, widget1, widget2, widget3)
+
+        Arguments:
+            layout {Dict} -- Layout to add widget to
+
+            widgets {*Dict} -- All the widgets to add
+        &#34;&#34;&#34;
+
+        for w in widgets:
+            layout.addWidget(w)
+
+    def __authenticate(self):
+        &#34;&#34;&#34;__authenticate will authenticate a user and update the view
+        &#34;&#34;&#34;
+        if self.authenticated:
+            self.flix_api.reset()
+            self.e_logout.emit()
+            self.__reset(&#39;Log In&#39;)
+            self.authenticated = False
+            return
+
+        credentials = self.flix_api.authenticate(self.hostname.text(),
+                                                 self.login.text(),
+                                                 self.password.text())
+        if credentials is None:
+            self.__error(&#39;Could not authenticate user&#39;)
+            self.login.clear()
+            self.password.clear()
+            return
+        self.e_login.emit(credentials)
+        self.authenticated = True
+        self.__init_shows()
+        self.__reset(&#39;Log Out&#39;)
+
+    def __reset(self, action=&#39;Log Out&#39;):
+        &#34;&#34;&#34;__reset will reset the login form / shows info for login / logout
+
+        Arguments:
+            action {str} -- action to handle (default: {&#39;Log Out&#39;})
+        &#34;&#34;&#34;
+        if action == &#39;Log Out&#39;:
+            self.hostname.setReadOnly(True)
+            self.login.setReadOnly(True)
+            self.password.setReadOnly(True)
+            self.submit.setText(&#39;Log Out&#39;)
+            return
+        self.hostname.setReadOnly(False)
+        self.login.setReadOnly(False)
+        self.password.setReadOnly(False)
+        self.show_list.clear()
+        self.sequence_list.clear()
+        self.episode_list.clear()
+        self.submit.setText(action)
+
+    def __on_show_changed(self, tracking_code):
+        &#34;&#34;&#34;__on_show_changed triggered after a show is selected,
+        will init the list of sequences from this show
+
+        Arguments:
+            tracking_code {str} -- show_tracking_code from the event
+        &#34;&#34;&#34;
+        if tracking_code == &#39;&#39;:
+            return
+        self.__selected_show_tracking_code = tracking_code
+        show_id, episodic, _ = self.get_selected_show()
+        self.e_show_changed.emit(show_id, tracking_code, episodic)
+
+        self.sequence_list.clear()
+        self.episode_list.clear()
+        # If the show is episodic we show the episode list and update his list
+        if episodic is True:
+            self.episode_list.show()
+            self.episode_label.show()
+            episodes = self.flix_api.get_episodes(show_id)
+            if episodes is None:
+                self.__error(&#39;Could not retrieve episodes&#39;)
+                return
+            self.episode_tracking_code = self.__get_episode_tracking_code(
+                episodes)
+            for e in self.episode_tracking_code:
+                self.episode_list.addItem(e)
+            self.episode_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
+            return
+        # If not episodic we hide the episode list and update the sequence list
+        self.episode_list.hide()
+        self.episode_label.hide()
+        sequences = self.flix_api.get_sequences(show_id)
+        if sequences is None:
+            self.__error(&#39;Could not retreive sequences&#39;)
+            return
+        self.sequence_tracking_code = self.__get_sequence_tracking_code(
+            sequences)
+        for s in self.sequence_tracking_code:
+            self.sequence_list.addItem(s)
+        self.sequence_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
+
+    def __on_episode_changed(self, tracking_code):
+        &#34;&#34;&#34;__on_episode_changed triggered after an episode is selected,
+        will store the selected episode
+
+        Arguments:
+            tracking_code {str} -- episode_tracking_code from the event
+        &#34;&#34;&#34;
+        if tracking_code == &#39;&#39;:
+            return
+        self.__selected_episode_tracking_code = tracking_code
+        show_id, _, _ = self.get_selected_show()
+        episode_id, _ = self.get_selected_episode()
+        self.e_episode_changed.emit(episode_id, tracking_code)
+        sequences = self.flix_api.get_sequences(show_id, episode_id)
+        if sequences is None:
+            self.__error(&#39;Could not retreive sequences&#39;)
+            return
+        self.sequence_tracking_code = self.__get_sequence_tracking_code(
+            sequences)
+        self.sequence_list.clear()
+        for s in self.sequence_tracking_code:
+            self.sequence_list.addItem(s)
+        self.sequence_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
+
+    def on_sequence_changed(self, tracking_code):
+        &#34;&#34;&#34;on_sequence_changed triggered after a sequence is selected,
+        will store the selected sequence
+
+        Arguments:
+            tracking_code {str} -- sequence_tracking_code from the event
+        &#34;&#34;&#34;
+        if tracking_code == &#39;&#39;:
+            return
+        self.__selected_sequence_tracking_code = tracking_code
+        seq_id, seq_rev, _ = self.get_selected_sequence()
+        self.e_sequence_changed.emit(seq_id, seq_rev, tracking_code)
+
+    def __init_shows(self):
+        &#34;&#34;&#34;__init_shows will retrieve the list of show and update the UI
+        &#34;&#34;&#34;
+        shows = self.flix_api.get_shows()
+        if shows is None:
+            self.__error(&#39;Could not retreive shows&#39;)
+            return
+        self.show_tracking_code = self.__get_show_tracking_code(shows)
+        self.show_list.clear()
+        for s in self.show_tracking_code:
+            self.show_list.addItem(s)
+        self.show_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
+
+    def __sort_alphanumeric(self, d):
+        &#34;&#34;&#34;__sort_alphanumeric will sort a dictionnary alphanumerically by keys
+
+        Arguments:
+            d {Dict} -- Dictionnary to sort
+
+        Returns:
+            Dict -- Sorted Dictionnary
+        &#34;&#34;&#34;
+        def convert(text): return int(text) if text.isdigit() else text
+
+        def alphanum_key(key): return [convert(c)
+                                       for c in re.split(&#39;([0-9]+)&#39;, key)]
+        keys = sorted(d.keys(), key=alphanum_key)
+        return OrderedDict((k, d[k]) for k in keys)
+
+    def __get_show_tracking_code(self, shows):
+        &#34;&#34;&#34;__get_show_tracking_code will format the shows to have a mapping:
+        tracking_code -&gt; [show_id, episodic]
+
+        Arguments:
+            shows {List} -- List of shows
+
+        Returns:
+            Dict -- Shows by tracking code
+        &#34;&#34;&#34;
+        show_tracking_codes = {}
+        if shows is None:
+            return show_tracking_codes
+        for s in shows:
+            if s.get(&#39;hidden&#39;, False) is False:
+                show_tracking_codes[s.get(&#39;tracking_code&#39;)] = [
+                    s.get(&#39;id&#39;),
+                    s.get(&#39;episodic&#39;)
+                ]
+        return self.__sort_alphanumeric(show_tracking_codes)
+
+    def __get_sequence_tracking_code(self, sequences):
+        &#34;&#34;&#34;__get_sequence_tracking_code will format the sequences to have
+        a mapping: tracking_code -&gt; [sequence_id, last_seq_rev_id]
+
+        Arguments:
+            sequences {List} -- List of sequences
+
+        Returns:
+            Dict -- sequence ID and last seq rev by tracking code
+        &#34;&#34;&#34;
+        sequence_tracking_codes = {}
+        if sequences is None:
+            return sequence_tracking_codes
+        for s in sequences:
+            if s.get(&#39;revisions_count&#39;) &gt; 0:
+                sequence_tracking_codes[s.get(&#39;tracking_code&#39;)] = [
+                    s.get(&#39;id&#39;),
+                    s.get(&#39;revisions_count&#39;)
+                ]
+        return self.__sort_alphanumeric(sequence_tracking_codes)
+
+    def __get_episode_tracking_code(self, episodes):
+        &#34;&#34;&#34;__get_episode_tracking_code will format the episodes to have a
+        mapping: tracking_code -&gt; episode_id
+
+        Arguments:
+            episodes {List} -- List of episodes
+
+        Returns:
+            Dict -- Episodes by tracking code
+        &#34;&#34;&#34;
+        episode_tracking_codes = {}
+        if episodes is None:
+            return episode_tracking_codes
+        for s in episodes:
+            episode_tracking_codes[s.get(&#39;tracking_code&#39;)] = s.get(&#39;id&#39;)
+        return self.__sort_alphanumeric(episode_tracking_codes)
+
+    def __error(self, message):
+        &#34;&#34;&#34;__error will show a error message with a given message
+
+        Arguments:
+            message {str} -- Message to show
+        &#34;&#34;&#34;
+        err = QErrorMessage(self.parent())
+        err.setWindowTitle(&#39;Flix&#39;)
+        err.showMessage(message)
+        err.exec_()</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>PySide2.QtWidgets.QWidget</li>
+<li>PySide2.QtCore.QObject</li>
+<li>PySide2.QtGui.QPaintDevice</li>
+<li>Shiboken.Object</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="flix_ui.flix_ui.e_episode_changed"><code class="name">var <span class="ident">e_episode_changed</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="flix_ui.flix_ui.e_login"><code class="name">var <span class="ident">e_login</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="flix_ui.flix_ui.e_logout"><code class="name">var <span class="ident">e_logout</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="flix_ui.flix_ui.e_sequence_changed"><code class="name">var <span class="ident">e_sequence_changed</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="flix_ui.flix_ui.e_show_changed"><code class="name">var <span class="ident">e_show_changed</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="flix_ui.flix_ui.staticMetaObject"><code class="name">var <span class="ident">staticMetaObject</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="flix_ui.flix_ui.create_blank_panel"><code class="name flex">
+<span>def <span class="ident">create_blank_panel</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def create_blank_panel(self):
+    blank_panel = self.flix_api.new_panel(show_id, sequence_id)
+    blank_panel[&#39;panel_id&#39;] = blank_panel.get(&#39;id&#39;)
+    blank_panel[&#39;revision_number&#39;] = 1
+    return blank_panel</code></pre>
+</details>
+</dd>
+<dt id="flix_ui.flix_ui.download_first_thumb"><code class="name flex">
+<span>def <span class="ident">download_first_thumb</span></span>(<span>self, p)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def download_first_thumb(self, p):
+    temp_path = tempfile.mkdtemp()
+    thumb_mo = p.get(
+        &#39;asset&#39;, {}).get(
+        &#39;media_objects&#39;, {}).get(
+        &#39;thumbnail&#39;, [])
+    thumb_mo_id = None if len(thumb_mo) &lt; 1 else thumb_mo[0].get(&#39;id&#39;)
+    if thumb_mo_id is None:
+        self.__error(&#39;Could not retrieve thumbnail ID&#39;)
+        return None
+    _, _, seq_tracking_code = self.get_selected_sequence()
+    temp_filepath = os.path.join(
+        temp_path,
+        &#39;{0}_{1}_{2}_.png&#39;.format(
+            seq_tracking_code,
+            p.get(&#39;panel_id&#39;),
+            p.get(&#39;revision_counter&#39;)))
+    if sys.platform == &#39;win32&#39; or sys.platform == &#39;cygwin&#39;:
+        temp_filepath = temp_filepath.replace(&#39;\\&#39;, &#39;\\\\&#39;)
+    if self.flix_api.download_media_object(
+            temp_filepath, thumb_mo_id) is None:
+        self.__error(&#39;Could not download thumbnail&#39;)
+        return None
+    return temp_filepath</code></pre>
+</details>
+</dd>
+<dt id="flix_ui.flix_ui.duplicate_panel"><code class="name flex">
+<span>def <span class="ident">duplicate_panel</span></span>(<span>self, show_id, sequence_id, p)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>duplicate_panel wil duplicate a panel and reuse his asset</p>
+<h2 id="arguments">Arguments</h2>
+<p>show_id {int} &ndash; Show ID</p>
+<p>sequence_id {int} &ndash; Sequence ID</p>
+<p>p {Dict} &ndash; Panel to duplicate</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict -- New Duplicated Panel</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def duplicate_panel(self, show_id, sequence_id, p):
+    &#34;&#34;&#34;duplicate_panel wil duplicate a panel and reuse his asset
+
+    Arguments:
+        show_id {int} -- Show ID
+
+        sequence_id {int} -- Sequence ID
+
+        p {Dict} -- Panel to duplicate
+
+    Returns:
+        Dict -- New Duplicated Panel
+    &#34;&#34;&#34;
+    new_panel = self.flix_api.new_panel(
+        show_id, sequence_id, p[&#39;asset&#39;][&#39;asset_id&#39;], p[&#39;duration&#39;])
+    new_panel[&#39;panel_id&#39;] = new_panel.get(&#39;id&#39;)
+    new_panel[&#39;revision_number&#39;] = 1
+    new_panel[&#39;duration&#39;] = p[&#39;duration&#39;]
+    return new_panel</code></pre>
+</details>
+</dd>
+<dt id="flix_ui.flix_ui.get_default_image_name"><code class="name flex">
+<span>def <span class="ident">get_default_image_name</span></span>(<span>self, seq_rev_number, panel_pos, panel_id, panel_revision)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>get_default_image_name will format the image name</p>
+<h2 id="arguments">Arguments</h2>
+<p>seq_rev_number {int} &ndash; Sequence revision number</p>
+<p>panel_pos {int} &ndash; Panel position</p>
+<p>panel_id {int} &ndash; Panel ID</p>
+<p>panel_revision {int} &ndash; Panel revision</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>str -- Formatted name</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_default_image_name(
+        self,
+        seq_rev_number,
+        panel_pos,
+        panel_id,
+        panel_revision):
+    &#34;&#34;&#34;get_default_image_name will format the image name
+
+    Arguments:
+        seq_rev_number {int} -- Sequence revision number
+
+        panel_pos {int} -- Panel position
+
+        panel_id {int} -- Panel ID
+
+        panel_revision {int} -- Panel revision
+
+    Returns:
+        str -- Formatted name
+    &#34;&#34;&#34;
+    _, _, show_tracking_code = self.get_selected_show()
+    _, _, seq_tracking_code = self.get_selected_sequence()
+    return &#39;{0}_{1}_v{2}_{3}_{4}_v{5}&#39;.format(
+        show_tracking_code,
+        seq_tracking_code,
+        seq_rev_number,
+        panel_pos,
+        panel_id,
+        panel_revision)</code></pre>
+</details>
+</dd>
+<dt id="flix_ui.flix_ui.get_dialogues_by_panel_id"><code class="name flex">
+<span>def <span class="ident">get_dialogues_by_panel_id</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>get_dialogues_by_panel_id will get the dialogues to have
+a mapping panel_id -&gt; dialogue</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict -- Mapping panel_id to dialogue</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_dialogues_by_panel_id(self):
+    &#34;&#34;&#34;get_dialogues_by_panel_id will get the dialogues to have
+    a mapping panel_id -&gt; dialogue
+
+    Returns:
+        Dict -- Mapping panel_id to dialogue
+    &#34;&#34;&#34;
+    seq_id, seq_rev_number, _ = self.get_selected_sequence()
+    show_id, _, _ = self.get_selected_show()
+    dialogues = self.get_flix_api().get_dialogues(
+        show_id, seq_id, seq_rev_number)
+
+    mapped_dialogues = {}
+    cleanr = re.compile(&#39;&lt;.*?&gt;|&amp;([a-z0-9]+|#[0-9]{1,6}|#x[0-9a-f]{1,6});&#39;)
+    for d in dialogues:
+        t = d.get(&#39;text&#39;, &#39;&#39;).replace(&#39;&lt;/p&gt;&#39;, &#39;\n&#39;)
+        mapped_dialogues[d.get(&#39;panel_id&#39;)] = re.sub(cleanr, &#39;&#39;, t)
+    return mapped_dialogues</code></pre>
+</details>
+</dd>
+<dt id="flix_ui.flix_ui.get_flix_api"><code class="name flex">
+<span>def <span class="ident">get_flix_api</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>get_flix_api will return the flix_api</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>flix_api.flix -- Flix api entity</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_flix_api(self):
+    &#34;&#34;&#34;get_flix_api will return the flix_api
+
+    Returns:
+        flix_api.flix -- Flix api entity
+    &#34;&#34;&#34;
+    return self.flix_api</code></pre>
+</details>
+</dd>
+<dt id="flix_ui.flix_ui.get_markers_by_name"><code class="name flex">
+<span>def <span class="ident">get_markers_by_name</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>get_markers will get the sequence_revision to have a
+mapping of markers: start -&gt; marker_name</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict -- Mapping start -&gt; marker_name</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_markers_by_name(self):
+    &#34;&#34;&#34;get_markers will get the sequence_revision to have a
+    mapping of markers: start -&gt; marker_name
+
+    Returns:
+        Dict -- Mapping start -&gt; marker_name
+    &#34;&#34;&#34;
+    seq_id, seq_rev_number, _ = self.get_selected_sequence()
+    show_id, _, _ = self.get_selected_show()
+    sequence_revision = self.flix_api.get_sequence_rev(
+        show_id, seq_id, seq_rev_number)
+    if sequence_revision is None:
+        self.__error(&#39;Could not retreive sequence revision&#39;)
+        return []
+    markers_mapping = {}
+    markers = sequence_revision.get(&#39;meta_data&#39;, {}).get(&#39;markers&#39;, [])
+    for m in markers:
+        markers_mapping[m.get(&#39;start&#39;)] = m.get(&#39;name&#39;)
+    return OrderedDict(sorted(markers_mapping.items()))</code></pre>
+</details>
+</dd>
+<dt id="flix_ui.flix_ui.get_media_object_per_shots"><code class="name flex">
+<span>def <span class="ident">get_media_object_per_shots</span></span>(<span>self, fn_progress)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>get_media_object_per_shots will get the media objects per shotss</p>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code>RuntimeError</code></dt>
+<dd>Need authentication</dd>
+</dl>
+<h2 id="arguments">Arguments</h2>
+<p>Callable[[str], None] &ndash; fn_progress is a progress function</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict -- Mapping</code> of <code>media objects per shots</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_media_object_per_shots(self, fn_progress):
+    &#34;&#34;&#34;get_media_object_per_shots will get the media objects per shotss
+
+    Raises:
+        RuntimeError: Need authentication
+
+    Arguments:
+        Callable[[str], None] -- fn_progress is a progress function
+
+    Returns:
+        Dict -- Mapping of media objects per shots
+    &#34;&#34;&#34;
+    if not self.authenticated:
+        raise RuntimeError(self.__err_authenticate)
+
+    show_id, episodic, _ = self.get_selected_show()
+    seq_id, seq_rev_number, _ = self.get_selected_sequence()
+    flix_api = self.get_flix_api()
+    fn_progress(&#39;get sequence revision&#39;)
+    seq_rev = flix_api.get_sequence_rev(show_id, seq_id, seq_rev_number)
+    episode_id = None
+    if episodic:
+        episode_id, _ = self.get_selected_episode()
+    if seq_rev is None:
+        self.__error(&#39;Could not retrieve sequence revision&#39;)
+        return None
+    fn_progress(&#39;get markers&#39;)
+    markers = self.get_flix_api().get_markers(seq_rev)
+    if len(markers) &lt; 1:
+        self.__info(&#39;You need at least one shot&#39;)
+        return None
+    fn_progress(&#39;get panels&#39;)
+    panels = self.get_flix_api().get_panels(
+        show_id, seq_id, seq_rev_number)
+    if panels is None:
+        self.__error(&#39;Could not retrieve panels&#39;)
+        return None
+    fn_progress(&#39;get markers per panels&#39;)
+    panels_per_markers = self.get_flix_api().get_markers_per_panels(markers, panels)
+    mo_per_shots, ok = self.get_flix_api().mo_per_shots(panels_per_markers,
+                                                        show_id,
+                                                        seq_id,
+                                                        seq_rev_number,
+                                                        episode_id)
+
+    # Split export quicktime
+    for shot_name in mo_per_shots:
+        def on_retry(r): return fn_progress(
+            &#39;export quicktime for shot {0}{1}&#39;.format(
+                shot_name, &#39;.&#39; * (r % 4)))
+        fn_progress(&#39;export quicktime for shot {0}&#39;.format(shot_name))
+        mo = self.get_flix_api().get_mo_quicktime_export(
+            shot_name, panels_per_markers[shot_name],
+            show_id, seq_id, seq_rev_number, episode_id, on_retry)
+        mo_per_shots[shot_name][&#39;mov&#39;] = mo
+
+    if mo_per_shots is None:
+        self.__error(&#39;Could not retrieve media objects per shots&#39;)
+        return None
+    if ok is False:
+        return None
+    return mo_per_shots</code></pre>
+</details>
+</dd>
+<dt id="flix_ui.flix_ui.get_panels"><code class="name flex">
+<span>def <span class="ident">get_panels</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_panels(self):
+    show_id, _, _ = self.get_selected_show()
+    seq_id, seq_rev_number, _ = self.get_selected_sequence()
+    return self.get_flix_api().get_panels(show_id,
+                                          seq_id,
+                                          seq_rev_number)</code></pre>
+</details>
+</dd>
+<dt id="flix_ui.flix_ui.get_selected_episode"><code class="name flex">
+<span>def <span class="ident">get_selected_episode</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>get_selected_episode will return the selected episode info</p>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code>RuntimeError</code></dt>
+<dd>Episode not found</dd>
+<dt><code>RuntimeError</code></dt>
+<dd>Need authentication</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Tuple[int, str] -- Episode ID, Episode tracking code</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_selected_episode(self):
+    &#34;&#34;&#34;get_selected_episode will return the selected episode info
+
+    Raises:
+        RuntimeError: Episode not found
+        RuntimeError: Need authentication
+
+    Returns:
+        Tuple[int, str] -- Episode ID, Episode tracking code
+    &#34;&#34;&#34;
+    if not self.authenticated:
+        raise RuntimeError(self.__err_authenticate)
+
+    etc = self.__selected_episode_tracking_code
+    if not (etc in self.episode_tracking_code):
+        raise RuntimeError(self.__err_episode_not_found)
+    episode_id = self.episode_tracking_code[etc]
+    return episode_id, etc</code></pre>
+</details>
+</dd>
+<dt id="flix_ui.flix_ui.get_selected_sequence"><code class="name flex">
+<span>def <span class="ident">get_selected_sequence</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>get_selected_sequence will return the selected sequence info</p>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code>RuntimeError</code></dt>
+<dd>Sequence not found</dd>
+<dt><code>RuntimeError</code></dt>
+<dd>Need authentication</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Tuple[int, int, str] -- Sequence ID, Seq rev ID, Seq tracking code</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_selected_sequence(self):
+    &#34;&#34;&#34;get_selected_sequence will return the selected sequence info
+
+    Raises:
+        RuntimeError: Sequence not found
+        RuntimeError: Need authentication
+
+    Returns:
+        Tuple[int, int, str] -- Sequence ID, Seq rev ID, Seq tracking code
+    &#34;&#34;&#34;
+    if not self.authenticated:
+        raise RuntimeError(self.__err_authenticate)
+
+    stc = self.__selected_sequence_tracking_code
+    if not (stc in self.sequence_tracking_code):
+        raise RuntimeError(self.__err_sequence_not_found)
+    seq_id = self.sequence_tracking_code[stc][0]
+    seq_rev = self.sequence_tracking_code[stc][1]
+    return seq_id, seq_rev, stc</code></pre>
+</details>
+</dd>
+<dt id="flix_ui.flix_ui.get_selected_show"><code class="name flex">
+<span>def <span class="ident">get_selected_show</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>get_selected_show will return the selected show info</p>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code>RuntimeError</code></dt>
+<dd>Show not found</dd>
+<dt><code>RuntimeError</code></dt>
+<dd>Need authentication</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Tuple[int, bool, str] -- Show ID, Episodic, Show tracking code</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_selected_show(self):
+    &#34;&#34;&#34;get_selected_show will return the selected show info
+
+    Raises:
+        RuntimeError: Show not found
+        RuntimeError: Need authentication
+
+    Returns:
+        Tuple[int, bool, str] -- Show ID, Episodic, Show tracking code
+    &#34;&#34;&#34;
+    if not self.authenticated:
+        raise RuntimeError(self.__err_authenticate)
+
+    stc = self.__selected_show_tracking_code
+    if not (stc in self.show_tracking_code):
+        raise RuntimeError(self.__err_show_not_found)
+    show_id = self.show_tracking_code[stc][0]
+    episodic = self.show_tracking_code[stc][1]
+    return show_id, episodic, stc</code></pre>
+</details>
+</dd>
+<dt id="flix_ui.flix_ui.handle_duplicate_panels"><code class="name flex">
+<span>def <span class="ident">handle_duplicate_panels</span></span>(<span>self, panels)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>handle_duplicate_panels will handle duplicate panels
+and create new ones</p>
+<h2 id="arguments">Arguments</h2>
+<p>panels {List} &ndash; List of Panels</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>List -- List</code> of <code>panels</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def handle_duplicate_panels(self, panels):
+    &#34;&#34;&#34;handle_duplicate_panels will handle duplicate panels
+    and create new ones
+
+    Arguments:
+        panels {List} -- List of Panels
+
+    Returns:
+        List -- List of panels
+    &#34;&#34;&#34;
+    show_id, _, _ = self.get_selected_show()
+    seq_id, _, _ = self.get_selected_sequence()
+    uniq_p = {}
+    for i, p in enumerate(panels):
+        uid = &#39;{0}-{1}&#39;.format(p.get(&#39;panel_id&#39;), p.get(&#39;revision_number&#39;))
+        if uid in uniq_p:
+            panels[i] = self.duplicate_panel(show_id, seq_id, p)
+            continue
+        uniq_p[uid] = True
+    return panels</code></pre>
+</details>
+</dd>
+<dt id="flix_ui.flix_ui.is_authenticated"><code class="name flex">
+<span>def <span class="ident">is_authenticated</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>is_authenticated will return the state of the authentication</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool -- Authenticated</code> or <code>not</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def is_authenticated(self):
+    &#34;&#34;&#34;is_authenticated will return the state of the authentication
+
+    Returns:
+        bool -- Authenticated or not
+    &#34;&#34;&#34;
+    return self.authenticated</code></pre>
+</details>
+</dd>
+<dt id="flix_ui.flix_ui.on_sequence_changed"><code class="name flex">
+<span>def <span class="ident">on_sequence_changed</span></span>(<span>self, tracking_code)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>on_sequence_changed triggered after a sequence is selected,
+will store the selected sequence</p>
+<h2 id="arguments">Arguments</h2>
+<p>tracking_code {str} &ndash; sequence_tracking_code from the event</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def on_sequence_changed(self, tracking_code):
+    &#34;&#34;&#34;on_sequence_changed triggered after a sequence is selected,
+    will store the selected sequence
+
+    Arguments:
+        tracking_code {str} -- sequence_tracking_code from the event
+    &#34;&#34;&#34;
+    if tracking_code == &#39;&#39;:
+        return
+    self.__selected_sequence_tracking_code = tracking_code
+    seq_id, seq_rev, _ = self.get_selected_sequence()
+    self.e_sequence_changed.emit(seq_id, seq_rev, tracking_code)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="flix_ui.main_dialogue"><code class="flex name class">
+<span>class <span class="ident">main_dialogue</span></span>
+<span>(</span><span>parent=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>QDialog(self, parent: typing.Union[PySide2.QtWidgets.QWidget, NoneType] = None, f: PySide2.QtCore.Qt.WindowFlags = Default(Qt.WindowFlags))</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class main_dialogue(QDialog):
+    def __init__(self, parent=None):
+        super(main_dialogue, self).__init__(parent)
+        self.setWindowTitle(&#39;Flix Production Handoff&#39;)
+
+        main_layout = QVBoxLayout()
+        widget_flix_ui = flix_ui()
+        # Bind event from flix
+        widget_flix_ui.e_login.connect(self.on_login)
+        widget_flix_ui.e_logout.connect(self.on_logout)
+        widget_flix_ui.e_show_changed.connect(self.on_show_changed)
+        widget_flix_ui.e_episode_changed.connect(self.on_episode_changed)
+        widget_flix_ui.e_sequence_changed.connect(self.on_sequence_changed)
+
+        # Add flix Ui widget
+        main_layout.addWidget(widget_flix_ui)
+        self.setLayout(main_layout)
+
+    def on_login(self, credentials):
+        print(&#39;logged in&#39;, credentials)
+
+    def on_logout(self):
+        print(&#39;logged out&#39;)
+
+    def on_show_changed(self, show_id, tracking_code, episodic):
+        print(&#39;show selected&#39;, show_id, tracking_code, episodic)
+
+    def on_episode_changed(self, episode_id, tracking_code):
+        print(&#39;episode selected&#39;, episode_id, tracking_code)
+
+    def on_sequence_changed(self, sequence_id, seq_rev, tracking_code):
+        print(&#39;sequence selected&#39;, sequence_id, seq_rev, tracking_code)
+        print(sequence_id, seq_rev, tracking_code)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>PySide2.QtWidgets.QDialog</li>
+<li>PySide2.QtWidgets.QWidget</li>
+<li>PySide2.QtCore.QObject</li>
+<li>PySide2.QtGui.QPaintDevice</li>
+<li>Shiboken.Object</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="flix_ui.main_dialogue.staticMetaObject"><code class="name">var <span class="ident">staticMetaObject</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="flix_ui.main_dialogue.on_episode_changed"><code class="name flex">
+<span>def <span class="ident">on_episode_changed</span></span>(<span>self, episode_id, tracking_code)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def on_episode_changed(self, episode_id, tracking_code):
+    print(&#39;episode selected&#39;, episode_id, tracking_code)</code></pre>
+</details>
+</dd>
+<dt id="flix_ui.main_dialogue.on_login"><code class="name flex">
+<span>def <span class="ident">on_login</span></span>(<span>self, credentials)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def on_login(self, credentials):
+    print(&#39;logged in&#39;, credentials)</code></pre>
+</details>
+</dd>
+<dt id="flix_ui.main_dialogue.on_logout"><code class="name flex">
+<span>def <span class="ident">on_logout</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def on_logout(self):
+    print(&#39;logged out&#39;)</code></pre>
+</details>
+</dd>
+<dt id="flix_ui.main_dialogue.on_sequence_changed"><code class="name flex">
+<span>def <span class="ident">on_sequence_changed</span></span>(<span>self, sequence_id, seq_rev, tracking_code)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def on_sequence_changed(self, sequence_id, seq_rev, tracking_code):
+    print(&#39;sequence selected&#39;, sequence_id, seq_rev, tracking_code)
+    print(sequence_id, seq_rev, tracking_code)</code></pre>
+</details>
+</dd>
+<dt id="flix_ui.main_dialogue.on_show_changed"><code class="name flex">
+<span>def <span class="ident">on_show_changed</span></span>(<span>self, show_id, tracking_code, episodic)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def on_show_changed(self, show_id, tracking_code, episodic):
+    print(&#39;show selected&#39;, show_id, tracking_code, episodic)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="flix_ui.flix_ui" href="#flix_ui.flix_ui">flix_ui</a></code></h4>
+<ul class="">
+<li><code><a title="flix_ui.flix_ui.create_blank_panel" href="#flix_ui.flix_ui.create_blank_panel">create_blank_panel</a></code></li>
+<li><code><a title="flix_ui.flix_ui.download_first_thumb" href="#flix_ui.flix_ui.download_first_thumb">download_first_thumb</a></code></li>
+<li><code><a title="flix_ui.flix_ui.duplicate_panel" href="#flix_ui.flix_ui.duplicate_panel">duplicate_panel</a></code></li>
+<li><code><a title="flix_ui.flix_ui.e_episode_changed" href="#flix_ui.flix_ui.e_episode_changed">e_episode_changed</a></code></li>
+<li><code><a title="flix_ui.flix_ui.e_login" href="#flix_ui.flix_ui.e_login">e_login</a></code></li>
+<li><code><a title="flix_ui.flix_ui.e_logout" href="#flix_ui.flix_ui.e_logout">e_logout</a></code></li>
+<li><code><a title="flix_ui.flix_ui.e_sequence_changed" href="#flix_ui.flix_ui.e_sequence_changed">e_sequence_changed</a></code></li>
+<li><code><a title="flix_ui.flix_ui.e_show_changed" href="#flix_ui.flix_ui.e_show_changed">e_show_changed</a></code></li>
+<li><code><a title="flix_ui.flix_ui.get_default_image_name" href="#flix_ui.flix_ui.get_default_image_name">get_default_image_name</a></code></li>
+<li><code><a title="flix_ui.flix_ui.get_dialogues_by_panel_id" href="#flix_ui.flix_ui.get_dialogues_by_panel_id">get_dialogues_by_panel_id</a></code></li>
+<li><code><a title="flix_ui.flix_ui.get_flix_api" href="#flix_ui.flix_ui.get_flix_api">get_flix_api</a></code></li>
+<li><code><a title="flix_ui.flix_ui.get_markers_by_name" href="#flix_ui.flix_ui.get_markers_by_name">get_markers_by_name</a></code></li>
+<li><code><a title="flix_ui.flix_ui.get_media_object_per_shots" href="#flix_ui.flix_ui.get_media_object_per_shots">get_media_object_per_shots</a></code></li>
+<li><code><a title="flix_ui.flix_ui.get_panels" href="#flix_ui.flix_ui.get_panels">get_panels</a></code></li>
+<li><code><a title="flix_ui.flix_ui.get_selected_episode" href="#flix_ui.flix_ui.get_selected_episode">get_selected_episode</a></code></li>
+<li><code><a title="flix_ui.flix_ui.get_selected_sequence" href="#flix_ui.flix_ui.get_selected_sequence">get_selected_sequence</a></code></li>
+<li><code><a title="flix_ui.flix_ui.get_selected_show" href="#flix_ui.flix_ui.get_selected_show">get_selected_show</a></code></li>
+<li><code><a title="flix_ui.flix_ui.handle_duplicate_panels" href="#flix_ui.flix_ui.handle_duplicate_panels">handle_duplicate_panels</a></code></li>
+<li><code><a title="flix_ui.flix_ui.is_authenticated" href="#flix_ui.flix_ui.is_authenticated">is_authenticated</a></code></li>
+<li><code><a title="flix_ui.flix_ui.on_sequence_changed" href="#flix_ui.flix_ui.on_sequence_changed">on_sequence_changed</a></code></li>
+<li><code><a title="flix_ui.flix_ui.staticMetaObject" href="#flix_ui.flix_ui.staticMetaObject">staticMetaObject</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="flix_ui.main_dialogue" href="#flix_ui.main_dialogue">main_dialogue</a></code></h4>
+<ul class="two-column">
+<li><code><a title="flix_ui.main_dialogue.on_episode_changed" href="#flix_ui.main_dialogue.on_episode_changed">on_episode_changed</a></code></li>
+<li><code><a title="flix_ui.main_dialogue.on_login" href="#flix_ui.main_dialogue.on_login">on_login</a></code></li>
+<li><code><a title="flix_ui.main_dialogue.on_logout" href="#flix_ui.main_dialogue.on_logout">on_logout</a></code></li>
+<li><code><a title="flix_ui.main_dialogue.on_sequence_changed" href="#flix_ui.main_dialogue.on_sequence_changed">on_sequence_changed</a></code></li>
+<li><code><a title="flix_ui.main_dialogue.on_show_changed" href="#flix_ui.main_dialogue.on_show_changed">on_show_changed</a></code></li>
+<li><code><a title="flix_ui.main_dialogue.staticMetaObject" href="#flix_ui.main_dialogue.staticMetaObject">staticMetaObject</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.8.1</a>.</p>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad()</script>
+</body>
+</html>

@@ -1,0 +1,1243 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.8.1" />
+<title>hiero_ui API documentation</title>
+<meta name="description" content="" />
+<link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
+<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>hiero_ui</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">import json
+import sys
+import uuid
+
+from PySide2.QtCore import Signal
+from PySide2.QtWidgets import (QApplication, QComboBox, QDialog, QErrorMessage,
+                               QHBoxLayout, QLabel, QLineEdit, QPushButton,
+                               QSizePolicy, QVBoxLayout, QWidget)
+
+import hiero_c as hiero_api
+
+
+class hiero_ui(QWidget):
+
+    e_pull_latest = Signal()
+    e_update_in_flix = Signal()
+
+    def __init__(self, *args, **kwargs):
+        super(hiero_ui, self).__init__(*args, **kwargs)
+        self.hiero_api = hiero_api.hiero_c()
+        self.setSizePolicy(
+            QSizePolicy.MinimumExpanding,
+            QSizePolicy.MinimumExpanding
+        )
+
+        h_action = QHBoxLayout()
+        pull = QPushButton(&#34;Pull Latest&#34;)
+        pull.clicked.connect(self.on_pull_latest)
+        update = QPushButton(&#34;Update in Flix&#34;)
+        update.clicked.connect(self.on_update_in_flix)
+        h_action.addWidget(pull)
+        h_action.addWidget(update)
+        self.setLayout(h_action)
+
+    def on_pull_latest(self):
+        self.e_pull_latest.emit()
+
+    def on_update_in_flix(self):
+        self.e_update_in_flix.emit()
+
+    def create_video_tracks(self, video_name, shot_name=None):
+        track = self.hiero_api.create_video_track(video_name)
+        if shot_name is None:
+            shot = None
+        else:
+            shot = self.hiero_api.create_video_track(&#39;Shots&#39;)
+        return track, shot
+
+    def add_dialogue(self, mapped_dialogue, panel_id, track, prev):
+        &#34;&#34;&#34;add_dialogue will create a dialogue and add it to the track
+
+        Arguments:
+            mapped_dialogue {Dict} -- mapping of dialogue to ensure there is a
+            dialogue for the panel
+
+            panel_id {int} -- Panel ID
+
+            track {dict} -- Track to add the dialogue
+
+            prev {Dict} -- Previous trackitem
+        &#34;&#34;&#34;
+        if panel_id in mapped_dialogue:
+            settings = {
+                &#39;name&#39;: &#39;dialogue-[{0}]&#39;.format(uuid.uuid4()),
+                &#39;message&#39;: mapped_dialogue[panel_id],
+                &#39;opacity&#39;: .6,
+                &#39;global_font_scale&#39;: .3,
+                &#39;enable_background&#39;: True,
+                &#39;background_opacity&#39;: .6,
+                &#39;box&#39;: (0, 0, 1000, 562),
+                &#39;xjustify&#39;: 1,
+                &#39;yjustify&#39;: 2
+            }
+            self.hiero_api.add_dialogue_track_effect(track, prev, settings)
+
+    def add_burnin(
+            self,
+            panels,
+            panel_in,
+            markers_map,
+            current_marker,
+            marker_in,
+            shots,
+            p,
+            i):
+        &#34;&#34;&#34;add_burnin will add a burnin in a VideoTrack
+
+        Arguments:
+            panels {List} -- List of Panels
+
+            panel_in {int} -- First frame of the panel (from whole timeline)
+
+            markers_map {Dict} -- Mapping of markers
+
+            current_marker {str} -- Current Marker
+
+            marker_in {int} -- First frame of the marker to add as burnin
+
+            shots {Dict} -- Video track to add the burnin
+
+            p {Dict} -- Panel
+
+            i {int} -- Posiion of the panel
+
+        Returns:
+            [type] -- [description]
+        &#34;&#34;&#34;
+        &#34;&#34;&#34;add_burnin will add a burnin in a VideoTrack
+        panels: list of panels
+        panel_in: first frame of the panel (from the whole timeline)
+        markers_map: mapping of markers
+        marker_in: first frame of the marker to add as burnin
+        shots: video track to add the burnin
+        p: actual panel
+        i: position of the panel
+        &#34;&#34;&#34;
+        if panel_in in markers_map and markers_map[panel_in] != current_marker:
+            if marker_in is not None:
+                self.create_burnin(
+                    shots,
+                    marker_in,
+                    panel_in - 1,
+                    markers_map[panel_in])
+            marker_in = panel_in
+        if len(panels) - 1 == i and marker_in is not None:
+            self.create_burnin(
+                shots,
+                marker_in,
+                panel_in +
+                p.get(&#39;duration&#39;) -
+                1,
+                current_marker)
+        return marker_in
+
+    def get_panels_from_sequence(self, sequence, show_id, sequence_id, blank_panel):
+        &#34;&#34;&#34;get_panels_from_sequence will retrieve all the clips and format
+        them as panels from a hiero sequence
+
+        Arguments:
+            sequence {Dict} -- Video Track Sequence
+
+            show_id {int} -- Show ID
+
+            sequence_id {int} -- Sequence ID
+
+        Returns:
+            List -- List of panels
+        &#34;&#34;&#34;
+        panels = []
+        for track_item in sequence.items():
+            panel_info = None
+            tags_note = self.hiero_api.get_item_tags_note(track_item, &#39;France&#39;)
+            if len(tags_note) &gt; 0:
+                panel_info = tags_note[0]
+            if panel_info is None:
+                panels.append(json.dumps(blank_panel()))
+            else:
+                panels.append(panel_info)
+        return panels
+
+    def update_panel_from_sequence(self, sequence, panels):
+        &#34;&#34;&#34;update_panel_from_sequence will update panels depending
+        on hiero sequence
+
+        Arguments:
+            sequence {Dict} -- Video Track Sequence
+
+            panels {List} -- List of Panels
+
+        Returns:
+            List -- List of Panels
+        &#34;&#34;&#34;
+        for i, track_item in enumerate(sequence.items()):
+            panel = json.loads(panels[i])
+            panel[&#39;duration&#39;] = int(track_item.duration())
+            panels[i] = panel
+        return panels
+
+    def get_markers_from_sequence(self, sequence):
+        &#34;&#34;&#34;get_markers_from_sequence will retrieve all the
+        markers from a sequence
+
+        Arguments:
+            sequence {Dict} -- Video Track Shots
+
+        Returns:
+            List -- List of markers
+        &#34;&#34;&#34;
+        markers = []
+        for mrks in sequence.subTrackItems():
+            for marker in mrks:
+                name = marker.name()
+                if len(name) &gt; 36:
+                    name = name[:-39]
+                markers.append({
+                    &#39;name&#39;: name,
+                    &#39;start&#39;: marker.timelineIn()
+                })
+        return markers
+
+    def get_comment_tag(self, p):
+        &#34;&#34;&#34;get_comment_tag will make a copy of a comment tag and set
+        his comment as a note
+
+        Arguments:
+            p {Dict} -- Panel
+
+        Returns:
+            Dict -- Hiero Tag
+        &#34;&#34;&#34;
+        comment = p.get(&#39;latest_open_note&#39;, {}).get(&#39;body&#39;, None)
+        t = None
+        if comment is not None:
+            t = self.hiero_api.create_comment_tag(comment)
+        return t
+
+    def add_panel_info_tag(self, p, tags):
+        &#34;&#34;&#34;add_panel_info_tag will add a tag of the panel info
+
+        Arguments:
+            p {Dict} -- Panel
+
+            tags {List} -- List of all tags
+
+        Returns:
+            List -- List of all tags
+        &#34;&#34;&#34;
+        t = self.hiero_api.create_info_tag(json.dumps(p))
+        tags.append(t)
+        return tags
+
+    def add_marker(self, markers_mapping, panel_in, sequence):
+        &#34;&#34;&#34;add_marker will add a marker in the sequence
+
+        Arguments:
+            markers_mapping {Dict} -- Mapping of markers
+
+            panel_in {int} -- First frame of the panel
+            (from the whole sequence)
+
+            sequence {Dict} -- Hiero Sequence
+        &#34;&#34;&#34;
+        if panel_in in markers_mapping:
+            tag = self.hiero_api.create_marker_tag(
+                panel_in,
+                markers_mapping[panel_in])
+            sequence.addTagToRange(tag, panel_in, panel_in + 1)
+
+    def add_comment(self, p, tags):
+        &#34;&#34;&#34;add_comment will add a tag comment to the list
+
+        Arguments:
+            p {Dict} -- Panel
+
+            tags {List} -- List of all tags
+
+        Returns:
+            List -- List of all tags
+        &#34;&#34;&#34;
+        comment_tag = self.get_comment_tag(p)
+        if comment_tag is not None:
+            tags.append(comment_tag)
+        return tags
+
+    def create_burnin(self, track, fr, to, burnin_name):
+        &#34;&#34;&#34;create_burnin will create a burnin and add it to the track
+
+        Arguments:
+            track {Dict} -- Hiero Track
+
+            fr {int} -- Start of the burnin
+
+            to {int} -- End of the burnin
+
+            burnin_name {str} -- Burnin Name
+        &#34;&#34;&#34;
+        settings = {
+            &#39;name&#39;: &#39;{0}-[{1}]&#39;.format(burnin_name, uuid.uuid4()),
+            &#39;burnIn_textScale&#39;: .25,
+            &#39;burnIn_topLeft&#39;: &#39;hiero/clip&#39;,
+            &#39;burnIn_topMiddle&#39;: &#39;none&#39;,
+            &#39;burnIn_topRight&#39;: &#39;hiero/sequence/timecode&#39;,
+            &#39;burnIn_bottomLeft&#39;: &#39;none&#39;,
+            &#39;burnIn_bottomMiddle&#39;: &#39;none&#39;,
+            &#39;burnIn_bottomRight&#39;: &#39;none&#39;,
+            &#39;burnIn_backgroundEnable&#39;: &#39;true&#39;,
+            &#39;burnIn_backgroundXBorder&#39;: 10,
+            &#39;burnIn_backgroundYBorder&#39;: 10,
+            &#39;burnIn_backgroundOpacity&#39;: .6,
+        }
+        self.hiero_api.add_burnin_track_effect(track, fr, to, settings)
+
+    def pull_to_sequence(self, show_tc, seq_rev_tc, seq_tracking_code):
+        my_project = self.hiero_api.get_project(
+            &#39;Flix_{0}&#39;.format(
+                show_tc))
+        seq, seq_bin_reused = self.hiero_api.get_project_bin(
+            my_project, &#39;Flix_{0}&#39;.format(
+                seq_tracking_code))
+        if seq_bin_reused is False:
+            clipsBin = my_project.clipsBin()
+            clipsBin.addItem(seq)
+
+        seq_rev_bin, seq_rev_bin_reused = self.hiero_api.get_seq_bin(
+            seq, &#39;v{0}&#39;.format(seq_rev_tc))
+        if seq_rev_bin_reused is False:
+            seq.addItem(seq_rev_bin)
+
+        sequence = self.hiero_api.create_sequence(
+            &#39;Flix_{0}_v{1}&#39;.format(
+                seq_tracking_code,
+                seq_rev_tc))
+        seq_item = self.hiero_api.sequence_to_bin_item(sequence)
+        seq_rev_bin.addItem(seq_item)
+        return sequence, seq, seq_rev_bin
+
+if __name__ == &#39;__main__&#39;:
+    app = QApplication(sys.argv)
+    main_view = hiero_ui()
+    main_view.show()
+    sys.exit(app.exec_())</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="hiero_ui.hiero_ui"><code class="flex name class">
+<span>class <span class="ident">hiero_ui</span></span>
+<span>(</span><span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>QWidget(self, parent: typing.Union[PySide2.QtWidgets.QWidget, NoneType] = None, f: PySide2.QtCore.Qt.WindowFlags = Default(Qt.WindowFlags))</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class hiero_ui(QWidget):
+
+    e_pull_latest = Signal()
+    e_update_in_flix = Signal()
+
+    def __init__(self, *args, **kwargs):
+        super(hiero_ui, self).__init__(*args, **kwargs)
+        self.hiero_api = hiero_api.hiero_c()
+        self.setSizePolicy(
+            QSizePolicy.MinimumExpanding,
+            QSizePolicy.MinimumExpanding
+        )
+
+        h_action = QHBoxLayout()
+        pull = QPushButton(&#34;Pull Latest&#34;)
+        pull.clicked.connect(self.on_pull_latest)
+        update = QPushButton(&#34;Update in Flix&#34;)
+        update.clicked.connect(self.on_update_in_flix)
+        h_action.addWidget(pull)
+        h_action.addWidget(update)
+        self.setLayout(h_action)
+
+    def on_pull_latest(self):
+        self.e_pull_latest.emit()
+
+    def on_update_in_flix(self):
+        self.e_update_in_flix.emit()
+
+    def create_video_tracks(self, video_name, shot_name=None):
+        track = self.hiero_api.create_video_track(video_name)
+        if shot_name is None:
+            shot = None
+        else:
+            shot = self.hiero_api.create_video_track(&#39;Shots&#39;)
+        return track, shot
+
+    def add_dialogue(self, mapped_dialogue, panel_id, track, prev):
+        &#34;&#34;&#34;add_dialogue will create a dialogue and add it to the track
+
+        Arguments:
+            mapped_dialogue {Dict} -- mapping of dialogue to ensure there is a
+            dialogue for the panel
+
+            panel_id {int} -- Panel ID
+
+            track {dict} -- Track to add the dialogue
+
+            prev {Dict} -- Previous trackitem
+        &#34;&#34;&#34;
+        if panel_id in mapped_dialogue:
+            settings = {
+                &#39;name&#39;: &#39;dialogue-[{0}]&#39;.format(uuid.uuid4()),
+                &#39;message&#39;: mapped_dialogue[panel_id],
+                &#39;opacity&#39;: .6,
+                &#39;global_font_scale&#39;: .3,
+                &#39;enable_background&#39;: True,
+                &#39;background_opacity&#39;: .6,
+                &#39;box&#39;: (0, 0, 1000, 562),
+                &#39;xjustify&#39;: 1,
+                &#39;yjustify&#39;: 2
+            }
+            self.hiero_api.add_dialogue_track_effect(track, prev, settings)
+
+    def add_burnin(
+            self,
+            panels,
+            panel_in,
+            markers_map,
+            current_marker,
+            marker_in,
+            shots,
+            p,
+            i):
+        &#34;&#34;&#34;add_burnin will add a burnin in a VideoTrack
+
+        Arguments:
+            panels {List} -- List of Panels
+
+            panel_in {int} -- First frame of the panel (from whole timeline)
+
+            markers_map {Dict} -- Mapping of markers
+
+            current_marker {str} -- Current Marker
+
+            marker_in {int} -- First frame of the marker to add as burnin
+
+            shots {Dict} -- Video track to add the burnin
+
+            p {Dict} -- Panel
+
+            i {int} -- Posiion of the panel
+
+        Returns:
+            [type] -- [description]
+        &#34;&#34;&#34;
+        &#34;&#34;&#34;add_burnin will add a burnin in a VideoTrack
+        panels: list of panels
+        panel_in: first frame of the panel (from the whole timeline)
+        markers_map: mapping of markers
+        marker_in: first frame of the marker to add as burnin
+        shots: video track to add the burnin
+        p: actual panel
+        i: position of the panel
+        &#34;&#34;&#34;
+        if panel_in in markers_map and markers_map[panel_in] != current_marker:
+            if marker_in is not None:
+                self.create_burnin(
+                    shots,
+                    marker_in,
+                    panel_in - 1,
+                    markers_map[panel_in])
+            marker_in = panel_in
+        if len(panels) - 1 == i and marker_in is not None:
+            self.create_burnin(
+                shots,
+                marker_in,
+                panel_in +
+                p.get(&#39;duration&#39;) -
+                1,
+                current_marker)
+        return marker_in
+
+    def get_panels_from_sequence(self, sequence, show_id, sequence_id, blank_panel):
+        &#34;&#34;&#34;get_panels_from_sequence will retrieve all the clips and format
+        them as panels from a hiero sequence
+
+        Arguments:
+            sequence {Dict} -- Video Track Sequence
+
+            show_id {int} -- Show ID
+
+            sequence_id {int} -- Sequence ID
+
+        Returns:
+            List -- List of panels
+        &#34;&#34;&#34;
+        panels = []
+        for track_item in sequence.items():
+            panel_info = None
+            tags_note = self.hiero_api.get_item_tags_note(track_item, &#39;France&#39;)
+            if len(tags_note) &gt; 0:
+                panel_info = tags_note[0]
+            if panel_info is None:
+                panels.append(json.dumps(blank_panel()))
+            else:
+                panels.append(panel_info)
+        return panels
+
+    def update_panel_from_sequence(self, sequence, panels):
+        &#34;&#34;&#34;update_panel_from_sequence will update panels depending
+        on hiero sequence
+
+        Arguments:
+            sequence {Dict} -- Video Track Sequence
+
+            panels {List} -- List of Panels
+
+        Returns:
+            List -- List of Panels
+        &#34;&#34;&#34;
+        for i, track_item in enumerate(sequence.items()):
+            panel = json.loads(panels[i])
+            panel[&#39;duration&#39;] = int(track_item.duration())
+            panels[i] = panel
+        return panels
+
+    def get_markers_from_sequence(self, sequence):
+        &#34;&#34;&#34;get_markers_from_sequence will retrieve all the
+        markers from a sequence
+
+        Arguments:
+            sequence {Dict} -- Video Track Shots
+
+        Returns:
+            List -- List of markers
+        &#34;&#34;&#34;
+        markers = []
+        for mrks in sequence.subTrackItems():
+            for marker in mrks:
+                name = marker.name()
+                if len(name) &gt; 36:
+                    name = name[:-39]
+                markers.append({
+                    &#39;name&#39;: name,
+                    &#39;start&#39;: marker.timelineIn()
+                })
+        return markers
+
+    def get_comment_tag(self, p):
+        &#34;&#34;&#34;get_comment_tag will make a copy of a comment tag and set
+        his comment as a note
+
+        Arguments:
+            p {Dict} -- Panel
+
+        Returns:
+            Dict -- Hiero Tag
+        &#34;&#34;&#34;
+        comment = p.get(&#39;latest_open_note&#39;, {}).get(&#39;body&#39;, None)
+        t = None
+        if comment is not None:
+            t = self.hiero_api.create_comment_tag(comment)
+        return t
+
+    def add_panel_info_tag(self, p, tags):
+        &#34;&#34;&#34;add_panel_info_tag will add a tag of the panel info
+
+        Arguments:
+            p {Dict} -- Panel
+
+            tags {List} -- List of all tags
+
+        Returns:
+            List -- List of all tags
+        &#34;&#34;&#34;
+        t = self.hiero_api.create_info_tag(json.dumps(p))
+        tags.append(t)
+        return tags
+
+    def add_marker(self, markers_mapping, panel_in, sequence):
+        &#34;&#34;&#34;add_marker will add a marker in the sequence
+
+        Arguments:
+            markers_mapping {Dict} -- Mapping of markers
+
+            panel_in {int} -- First frame of the panel
+            (from the whole sequence)
+
+            sequence {Dict} -- Hiero Sequence
+        &#34;&#34;&#34;
+        if panel_in in markers_mapping:
+            tag = self.hiero_api.create_marker_tag(
+                panel_in,
+                markers_mapping[panel_in])
+            sequence.addTagToRange(tag, panel_in, panel_in + 1)
+
+    def add_comment(self, p, tags):
+        &#34;&#34;&#34;add_comment will add a tag comment to the list
+
+        Arguments:
+            p {Dict} -- Panel
+
+            tags {List} -- List of all tags
+
+        Returns:
+            List -- List of all tags
+        &#34;&#34;&#34;
+        comment_tag = self.get_comment_tag(p)
+        if comment_tag is not None:
+            tags.append(comment_tag)
+        return tags
+
+    def create_burnin(self, track, fr, to, burnin_name):
+        &#34;&#34;&#34;create_burnin will create a burnin and add it to the track
+
+        Arguments:
+            track {Dict} -- Hiero Track
+
+            fr {int} -- Start of the burnin
+
+            to {int} -- End of the burnin
+
+            burnin_name {str} -- Burnin Name
+        &#34;&#34;&#34;
+        settings = {
+            &#39;name&#39;: &#39;{0}-[{1}]&#39;.format(burnin_name, uuid.uuid4()),
+            &#39;burnIn_textScale&#39;: .25,
+            &#39;burnIn_topLeft&#39;: &#39;hiero/clip&#39;,
+            &#39;burnIn_topMiddle&#39;: &#39;none&#39;,
+            &#39;burnIn_topRight&#39;: &#39;hiero/sequence/timecode&#39;,
+            &#39;burnIn_bottomLeft&#39;: &#39;none&#39;,
+            &#39;burnIn_bottomMiddle&#39;: &#39;none&#39;,
+            &#39;burnIn_bottomRight&#39;: &#39;none&#39;,
+            &#39;burnIn_backgroundEnable&#39;: &#39;true&#39;,
+            &#39;burnIn_backgroundXBorder&#39;: 10,
+            &#39;burnIn_backgroundYBorder&#39;: 10,
+            &#39;burnIn_backgroundOpacity&#39;: .6,
+        }
+        self.hiero_api.add_burnin_track_effect(track, fr, to, settings)
+
+    def pull_to_sequence(self, show_tc, seq_rev_tc, seq_tracking_code):
+        my_project = self.hiero_api.get_project(
+            &#39;Flix_{0}&#39;.format(
+                show_tc))
+        seq, seq_bin_reused = self.hiero_api.get_project_bin(
+            my_project, &#39;Flix_{0}&#39;.format(
+                seq_tracking_code))
+        if seq_bin_reused is False:
+            clipsBin = my_project.clipsBin()
+            clipsBin.addItem(seq)
+
+        seq_rev_bin, seq_rev_bin_reused = self.hiero_api.get_seq_bin(
+            seq, &#39;v{0}&#39;.format(seq_rev_tc))
+        if seq_rev_bin_reused is False:
+            seq.addItem(seq_rev_bin)
+
+        sequence = self.hiero_api.create_sequence(
+            &#39;Flix_{0}_v{1}&#39;.format(
+                seq_tracking_code,
+                seq_rev_tc))
+        seq_item = self.hiero_api.sequence_to_bin_item(sequence)
+        seq_rev_bin.addItem(seq_item)
+        return sequence, seq, seq_rev_bin</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>PySide2.QtWidgets.QWidget</li>
+<li>PySide2.QtCore.QObject</li>
+<li>PySide2.QtGui.QPaintDevice</li>
+<li>Shiboken.Object</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="hiero_ui.hiero_ui.e_pull_latest"><code class="name">var <span class="ident">e_pull_latest</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="hiero_ui.hiero_ui.e_update_in_flix"><code class="name">var <span class="ident">e_update_in_flix</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="hiero_ui.hiero_ui.staticMetaObject"><code class="name">var <span class="ident">staticMetaObject</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="hiero_ui.hiero_ui.add_burnin"><code class="name flex">
+<span>def <span class="ident">add_burnin</span></span>(<span>self, panels, panel_in, markers_map, current_marker, marker_in, shots, p, i)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>add_burnin will add a burnin in a VideoTrack</p>
+<h2 id="arguments">Arguments</h2>
+<p>panels {List} &ndash; List of Panels</p>
+<p>panel_in {int} &ndash; First frame of the panel (from whole timeline)</p>
+<p>markers_map {Dict} &ndash; Mapping of markers</p>
+<p>current_marker {str} &ndash; Current Marker</p>
+<p>marker_in {int} &ndash; First frame of the marker to add as burnin</p>
+<p>shots {Dict} &ndash; Video track to add the burnin</p>
+<p>p {Dict} &ndash; Panel</p>
+<p>i {int} &ndash; Posiion of the panel</p>
+<h2 id="returns">Returns</h2>
+<p>[type] &ndash; [description]</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def add_burnin(
+        self,
+        panels,
+        panel_in,
+        markers_map,
+        current_marker,
+        marker_in,
+        shots,
+        p,
+        i):
+    &#34;&#34;&#34;add_burnin will add a burnin in a VideoTrack
+
+    Arguments:
+        panels {List} -- List of Panels
+
+        panel_in {int} -- First frame of the panel (from whole timeline)
+
+        markers_map {Dict} -- Mapping of markers
+
+        current_marker {str} -- Current Marker
+
+        marker_in {int} -- First frame of the marker to add as burnin
+
+        shots {Dict} -- Video track to add the burnin
+
+        p {Dict} -- Panel
+
+        i {int} -- Posiion of the panel
+
+    Returns:
+        [type] -- [description]
+    &#34;&#34;&#34;
+    &#34;&#34;&#34;add_burnin will add a burnin in a VideoTrack
+    panels: list of panels
+    panel_in: first frame of the panel (from the whole timeline)
+    markers_map: mapping of markers
+    marker_in: first frame of the marker to add as burnin
+    shots: video track to add the burnin
+    p: actual panel
+    i: position of the panel
+    &#34;&#34;&#34;
+    if panel_in in markers_map and markers_map[panel_in] != current_marker:
+        if marker_in is not None:
+            self.create_burnin(
+                shots,
+                marker_in,
+                panel_in - 1,
+                markers_map[panel_in])
+        marker_in = panel_in
+    if len(panels) - 1 == i and marker_in is not None:
+        self.create_burnin(
+            shots,
+            marker_in,
+            panel_in +
+            p.get(&#39;duration&#39;) -
+            1,
+            current_marker)
+    return marker_in</code></pre>
+</details>
+</dd>
+<dt id="hiero_ui.hiero_ui.add_comment"><code class="name flex">
+<span>def <span class="ident">add_comment</span></span>(<span>self, p, tags)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>add_comment will add a tag comment to the list</p>
+<h2 id="arguments">Arguments</h2>
+<p>p {Dict} &ndash; Panel</p>
+<p>tags {List} &ndash; List of all tags</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>List -- List</code> of <code>all tags</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def add_comment(self, p, tags):
+    &#34;&#34;&#34;add_comment will add a tag comment to the list
+
+    Arguments:
+        p {Dict} -- Panel
+
+        tags {List} -- List of all tags
+
+    Returns:
+        List -- List of all tags
+    &#34;&#34;&#34;
+    comment_tag = self.get_comment_tag(p)
+    if comment_tag is not None:
+        tags.append(comment_tag)
+    return tags</code></pre>
+</details>
+</dd>
+<dt id="hiero_ui.hiero_ui.add_dialogue"><code class="name flex">
+<span>def <span class="ident">add_dialogue</span></span>(<span>self, mapped_dialogue, panel_id, track, prev)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>add_dialogue will create a dialogue and add it to the track</p>
+<h2 id="arguments">Arguments</h2>
+<p>mapped_dialogue {Dict} &ndash; mapping of dialogue to ensure there is a
+dialogue for the panel</p>
+<p>panel_id {int} &ndash; Panel ID</p>
+<p>track {dict} &ndash; Track to add the dialogue</p>
+<p>prev {Dict} &ndash; Previous trackitem</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def add_dialogue(self, mapped_dialogue, panel_id, track, prev):
+    &#34;&#34;&#34;add_dialogue will create a dialogue and add it to the track
+
+    Arguments:
+        mapped_dialogue {Dict} -- mapping of dialogue to ensure there is a
+        dialogue for the panel
+
+        panel_id {int} -- Panel ID
+
+        track {dict} -- Track to add the dialogue
+
+        prev {Dict} -- Previous trackitem
+    &#34;&#34;&#34;
+    if panel_id in mapped_dialogue:
+        settings = {
+            &#39;name&#39;: &#39;dialogue-[{0}]&#39;.format(uuid.uuid4()),
+            &#39;message&#39;: mapped_dialogue[panel_id],
+            &#39;opacity&#39;: .6,
+            &#39;global_font_scale&#39;: .3,
+            &#39;enable_background&#39;: True,
+            &#39;background_opacity&#39;: .6,
+            &#39;box&#39;: (0, 0, 1000, 562),
+            &#39;xjustify&#39;: 1,
+            &#39;yjustify&#39;: 2
+        }
+        self.hiero_api.add_dialogue_track_effect(track, prev, settings)</code></pre>
+</details>
+</dd>
+<dt id="hiero_ui.hiero_ui.add_marker"><code class="name flex">
+<span>def <span class="ident">add_marker</span></span>(<span>self, markers_mapping, panel_in, sequence)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>add_marker will add a marker in the sequence</p>
+<h2 id="arguments">Arguments</h2>
+<p>markers_mapping {Dict} &ndash; Mapping of markers</p>
+<p>panel_in {int} &ndash; First frame of the panel
+(from the whole sequence)</p>
+<p>sequence {Dict} &ndash; Hiero Sequence</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def add_marker(self, markers_mapping, panel_in, sequence):
+    &#34;&#34;&#34;add_marker will add a marker in the sequence
+
+    Arguments:
+        markers_mapping {Dict} -- Mapping of markers
+
+        panel_in {int} -- First frame of the panel
+        (from the whole sequence)
+
+        sequence {Dict} -- Hiero Sequence
+    &#34;&#34;&#34;
+    if panel_in in markers_mapping:
+        tag = self.hiero_api.create_marker_tag(
+            panel_in,
+            markers_mapping[panel_in])
+        sequence.addTagToRange(tag, panel_in, panel_in + 1)</code></pre>
+</details>
+</dd>
+<dt id="hiero_ui.hiero_ui.add_panel_info_tag"><code class="name flex">
+<span>def <span class="ident">add_panel_info_tag</span></span>(<span>self, p, tags)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>add_panel_info_tag will add a tag of the panel info</p>
+<h2 id="arguments">Arguments</h2>
+<p>p {Dict} &ndash; Panel</p>
+<p>tags {List} &ndash; List of all tags</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>List -- List</code> of <code>all tags</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def add_panel_info_tag(self, p, tags):
+    &#34;&#34;&#34;add_panel_info_tag will add a tag of the panel info
+
+    Arguments:
+        p {Dict} -- Panel
+
+        tags {List} -- List of all tags
+
+    Returns:
+        List -- List of all tags
+    &#34;&#34;&#34;
+    t = self.hiero_api.create_info_tag(json.dumps(p))
+    tags.append(t)
+    return tags</code></pre>
+</details>
+</dd>
+<dt id="hiero_ui.hiero_ui.create_burnin"><code class="name flex">
+<span>def <span class="ident">create_burnin</span></span>(<span>self, track, fr, to, burnin_name)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>create_burnin will create a burnin and add it to the track</p>
+<h2 id="arguments">Arguments</h2>
+<p>track {Dict} &ndash; Hiero Track</p>
+<p>fr {int} &ndash; Start of the burnin</p>
+<p>to {int} &ndash; End of the burnin</p>
+<p>burnin_name {str} &ndash; Burnin Name</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def create_burnin(self, track, fr, to, burnin_name):
+    &#34;&#34;&#34;create_burnin will create a burnin and add it to the track
+
+    Arguments:
+        track {Dict} -- Hiero Track
+
+        fr {int} -- Start of the burnin
+
+        to {int} -- End of the burnin
+
+        burnin_name {str} -- Burnin Name
+    &#34;&#34;&#34;
+    settings = {
+        &#39;name&#39;: &#39;{0}-[{1}]&#39;.format(burnin_name, uuid.uuid4()),
+        &#39;burnIn_textScale&#39;: .25,
+        &#39;burnIn_topLeft&#39;: &#39;hiero/clip&#39;,
+        &#39;burnIn_topMiddle&#39;: &#39;none&#39;,
+        &#39;burnIn_topRight&#39;: &#39;hiero/sequence/timecode&#39;,
+        &#39;burnIn_bottomLeft&#39;: &#39;none&#39;,
+        &#39;burnIn_bottomMiddle&#39;: &#39;none&#39;,
+        &#39;burnIn_bottomRight&#39;: &#39;none&#39;,
+        &#39;burnIn_backgroundEnable&#39;: &#39;true&#39;,
+        &#39;burnIn_backgroundXBorder&#39;: 10,
+        &#39;burnIn_backgroundYBorder&#39;: 10,
+        &#39;burnIn_backgroundOpacity&#39;: .6,
+    }
+    self.hiero_api.add_burnin_track_effect(track, fr, to, settings)</code></pre>
+</details>
+</dd>
+<dt id="hiero_ui.hiero_ui.create_video_tracks"><code class="name flex">
+<span>def <span class="ident">create_video_tracks</span></span>(<span>self, video_name, shot_name=None)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def create_video_tracks(self, video_name, shot_name=None):
+    track = self.hiero_api.create_video_track(video_name)
+    if shot_name is None:
+        shot = None
+    else:
+        shot = self.hiero_api.create_video_track(&#39;Shots&#39;)
+    return track, shot</code></pre>
+</details>
+</dd>
+<dt id="hiero_ui.hiero_ui.get_comment_tag"><code class="name flex">
+<span>def <span class="ident">get_comment_tag</span></span>(<span>self, p)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>get_comment_tag will make a copy of a comment tag and set
+his comment as a note</p>
+<h2 id="arguments">Arguments</h2>
+<p>p {Dict} &ndash; Panel</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict -- Hiero Tag</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_comment_tag(self, p):
+    &#34;&#34;&#34;get_comment_tag will make a copy of a comment tag and set
+    his comment as a note
+
+    Arguments:
+        p {Dict} -- Panel
+
+    Returns:
+        Dict -- Hiero Tag
+    &#34;&#34;&#34;
+    comment = p.get(&#39;latest_open_note&#39;, {}).get(&#39;body&#39;, None)
+    t = None
+    if comment is not None:
+        t = self.hiero_api.create_comment_tag(comment)
+    return t</code></pre>
+</details>
+</dd>
+<dt id="hiero_ui.hiero_ui.get_markers_from_sequence"><code class="name flex">
+<span>def <span class="ident">get_markers_from_sequence</span></span>(<span>self, sequence)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>get_markers_from_sequence will retrieve all the
+markers from a sequence</p>
+<h2 id="arguments">Arguments</h2>
+<p>sequence {Dict} &ndash; Video Track Shots</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>List -- List</code> of <code>markers</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_markers_from_sequence(self, sequence):
+    &#34;&#34;&#34;get_markers_from_sequence will retrieve all the
+    markers from a sequence
+
+    Arguments:
+        sequence {Dict} -- Video Track Shots
+
+    Returns:
+        List -- List of markers
+    &#34;&#34;&#34;
+    markers = []
+    for mrks in sequence.subTrackItems():
+        for marker in mrks:
+            name = marker.name()
+            if len(name) &gt; 36:
+                name = name[:-39]
+            markers.append({
+                &#39;name&#39;: name,
+                &#39;start&#39;: marker.timelineIn()
+            })
+    return markers</code></pre>
+</details>
+</dd>
+<dt id="hiero_ui.hiero_ui.get_panels_from_sequence"><code class="name flex">
+<span>def <span class="ident">get_panels_from_sequence</span></span>(<span>self, sequence, show_id, sequence_id, blank_panel)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>get_panels_from_sequence will retrieve all the clips and format
+them as panels from a hiero sequence</p>
+<h2 id="arguments">Arguments</h2>
+<p>sequence {Dict} &ndash; Video Track Sequence</p>
+<p>show_id {int} &ndash; Show ID</p>
+<p>sequence_id {int} &ndash; Sequence ID</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>List -- List</code> of <code>panels</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_panels_from_sequence(self, sequence, show_id, sequence_id, blank_panel):
+    &#34;&#34;&#34;get_panels_from_sequence will retrieve all the clips and format
+    them as panels from a hiero sequence
+
+    Arguments:
+        sequence {Dict} -- Video Track Sequence
+
+        show_id {int} -- Show ID
+
+        sequence_id {int} -- Sequence ID
+
+    Returns:
+        List -- List of panels
+    &#34;&#34;&#34;
+    panels = []
+    for track_item in sequence.items():
+        panel_info = None
+        tags_note = self.hiero_api.get_item_tags_note(track_item, &#39;France&#39;)
+        if len(tags_note) &gt; 0:
+            panel_info = tags_note[0]
+        if panel_info is None:
+            panels.append(json.dumps(blank_panel()))
+        else:
+            panels.append(panel_info)
+    return panels</code></pre>
+</details>
+</dd>
+<dt id="hiero_ui.hiero_ui.on_pull_latest"><code class="name flex">
+<span>def <span class="ident">on_pull_latest</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def on_pull_latest(self):
+    self.e_pull_latest.emit()</code></pre>
+</details>
+</dd>
+<dt id="hiero_ui.hiero_ui.on_update_in_flix"><code class="name flex">
+<span>def <span class="ident">on_update_in_flix</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def on_update_in_flix(self):
+    self.e_update_in_flix.emit()</code></pre>
+</details>
+</dd>
+<dt id="hiero_ui.hiero_ui.pull_to_sequence"><code class="name flex">
+<span>def <span class="ident">pull_to_sequence</span></span>(<span>self, show_tc, seq_rev_tc, seq_tracking_code)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def pull_to_sequence(self, show_tc, seq_rev_tc, seq_tracking_code):
+    my_project = self.hiero_api.get_project(
+        &#39;Flix_{0}&#39;.format(
+            show_tc))
+    seq, seq_bin_reused = self.hiero_api.get_project_bin(
+        my_project, &#39;Flix_{0}&#39;.format(
+            seq_tracking_code))
+    if seq_bin_reused is False:
+        clipsBin = my_project.clipsBin()
+        clipsBin.addItem(seq)
+
+    seq_rev_bin, seq_rev_bin_reused = self.hiero_api.get_seq_bin(
+        seq, &#39;v{0}&#39;.format(seq_rev_tc))
+    if seq_rev_bin_reused is False:
+        seq.addItem(seq_rev_bin)
+
+    sequence = self.hiero_api.create_sequence(
+        &#39;Flix_{0}_v{1}&#39;.format(
+            seq_tracking_code,
+            seq_rev_tc))
+    seq_item = self.hiero_api.sequence_to_bin_item(sequence)
+    seq_rev_bin.addItem(seq_item)
+    return sequence, seq, seq_rev_bin</code></pre>
+</details>
+</dd>
+<dt id="hiero_ui.hiero_ui.update_panel_from_sequence"><code class="name flex">
+<span>def <span class="ident">update_panel_from_sequence</span></span>(<span>self, sequence, panels)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>update_panel_from_sequence will update panels depending
+on hiero sequence</p>
+<h2 id="arguments">Arguments</h2>
+<p>sequence {Dict} &ndash; Video Track Sequence</p>
+<p>panels {List} &ndash; List of Panels</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>List -- List</code> of <code>Panels</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def update_panel_from_sequence(self, sequence, panels):
+    &#34;&#34;&#34;update_panel_from_sequence will update panels depending
+    on hiero sequence
+
+    Arguments:
+        sequence {Dict} -- Video Track Sequence
+
+        panels {List} -- List of Panels
+
+    Returns:
+        List -- List of Panels
+    &#34;&#34;&#34;
+    for i, track_item in enumerate(sequence.items()):
+        panel = json.loads(panels[i])
+        panel[&#39;duration&#39;] = int(track_item.duration())
+        panels[i] = panel
+    return panels</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="hiero_ui.hiero_ui" href="#hiero_ui.hiero_ui">hiero_ui</a></code></h4>
+<ul class="">
+<li><code><a title="hiero_ui.hiero_ui.add_burnin" href="#hiero_ui.hiero_ui.add_burnin">add_burnin</a></code></li>
+<li><code><a title="hiero_ui.hiero_ui.add_comment" href="#hiero_ui.hiero_ui.add_comment">add_comment</a></code></li>
+<li><code><a title="hiero_ui.hiero_ui.add_dialogue" href="#hiero_ui.hiero_ui.add_dialogue">add_dialogue</a></code></li>
+<li><code><a title="hiero_ui.hiero_ui.add_marker" href="#hiero_ui.hiero_ui.add_marker">add_marker</a></code></li>
+<li><code><a title="hiero_ui.hiero_ui.add_panel_info_tag" href="#hiero_ui.hiero_ui.add_panel_info_tag">add_panel_info_tag</a></code></li>
+<li><code><a title="hiero_ui.hiero_ui.create_burnin" href="#hiero_ui.hiero_ui.create_burnin">create_burnin</a></code></li>
+<li><code><a title="hiero_ui.hiero_ui.create_video_tracks" href="#hiero_ui.hiero_ui.create_video_tracks">create_video_tracks</a></code></li>
+<li><code><a title="hiero_ui.hiero_ui.e_pull_latest" href="#hiero_ui.hiero_ui.e_pull_latest">e_pull_latest</a></code></li>
+<li><code><a title="hiero_ui.hiero_ui.e_update_in_flix" href="#hiero_ui.hiero_ui.e_update_in_flix">e_update_in_flix</a></code></li>
+<li><code><a title="hiero_ui.hiero_ui.get_comment_tag" href="#hiero_ui.hiero_ui.get_comment_tag">get_comment_tag</a></code></li>
+<li><code><a title="hiero_ui.hiero_ui.get_markers_from_sequence" href="#hiero_ui.hiero_ui.get_markers_from_sequence">get_markers_from_sequence</a></code></li>
+<li><code><a title="hiero_ui.hiero_ui.get_panels_from_sequence" href="#hiero_ui.hiero_ui.get_panels_from_sequence">get_panels_from_sequence</a></code></li>
+<li><code><a title="hiero_ui.hiero_ui.on_pull_latest" href="#hiero_ui.hiero_ui.on_pull_latest">on_pull_latest</a></code></li>
+<li><code><a title="hiero_ui.hiero_ui.on_update_in_flix" href="#hiero_ui.hiero_ui.on_update_in_flix">on_update_in_flix</a></code></li>
+<li><code><a title="hiero_ui.hiero_ui.pull_to_sequence" href="#hiero_ui.hiero_ui.pull_to_sequence">pull_to_sequence</a></code></li>
+<li><code><a title="hiero_ui.hiero_ui.staticMetaObject" href="#hiero_ui.hiero_ui.staticMetaObject">staticMetaObject</a></code></li>
+<li><code><a title="hiero_ui.hiero_ui.update_panel_from_sequence" href="#hiero_ui.hiero_ui.update_panel_from_sequence">update_panel_from_sequence</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.8.1</a>.</p>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad()</script>
+</body>
+</html>

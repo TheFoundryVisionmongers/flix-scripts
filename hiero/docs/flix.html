@@ -331,6 +331,26 @@ class flix:
         self.password = None
         self.key = None
 
+    def format_panel_for_revision(self, panels):
+        &#34;&#34;&#34;format_panel_for_revision will format the panels as
+        revisioned panels
+
+        Arguments:
+            panels {List} -- List of panels
+
+        Returns:
+            List -- Formatted list of panels
+        &#34;&#34;&#34;
+        revisioned_panels = []
+        for p in panels:
+            revisioned_panels.append({
+                &#39;dialogue&#39;: p.get(&#39;dialogue&#39;),
+                &#39;duration&#39;: p.get(&#39;duration&#39;),
+                &#39;id&#39;: p.get(&#39;panel_id&#39;),
+                &#39;revision_number&#39;: p.get(&#39;revision_number&#39;)
+            })
+        return revisioned_panels
+
     def __get_token(self):
         &#34;&#34;&#34;__get_token will request a token and will reset it
         if it is too close to the expiry date
@@ -753,6 +773,26 @@ get sequences etc.</p></div>
         self.password = None
         self.key = None
 
+    def format_panel_for_revision(self, panels):
+        &#34;&#34;&#34;format_panel_for_revision will format the panels as
+        revisioned panels
+
+        Arguments:
+            panels {List} -- List of panels
+
+        Returns:
+            List -- Formatted list of panels
+        &#34;&#34;&#34;
+        revisioned_panels = []
+        for p in panels:
+            revisioned_panels.append({
+                &#39;dialogue&#39;: p.get(&#39;dialogue&#39;),
+                &#39;duration&#39;: p.get(&#39;duration&#39;),
+                &#39;id&#39;: p.get(&#39;panel_id&#39;),
+                &#39;revision_number&#39;: p.get(&#39;revision_number&#39;)
+            })
+        return revisioned_panels
+
     def __get_token(self):
         &#34;&#34;&#34;__get_token will request a token and will reset it
         if it is too close to the expiry date
@@ -951,6 +991,44 @@ get sequences etc.</p></div>
         print(&#39;Could not retrieve thumbnail&#39;)
         return None
     return temp_filepath</code></pre>
+</details>
+</dd>
+<dt id="flix.flix.format_panel_for_revision"><code class="name flex">
+<span>def <span class="ident">format_panel_for_revision</span></span>(<span>self, panels)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>format_panel_for_revision will format the panels as
+revisioned panels</p>
+<h2 id="arguments">Arguments</h2>
+<p>panels {List} &ndash; List of panels</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>List -- Formatted list</code> of <code>panels</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def format_panel_for_revision(self, panels):
+    &#34;&#34;&#34;format_panel_for_revision will format the panels as
+    revisioned panels
+
+    Arguments:
+        panels {List} -- List of panels
+
+    Returns:
+        List -- Formatted list of panels
+    &#34;&#34;&#34;
+    revisioned_panels = []
+    for p in panels:
+        revisioned_panels.append({
+            &#39;dialogue&#39;: p.get(&#39;dialogue&#39;),
+            &#39;duration&#39;: p.get(&#39;duration&#39;),
+            &#39;id&#39;: p.get(&#39;panel_id&#39;),
+            &#39;revision_number&#39;: p.get(&#39;revision_number&#39;)
+        })
+    return revisioned_panels</code></pre>
 </details>
 </dd>
 <dt id="flix.flix.get_dialogues"><code class="name flex">
@@ -1366,6 +1444,7 @@ comment {str} &ndash; Comment (default: {'From Hiero'})</p>
 <ul class="">
 <li><code><a title="flix.flix.authenticate" href="#flix.flix.authenticate">authenticate</a></code></li>
 <li><code><a title="flix.flix.download_media_object" href="#flix.flix.download_media_object">download_media_object</a></code></li>
+<li><code><a title="flix.flix.format_panel_for_revision" href="#flix.flix.format_panel_for_revision">format_panel_for_revision</a></code></li>
 <li><code><a title="flix.flix.get_dialogues" href="#flix.flix.get_dialogues">get_dialogues</a></code></li>
 <li><code><a title="flix.flix.get_episodes" href="#flix.flix.get_episodes">get_episodes</a></code></li>
 <li><code><a title="flix.flix.get_panels" href="#flix.flix.get_panels">get_panels</a></code></li>
