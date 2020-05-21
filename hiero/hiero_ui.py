@@ -33,12 +33,26 @@ class hiero_ui(QWidget):
         self.setLayout(h_action)
 
     def on_pull_latest(self):
+        """on_pull_latest callback of the pull latest event
+        """
         self.e_pull_latest.emit()
 
     def on_update_in_flix(self):
+        """on_update_in_flix callback of the update in flix event
+        """
         self.e_update_in_flix.emit()
 
     def create_video_tracks(self, video_name, shot_name=None):
+        """create_video_tracks
+
+        Arguments:
+            video_name {str} -- Video track name for the sequence
+
+            shot_name {str} -- Video track for the shots (default: {None})
+
+        Returns:
+            Tuple[Dict, Dict] -- Seq video track, Shot video track
+        """
         track = self.hiero_api.create_video_track(video_name)
         if shot_name is None:
             shot = None
@@ -103,16 +117,7 @@ class hiero_ui(QWidget):
             i {int} -- Posiion of the panel
 
         Returns:
-            [type] -- [description]
-        """
-        """add_burnin will add a burnin in a VideoTrack
-        panels: list of panels
-        panel_in: first frame of the panel (from the whole timeline)
-        markers_map: mapping of markers
-        marker_in: first frame of the marker to add as burnin
-        shots: video track to add the burnin
-        p: actual panel
-        i: position of the panel
+            int -- Value of the panel marker in
         """
         if panel_in in markers_map and markers_map[panel_in] != current_marker:
             if marker_in is not None:
@@ -142,6 +147,8 @@ class hiero_ui(QWidget):
             show_id {int} -- Show ID
 
             sequence_id {int} -- Sequence ID
+
+            blank_panel {Callable[[], None]} -- Callback to create blank panel
 
         Returns:
             List -- List of panels
@@ -291,6 +298,19 @@ class hiero_ui(QWidget):
         self.hiero_api.add_burnin_track_effect(track, fr, to, settings)
 
     def pull_to_sequence(self, show_tc, seq_rev_tc, seq_tracking_code):
+        """pull_to_sequence will pull to hiero a project, sequence and
+        sequence revision bin, as well as a new Sequence
+
+        Arguments:
+            show_tc {str} -- Show tracking code
+
+            seq_rev_tc {str} -- Sequence rev tracking code
+
+            seq_tracking_code {str} -- Sequence tracking code
+
+        Returns:
+            Tuple[Dict, Dict, Dict] -- Seq, Seq bin, Seq rev bin
+        """
         my_project = self.hiero_api.get_project(
             'Flix_{0}'.format(
                 show_tc))

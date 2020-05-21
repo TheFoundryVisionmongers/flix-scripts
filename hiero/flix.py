@@ -93,7 +93,6 @@ class flix:
         Arguments:
             show_id {int} -- Show ID
 
-        Keyword Arguments:
             episode_id {int} -- Episode ID (default: {None})
 
         Returns:
@@ -233,7 +232,6 @@ class flix:
 
             markers {List} -- List of Markers
 
-        Keyword Arguments:
             comment {str} -- Comment (default: {'From Hiero'})
 
         Returns:
@@ -269,7 +267,6 @@ class flix:
 
             sequence_id {int} -- Sequence ID
 
-        Keyword Arguments:
             asset_id {int} -- Asset ID (default: {None})
 
             duration {int} -- Duration (default: {12})
@@ -408,7 +405,6 @@ class flix:
 
             url {str} -- Url to make the request
 
-        Keyword Arguments:
             method {str} -- Request method (default: {'POST'})
 
         Returns:

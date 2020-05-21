@@ -66,7 +66,6 @@ class hiero_c:
 
             source_clip {Dict} -- Clip to link to the track item
 
-        Keyword Arguments:
             duration {int} -- Duration of the clip (default: {12})
 
             tags {list} -- list of tags to add (default: {[]})
@@ -182,7 +181,6 @@ class hiero_c:
         Arguments:
             note {str} -- Content
 
-        Keyword Arguments:
             visible {bool} -- Set tag bvisible or not (default: {False})
 
         Returns:

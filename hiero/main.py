@@ -30,28 +30,6 @@ class main_dialogue(QDialog):
         v_main_box.addWidget(self.wg_hiero_ui)
         self.setLayout(v_main_box)
 
-    def error(self, message):
-        """error will show a error message with a given message
-
-        Arguments:
-            message {str} -- Message to show
-        """
-        err = QErrorMessage(self.parent())
-        err.setWindowTitle('Flix')
-        err.showMessage(message)
-        err.exec_()
-
-    def info(self, message):
-        """info will show a message with a given message
-
-        Arguments:
-            message {str} -- Message to show
-        """
-        msgbox = QMessageBox(self.parent())
-        msgbox.setWindowTitle('Flix')
-        msgbox.setText(message)
-        msgbox.exec_()
-
     def create_clip(self, seq_rev, p, clip_name, clips):
         """create_clip will create a clip or reuse one and download image
 
@@ -103,7 +81,7 @@ class main_dialogue(QDialog):
         markers_mapping = self.wg_flix_ui.get_markers_by_name()
         panels = self.wg_flix_ui.get_panels()
         if panels is None:
-            self.error('Could not retreive panels')
+            self.__error('Could not retreive panels')
             return
 
         vt_track_name = 'Flix_{0}_v{1}'.format(
@@ -125,7 +103,7 @@ class main_dialogue(QDialog):
                     'revision_counter'))
             clip = self.create_clip(seq_rev_bin, p, clip_name, clips)
             if clip is None:
-                self.error('could not create clip: {0}'.format(clip_name))
+                self.__error('could not create clip: {0}'.format(clip_name))
                 return track, shots
 
             # Add comment
@@ -190,7 +168,7 @@ class main_dialogue(QDialog):
         else:
             self.pull_latest_seq_rev()
 
-        self.info('Sequence revision imported successfully')
+        self.__info('Sequence revision imported successfully')
 
     def on_update_in_flix(self):
         """on_update_in_flix will send a sequence to Flix
@@ -202,7 +180,7 @@ class main_dialogue(QDialog):
 
         sequence = self.wg_hiero_ui.hiero_api.get_active_sequence()
         if sequence is None:
-            self.error('could not find any sequence selected')
+            self.__error('could not find any sequence selected')
             return
         for tr in sequence.items():
             if tr.name() == 'Shots':
@@ -218,7 +196,7 @@ class main_dialogue(QDialog):
                     revisioned_panels = self.wg_flix_ui.get_flix_api().format_panel_for_revision(panels)
 
         if len(revisioned_panels) < 1:
-            self.error(
+            self.__error(
                 'could not create a sequence revision, need at least one clip')
             return
 
@@ -230,9 +208,31 @@ class main_dialogue(QDialog):
         new_seq_rev = self.wg_flix_ui.get_flix_api().new_sequence_revision(
             show_id, seq_id, revisioned_panels, markers, comment)
         if new_seq_rev is None:
-            self.error('Could not save sequence revision')
+            self.__error('Could not save sequence revision')
         else:
-            self.info('Sequence revision successfully created')
+            self.__info('Sequence revision successfully created')
+
+    def __error(self, message):
+        """__error will show a error message with a given message
+
+        Arguments:
+            message {str} -- Message to show
+        """
+        err = QErrorMessage(self.parent())
+        err.setWindowTitle('Flix')
+        err.showMessage(message)
+        err.exec_()
+
+    def __info(self, message):
+        """__info will show a message with a given message
+
+        Arguments:
+            message {str} -- Message to show
+        """
+        msgbox = QMessageBox(self.parent())
+        msgbox.setWindowTitle('Flix')
+        msgbox.setText(message)
+        msgbox.exec_()
 
 
 main_view = main_dialogue()
