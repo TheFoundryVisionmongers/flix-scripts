@@ -1,12 +1,5 @@
-import os
-import re
-import sys
-from collections import OrderedDict
-
-from PySide2.QtWidgets import (QApplication, QComboBox, QDialog, QErrorMessage,
-                               QHBoxLayout, QInputDialog, QLabel, QLineEdit,
-                               QMessageBox, QPushButton, QStackedWidget,
-                               QVBoxLayout)
+from PySide2.QtWidgets import (QDialog, QErrorMessage, QInputDialog,
+                               QMessageBox, QVBoxLayout)
 
 import flix_ui as flix_widget
 import hiero_c as hiero_api
@@ -116,7 +109,8 @@ class main_dialogue(QDialog):
             prev = self.wg_hiero_ui.hiero_api.add_track_item(
                 track, clip_name, clip, p.get('duration'), tags, prev)
             # Add dialogue
-            self.wg_hiero_ui.add_dialogue(mapped_dialogue, panel_id, track, prev)
+            self.wg_hiero_ui.add_dialogue(
+                mapped_dialogue, panel_id, track, prev)
             # Add burnin
             marker_in = self.wg_hiero_ui.add_burnin(
                 panels,
@@ -139,9 +133,8 @@ class main_dialogue(QDialog):
         """
         _, _, show_tc = self.wg_flix_ui.get_selected_show()
         seq_id, seq_rev_tc, seq_tc = self.wg_flix_ui.get_selected_sequence()
-        sequence, seq, seq_rev_bin = self.wg_hiero_ui.pull_to_sequence(show_tc,
-                                                                       seq_rev_tc,
-                                                                       seq_tc)
+        sequence, seq, seq_rev_bin = self.wg_hiero_ui.pull_to_sequence(
+            show_tc, seq_rev_tc, seq_tc)
         track, shots = self.create_video_track(
             sequence, seq, seq_rev_bin, seq_id, seq_rev_tc)
         if track is None:
@@ -151,18 +144,19 @@ class main_dialogue(QDialog):
             sequence.addTrack(shots)
 
     def on_pull_latest(self):
-        """on_pull_latest will retrieve the last sequence revision from Flix and
-        will create / reuse bins, sequences, clips
+        """on_pull_latest will retrieve the last sequence revision from Flix
+        and will create / reuse bins, sequences, clips
         Depending on the selection it will pull only one or all of them
         """
         _, _, selected_seq_tc = self.wg_flix_ui.get_selected_sequence()
         if selected_seq_tc == 'All Sequences':
             for count in range(self.wg_flix_ui.sequence_list.count()):
-                if self.wg_flix_ui.sequence_list.itemText(count) == 'All Sequences':
+                if self.wg_flix_ui.sequence_list.itemText(
+                        count) == 'All Sequences':
                     continue
-                select_seq_tracking_code = self.wg_flix_ui.sequence_list.itemText(
+                select_seq_tc = self.wg_flix_ui.sequence_list.itemText(
                     count)
-                self.wg_flix_ui.on_sequence_changed(select_seq_tracking_code)
+                self.wg_flix_ui.on_sequence_changed(select_seq_tc)
                 self.pull_latest_seq_rev()
             self.wg_flix_ui.on_sequence_changed('All Sequences')
         else:
@@ -175,8 +169,9 @@ class main_dialogue(QDialog):
         """
         show_id, _, _ = self.wg_flix_ui.get_selected_show()
         seq_id, _, _ = self.wg_flix_ui.get_selected_sequence()
-        revisioned_panels = []
+        rev_panels = []
         markers = []
+        flix_api = self.wg_flix_ui.get_flix_api()
 
         sequence = self.wg_hiero_ui.hiero_api.get_active_sequence()
         if sequence is None:
@@ -186,16 +181,15 @@ class main_dialogue(QDialog):
             if tr.name() == 'Shots':
                 markers = self.wg_hiero_ui.get_markers_from_sequence(tr)
             else:
-                panels = self.wg_hiero_ui.get_panels_from_sequence(tr,
-                                                       show_id,
-                                                       seq_id,
-                                                       self.wg_flix_ui.create_blank_panel)
-                panels = self.wg_hiero_ui.update_panel_from_sequence(tr, panels)
+                panels = self.wg_hiero_ui.get_panels_from_sequence(
+                    tr, show_id, seq_id, self.wg_flix_ui.create_blank_panel)
+                panels = self.wg_hiero_ui.update_panel_from_sequence(
+                    tr, panels)
                 panels = self.wg_flix_ui.handle_duplicate_panels(panels)
-                if len(panels) > 0 and len(revisioned_panels) < 1:
-                    revisioned_panels = self.wg_flix_ui.get_flix_api().format_panel_for_revision(panels)
+                if len(panels) > 0 and len(rev_panels) < 1:
+                    rev_panels = flix_api.format_panel_for_revision(panels)
 
-        if len(revisioned_panels) < 1:
+        if len(rev_panels) < 1:
             self.__error(
                 'could not create a sequence revision, need at least one clip')
             return
@@ -205,8 +199,8 @@ class main_dialogue(QDialog):
         if ok is False:
             return
 
-        new_seq_rev = self.wg_flix_ui.get_flix_api().new_sequence_revision(
-            show_id, seq_id, revisioned_panels, markers, comment)
+        new_seq_rev = flix_api.new_sequence_revision(
+            show_id, seq_id, rev_panels, markers, comment)
         if new_seq_rev is None:
             self.__error('Could not save sequence revision')
         else:

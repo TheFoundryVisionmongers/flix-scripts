@@ -3,9 +3,8 @@ import sys
 import uuid
 
 from PySide2.QtCore import Signal
-from PySide2.QtWidgets import (QApplication, QComboBox, QDialog, QErrorMessage,
-                               QHBoxLayout, QLabel, QLineEdit, QPushButton,
-                               QSizePolicy, QVBoxLayout, QWidget)
+from PySide2.QtWidgets import (QApplication, QHBoxLayout, QPushButton,
+                               QSizePolicy, QWidget)
 
 import hiero_c as hiero_api
 
@@ -137,7 +136,12 @@ class hiero_ui(QWidget):
                 current_marker)
         return marker_in
 
-    def get_panels_from_sequence(self, sequence, show_id, sequence_id, blank_panel):
+    def get_panels_from_sequence(
+            self,
+            sequence,
+            show_id,
+            sequence_id,
+            blank_panel):
         """get_panels_from_sequence will retrieve all the clips and format
         them as panels from a hiero sequence
 
@@ -333,6 +337,7 @@ class hiero_ui(QWidget):
         seq_item = self.hiero_api.sequence_to_bin_item(sequence)
         seq_rev_bin.addItem(seq_item)
         return sequence, seq, seq_rev_bin
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

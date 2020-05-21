@@ -4,7 +4,7 @@ import sys
 import tempfile
 from collections import OrderedDict
 
-from PySide2.QtCore import QSize, Signal
+from PySide2.QtCore import Signal
 from PySide2.QtWidgets import (QApplication, QComboBox, QDialog, QErrorMessage,
                                QHBoxLayout, QLabel, QLineEdit, QPushButton,
                                QSizePolicy, QVBoxLayout, QWidget)
@@ -325,23 +325,23 @@ class flix_ui(QWidget):
             self.__error('Could not retrieve sequence revision')
             return None
         fn_progress('get markers')
-        markers = self.get_flix_api().get_markers(seq_rev)
+        markers = flix_api.get_markers(seq_rev)
         if len(markers) < 1:
             self.__info('You need at least one shot')
             return None
         fn_progress('get panels')
-        panels = self.get_flix_api().get_panels(
+        panels = flix_api.get_panels(
             show_id, seq_id, seq_rev_number)
         if panels is None:
             self.__error('Could not retrieve panels')
             return None
         fn_progress('get markers per panels')
-        panels_per_markers = self.get_flix_api().get_markers_per_panels(markers, panels)
-        mo_per_shots, ok = self.get_flix_api().mo_per_shots(panels_per_markers,
-                                                            show_id,
-                                                            seq_id,
-                                                            seq_rev_number,
-                                                            episode_id)
+        panels_per_markers = flix_api.get_markers_per_panels(markers, panels)
+        mo_per_shots, ok = flix_api.mo_per_shots(panels_per_markers,
+                                                 show_id,
+                                                 seq_id,
+                                                 seq_rev_number,
+                                                 episode_id)
 
         # Split export quicktime
         for shot_name in mo_per_shots:
@@ -349,7 +349,7 @@ class flix_ui(QWidget):
                 'export quicktime for shot {0}{1}'.format(
                     shot_name, '.' * (r % 4)))
             fn_progress('export quicktime for shot {0}'.format(shot_name))
-            mo = self.get_flix_api().get_mo_quicktime_export(
+            mo = flix_api.get_mo_quicktime_export(
                 shot_name, panels_per_markers[shot_name],
                 show_id, seq_id, seq_rev_number, episode_id, on_retry)
             mo_per_shots[shot_name]['mov'] = mo
