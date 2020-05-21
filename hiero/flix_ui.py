@@ -375,6 +375,8 @@ class flix_ui(QWidget):
             raise RuntimeError(self.__err_authenticate)
 
         stc = self.__selected_sequence_tracking_code
+        if stc == 'All Sequences':
+            return 0, 0, stc
         if not (stc in self.sequence_tracking_code):
             raise RuntimeError(self.__err_sequence_not_found)
         seq_id = self.sequence_tracking_code[stc][0]
@@ -520,6 +522,7 @@ class flix_ui(QWidget):
             return
         self.sequence_tracking_code = self.__get_sequence_tracking_code(
             sequences)
+        self.sequence_list.addItem('All Sequences')
         for s in self.sequence_tracking_code:
             self.sequence_list.addItem(s)
         self.sequence_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
@@ -544,6 +547,7 @@ class flix_ui(QWidget):
         self.sequence_tracking_code = self.__get_sequence_tracking_code(
             sequences)
         self.sequence_list.clear()
+        self.sequence_list.addItem('All Sequences')
         for s in self.sequence_tracking_code:
             self.sequence_list.addItem(s)
         self.sequence_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
@@ -558,6 +562,9 @@ class flix_ui(QWidget):
         if tracking_code == '':
             return
         self.__selected_sequence_tracking_code = tracking_code
+        if tracking_code == 'All Sequences':
+            self.e_sequence_changed.emit(0, 0, tracking_code)
+            return
         seq_id, seq_rev, _ = self.get_selected_sequence()
         self.e_sequence_changed.emit(seq_id, seq_rev, tracking_code)
 
