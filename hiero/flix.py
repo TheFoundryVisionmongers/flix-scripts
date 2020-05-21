@@ -305,6 +305,26 @@ class flix:
         self.password = None
         self.key = None
 
+    def format_panel_for_revision(self, panels):
+        """format_panel_for_revision will format the panels as
+        revisioned panels
+
+        Arguments:
+            panels {List} -- List of panels
+
+        Returns:
+            List -- Formatted list of panels
+        """
+        revisioned_panels = []
+        for p in panels:
+            revisioned_panels.append({
+                'dialogue': p.get('dialogue'),
+                'duration': p.get('duration'),
+                'id': p.get('panel_id'),
+                'revision_number': p.get('revision_number')
+            })
+        return revisioned_panels
+
     def __get_token(self):
         """__get_token will request a token and will reset it
         if it is too close to the expiry date

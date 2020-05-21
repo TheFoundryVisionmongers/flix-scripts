@@ -1,7 +1,8 @@
 import re
+
 from hiero.core import (Bin, BinItem, Format, Sequence, Tag, VideoTrack,
-                        newProject, project, findProjectTags)
-from hiero.ui import (activeSequence, windowManager)
+                        findProjectTags, newProject, project)
+from hiero.ui import activeSequence, windowManager
 
 
 class hiero_c:
