@@ -59,13 +59,11 @@ class shotgun_ui(QWidget):
         self.sg_hostname, self.sg_hostname_label = self.__create_line_label(
             'https://thomaslacroix.shotgunstudio.com',
             'Shotgun URL',
-            350
-        )
+            350)
         self.sg_login, self.sg_login_label = self.__create_line_label(
             'thomas.lacroix@epitech.eu',
             'Username',
-            200
-        )
+            200)
 
         pull = QPushButton('Export Latest')
         pull.clicked.connect(self.__pull_latest)
