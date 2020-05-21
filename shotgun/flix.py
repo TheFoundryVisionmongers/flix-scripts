@@ -4,9 +4,11 @@ import hashlib
 import hmac
 import json
 import time
-import requests
+from collections import OrderedDict
 from datetime import datetime, timedelta
-from typing import Dict, List, Tuple
+from typing import Callable, Dict, List, Tuple
+
+import requests
 
 
 class flix:
@@ -134,7 +136,6 @@ class flix:
         Arguments:
             show_id {int} -- Show ID
 
-        Keyword Arguments:
             episode_id {int} -- Episode ID (default: {None})
 
         Returns:
@@ -297,8 +298,8 @@ class flix:
 
             panel_revisions {List} -- List of panel revisions
 
-        Keyword Arguments:
             episode_id {int} -- Episode ID (default: {None})
+
             include_dialogue {bool} -- Include Dialogue (default: {False})
 
         Returns:
@@ -369,7 +370,6 @@ class flix:
 
             markers {List} -- List of Markers
 
-        Keyword Arguments:
             comment {str} -- Comment (default: {'From Shotgun'})
 
         Returns:
@@ -411,7 +411,6 @@ class flix:
 
             sequence_id {int} -- Sequence ID
 
-        Keyword Arguments:
             asset_id {int} -- Asset ID (default: {None})
 
             duration {int} -- Duration (default: {12})
@@ -449,6 +448,174 @@ class flix:
         self.password = None
         self.key = None
 
+    def mo_per_shots(self,
+                     panels_per_markers: Dict,
+                     show_id: int,
+                     seq_id: int,
+                     seq_rev_number: int,
+                     episode_id: int = None) -> Dict:
+        """mo_per_shots will make a mapping of all media objects per shots and
+        will start the quicktime export per shot
+
+        Arguments:
+            panels_per_markers {Dict} -- Panels per markers
+
+            show_id {int} -- Show ID
+
+            seq_id {int} -- Sequence ID
+
+            seq_rev_number {int} -- Sequence Revision ID
+
+            episode_id {int} -- Episode ID (default: {None})
+
+        Returns:
+            Dict -- Media objects per shots
+        """
+        mo_per_shots = {}
+        for shot_name in panels_per_markers:
+            mo_per_shots[shot_name] = {'artwork': [], 'thumbnails': []}
+            panels = panels_per_markers[shot_name]
+            for p in panels:
+                asset = self.get_asset(
+                    p.get('asset').get('asset_id'))
+                if asset is None:
+                    return None, False
+                artwork = asset.get('media_objects', {}).get('artwork')[0]
+                mo_per_shots[shot_name]['artwork'].append({
+                    'name': artwork.get('name'),
+                    'id': p.get('id'),
+                    'revision_number': p.get('revision_number'),
+                    'pos': p.get('pos'),
+                    'mo': artwork.get('id')
+                })
+                mo_per_shots[shot_name]['thumbnails'].append(
+                    {'name': asset.get('media_objects', {}).get('thumbnail')
+                     [0].get('name'),
+                     'id': p.get('id'),
+                     'revision_number': p.get('revision_number'),
+                     'pos': p.get('pos'),
+                     'mo': asset.get('media_objects', {}).get('thumbnail')
+                     [0].get('id')})
+        return mo_per_shots, True
+
+    def get_mo_quicktime_export(
+            self, shot_name: str, panels: List, show_id: int, seq_id: int,
+            seq_rev_number: int, episode_id: int,
+            on_retry: Callable[[int],
+                               None]):
+        """get_mo_quicktime_export will start the quicktime export and wait until it
+        is completed and retrieve the asset from it to return his media object ID
+
+        Arguments:
+            shot_name {str} -- Shot name
+
+            panels {List} -- List of panels to export
+
+            show_id {int} -- Show ID
+
+            seq_id {int} -- Sequence ID
+
+            seq_rev_number {int} -- Sequence Revision Number
+
+            episode_id {int} -- Episode ID
+
+            on_retry {Callable[[int], None]} -- Callback for the on retry
+
+        Returns:
+            int -- Media Object ID of the quicktime
+        """
+
+        chain_id = self.start_quicktime_export(
+            show_id, seq_id, seq_rev_number, panels, episode_id, False)
+        retry = 0
+        while True:
+            res = self.get_chain(chain_id)
+            if res is None or res.get('status') == 'errored' or res.get(
+                    'status') == 'timed out':
+                return None
+            if res.get('status') == 'in progress':
+                on_retry(retry)
+                retry = retry + 1
+                time.sleep(1)
+                continue
+            if res.get('status') == 'completed':
+                asset = self.get_asset(
+                    res.get('results', {}).get('assetID'))
+                if asset is None:
+                    return None
+                return asset.get(
+                    'media_objects', {}).get('artwork', [])[0].get('id')
+
+    def get_markers(self, sequence_revision: object) -> Dict:
+        """get_markers will format the sequence_revision to have a
+        mapping of markers: start -> marker_name
+
+        Arguments:
+            sequence_revision {object} -- Sequence revision
+
+        Returns:
+            Dict -- Markers by start time
+        """
+        markers_mapping = {}
+        markers = sequence_revision.get('meta_data', {}).get('markers', [])
+        for m in markers:
+            markers_mapping[m.get('start')] = m.get('name')
+        return OrderedDict(sorted(markers_mapping.items()))
+
+    def format_panel_for_revision(self, panel: object, pos: int) -> object:
+        """format_panel_for_revision will format the panel as
+        revisionned panel
+
+        Arguments:
+            panel {object} -- Panel from Flix
+
+            pos {int} -- Position in the Flix timeline
+
+        Returns:
+            object -- Formatted panel
+        """
+        return {
+            'dialogue': panel.get('dialogue'),
+            'duration': panel.get('duration'),
+            'id': panel.get('panel_id'),
+            'revision_number': panel.get('revision_number'),
+            'asset': panel.get('asset'),
+            'pos': pos
+        }
+
+    def get_markers_per_panels(self, markers: List, panels: List) -> Dict:
+        """get_markers_per_panels will return a mapping of markers per panels
+
+        Arguments:
+            markers {List} -- List of markers
+
+            panels {List} -- List of panels
+
+        Returns:
+            Dict -- Panels per markers
+        """
+        panels_per_markers = {}
+        panel_in = 0
+        markers_keys = list(markers.keys())
+        marker_i = 0
+        for i, p in enumerate(panels):
+            if markers_keys[marker_i] == panel_in:
+                panels_per_markers[markers[markers_keys[marker_i]]] = []
+                panels_per_markers[markers[markers_keys[marker_i]]].append(
+                    self.format_panel_for_revision(p, i))
+                if len(markers_keys) > marker_i + 1:
+                    marker_i = marker_i + 1
+            elif markers_keys[marker_i] > panel_in:
+                panels_per_markers[markers[markers_keys[marker_i - 1]]].append(
+                    self.format_panel_for_revision(p, i))
+            elif len(markers_keys) - 1 == marker_i:
+                if markers[markers_keys[marker_i]] not in panels_per_markers:
+                    panels_per_markers[markers[markers_keys[marker_i]]] = []
+                panels_per_markers[markers[markers_keys[marker_i]]].append(
+                    self.format_panel_for_revision(p, i))
+            panel_in = panel_in + p.get('duration')
+        return panels_per_markers
+
     def __get_token(self) -> Tuple[str, str]:
         """__get_token will request a token and will reset it
         if it is too close to the expiry date
@@ -467,7 +634,7 @@ class flix:
             self.key = auth_id
             self.secret = auth_secret_token
             self.expiry = datetime.strptime(auth_expiry_date,
-                                           '%Y-%m-%dT%H:%M:%S')
+                                            '%Y-%m-%dT%H:%M:%S')
         return self.key, self.secret
 
     def __fn_sign(self,
@@ -540,7 +707,6 @@ class flix:
 
             url {str} -- Url to make the request
 
-        Keyword Arguments:
             method {str} -- Request method (default: {'POST'})
 
         Returns:
