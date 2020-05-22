@@ -24,19 +24,19 @@
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">import os
-import re
-import sys
-from collections import OrderedDict
-
-from PySide2.QtWidgets import (QApplication, QComboBox, QDialog, QErrorMessage,
-                               QHBoxLayout, QInputDialog, QLabel, QLineEdit,
-                               QMessageBox, QPushButton, QStackedWidget,
-                               QVBoxLayout)
+<pre><code class="python">from PySide2.QtCore import QCoreApplication
+from PySide2.QtWidgets import (QDialog, QErrorMessage, QInputDialog,
+                               QMessageBox, QVBoxLayout, QProgressDialog)
 
 import flix_ui as flix_widget
 import hiero_c as hiero_api
 import hiero_ui as hiero_widget
+
+
+class progress_canceled(Exception):
+    &#34;&#34;&#34;progress_canceled is an exception for the progress cancelled
+    &#34;&#34;&#34;
+    pass
 
 
 class main_dialogue(QDialog):
@@ -55,28 +55,6 @@ class main_dialogue(QDialog):
         v_main_box.addWidget(self.wg_flix_ui)
         v_main_box.addWidget(self.wg_hiero_ui)
         self.setLayout(v_main_box)
-
-    def error(self, message):
-        &#34;&#34;&#34;error will show a error message with a given message
-
-        Arguments:
-            message {str} -- Message to show
-        &#34;&#34;&#34;
-        err = QErrorMessage(self.parent())
-        err.setWindowTitle(&#39;Flix&#39;)
-        err.showMessage(message)
-        err.exec_()
-
-    def info(self, message):
-        &#34;&#34;&#34;info will show a message with a given message
-
-        Arguments:
-            message {str} -- Message to show
-        &#34;&#34;&#34;
-        msgbox = QMessageBox(self.parent())
-        msgbox.setWindowTitle(&#39;Flix&#39;)
-        msgbox.setText(message)
-        msgbox.exec_()
 
     def create_clip(self, seq_rev, p, clip_name, clips):
         &#34;&#34;&#34;create_clip will create a clip or reuse one and download image
@@ -125,18 +103,23 @@ class main_dialogue(QDialog):
             Tuple[Dict, Dict] -- VideoTrack, ShotTrack
         &#34;&#34;&#34;
         _, seq_rev_nbr, seq_tc = self.wg_flix_ui.get_selected_sequence()
+        self.__update_progress(&#39;Get dialogues by panel id&#39;)
         mapped_dialogue = self.wg_flix_ui.get_dialogues_by_panel_id()
+        self.__update_progress(&#39;Get markers by name&#39;)
         markers_mapping = self.wg_flix_ui.get_markers_by_name()
+        self.__update_progress(&#39;Get panels&#39;)
         panels = self.wg_flix_ui.get_panels()
         if panels is None:
-            self.error(&#39;Could not retreive panels&#39;)
+            self.__error(&#39;Could not retreive panels&#39;)
             return
 
         vt_track_name = &#39;Flix_{0}_v{1}&#39;.format(
             seq_tc, seq_rev_nbr)
         vt_shot_name = &#39;Shots&#39; if len(markers_mapping) &gt; 0 else None
+        self.__update_progress(&#39;Create video tracks&#39;)
         track, shots = self.wg_hiero_ui.create_video_tracks(vt_track_name,
                                                             vt_shot_name)
+        self.__update_progress(&#39;Get clips from Hiero&#39;)
         clips = self.wg_hiero_ui.hiero_api.get_clips(seq_bin)
 
         prev = None
@@ -149,23 +132,31 @@ class main_dialogue(QDialog):
             clip_name = &#39;{0}_{1}_{2}_&#39;.format(
                 seq_tc, panel_id, p.get(
                     &#39;revision_counter&#39;))
+            self.__update_progress(&#39;Create clip: {0}&#39;.format(clip_name))
             clip = self.create_clip(seq_rev_bin, p, clip_name, clips)
             if clip is None:
-                self.error(&#39;could not create clip: {0}&#39;.format(clip_name))
+                self.__error(&#39;could not create clip: {0}&#39;.format(clip_name))
                 return track, shots
 
             # Add comment
+            self.__update_progress(&#39;Add comment&#39;)
             tags = self.wg_hiero_ui.add_comment(p, tags)
             # Add panel info
+            self.__update_progress(&#39;Add clip info&#39;)
             tags = self.wg_hiero_ui.add_panel_info_tag(p, tags)
             # Add marker
+            self.__update_progress(&#39;Add marker&#39;)
             self.wg_hiero_ui.add_marker(markers_mapping, panel_in, sequence)
             # Add track item
+            self.__update_progress(&#39;Add track item&#39;)
             prev = self.wg_hiero_ui.hiero_api.add_track_item(
                 track, clip_name, clip, p.get(&#39;duration&#39;), tags, prev)
             # Add dialogue
-            self.wg_hiero_ui.add_dialogue(mapped_dialogue, panel_id, track, prev)
+            self.__update_progress(&#39;Add dialogue&#39;)
+            self.wg_hiero_ui.add_dialogue(
+                mapped_dialogue, panel_id, track, prev)
             # Add burnin
+            self.__update_progress(&#39;Add burnin&#39;)
             marker_in = self.wg_hiero_ui.add_burnin(
                 panels,
                 panel_in,
@@ -185,80 +176,164 @@ class main_dialogue(QDialog):
         &#34;&#34;&#34;pull_taltest_seq_rev will pull one latest sequence revision and send
         it to hiero
         &#34;&#34;&#34;
-        _, _, show_tc = self.wg_flix_ui.get_selected_show()
-        seq_id, seq_rev_tc, seq_tc = self.wg_flix_ui.get_selected_sequence()
-        sequence, seq, seq_rev_bin = self.wg_hiero_ui.pull_to_sequence(show_tc,
-                                                                       seq_rev_tc,
-                                                                       seq_tc)
-        track, shots = self.create_video_track(
-            sequence, seq, seq_rev_bin, seq_id, seq_rev_tc)
-        if track is None:
+        try:
+            self.__init_progress(3)
+
+            _, _, show_tc = self.wg_flix_ui.get_selected_show()
+            seq_id, seq_rev_tc, seq_tc = self.wg_flix_ui.get_selected_sequence()
+            self.__update_progress(&#39;Pull sequence to hiero&#39;, False)
+            sequence, seq, seq_rev_bin = self.wg_hiero_ui.pull_to_sequence(
+                show_tc, seq_rev_tc, seq_tc, self.__update_progress)
+            self.__update_progress(&#39;Create video track&#39;, False)
+            track, shots = self.create_video_track(
+                sequence, seq, seq_rev_bin, seq_id, seq_rev_tc)
+            if track is None:
+                return
+            self.__update_progress(&#39;Add video track&#39;, False)
+            sequence.addTrack(track)
+            if shots is not None:
+                self.__update_progress(&#39;Add shot track&#39;)
+                sequence.addTrack(shots)
+        except progress_canceled:
+            print(&#39;progress cancelled&#39;)
             return
-        sequence.addTrack(track)
-        if shots is not None:
-            sequence.addTrack(shots)
 
     def on_pull_latest(self):
-        &#34;&#34;&#34;on_pull_latest will retrieve the last sequence revision from Flix and
-        will create / reuse bins, sequences, clips
+        &#34;&#34;&#34;on_pull_latest will retrieve the last sequence revision from Flix
+        and will create / reuse bins, sequences, clips
         Depending on the selection it will pull only one or all of them
         &#34;&#34;&#34;
         _, _, selected_seq_tc = self.wg_flix_ui.get_selected_sequence()
         if selected_seq_tc == &#39;All Sequences&#39;:
             for count in range(self.wg_flix_ui.sequence_list.count()):
-                if self.wg_flix_ui.sequence_list.itemText(count) == &#39;All Sequences&#39;:
+                if self.wg_flix_ui.sequence_list.itemText(
+                        count) == &#39;All Sequences&#39;:
                     continue
-                select_seq_tracking_code = self.wg_flix_ui.sequence_list.itemText(
+                select_seq_tc = self.wg_flix_ui.sequence_list.itemText(
                     count)
-                self.wg_flix_ui.on_sequence_changed(select_seq_tracking_code)
+                self.wg_flix_ui.on_sequence_changed(select_seq_tc)
                 self.pull_latest_seq_rev()
             self.wg_flix_ui.on_sequence_changed(&#39;All Sequences&#39;)
         else:
             self.pull_latest_seq_rev()
 
-        self.info(&#39;Sequence revision imported successfully&#39;)
+        self.__info(&#39;Sequence revision imported successfully&#39;)
 
     def on_update_in_flix(self):
         &#34;&#34;&#34;on_update_in_flix will send a sequence to Flix
         &#34;&#34;&#34;
         show_id, _, _ = self.wg_flix_ui.get_selected_show()
         seq_id, _, _ = self.wg_flix_ui.get_selected_sequence()
-        revisioned_panels = []
+        rev_panels = []
         markers = []
+        flix_api = self.wg_flix_ui.get_flix_api()
 
-        sequence = self.wg_hiero_ui.hiero_api.get_active_sequence()
-        if sequence is None:
-            self.error(&#39;could not find any sequence selected&#39;)
-            return
-        for tr in sequence.items():
-            if tr.name() == &#39;Shots&#39;:
-                markers = self.wg_hiero_ui.get_markers_from_sequence(tr)
+        try:
+            self.__init_progress(3)
+            sequence = self.wg_hiero_ui.hiero_api.get_active_sequence()
+            if sequence is None:
+                self.__error(&#39;could not find any sequence selected&#39;)
+                self.progress.close()
+                return
+            self.__update_progress(&#39;Get Hiero items&#39;, False)
+            for tr in sequence.items():
+                if tr.name() == &#39;Shots&#39;:
+                    self.__update_progress(&#39;Get Shots items&#39;)
+                    markers = self.wg_hiero_ui.get_markers_from_sequence(tr)
+                else:
+                    self.__update_progress(&#39;Get Clips items&#39;)
+                    panels = self.wg_hiero_ui.get_panels_from_sequence(
+                        tr, show_id, seq_id, self.wg_flix_ui.create_blank_panel)
+                    self.__update_progress(&#39;Update clips items info&#39;)
+                    panels = self.wg_hiero_ui.update_panel_from_sequence(
+                        tr, panels)
+                    self.__update_progress(&#39;Handle duplicate clips&#39;)
+                    panels = self.wg_flix_ui.handle_duplicate_panels(panels)
+                    if len(panels) &gt; 0 and len(rev_panels) &lt; 1:
+                        rev_panels = flix_api.format_panel_for_revision(panels)
+
+            if len(rev_panels) &lt; 1:
+                self.__error(
+                    &#39;could not create a sequence revision, need at least one clip&#39;)
+                self.progress.close()
+                return
+
+            self.__update_progress(&#39;Set seq revision comment&#39;, False)
+            comment, ok = QInputDialog.getText(
+                self, &#39;Update to Flix&#39;, &#39;Sequence revision comment:&#39;)
+            if ok is False:
+                self.progress.close()
+                return
+
+            self.__update_progress(&#39;Create sequence revision&#39;, False)
+            new_seq_rev = flix_api.new_sequence_revision(
+                show_id, seq_id, rev_panels, markers, comment)
+            if new_seq_rev is None:
+                self.__error(&#39;Could not save sequence revision&#39;)
             else:
-                panels = self.wg_hiero_ui.get_panels_from_sequence(tr,
-                                                       show_id,
-                                                       seq_id,
-                                                       self.wg_flix_ui.create_blank_panel)
-                panels = self.wg_hiero_ui.update_panel_from_sequence(tr, panels)
-                panels = self.wg_flix_ui.handle_duplicate_panels(panels)
-                if len(panels) &gt; 0 and len(revisioned_panels) &lt; 1:
-                    revisioned_panels = self.wg_flix_ui.get_flix_api().format_panel_for_revision(panels)
-
-        if len(revisioned_panels) &lt; 1:
-            self.error(
-                &#39;could not create a sequence revision, need at least one clip&#39;)
+                self.__info(&#39;Sequence revision successfully created&#39;)
+        except progress_canceled:
+            print(&#39;progress cancelled&#39;)
             return
 
-        comment, ok = QInputDialog.getText(
-            self, &#39;Update to Flix&#39;, &#39;Sequence revision comment:&#39;)
-        if ok is False:
-            return
+    def __update_progress(self,
+                          message,
+                          skip_step=True):
+        &#34;&#34;&#34;update_progress will update the progress message
+        and will return False if the progress is &#39;canceled&#39; by the user
 
-        new_seq_rev = self.wg_flix_ui.get_flix_api().new_sequence_revision(
-            show_id, seq_id, revisioned_panels, markers, comment)
-        if new_seq_rev is None:
-            self.error(&#39;Could not save sequence revision&#39;)
-        else:
-            self.info(&#39;Sequence revision successfully created&#39;)
+        Arguments:
+            message {str} -- Message to show in the progress
+
+            skip_step {bool} -- Will skip the step (default: {True})
+        &#34;&#34;&#34;
+        next_value = self.progress_start
+        if skip_step is False:
+            next_value = next_value + 1
+        self.progress_start = next_value
+        self.progress.setValue(next_value)
+        self.progress.setLabelText(message)
+        self.progress.repaint()
+        QCoreApplication.processEvents()
+        if self.progress.wasCanceled():
+            raise progress_canceled
+
+    def __init_progress(self, steps):
+        &#34;&#34;&#34;__init_progress will init the progress bar
+
+        Arguments:
+            steps {int} -- Number of step of the progress bar
+        &#34;&#34;&#34;
+        self.progress = QProgressDialog(&#39;Operation in progress.&#39;,
+                                        &#39;Stop&#39;,
+                                        0,
+                                        steps)
+        self.progress_start = 0
+        self.progress.setMinimumWidth(400)
+        self.progress.setMinimumHeight(100)
+        self.progress.show()
+
+    def __error(self, message):
+        &#34;&#34;&#34;__error will show a error message with a given message
+
+        Arguments:
+            message {str} -- Message to show
+        &#34;&#34;&#34;
+        err = QErrorMessage(self.parent())
+        err.setWindowTitle(&#39;Flix&#39;)
+        err.showMessage(message)
+        err.exec_()
+
+    def __info(self, message):
+        &#34;&#34;&#34;__info will show a message with a given message
+
+        Arguments:
+            message {str} -- Message to show
+        &#34;&#34;&#34;
+        msgbox = QMessageBox(self.parent())
+        msgbox.setWindowTitle(&#39;Flix&#39;)
+        msgbox.setText(message)
+        msgbox.exec_()
 
 
 # main_view = main_dialogue()
@@ -303,28 +378,6 @@ class main_dialogue(QDialog):
         v_main_box.addWidget(self.wg_hiero_ui)
         self.setLayout(v_main_box)
 
-    def error(self, message):
-        &#34;&#34;&#34;error will show a error message with a given message
-
-        Arguments:
-            message {str} -- Message to show
-        &#34;&#34;&#34;
-        err = QErrorMessage(self.parent())
-        err.setWindowTitle(&#39;Flix&#39;)
-        err.showMessage(message)
-        err.exec_()
-
-    def info(self, message):
-        &#34;&#34;&#34;info will show a message with a given message
-
-        Arguments:
-            message {str} -- Message to show
-        &#34;&#34;&#34;
-        msgbox = QMessageBox(self.parent())
-        msgbox.setWindowTitle(&#39;Flix&#39;)
-        msgbox.setText(message)
-        msgbox.exec_()
-
     def create_clip(self, seq_rev, p, clip_name, clips):
         &#34;&#34;&#34;create_clip will create a clip or reuse one and download image
 
@@ -372,18 +425,23 @@ class main_dialogue(QDialog):
             Tuple[Dict, Dict] -- VideoTrack, ShotTrack
         &#34;&#34;&#34;
         _, seq_rev_nbr, seq_tc = self.wg_flix_ui.get_selected_sequence()
+        self.__update_progress(&#39;Get dialogues by panel id&#39;)
         mapped_dialogue = self.wg_flix_ui.get_dialogues_by_panel_id()
+        self.__update_progress(&#39;Get markers by name&#39;)
         markers_mapping = self.wg_flix_ui.get_markers_by_name()
+        self.__update_progress(&#39;Get panels&#39;)
         panels = self.wg_flix_ui.get_panels()
         if panels is None:
-            self.error(&#39;Could not retreive panels&#39;)
+            self.__error(&#39;Could not retreive panels&#39;)
             return
 
         vt_track_name = &#39;Flix_{0}_v{1}&#39;.format(
             seq_tc, seq_rev_nbr)
         vt_shot_name = &#39;Shots&#39; if len(markers_mapping) &gt; 0 else None
+        self.__update_progress(&#39;Create video tracks&#39;)
         track, shots = self.wg_hiero_ui.create_video_tracks(vt_track_name,
                                                             vt_shot_name)
+        self.__update_progress(&#39;Get clips from Hiero&#39;)
         clips = self.wg_hiero_ui.hiero_api.get_clips(seq_bin)
 
         prev = None
@@ -396,23 +454,31 @@ class main_dialogue(QDialog):
             clip_name = &#39;{0}_{1}_{2}_&#39;.format(
                 seq_tc, panel_id, p.get(
                     &#39;revision_counter&#39;))
+            self.__update_progress(&#39;Create clip: {0}&#39;.format(clip_name))
             clip = self.create_clip(seq_rev_bin, p, clip_name, clips)
             if clip is None:
-                self.error(&#39;could not create clip: {0}&#39;.format(clip_name))
+                self.__error(&#39;could not create clip: {0}&#39;.format(clip_name))
                 return track, shots
 
             # Add comment
+            self.__update_progress(&#39;Add comment&#39;)
             tags = self.wg_hiero_ui.add_comment(p, tags)
             # Add panel info
+            self.__update_progress(&#39;Add clip info&#39;)
             tags = self.wg_hiero_ui.add_panel_info_tag(p, tags)
             # Add marker
+            self.__update_progress(&#39;Add marker&#39;)
             self.wg_hiero_ui.add_marker(markers_mapping, panel_in, sequence)
             # Add track item
+            self.__update_progress(&#39;Add track item&#39;)
             prev = self.wg_hiero_ui.hiero_api.add_track_item(
                 track, clip_name, clip, p.get(&#39;duration&#39;), tags, prev)
             # Add dialogue
-            self.wg_hiero_ui.add_dialogue(mapped_dialogue, panel_id, track, prev)
+            self.__update_progress(&#39;Add dialogue&#39;)
+            self.wg_hiero_ui.add_dialogue(
+                mapped_dialogue, panel_id, track, prev)
             # Add burnin
+            self.__update_progress(&#39;Add burnin&#39;)
             marker_in = self.wg_hiero_ui.add_burnin(
                 panels,
                 panel_in,
@@ -432,80 +498,164 @@ class main_dialogue(QDialog):
         &#34;&#34;&#34;pull_taltest_seq_rev will pull one latest sequence revision and send
         it to hiero
         &#34;&#34;&#34;
-        _, _, show_tc = self.wg_flix_ui.get_selected_show()
-        seq_id, seq_rev_tc, seq_tc = self.wg_flix_ui.get_selected_sequence()
-        sequence, seq, seq_rev_bin = self.wg_hiero_ui.pull_to_sequence(show_tc,
-                                                                       seq_rev_tc,
-                                                                       seq_tc)
-        track, shots = self.create_video_track(
-            sequence, seq, seq_rev_bin, seq_id, seq_rev_tc)
-        if track is None:
+        try:
+            self.__init_progress(3)
+
+            _, _, show_tc = self.wg_flix_ui.get_selected_show()
+            seq_id, seq_rev_tc, seq_tc = self.wg_flix_ui.get_selected_sequence()
+            self.__update_progress(&#39;Pull sequence to hiero&#39;, False)
+            sequence, seq, seq_rev_bin = self.wg_hiero_ui.pull_to_sequence(
+                show_tc, seq_rev_tc, seq_tc, self.__update_progress)
+            self.__update_progress(&#39;Create video track&#39;, False)
+            track, shots = self.create_video_track(
+                sequence, seq, seq_rev_bin, seq_id, seq_rev_tc)
+            if track is None:
+                return
+            self.__update_progress(&#39;Add video track&#39;, False)
+            sequence.addTrack(track)
+            if shots is not None:
+                self.__update_progress(&#39;Add shot track&#39;)
+                sequence.addTrack(shots)
+        except progress_canceled:
+            print(&#39;progress cancelled&#39;)
             return
-        sequence.addTrack(track)
-        if shots is not None:
-            sequence.addTrack(shots)
 
     def on_pull_latest(self):
-        &#34;&#34;&#34;on_pull_latest will retrieve the last sequence revision from Flix and
-        will create / reuse bins, sequences, clips
+        &#34;&#34;&#34;on_pull_latest will retrieve the last sequence revision from Flix
+        and will create / reuse bins, sequences, clips
         Depending on the selection it will pull only one or all of them
         &#34;&#34;&#34;
         _, _, selected_seq_tc = self.wg_flix_ui.get_selected_sequence()
         if selected_seq_tc == &#39;All Sequences&#39;:
             for count in range(self.wg_flix_ui.sequence_list.count()):
-                if self.wg_flix_ui.sequence_list.itemText(count) == &#39;All Sequences&#39;:
+                if self.wg_flix_ui.sequence_list.itemText(
+                        count) == &#39;All Sequences&#39;:
                     continue
-                select_seq_tracking_code = self.wg_flix_ui.sequence_list.itemText(
+                select_seq_tc = self.wg_flix_ui.sequence_list.itemText(
                     count)
-                self.wg_flix_ui.on_sequence_changed(select_seq_tracking_code)
+                self.wg_flix_ui.on_sequence_changed(select_seq_tc)
                 self.pull_latest_seq_rev()
             self.wg_flix_ui.on_sequence_changed(&#39;All Sequences&#39;)
         else:
             self.pull_latest_seq_rev()
 
-        self.info(&#39;Sequence revision imported successfully&#39;)
+        self.__info(&#39;Sequence revision imported successfully&#39;)
 
     def on_update_in_flix(self):
         &#34;&#34;&#34;on_update_in_flix will send a sequence to Flix
         &#34;&#34;&#34;
         show_id, _, _ = self.wg_flix_ui.get_selected_show()
         seq_id, _, _ = self.wg_flix_ui.get_selected_sequence()
-        revisioned_panels = []
+        rev_panels = []
         markers = []
+        flix_api = self.wg_flix_ui.get_flix_api()
 
-        sequence = self.wg_hiero_ui.hiero_api.get_active_sequence()
-        if sequence is None:
-            self.error(&#39;could not find any sequence selected&#39;)
-            return
-        for tr in sequence.items():
-            if tr.name() == &#39;Shots&#39;:
-                markers = self.wg_hiero_ui.get_markers_from_sequence(tr)
+        try:
+            self.__init_progress(3)
+            sequence = self.wg_hiero_ui.hiero_api.get_active_sequence()
+            if sequence is None:
+                self.__error(&#39;could not find any sequence selected&#39;)
+                self.progress.close()
+                return
+            self.__update_progress(&#39;Get Hiero items&#39;, False)
+            for tr in sequence.items():
+                if tr.name() == &#39;Shots&#39;:
+                    self.__update_progress(&#39;Get Shots items&#39;)
+                    markers = self.wg_hiero_ui.get_markers_from_sequence(tr)
+                else:
+                    self.__update_progress(&#39;Get Clips items&#39;)
+                    panels = self.wg_hiero_ui.get_panels_from_sequence(
+                        tr, show_id, seq_id, self.wg_flix_ui.create_blank_panel)
+                    self.__update_progress(&#39;Update clips items info&#39;)
+                    panels = self.wg_hiero_ui.update_panel_from_sequence(
+                        tr, panels)
+                    self.__update_progress(&#39;Handle duplicate clips&#39;)
+                    panels = self.wg_flix_ui.handle_duplicate_panels(panels)
+                    if len(panels) &gt; 0 and len(rev_panels) &lt; 1:
+                        rev_panels = flix_api.format_panel_for_revision(panels)
+
+            if len(rev_panels) &lt; 1:
+                self.__error(
+                    &#39;could not create a sequence revision, need at least one clip&#39;)
+                self.progress.close()
+                return
+
+            self.__update_progress(&#39;Set seq revision comment&#39;, False)
+            comment, ok = QInputDialog.getText(
+                self, &#39;Update to Flix&#39;, &#39;Sequence revision comment:&#39;)
+            if ok is False:
+                self.progress.close()
+                return
+
+            self.__update_progress(&#39;Create sequence revision&#39;, False)
+            new_seq_rev = flix_api.new_sequence_revision(
+                show_id, seq_id, rev_panels, markers, comment)
+            if new_seq_rev is None:
+                self.__error(&#39;Could not save sequence revision&#39;)
             else:
-                panels = self.wg_hiero_ui.get_panels_from_sequence(tr,
-                                                       show_id,
-                                                       seq_id,
-                                                       self.wg_flix_ui.create_blank_panel)
-                panels = self.wg_hiero_ui.update_panel_from_sequence(tr, panels)
-                panels = self.wg_flix_ui.handle_duplicate_panels(panels)
-                if len(panels) &gt; 0 and len(revisioned_panels) &lt; 1:
-                    revisioned_panels = self.wg_flix_ui.get_flix_api().format_panel_for_revision(panels)
-
-        if len(revisioned_panels) &lt; 1:
-            self.error(
-                &#39;could not create a sequence revision, need at least one clip&#39;)
+                self.__info(&#39;Sequence revision successfully created&#39;)
+        except progress_canceled:
+            print(&#39;progress cancelled&#39;)
             return
 
-        comment, ok = QInputDialog.getText(
-            self, &#39;Update to Flix&#39;, &#39;Sequence revision comment:&#39;)
-        if ok is False:
-            return
+    def __update_progress(self,
+                          message,
+                          skip_step=True):
+        &#34;&#34;&#34;update_progress will update the progress message
+        and will return False if the progress is &#39;canceled&#39; by the user
 
-        new_seq_rev = self.wg_flix_ui.get_flix_api().new_sequence_revision(
-            show_id, seq_id, revisioned_panels, markers, comment)
-        if new_seq_rev is None:
-            self.error(&#39;Could not save sequence revision&#39;)
-        else:
-            self.info(&#39;Sequence revision successfully created&#39;)</code></pre>
+        Arguments:
+            message {str} -- Message to show in the progress
+
+            skip_step {bool} -- Will skip the step (default: {True})
+        &#34;&#34;&#34;
+        next_value = self.progress_start
+        if skip_step is False:
+            next_value = next_value + 1
+        self.progress_start = next_value
+        self.progress.setValue(next_value)
+        self.progress.setLabelText(message)
+        self.progress.repaint()
+        QCoreApplication.processEvents()
+        if self.progress.wasCanceled():
+            raise progress_canceled
+
+    def __init_progress(self, steps):
+        &#34;&#34;&#34;__init_progress will init the progress bar
+
+        Arguments:
+            steps {int} -- Number of step of the progress bar
+        &#34;&#34;&#34;
+        self.progress = QProgressDialog(&#39;Operation in progress.&#39;,
+                                        &#39;Stop&#39;,
+                                        0,
+                                        steps)
+        self.progress_start = 0
+        self.progress.setMinimumWidth(400)
+        self.progress.setMinimumHeight(100)
+        self.progress.show()
+
+    def __error(self, message):
+        &#34;&#34;&#34;__error will show a error message with a given message
+
+        Arguments:
+            message {str} -- Message to show
+        &#34;&#34;&#34;
+        err = QErrorMessage(self.parent())
+        err.setWindowTitle(&#39;Flix&#39;)
+        err.showMessage(message)
+        err.exec_()
+
+    def __info(self, message):
+        &#34;&#34;&#34;__info will show a message with a given message
+
+        Arguments:
+            message {str} -- Message to show
+        &#34;&#34;&#34;
+        msgbox = QMessageBox(self.parent())
+        msgbox.setWindowTitle(&#39;Flix&#39;)
+        msgbox.setText(message)
+        msgbox.exec_()</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -612,18 +762,23 @@ sequence and one for shots</p>
         Tuple[Dict, Dict] -- VideoTrack, ShotTrack
     &#34;&#34;&#34;
     _, seq_rev_nbr, seq_tc = self.wg_flix_ui.get_selected_sequence()
+    self.__update_progress(&#39;Get dialogues by panel id&#39;)
     mapped_dialogue = self.wg_flix_ui.get_dialogues_by_panel_id()
+    self.__update_progress(&#39;Get markers by name&#39;)
     markers_mapping = self.wg_flix_ui.get_markers_by_name()
+    self.__update_progress(&#39;Get panels&#39;)
     panels = self.wg_flix_ui.get_panels()
     if panels is None:
-        self.error(&#39;Could not retreive panels&#39;)
+        self.__error(&#39;Could not retreive panels&#39;)
         return
 
     vt_track_name = &#39;Flix_{0}_v{1}&#39;.format(
         seq_tc, seq_rev_nbr)
     vt_shot_name = &#39;Shots&#39; if len(markers_mapping) &gt; 0 else None
+    self.__update_progress(&#39;Create video tracks&#39;)
     track, shots = self.wg_hiero_ui.create_video_tracks(vt_track_name,
                                                         vt_shot_name)
+    self.__update_progress(&#39;Get clips from Hiero&#39;)
     clips = self.wg_hiero_ui.hiero_api.get_clips(seq_bin)
 
     prev = None
@@ -636,23 +791,31 @@ sequence and one for shots</p>
         clip_name = &#39;{0}_{1}_{2}_&#39;.format(
             seq_tc, panel_id, p.get(
                 &#39;revision_counter&#39;))
+        self.__update_progress(&#39;Create clip: {0}&#39;.format(clip_name))
         clip = self.create_clip(seq_rev_bin, p, clip_name, clips)
         if clip is None:
-            self.error(&#39;could not create clip: {0}&#39;.format(clip_name))
+            self.__error(&#39;could not create clip: {0}&#39;.format(clip_name))
             return track, shots
 
         # Add comment
+        self.__update_progress(&#39;Add comment&#39;)
         tags = self.wg_hiero_ui.add_comment(p, tags)
         # Add panel info
+        self.__update_progress(&#39;Add clip info&#39;)
         tags = self.wg_hiero_ui.add_panel_info_tag(p, tags)
         # Add marker
+        self.__update_progress(&#39;Add marker&#39;)
         self.wg_hiero_ui.add_marker(markers_mapping, panel_in, sequence)
         # Add track item
+        self.__update_progress(&#39;Add track item&#39;)
         prev = self.wg_hiero_ui.hiero_api.add_track_item(
             track, clip_name, clip, p.get(&#39;duration&#39;), tags, prev)
         # Add dialogue
-        self.wg_hiero_ui.add_dialogue(mapped_dialogue, panel_id, track, prev)
+        self.__update_progress(&#39;Add dialogue&#39;)
+        self.wg_hiero_ui.add_dialogue(
+            mapped_dialogue, panel_id, track, prev)
         # Add burnin
+        self.__update_progress(&#39;Add burnin&#39;)
         marker_in = self.wg_hiero_ui.add_burnin(
             panels,
             panel_in,
@@ -669,82 +832,37 @@ sequence and one for shots</p>
     return track, shots</code></pre>
 </details>
 </dd>
-<dt id="main.main_dialogue.error"><code class="name flex">
-<span>def <span class="ident">error</span></span>(<span>self, message)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>error will show a error message with a given message</p>
-<h2 id="arguments">Arguments</h2>
-<p>message {str} &ndash; Message to show</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def error(self, message):
-    &#34;&#34;&#34;error will show a error message with a given message
-
-    Arguments:
-        message {str} -- Message to show
-    &#34;&#34;&#34;
-    err = QErrorMessage(self.parent())
-    err.setWindowTitle(&#39;Flix&#39;)
-    err.showMessage(message)
-    err.exec_()</code></pre>
-</details>
-</dd>
-<dt id="main.main_dialogue.info"><code class="name flex">
-<span>def <span class="ident">info</span></span>(<span>self, message)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>info will show a message with a given message</p>
-<h2 id="arguments">Arguments</h2>
-<p>message {str} &ndash; Message to show</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def info(self, message):
-    &#34;&#34;&#34;info will show a message with a given message
-
-    Arguments:
-        message {str} -- Message to show
-    &#34;&#34;&#34;
-    msgbox = QMessageBox(self.parent())
-    msgbox.setWindowTitle(&#39;Flix&#39;)
-    msgbox.setText(message)
-    msgbox.exec_()</code></pre>
-</details>
-</dd>
 <dt id="main.main_dialogue.on_pull_latest"><code class="name flex">
 <span>def <span class="ident">on_pull_latest</span></span>(<span>self)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>on_pull_latest will retrieve the last sequence revision from Flix and
-will create / reuse bins, sequences, clips
+<div class="desc"><p>on_pull_latest will retrieve the last sequence revision from Flix
+and will create / reuse bins, sequences, clips
 Depending on the selection it will pull only one or all of them</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def on_pull_latest(self):
-    &#34;&#34;&#34;on_pull_latest will retrieve the last sequence revision from Flix and
-    will create / reuse bins, sequences, clips
+    &#34;&#34;&#34;on_pull_latest will retrieve the last sequence revision from Flix
+    and will create / reuse bins, sequences, clips
     Depending on the selection it will pull only one or all of them
     &#34;&#34;&#34;
     _, _, selected_seq_tc = self.wg_flix_ui.get_selected_sequence()
     if selected_seq_tc == &#39;All Sequences&#39;:
         for count in range(self.wg_flix_ui.sequence_list.count()):
-            if self.wg_flix_ui.sequence_list.itemText(count) == &#39;All Sequences&#39;:
+            if self.wg_flix_ui.sequence_list.itemText(
+                    count) == &#39;All Sequences&#39;:
                 continue
-            select_seq_tracking_code = self.wg_flix_ui.sequence_list.itemText(
+            select_seq_tc = self.wg_flix_ui.sequence_list.itemText(
                 count)
-            self.wg_flix_ui.on_sequence_changed(select_seq_tracking_code)
+            self.wg_flix_ui.on_sequence_changed(select_seq_tc)
             self.pull_latest_seq_rev()
         self.wg_flix_ui.on_sequence_changed(&#39;All Sequences&#39;)
     else:
         self.pull_latest_seq_rev()
 
-    self.info(&#39;Sequence revision imported successfully&#39;)</code></pre>
+    self.__info(&#39;Sequence revision imported successfully&#39;)</code></pre>
 </details>
 </dd>
 <dt id="main.main_dialogue.on_update_in_flix"><code class="name flex">
@@ -761,42 +879,57 @@ Depending on the selection it will pull only one or all of them</p></div>
     &#34;&#34;&#34;
     show_id, _, _ = self.wg_flix_ui.get_selected_show()
     seq_id, _, _ = self.wg_flix_ui.get_selected_sequence()
-    revisioned_panels = []
+    rev_panels = []
     markers = []
+    flix_api = self.wg_flix_ui.get_flix_api()
 
-    sequence = self.wg_hiero_ui.hiero_api.get_active_sequence()
-    if sequence is None:
-        self.error(&#39;could not find any sequence selected&#39;)
-        return
-    for tr in sequence.items():
-        if tr.name() == &#39;Shots&#39;:
-            markers = self.wg_hiero_ui.get_markers_from_sequence(tr)
+    try:
+        self.__init_progress(3)
+        sequence = self.wg_hiero_ui.hiero_api.get_active_sequence()
+        if sequence is None:
+            self.__error(&#39;could not find any sequence selected&#39;)
+            self.progress.close()
+            return
+        self.__update_progress(&#39;Get Hiero items&#39;, False)
+        for tr in sequence.items():
+            if tr.name() == &#39;Shots&#39;:
+                self.__update_progress(&#39;Get Shots items&#39;)
+                markers = self.wg_hiero_ui.get_markers_from_sequence(tr)
+            else:
+                self.__update_progress(&#39;Get Clips items&#39;)
+                panels = self.wg_hiero_ui.get_panels_from_sequence(
+                    tr, show_id, seq_id, self.wg_flix_ui.create_blank_panel)
+                self.__update_progress(&#39;Update clips items info&#39;)
+                panels = self.wg_hiero_ui.update_panel_from_sequence(
+                    tr, panels)
+                self.__update_progress(&#39;Handle duplicate clips&#39;)
+                panels = self.wg_flix_ui.handle_duplicate_panels(panels)
+                if len(panels) &gt; 0 and len(rev_panels) &lt; 1:
+                    rev_panels = flix_api.format_panel_for_revision(panels)
+
+        if len(rev_panels) &lt; 1:
+            self.__error(
+                &#39;could not create a sequence revision, need at least one clip&#39;)
+            self.progress.close()
+            return
+
+        self.__update_progress(&#39;Set seq revision comment&#39;, False)
+        comment, ok = QInputDialog.getText(
+            self, &#39;Update to Flix&#39;, &#39;Sequence revision comment:&#39;)
+        if ok is False:
+            self.progress.close()
+            return
+
+        self.__update_progress(&#39;Create sequence revision&#39;, False)
+        new_seq_rev = flix_api.new_sequence_revision(
+            show_id, seq_id, rev_panels, markers, comment)
+        if new_seq_rev is None:
+            self.__error(&#39;Could not save sequence revision&#39;)
         else:
-            panels = self.wg_hiero_ui.get_panels_from_sequence(tr,
-                                                   show_id,
-                                                   seq_id,
-                                                   self.wg_flix_ui.create_blank_panel)
-            panels = self.wg_hiero_ui.update_panel_from_sequence(tr, panels)
-            panels = self.wg_flix_ui.handle_duplicate_panels(panels)
-            if len(panels) &gt; 0 and len(revisioned_panels) &lt; 1:
-                revisioned_panels = self.wg_flix_ui.get_flix_api().format_panel_for_revision(panels)
-
-    if len(revisioned_panels) &lt; 1:
-        self.error(
-            &#39;could not create a sequence revision, need at least one clip&#39;)
-        return
-
-    comment, ok = QInputDialog.getText(
-        self, &#39;Update to Flix&#39;, &#39;Sequence revision comment:&#39;)
-    if ok is False:
-        return
-
-    new_seq_rev = self.wg_flix_ui.get_flix_api().new_sequence_revision(
-        show_id, seq_id, revisioned_panels, markers, comment)
-    if new_seq_rev is None:
-        self.error(&#39;Could not save sequence revision&#39;)
-    else:
-        self.info(&#39;Sequence revision successfully created&#39;)</code></pre>
+            self.__info(&#39;Sequence revision successfully created&#39;)
+    except progress_canceled:
+        print(&#39;progress cancelled&#39;)
+        return</code></pre>
 </details>
 </dd>
 <dt id="main.main_dialogue.pull_latest_seq_rev"><code class="name flex">
@@ -813,21 +946,51 @@ it to hiero</p></div>
     &#34;&#34;&#34;pull_taltest_seq_rev will pull one latest sequence revision and send
     it to hiero
     &#34;&#34;&#34;
-    _, _, show_tc = self.wg_flix_ui.get_selected_show()
-    seq_id, seq_rev_tc, seq_tc = self.wg_flix_ui.get_selected_sequence()
-    sequence, seq, seq_rev_bin = self.wg_hiero_ui.pull_to_sequence(show_tc,
-                                                                   seq_rev_tc,
-                                                                   seq_tc)
-    track, shots = self.create_video_track(
-        sequence, seq, seq_rev_bin, seq_id, seq_rev_tc)
-    if track is None:
-        return
-    sequence.addTrack(track)
-    if shots is not None:
-        sequence.addTrack(shots)</code></pre>
+    try:
+        self.__init_progress(3)
+
+        _, _, show_tc = self.wg_flix_ui.get_selected_show()
+        seq_id, seq_rev_tc, seq_tc = self.wg_flix_ui.get_selected_sequence()
+        self.__update_progress(&#39;Pull sequence to hiero&#39;, False)
+        sequence, seq, seq_rev_bin = self.wg_hiero_ui.pull_to_sequence(
+            show_tc, seq_rev_tc, seq_tc, self.__update_progress)
+        self.__update_progress(&#39;Create video track&#39;, False)
+        track, shots = self.create_video_track(
+            sequence, seq, seq_rev_bin, seq_id, seq_rev_tc)
+        if track is None:
+            return
+        self.__update_progress(&#39;Add video track&#39;, False)
+        sequence.addTrack(track)
+        if shots is not None:
+            self.__update_progress(&#39;Add shot track&#39;)
+            sequence.addTrack(shots)
+    except progress_canceled:
+        print(&#39;progress cancelled&#39;)
+        return</code></pre>
 </details>
 </dd>
 </dl>
+</dd>
+<dt id="main.progress_canceled"><code class="flex name class">
+<span>class <span class="ident">progress_canceled</span></span>
+<span>(</span><span>...)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>progress_canceled is an exception for the progress cancelled</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class progress_canceled(Exception):
+    &#34;&#34;&#34;progress_canceled is an exception for the progress cancelled
+    &#34;&#34;&#34;
+    pass</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>builtins.Exception</li>
+<li>builtins.BaseException</li>
+</ul>
 </dd>
 </dl>
 </section>
@@ -845,13 +1008,14 @@ it to hiero</p></div>
 <ul class="two-column">
 <li><code><a title="main.main_dialogue.create_clip" href="#main.main_dialogue.create_clip">create_clip</a></code></li>
 <li><code><a title="main.main_dialogue.create_video_track" href="#main.main_dialogue.create_video_track">create_video_track</a></code></li>
-<li><code><a title="main.main_dialogue.error" href="#main.main_dialogue.error">error</a></code></li>
-<li><code><a title="main.main_dialogue.info" href="#main.main_dialogue.info">info</a></code></li>
 <li><code><a title="main.main_dialogue.on_pull_latest" href="#main.main_dialogue.on_pull_latest">on_pull_latest</a></code></li>
 <li><code><a title="main.main_dialogue.on_update_in_flix" href="#main.main_dialogue.on_update_in_flix">on_update_in_flix</a></code></li>
 <li><code><a title="main.main_dialogue.pull_latest_seq_rev" href="#main.main_dialogue.pull_latest_seq_rev">pull_latest_seq_rev</a></code></li>
 <li><code><a title="main.main_dialogue.staticMetaObject" href="#main.main_dialogue.staticMetaObject">staticMetaObject</a></code></li>
 </ul>
+</li>
+<li>
+<h4><code><a title="main.progress_canceled" href="#main.progress_canceled">progress_canceled</a></code></h4>
 </li>
 </ul>
 </li>

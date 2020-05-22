@@ -30,7 +30,7 @@ import sys
 import tempfile
 from collections import OrderedDict
 
-from PySide2.QtCore import QSize, Signal
+from PySide2.QtCore import Signal
 from PySide2.QtWidgets import (QApplication, QComboBox, QDialog, QErrorMessage,
                                QHBoxLayout, QLabel, QLineEdit, QPushButton,
                                QSizePolicy, QVBoxLayout, QWidget)
@@ -351,23 +351,23 @@ class flix_ui(QWidget):
             self.__error(&#39;Could not retrieve sequence revision&#39;)
             return None
         fn_progress(&#39;get markers&#39;)
-        markers = self.get_flix_api().get_markers(seq_rev)
+        markers = flix_api.get_markers(seq_rev)
         if len(markers) &lt; 1:
             self.__info(&#39;You need at least one shot&#39;)
             return None
         fn_progress(&#39;get panels&#39;)
-        panels = self.get_flix_api().get_panels(
+        panels = flix_api.get_panels(
             show_id, seq_id, seq_rev_number)
         if panels is None:
             self.__error(&#39;Could not retrieve panels&#39;)
             return None
         fn_progress(&#39;get markers per panels&#39;)
-        panels_per_markers = self.get_flix_api().get_markers_per_panels(markers, panels)
-        mo_per_shots, ok = self.get_flix_api().mo_per_shots(panels_per_markers,
-                                                            show_id,
-                                                            seq_id,
-                                                            seq_rev_number,
-                                                            episode_id)
+        panels_per_markers = flix_api.get_markers_per_panels(markers, panels)
+        mo_per_shots, ok = flix_api.mo_per_shots(panels_per_markers,
+                                                 show_id,
+                                                 seq_id,
+                                                 seq_rev_number,
+                                                 episode_id)
 
         # Split export quicktime
         for shot_name in mo_per_shots:
@@ -375,7 +375,7 @@ class flix_ui(QWidget):
                 &#39;export quicktime for shot {0}{1}&#39;.format(
                     shot_name, &#39;.&#39; * (r % 4)))
             fn_progress(&#39;export quicktime for shot {0}&#39;.format(shot_name))
-            mo = self.get_flix_api().get_mo_quicktime_export(
+            mo = flix_api.get_mo_quicktime_export(
                 shot_name, panels_per_markers[shot_name],
                 show_id, seq_id, seq_rev_number, episode_id, on_retry)
             mo_per_shots[shot_name][&#39;mov&#39;] = mo
@@ -401,6 +401,8 @@ class flix_ui(QWidget):
             raise RuntimeError(self.__err_authenticate)
 
         stc = self.__selected_sequence_tracking_code
+        if stc == &#39;All Sequences&#39;:
+            return 0, 0, stc
         if not (stc in self.sequence_tracking_code):
             raise RuntimeError(self.__err_sequence_not_found)
         seq_id = self.sequence_tracking_code[stc][0]
@@ -546,6 +548,7 @@ class flix_ui(QWidget):
             return
         self.sequence_tracking_code = self.__get_sequence_tracking_code(
             sequences)
+        self.sequence_list.addItem(&#39;All Sequences&#39;)
         for s in self.sequence_tracking_code:
             self.sequence_list.addItem(s)
         self.sequence_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
@@ -570,6 +573,7 @@ class flix_ui(QWidget):
         self.sequence_tracking_code = self.__get_sequence_tracking_code(
             sequences)
         self.sequence_list.clear()
+        self.sequence_list.addItem(&#39;All Sequences&#39;)
         for s in self.sequence_tracking_code:
             self.sequence_list.addItem(s)
         self.sequence_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
@@ -584,6 +588,9 @@ class flix_ui(QWidget):
         if tracking_code == &#39;&#39;:
             return
         self.__selected_sequence_tracking_code = tracking_code
+        if tracking_code == &#39;All Sequences&#39;:
+            self.e_sequence_changed.emit(0, 0, tracking_code)
+            return
         seq_id, seq_rev, _ = self.get_selected_sequence()
         self.e_sequence_changed.emit(seq_id, seq_rev, tracking_code)
 
@@ -1068,23 +1075,23 @@ e_sequence_changed: sequence ID, sequence Revision number, tracking code</p></di
             self.__error(&#39;Could not retrieve sequence revision&#39;)
             return None
         fn_progress(&#39;get markers&#39;)
-        markers = self.get_flix_api().get_markers(seq_rev)
+        markers = flix_api.get_markers(seq_rev)
         if len(markers) &lt; 1:
             self.__info(&#39;You need at least one shot&#39;)
             return None
         fn_progress(&#39;get panels&#39;)
-        panels = self.get_flix_api().get_panels(
+        panels = flix_api.get_panels(
             show_id, seq_id, seq_rev_number)
         if panels is None:
             self.__error(&#39;Could not retrieve panels&#39;)
             return None
         fn_progress(&#39;get markers per panels&#39;)
-        panels_per_markers = self.get_flix_api().get_markers_per_panels(markers, panels)
-        mo_per_shots, ok = self.get_flix_api().mo_per_shots(panels_per_markers,
-                                                            show_id,
-                                                            seq_id,
-                                                            seq_rev_number,
-                                                            episode_id)
+        panels_per_markers = flix_api.get_markers_per_panels(markers, panels)
+        mo_per_shots, ok = flix_api.mo_per_shots(panels_per_markers,
+                                                 show_id,
+                                                 seq_id,
+                                                 seq_rev_number,
+                                                 episode_id)
 
         # Split export quicktime
         for shot_name in mo_per_shots:
@@ -1092,7 +1099,7 @@ e_sequence_changed: sequence ID, sequence Revision number, tracking code</p></di
                 &#39;export quicktime for shot {0}{1}&#39;.format(
                     shot_name, &#39;.&#39; * (r % 4)))
             fn_progress(&#39;export quicktime for shot {0}&#39;.format(shot_name))
-            mo = self.get_flix_api().get_mo_quicktime_export(
+            mo = flix_api.get_mo_quicktime_export(
                 shot_name, panels_per_markers[shot_name],
                 show_id, seq_id, seq_rev_number, episode_id, on_retry)
             mo_per_shots[shot_name][&#39;mov&#39;] = mo
@@ -1118,6 +1125,8 @@ e_sequence_changed: sequence ID, sequence Revision number, tracking code</p></di
             raise RuntimeError(self.__err_authenticate)
 
         stc = self.__selected_sequence_tracking_code
+        if stc == &#39;All Sequences&#39;:
+            return 0, 0, stc
         if not (stc in self.sequence_tracking_code):
             raise RuntimeError(self.__err_sequence_not_found)
         seq_id = self.sequence_tracking_code[stc][0]
@@ -1263,6 +1272,7 @@ e_sequence_changed: sequence ID, sequence Revision number, tracking code</p></di
             return
         self.sequence_tracking_code = self.__get_sequence_tracking_code(
             sequences)
+        self.sequence_list.addItem(&#39;All Sequences&#39;)
         for s in self.sequence_tracking_code:
             self.sequence_list.addItem(s)
         self.sequence_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
@@ -1287,6 +1297,7 @@ e_sequence_changed: sequence ID, sequence Revision number, tracking code</p></di
         self.sequence_tracking_code = self.__get_sequence_tracking_code(
             sequences)
         self.sequence_list.clear()
+        self.sequence_list.addItem(&#39;All Sequences&#39;)
         for s in self.sequence_tracking_code:
             self.sequence_list.addItem(s)
         self.sequence_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
@@ -1301,6 +1312,9 @@ e_sequence_changed: sequence ID, sequence Revision number, tracking code</p></di
         if tracking_code == &#39;&#39;:
             return
         self.__selected_sequence_tracking_code = tracking_code
+        if tracking_code == &#39;All Sequences&#39;:
+            self.e_sequence_changed.emit(0, 0, tracking_code)
+            return
         seq_id, seq_rev, _ = self.get_selected_sequence()
         self.e_sequence_changed.emit(seq_id, seq_rev, tracking_code)
 
@@ -1721,23 +1735,23 @@ mapping of markers: start -&gt; marker_name</p>
         self.__error(&#39;Could not retrieve sequence revision&#39;)
         return None
     fn_progress(&#39;get markers&#39;)
-    markers = self.get_flix_api().get_markers(seq_rev)
+    markers = flix_api.get_markers(seq_rev)
     if len(markers) &lt; 1:
         self.__info(&#39;You need at least one shot&#39;)
         return None
     fn_progress(&#39;get panels&#39;)
-    panels = self.get_flix_api().get_panels(
+    panels = flix_api.get_panels(
         show_id, seq_id, seq_rev_number)
     if panels is None:
         self.__error(&#39;Could not retrieve panels&#39;)
         return None
     fn_progress(&#39;get markers per panels&#39;)
-    panels_per_markers = self.get_flix_api().get_markers_per_panels(markers, panels)
-    mo_per_shots, ok = self.get_flix_api().mo_per_shots(panels_per_markers,
-                                                        show_id,
-                                                        seq_id,
-                                                        seq_rev_number,
-                                                        episode_id)
+    panels_per_markers = flix_api.get_markers_per_panels(markers, panels)
+    mo_per_shots, ok = flix_api.mo_per_shots(panels_per_markers,
+                                             show_id,
+                                             seq_id,
+                                             seq_rev_number,
+                                             episode_id)
 
     # Split export quicktime
     for shot_name in mo_per_shots:
@@ -1745,7 +1759,7 @@ mapping of markers: start -&gt; marker_name</p>
             &#39;export quicktime for shot {0}{1}&#39;.format(
                 shot_name, &#39;.&#39; * (r % 4)))
         fn_progress(&#39;export quicktime for shot {0}&#39;.format(shot_name))
-        mo = self.get_flix_api().get_mo_quicktime_export(
+        mo = flix_api.get_mo_quicktime_export(
             shot_name, panels_per_markers[shot_name],
             show_id, seq_id, seq_rev_number, episode_id, on_retry)
         mo_per_shots[shot_name][&#39;mov&#39;] = mo
@@ -1851,6 +1865,8 @@ mapping of markers: start -&gt; marker_name</p>
         raise RuntimeError(self.__err_authenticate)
 
     stc = self.__selected_sequence_tracking_code
+    if stc == &#39;All Sequences&#39;:
+        return 0, 0, stc
     if not (stc in self.sequence_tracking_code):
         raise RuntimeError(self.__err_sequence_not_found)
     seq_id = self.sequence_tracking_code[stc][0]
@@ -1984,6 +2000,9 @@ will store the selected sequence</p>
     if tracking_code == &#39;&#39;:
         return
     self.__selected_sequence_tracking_code = tracking_code
+    if tracking_code == &#39;All Sequences&#39;:
+        self.e_sequence_changed.emit(0, 0, tracking_code)
+        return
     seq_id, seq_rev, _ = self.get_selected_sequence()
     self.e_sequence_changed.emit(seq_id, seq_rev, tracking_code)</code></pre>
 </details>
