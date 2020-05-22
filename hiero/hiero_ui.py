@@ -301,7 +301,11 @@ class hiero_ui(QWidget):
         }
         self.hiero_api.add_burnin_track_effect(track, fr, to, settings)
 
-    def pull_to_sequence(self, show_tc, seq_rev_tc, seq_tracking_code):
+    def pull_to_sequence(self,
+                         show_tc,
+                         seq_rev_tc,
+                         seq_tracking_code,
+                         fn_update):
         """pull_to_sequence will pull to hiero a project, sequence and
         sequence revision bin, as well as a new Sequence
 
@@ -312,28 +316,34 @@ class hiero_ui(QWidget):
 
             seq_tracking_code {str} -- Sequence tracking code
 
+            fn_update {Callable[[str], None]} -- Update callback
+
         Returns:
             Tuple[Dict, Dict, Dict] -- Seq, Seq bin, Seq rev bin
         """
-        my_project = self.hiero_api.get_project(
-            'Flix_{0}'.format(
-                show_tc))
+        hiero_project_name = 'Flix_{0}'.format(show_tc)
+        fn_update('Get / Create hiero project: {0}'.format(hiero_project_name))
+        my_project = self.hiero_api.get_project(hiero_project_name)
+        seq_bin_name = 'Flix_{0}'.format(seq_tracking_code)
+        fn_update('Get / Create Sequence bin: {0}'.format(seq_bin_name))
         seq, seq_bin_reused = self.hiero_api.get_project_bin(
-            my_project, 'Flix_{0}'.format(
-                seq_tracking_code))
+            my_project, seq_bin_name)
         if seq_bin_reused is False:
             clipsBin = my_project.clipsBin()
             clipsBin.addItem(seq)
-
+        seqrev_bin_name = 'v{0}'.format(seq_rev_tc)
+        fn_update('Get / Create Sequence Rev bin: {0}'.format(seqrev_bin_name))
         seq_rev_bin, seq_rev_bin_reused = self.hiero_api.get_seq_bin(
-            seq, 'v{0}'.format(seq_rev_tc))
+            seq, seqrev_bin_name)
         if seq_rev_bin_reused is False:
             seq.addItem(seq_rev_bin)
 
-        sequence = self.hiero_api.create_sequence(
-            'Flix_{0}_v{1}'.format(
+        sequence_name = 'Flix_{0}_v{1}'.format(
                 seq_tracking_code,
-                seq_rev_tc))
+                seq_rev_tc)
+        fn_update('Create Sequence: {}'.format(sequence_name))
+        sequence = self.hiero_api.create_sequence(
+            sequence_name)
         seq_item = self.hiero_api.sequence_to_bin_item(sequence)
         seq_rev_bin.addItem(seq_item)
         return sequence, seq, seq_rev_bin
