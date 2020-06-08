@@ -1,3 +1,7 @@
+#
+# Copyright (C) Foundry 2020
+#
+
 import re
 
 from hiero.core import (Bin, BinItem, Format, Sequence, Tag, VideoTrack,

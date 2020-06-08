@@ -1,3 +1,7 @@
+#
+# Copyright (C) Foundry 2020
+#
+
 import base64
 import binascii
 import hashlib

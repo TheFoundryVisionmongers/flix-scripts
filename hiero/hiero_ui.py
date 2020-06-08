@@ -1,3 +1,7 @@
+#
+# Copyright (C) Foundry 2020
+#
+
 import json
 import sys
 import uuid
