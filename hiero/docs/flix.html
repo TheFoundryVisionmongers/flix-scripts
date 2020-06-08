@@ -119,7 +119,6 @@ class flix:
         Arguments:
             show_id {int} -- Show ID
 
-        Keyword Arguments:
             episode_id {int} -- Episode ID (default: {None})
 
         Returns:
@@ -259,7 +258,6 @@ class flix:
 
             markers {List} -- List of Markers
 
-        Keyword Arguments:
             comment {str} -- Comment (default: {&#39;From Hiero&#39;})
 
         Returns:
@@ -295,7 +293,6 @@ class flix:
 
             sequence_id {int} -- Sequence ID
 
-        Keyword Arguments:
             asset_id {int} -- Asset ID (default: {None})
 
             duration {int} -- Duration (default: {12})
@@ -330,6 +327,26 @@ class flix:
         self.login = None
         self.password = None
         self.key = None
+
+    def format_panel_for_revision(self, panels):
+        &#34;&#34;&#34;format_panel_for_revision will format the panels as
+        revisioned panels
+
+        Arguments:
+            panels {List} -- List of panels
+
+        Returns:
+            List -- Formatted list of panels
+        &#34;&#34;&#34;
+        revisioned_panels = []
+        for p in panels:
+            revisioned_panels.append({
+                &#39;dialogue&#39;: p.get(&#39;dialogue&#39;),
+                &#39;duration&#39;: p.get(&#39;duration&#39;),
+                &#39;id&#39;: p.get(&#39;panel_id&#39;),
+                &#39;revision_number&#39;: p.get(&#39;revision_number&#39;)
+            })
+        return revisioned_panels
 
     def __get_token(self):
         &#34;&#34;&#34;__get_token will request a token and will reset it
@@ -414,7 +431,6 @@ class flix:
 
             url {str} -- Url to make the request
 
-        Keyword Arguments:
             method {str} -- Request method (default: {&#39;POST&#39;})
 
         Returns:
@@ -541,7 +557,6 @@ get sequences etc.</p></div>
         Arguments:
             show_id {int} -- Show ID
 
-        Keyword Arguments:
             episode_id {int} -- Episode ID (default: {None})
 
         Returns:
@@ -681,7 +696,6 @@ get sequences etc.</p></div>
 
             markers {List} -- List of Markers
 
-        Keyword Arguments:
             comment {str} -- Comment (default: {&#39;From Hiero&#39;})
 
         Returns:
@@ -717,7 +731,6 @@ get sequences etc.</p></div>
 
             sequence_id {int} -- Sequence ID
 
-        Keyword Arguments:
             asset_id {int} -- Asset ID (default: {None})
 
             duration {int} -- Duration (default: {12})
@@ -752,6 +765,26 @@ get sequences etc.</p></div>
         self.login = None
         self.password = None
         self.key = None
+
+    def format_panel_for_revision(self, panels):
+        &#34;&#34;&#34;format_panel_for_revision will format the panels as
+        revisioned panels
+
+        Arguments:
+            panels {List} -- List of panels
+
+        Returns:
+            List -- Formatted list of panels
+        &#34;&#34;&#34;
+        revisioned_panels = []
+        for p in panels:
+            revisioned_panels.append({
+                &#39;dialogue&#39;: p.get(&#39;dialogue&#39;),
+                &#39;duration&#39;: p.get(&#39;duration&#39;),
+                &#39;id&#39;: p.get(&#39;panel_id&#39;),
+                &#39;revision_number&#39;: p.get(&#39;revision_number&#39;)
+            })
+        return revisioned_panels
 
     def __get_token(self):
         &#34;&#34;&#34;__get_token will request a token and will reset it
@@ -836,7 +869,6 @@ get sequences etc.</p></div>
 
             url {str} -- Url to make the request
 
-        Keyword Arguments:
             method {str} -- Request method (default: {&#39;POST&#39;})
 
         Returns:
@@ -951,6 +983,44 @@ get sequences etc.</p></div>
         print(&#39;Could not retrieve thumbnail&#39;)
         return None
     return temp_filepath</code></pre>
+</details>
+</dd>
+<dt id="flix.flix.format_panel_for_revision"><code class="name flex">
+<span>def <span class="ident">format_panel_for_revision</span></span>(<span>self, panels)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>format_panel_for_revision will format the panels as
+revisioned panels</p>
+<h2 id="arguments">Arguments</h2>
+<p>panels {List} &ndash; List of panels</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>List -- Formatted list</code> of <code>panels</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def format_panel_for_revision(self, panels):
+    &#34;&#34;&#34;format_panel_for_revision will format the panels as
+    revisioned panels
+
+    Arguments:
+        panels {List} -- List of panels
+
+    Returns:
+        List -- Formatted list of panels
+    &#34;&#34;&#34;
+    revisioned_panels = []
+    for p in panels:
+        revisioned_panels.append({
+            &#39;dialogue&#39;: p.get(&#39;dialogue&#39;),
+            &#39;duration&#39;: p.get(&#39;duration&#39;),
+            &#39;id&#39;: p.get(&#39;panel_id&#39;),
+            &#39;revision_number&#39;: p.get(&#39;revision_number&#39;)
+        })
+    return revisioned_panels</code></pre>
 </details>
 </dd>
 <dt id="flix.flix.get_dialogues"><code class="name flex">
@@ -1136,8 +1206,7 @@ get sequences etc.</p></div>
 <div class="desc"><p>get_sequences retrieve the list of sequence from a show</p>
 <h2 id="arguments">Arguments</h2>
 <p>show_id {int} &ndash; Show ID</p>
-<p>Keyword Arguments:
-episode_id {int} &ndash; Episode ID (default: {None})</p>
+<p>episode_id {int} &ndash; Episode ID (default: {None})</p>
 <h2 id="returns">Returns</h2>
 <dl>
 <dt><code>Dict -- Sequences</code></dt>
@@ -1153,7 +1222,6 @@ episode_id {int} &ndash; Episode ID (default: {None})</p>
     Arguments:
         show_id {int} -- Show ID
 
-    Keyword Arguments:
         episode_id {int} -- Episode ID (default: {None})
 
     Returns:
@@ -1216,10 +1284,8 @@ episode_id {int} &ndash; Episode ID (default: {None})</p>
 <h2 id="arguments">Arguments</h2>
 <p>show_id {int} &ndash; Show ID</p>
 <p>sequence_id {int} &ndash; Sequence ID</p>
-<p>Keyword Arguments:
-asset_id {int} &ndash; Asset ID (default: {None})</p>
-<pre><code>duration {int} -- Duration (default: {12})
-</code></pre>
+<p>asset_id {int} &ndash; Asset ID (default: {None})</p>
+<p>duration {int} &ndash; Duration (default: {12})</p>
 <h2 id="returns">Returns</h2>
 <dl>
 <dt><code>Dict -- Panel</code></dt>
@@ -1237,7 +1303,6 @@ asset_id {int} &ndash; Asset ID (default: {None})</p>
 
         sequence_id {int} -- Sequence ID
 
-    Keyword Arguments:
         asset_id {int} -- Asset ID (default: {None})
 
         duration {int} -- Duration (default: {12})
@@ -1274,8 +1339,7 @@ asset_id {int} &ndash; Asset ID (default: {None})</p>
 <p>sequence_id {int} &ndash; Sequence ID</p>
 <p>revisioned_panels {List} &ndash; List of revisionned panels</p>
 <p>markers {List} &ndash; List of Markers</p>
-<p>Keyword Arguments:
-comment {str} &ndash; Comment (default: {'From Hiero'})</p>
+<p>comment {str} &ndash; Comment (default: {'From Hiero'})</p>
 <h2 id="returns">Returns</h2>
 <dl>
 <dt><code>Dict -- Sequence Revision</code></dt>
@@ -1299,7 +1363,6 @@ comment {str} &ndash; Comment (default: {'From Hiero'})</p>
 
         markers {List} -- List of Markers
 
-    Keyword Arguments:
         comment {str} -- Comment (default: {&#39;From Hiero&#39;})
 
     Returns:
@@ -1366,6 +1429,7 @@ comment {str} &ndash; Comment (default: {'From Hiero'})</p>
 <ul class="">
 <li><code><a title="flix.flix.authenticate" href="#flix.flix.authenticate">authenticate</a></code></li>
 <li><code><a title="flix.flix.download_media_object" href="#flix.flix.download_media_object">download_media_object</a></code></li>
+<li><code><a title="flix.flix.format_panel_for_revision" href="#flix.flix.format_panel_for_revision">format_panel_for_revision</a></code></li>
 <li><code><a title="flix.flix.get_dialogues" href="#flix.flix.get_dialogues">get_dialogues</a></code></li>
 <li><code><a title="flix.flix.get_episodes" href="#flix.flix.get_episodes">get_episodes</a></code></li>
 <li><code><a title="flix.flix.get_panels" href="#flix.flix.get_panels">get_panels</a></code></li>

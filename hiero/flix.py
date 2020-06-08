@@ -93,7 +93,6 @@ class flix:
         Arguments:
             show_id {int} -- Show ID
 
-        Keyword Arguments:
             episode_id {int} -- Episode ID (default: {None})
 
         Returns:
@@ -233,7 +232,6 @@ class flix:
 
             markers {List} -- List of Markers
 
-        Keyword Arguments:
             comment {str} -- Comment (default: {'From Hiero'})
 
         Returns:
@@ -269,7 +267,6 @@ class flix:
 
             sequence_id {int} -- Sequence ID
 
-        Keyword Arguments:
             asset_id {int} -- Asset ID (default: {None})
 
             duration {int} -- Duration (default: {12})
@@ -304,6 +301,26 @@ class flix:
         self.login = None
         self.password = None
         self.key = None
+
+    def format_panel_for_revision(self, panels):
+        """format_panel_for_revision will format the panels as
+        revisioned panels
+
+        Arguments:
+            panels {List} -- List of panels
+
+        Returns:
+            List -- Formatted list of panels
+        """
+        revisioned_panels = []
+        for p in panels:
+            revisioned_panels.append({
+                'dialogue': p.get('dialogue'),
+                'duration': p.get('duration'),
+                'id': p.get('panel_id'),
+                'revision_number': p.get('revision_number')
+            })
+        return revisioned_panels
 
     def __get_token(self):
         """__get_token will request a token and will reset it
@@ -388,7 +405,6 @@ class flix:
 
             url {str} -- Url to make the request
 
-        Keyword Arguments:
             method {str} -- Request method (default: {'POST'})
 
         Returns:

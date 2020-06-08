@@ -25,9 +25,10 @@
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">import re
+
 # from hiero.core import (Bin, BinItem, Format, Sequence, Tag, VideoTrack,
-#                         newProject, project, findProjectTags)
-# from hiero.ui import (activeSequence, windowManager)
+#                         findProjectTags, newProject, project)
+# from hiero.ui import activeSequence, windowManager
 
 
 class hiero_c:
@@ -91,7 +92,6 @@ class hiero_c:
 
             source_clip {Dict} -- Clip to link to the track item
 
-        Keyword Arguments:
             duration {int} -- Duration of the clip (default: {12})
 
             tags {list} -- list of tags to add (default: {[]})
@@ -207,7 +207,6 @@ class hiero_c:
         Arguments:
             note {str} -- Content
 
-        Keyword Arguments:
             visible {bool} -- Set tag bvisible or not (default: {False})
 
         Returns:
@@ -404,7 +403,6 @@ class hiero_c:
 
             source_clip {Dict} -- Clip to link to the track item
 
-        Keyword Arguments:
             duration {int} -- Duration of the clip (default: {12})
 
             tags {list} -- list of tags to add (default: {[]})
@@ -520,7 +518,6 @@ class hiero_c:
         Arguments:
             note {str} -- Content
 
-        Keyword Arguments:
             visible {bool} -- Set tag bvisible or not (default: {False})
 
         Returns:
@@ -719,12 +716,9 @@ add a source and tags</p>
 <p>track {Dict} &ndash; Track to add the new track item</p>
 <p>track_item_name {str} &ndash; Name of the new track item</p>
 <p>source_clip {Dict} &ndash; Clip to link to the track item</p>
-<p>Keyword Arguments:
-duration {int} &ndash; Duration of the clip (default: {12})</p>
-<pre><code>tags {list} -- list of tags to add (default: {[]})
-
-last_track_item {[type]} -- previous track item (default: {None})
-</code></pre>
+<p>duration {int} &ndash; Duration of the clip (default: {12})</p>
+<p>tags {list} &ndash; list of tags to add (default: {[]})</p>
+<p>last_track_item {[type]} &ndash; previous track item (default: {None})</p>
 <h2 id="returns">Returns</h2>
 <dl>
 <dt><code>Dict -- New Track Item</code></dt>
@@ -752,7 +746,6 @@ last_track_item {[type]} -- previous track item (default: {None})
 
         source_clip {Dict} -- Clip to link to the track item
 
-    Keyword Arguments:
         duration {int} -- Duration of the clip (default: {12})
 
         tags {list} -- list of tags to add (default: {[]})
@@ -817,8 +810,7 @@ last_track_item {[type]} -- previous track item (default: {None})
 <div class="desc"><p>create_info_tag will create an info tag</p>
 <h2 id="arguments">Arguments</h2>
 <p>note {str} &ndash; Content</p>
-<p>Keyword Arguments:
-visible {bool} &ndash; Set tag bvisible or not (default: {False})</p>
+<p>visible {bool} &ndash; Set tag bvisible or not (default: {False})</p>
 <h2 id="returns">Returns</h2>
 <dl>
 <dt><code>Dict -- Hiero Tags</code></dt>
@@ -834,7 +826,6 @@ visible {bool} &ndash; Set tag bvisible or not (default: {False})</p>
     Arguments:
         note {str} -- Content
 
-    Keyword Arguments:
         visible {bool} -- Set tag bvisible or not (default: {False})
 
     Returns:
