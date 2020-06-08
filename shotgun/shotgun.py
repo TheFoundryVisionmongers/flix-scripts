@@ -1,3 +1,7 @@
+#
+# Copyright (C) Foundry 2020
+#
+
 from typing import Dict
 
 import shotgun_api3

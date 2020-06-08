@@ -1,3 +1,7 @@
+#
+# Copyright (C) Foundry 2020
+#
+
 from PySide2.QtCore import QCoreApplication
 from PySide2.QtWidgets import (QDialog, QErrorMessage, QInputDialog,
                                QMessageBox, QVBoxLayout, QProgressDialog)

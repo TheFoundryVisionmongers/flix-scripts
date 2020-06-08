@@ -1,3 +1,7 @@
+#
+# Copyright (C) Foundry 2020
+#
+
 import os
 import re
 import sys
