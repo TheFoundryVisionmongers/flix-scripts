@@ -70,7 +70,15 @@ class flix:
         self.password = None
         self.key = None
 
-    def revoke_access_key(self, access_key) -> bool:
+    def revoke_access_key(self, access_key: str) -> bool:
+        """revoke_access_key will revoke an access key
+
+        Args:
+            access_key (str): Access Key
+
+        Returns:
+            bool: State of the requests
+        """
         url = '/authenticate/key/{}'.format(access_key)
         headers = self.__get_headers(None, url, 'DELETE')
 
@@ -90,6 +98,11 @@ class flix:
         return True
 
     def get_info(self) -> Dict:
+        """get_info will get the server infos
+
+        Returns:
+            Dict: Server info
+        """
         url = '/info'
         headers = self.__get_headers(None, url, 'GET')
         response = None
@@ -108,6 +121,11 @@ class flix:
         return response
 
     def get_users(self) -> Dict:
+        """get_users will get users access keys
+
+        Returns:
+            Dict: List of access keys with users
+        """
         url = '/users/current'
         headers = self.__get_headers(None, url, 'GET')
         response = None
