@@ -42,12 +42,12 @@ if __name__ == '__main__':
     flix_api = flix_api.flix()
 
     # Retrieve authentification token
-    serverURL = args.server
+    hostname = args.server
     login = args.user
     password = args.password
 
     # Authenticate to Flix server
-    credentials = flix_api.authenticate(serverURL,
+    credentials = flix_api.authenticate(hostname,
                                         login,
                                         password)
     if credentials is None:
