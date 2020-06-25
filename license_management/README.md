@@ -8,6 +8,8 @@ You are able to revoke access to some users to free a seat.
 
 ## Prerequisites
 
+You need Flix Server >= 6.3.4.
+
 This script requires a minimum Python version of 3.7
 
 You will also need to install these libraries:
