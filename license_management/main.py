@@ -3,6 +3,7 @@
 #
 
 import argparse
+import datetime
 import os
 import signal
 import sys
@@ -82,11 +83,13 @@ if __name__ == '__main__':
         print(dash)
         for ak in access_keys.get('access_keys', []):
             owner = ak.get('owner', {})
+            expiry_date = datetime.datetime.strptime(str(ak.get('expiry_date')), '%Y-%m-%dT%H:%M:%SZ')
+            expiry_date = expiry_date.strftime("%b %d %Y %H:%M %p")
             print('{:<20s}|{:>7s}|{:>20s}|{:>30s}'.format(
                 str(ak.get('id')),
                 str(owner.get('id')),
                 str(owner.get('username')),
-                str(ak.get('expiry_date'))))
+                expiry_date))
 
     elif args.revoke:
         # Revoke access keys
