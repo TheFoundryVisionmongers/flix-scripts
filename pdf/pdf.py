@@ -33,7 +33,12 @@ class Pdf(object):
         self.column = columns
         self.margin_size = 25
         self.styles = getSampleStyleSheet()
-        self.output = os.path.join(export_path, '{}.pdf'.format(header_title))
+        # Extract invalid chars for Windows filename
+        filename = header_title
+        for invalid_char in ['\\', '/', '*', '<', '>', ':', '?', '|']:
+            filename = filename.replace(invalid_char, '')
+        filename = '{}.pdf'.format(filename)
+        self.output = os.path.join(export_path, filename)
         self.font_type_path = font
         self.font_size = font_size
         self.panels = panels
