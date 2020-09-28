@@ -95,7 +95,26 @@ class main_dialogue(QDialog):
         self.progress.setMinimumHeight(100)
         self.progress.show()
 
-    def on_generate(self, font, columns, rows, export_path, font_size):
+    def on_generate(self,
+                    font: str,
+                    columns: int,
+                    rows: int,
+                    export_path: str,
+                    font_size: int):
+        """on_generate will start the generatation of the contact sheet after
+        retrieving all the data needed
+
+        Arguments:
+            font {str} -- Font path
+
+            columns {int} -- Number of columns
+
+            rows {int} -- Number of rows
+
+            export_path {str} -- Export path (without the filename)
+
+            font_size {int} -- Font size
+        """
         if self.wg_flix_ui.is_authenticated() is False:
             self.__error("You need to be authenticated")
             return
@@ -132,16 +151,33 @@ class main_dialogue(QDialog):
                                           font_size)
         except progress_canceled:
             print('progress cancelled')
-            return
 
     def __generate_contact_sheet(self,
-                                 font,
-                                 columns,
-                                 rows,
-                                 export_path,
-                                 rev_number,
-                                 header,
-                                 font_size):
+                                 font: str,
+                                 columns: int,
+                                 rows: int,
+                                 export_path: str,
+                                 rev_number: int,
+                                 header: str,
+                                 font_size: int):
+        """__generate_contact_sheet will download all the files and start
+        generate the contact sheet
+
+        Arguments:
+            font {str} -- Font path
+
+            columns {int} -- Number of columns
+
+            rows {int} -- Number of rows
+
+            export_path {str} -- Export path (without the filename)
+
+            rev_number {int} -- Revision number
+
+            header {str} -- Title of the header
+
+            font_size {int} -- Font size
+        """
         self.__init_progress(4)
 
         # Get panels from from sequence revision

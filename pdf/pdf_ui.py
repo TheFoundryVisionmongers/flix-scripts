@@ -10,17 +10,21 @@ import time
 from collections import OrderedDict
 from typing import Callable, Dict, List, Tuple
 
-from PySide2.QtCore import QSize, Qt, Signal, QRegExp
+from PySide2.QtCore import QRegExp, QSize, Qt, Signal
 from PySide2.QtGui import QPixmap, QRegExpValidator
 from PySide2.QtWidgets import (QApplication, QComboBox, QDialog, QErrorMessage,
-                               QFileDialog, QHBoxLayout, QLabel,
-                               QLineEdit, QMessageBox,
-                               QPushButton, QSizePolicy, QVBoxLayout, QWidget)
+                               QFileDialog, QHBoxLayout, QLabel, QLineEdit,
+                               QMessageBox, QPushButton, QSizePolicy,
+                               QVBoxLayout, QWidget)
 
 import pdf as pdf_api
 
 
 class pdf_ui(QWidget):
+    """pdf_ui is a widget that allow you to create a contact sheet
+
+    e_generate: font_path, columns, rows, export_path, font_size
+    """
 
     e_generate = Signal(str, int, int, str, int)
 
@@ -193,10 +197,19 @@ class pdf_ui(QWidget):
             return
         self.export_path.setText(export_p)
 
-    def __on_font_changed(self, ft):
+    def __on_font_changed(self, ft: str):
+        """__on_font_changed is triggered when the font changed
+
+        Arguments:
+            ft {str} -- Font path
+        """
         self.font = ft
 
     def __generate(self):
+        """__generate is triggered when the generate button is clicked.
+        It will ensure the font, rows, columns and font size are set correctly
+        before emitting a signal to e_generate
+        """
         if self.font is None:
             self.__error("You need to select a font")
             return

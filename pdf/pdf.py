@@ -2,19 +2,21 @@
 # Copyright (C) Foundry 2020
 #
 
-from reportlab.platypus import Paragraph, Table, TableStyle
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.lib.colors import black
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont, TTFError
-from reportlab.lib.utils import ImageReader, simpleSplit
-import reportlab.lib.pagesizes
-import reportlab.pdfgen.canvas
-import matplotlib.font_manager as fontman
 import copy
 import os
 import random
 import string
+from typing import Callable, Dict, List, Tuple
+
+import matplotlib.font_manager as fontman
+import reportlab.lib.pagesizes
+import reportlab.pdfgen.canvas
+from reportlab.lib.colors import black
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.utils import ImageReader, simpleSplit
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.platypus import Paragraph, Table, TableStyle
 
 
 class Pdf(object):
@@ -39,14 +41,16 @@ class Pdf(object):
         self.text_color = 'black'
 
     def build_canvas(self):
+        """build_canvas will generate the contact sheet and save it
+        """
         if os.path.exists(self.output):
             os.remove(self.output)
 
+        # Initialise the canvas
         self.page_width, self.page_height = self.__get_page_size()
         self.canvas = reportlab.pdfgen.canvas.Canvas(self.output,
                                                      pagesize=self.page_size)
         self.canvas.setLineWidth(width=.6)
-
         rowCounter = 0
         colCounter = 0
         pageNumber = 1
@@ -56,10 +60,13 @@ class Pdf(object):
         self.header = 15
         self.full_header = self.header + self.margin_header
 
+        # Load the font
         self.__load_font_type()
 
+        # Set the header
         self.__set_header()
 
+        # Set each panels (image / dialogue / New / etc.)
         for index, image_data in enumerate(self.panels):
             image = image_data['thumb']
             panel = ImageReader(image)
@@ -74,7 +81,6 @@ class Pdf(object):
                                "panel_w": panel_width,
                                "panelH": panel_height})
 
-            # insert the image and stroke
             self.canvas.drawImage(panel,
                                   panel_x,
                                   panel_y,
@@ -86,42 +92,48 @@ class Pdf(object):
                              height=panel_height)
 
             self.canvas.setFont(self.fontType, self.font_size)
+
+            # Set the panel ID - Revision
             panel_label = "%04d - %02d" % (int(image_data['id']),
                                            int(image_data['rev']))
             self.canvas.drawString(panel_x, panel_y - 7, panel_label)
+
+            # Set the panel position
             self.canvas.drawRightString(panel_x + panel_width,
                                         panel_y - 7, '%04d' % (index + 1))
 
+            # Set the dialogue
             self.__set_panel_dialogue(image_data)
 
+            # Set the "New" icon published images
             self.__set_panel_new_icon(image_data)
 
-            # check the row's and column's counter to set the next image
-            # in the correct place
+            # Update current counters (rows / columns)
             colCounter += 1
             if colCounter == self.column:
                 colCounter = 0
                 rowCounter += 1
 
+            # Handle next pages
             if rowCounter == self.row and not index == (len(self.panels) - 1):
                 self.canvas.showPage()
                 pageNumber += 1
                 rowCounter = 0
 
         # save the pdf
-        return self.canvas.save()
+        self.canvas.save()
 
-    def __set_panel_new_icon(self, image_data):
+    def __set_panel_new_icon(self, panel_data: Dict):
+        """__set_panel_new_icon will set the "new" for published panels only
+
+        Arguments:
+            panel_data (Dict): Panel informations
         """
-        Sets the panels new icons if the panel is new since the last editorial
-        publish,aligned to the top right of the panel
-        :param image_data: dictionary object with panel metaData
-        """
-        panel_x = image_data.get("panel_x")
-        panel_y = image_data.get("panel_y")
-        panel_h = image_data.get("panelH")
-        panel_w = image_data.get("panel_w")
-        if not image_data.get('published', False):
+        panel_x = panel_data.get("panel_x")
+        panel_y = panel_data.get("panel_y")
+        panel_h = panel_data.get("panelH")
+        panel_w = panel_data.get("panel_w")
+        if not panel_data.get('published', False):
             margin_width = 2 * 3
             margin_height = 2 * 2
             new_label_w = pdfmetrics.stringWidth('NEW',
@@ -146,31 +158,25 @@ class Pdf(object):
             self.canvas.drawCentredString(new_text_x, new_text_y, 'NEW')
 
     def __load_font_type(self):
-        """
-        Load the provided font from parameters as the default font to use
+        """__load_font_type will load the provided font
         """
         letters = string.ascii_letters
         self.fontType = ''.join(random.choice(letters) for i in range(10))
-        try:
-            pdfmetrics.registerFont(TTFont(self.fontType, self.font_type_path))
-        except TTFError as e:
-            raise flix.exceptions.FlixException(
-                "Incorrect PDF font type path %s" %
-                self.font_type_path, error=e, notify=True)
+        pdfmetrics.registerFont(TTFont(self.fontType, self.font_type_path))
 
-    def __set_panel_dialogue(self, image_data):
+    def __set_panel_dialogue(self, panel_data: Dict):
+        """__set_panel_dialogue will set the dialogue (if any) under
+        the panel
+
+        Arguments:
+            panel_data (Dict): Panel info
         """
-        Set the panel label and dialogue for the given panel and place it in
-        the appropriate position based on layout
-        :param image_data: dictionary object with panel metaData
-        :return: Table object
-        """
-        if len(image_data.get('dialogue', '')) < 1:
+        if len(panel_data.get('dialogue', '')) < 1:
             return
 
-        panel_x = image_data.get("panel_x")
-        panel_y = image_data.get("panel_y")
-        panel_w = image_data.get("panel_w")
+        panel_x = panel_data.get("panel_x")
+        panel_y = panel_data.get("panel_y")
+        panel_w = panel_data.get("panel_w")
 
         text_y = panel_y - self.text_gap
         text_height = self.text_gap
@@ -210,10 +216,11 @@ class Pdf(object):
         table.wrapOn(self.canvas, text_width, self.text_gap)
         table.drawOn(self.canvas, panel_x + panel_w / 6, text_y)
 
-    def __get_page_size(self):
-        """
-        get the page width and height based on the layout of the page
-        :return: width and height
+    def __get_page_size(self) -> Tuple[int, int]:
+        """__get_page_size will get the page size
+
+        Returns:
+            Tuple[int, int] -- width, height
         """
         pagesizes_import = __import__("reportlab.lib.pagesizes",
                                       globals(),
@@ -224,7 +231,16 @@ class Pdf(object):
 
         return self.page_size[0], self.page_size[1]
 
-    def __get_panel_size(self, panel):
+    def __get_panel_size(self, panel: dict) -> Tuple[int, int]:
+        """__get_panel_size will get the size of a panel depending
+        on the rows / colums / margins / header etc.
+
+        Arguments:
+            panel (dict): Panel info
+
+        Returns:
+            Tuple[int, int]: panel_width, panel_height
+        """
         o_width, o_height = panel.getSize()
         double_margin = self.margin_size * 2
         one_panel_per_page = (self.row == 1 and self.column == 1)
@@ -257,6 +273,8 @@ class Pdf(object):
         return panel_width, panel_height
 
     def __set_header(self):
+        """__set_header will set the header
+        """
         self.canvas.setFont(self.fontType, 8)
         self.canvas.setFillColorRGB(.68, .68, .68)
         self.canvas.rect(
@@ -274,7 +292,23 @@ class Pdf(object):
             self.page_height - self.margin_header - .75 * self.header,
             title_split[0])
 
-    def __get_panel_position(self, panel_w, panel_h, row_counter, col_counter):
+    def __get_panel_position(self,
+                             panel_w: int,
+                             panel_h: int,
+                             row_counter: int,
+                             col_counter: int) -> Tuple[int, int]:
+        """__get_panel_position will get the panel position depending
+        on the rows / colums / margins / header etc.
+
+        Arguments:
+            panel_w (int): Panel width
+            panel_h (int): Panel height
+            row_counter (int): Current row
+            col_counter (int): Current column
+
+        Returns:
+            Tuple[int, int]: panel_x, panel_y
+        """
         # calculate the gap between each image based on image size and page
         # size
         self.image_gap_w = (
@@ -301,7 +335,18 @@ class Pdf(object):
 
         return panel_x, panel_y
 
-    def __line_wrap(self, combinedLines, styleType):
+    def __line_wrap(self,
+                    combinedLines: List,
+                    styleType: Dict) -> Tuple[int, int]:
+        """__line_wrap will wrap all the lines and get the height / width
+
+        Arguments:
+            combinedLines (List): List of lines
+            styleType (Dict): Style
+
+        Returns:
+            Tuple[int, int]: width, height
+        """
         # Get overall width of text by getting stringWidth of longest line
         width = pdfmetrics.stringWidth(
             max(combinedLines),
@@ -311,14 +356,28 @@ class Pdf(object):
         height = styleType.leading * len(combinedLines)
         return width, height
 
-    def __trim_text(self, aW, aH, text, style):
-        """Trim list of text to fit in the available height provided """
-        lines = self.__break_lines(text, aW)
+    def __trim_text(self,
+                    max_w: int,
+                    max_h: int,
+                    text: str,
+                    style: Dict) -> str:
+        """__trim_text will trim a text and add epsilon if too long
+
+        Arguments:
+            max_w (int): Max width
+            max_h (int): Max height
+            text (str): Text to trim
+            style (Dict): Style
+
+        Returns:
+            str: New str
+        """
+        lines = self.__break_lines(text, max_w)
         original_lines_length = len(lines)
         if lines:
             width, height = self.__line_wrap(lines, style)
-            while int(height) > int(aH) or int(width) > int(aW):
-                if height < aH or len(lines) == 1:
+            while int(height) > int(max_h) or int(width) > int(max_w):
+                if height < max_h or len(lines) == 1:
                     break
                 del lines[-1]
                 width, height = self.__line_wrap(lines, style)
@@ -328,11 +387,25 @@ class Pdf(object):
             new_str += "..."
         return new_str
 
-    def __break_lines(self, textString, aW):
-        return simpleSplit(textString, self.fontType, self.font_size, aW)
+    def __break_lines(self, textString: str, max_w: int) -> str:
+        """__break_lines will break lines
+
+        Arguments:
+            textString (str): Text to break
+            max_w (int): Max width
+
+        Returns:
+            str: New str
+        """
+        return simpleSplit(textString, self.fontType, self.font_size, max_w)
 
 
-def get_system_fonts():
+def get_system_fonts() -> List[str]:
+    """get_system_fonts will get a list of all the fonts (.ttf) from the system
+
+    Returns:
+        List[str]: List of all the fonts
+    """
     matches = list(
         filter(
             lambda path: str(path).lower().endswith('.ttf'),
