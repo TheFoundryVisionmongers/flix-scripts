@@ -164,8 +164,11 @@ class flix:
             return None
         return response
 
-    def get_sequence_revisions(self, show_id: int, seq_id: int, episode_id: int = None) -> Dict:
-        """get_sequence_revisions retrieve the list of sequence revisions from a show
+    def get_sequence_revisions(self,
+                               show_id: int,
+                               seq_id: int,
+                               episode_id: int = None) -> Dict:
+        """get_sequence_revisions retrieve the list of sequence revisions
 
         Arguments:
             show_id {int} -- Show ID
@@ -539,8 +542,9 @@ class flix:
             seq_rev_number: int, episode_id: int,
             on_retry: Callable[[int],
                                None]):
-        """get_mo_quicktime_export will start the quicktime export and wait until it
-        is completed and retrieve the asset from it to return his media object ID
+        """get_mo_quicktime_export will start the quicktime export and
+        wait until it is completed and retrieve the asset from it
+        to return his media object ID
 
         Arguments:
             shot_name {str} -- Shot name

@@ -1,3 +1,7 @@
+#
+# Copyright (C) Foundry 2020
+#
+
 from reportlab.platypus import Paragraph, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.colors import black

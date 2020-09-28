@@ -116,11 +116,12 @@ class main_dialogue(QDialog):
             seq_rev.get('comment'))
         if episodic:
             _, epi_tc = self.wg_flix_ui.get_selected_episode()
-            header = '{0} - {1} - {2} -- Revisions: {3} - {4}'.format(show_tc,
-                                                                      epi_tc,
-                                                                      seq_tc,
-                                                                      rev_number,
-                                                                      seq_rev.get('comment', ''))
+            header = '{0} - {1} - {2} -- Revisions: {3} - {4}'.format(
+                show_tc,
+                epi_tc,
+                seq_tc,
+                rev_number,
+                seq_rev.get('comment', ''))
         try:
             self.__generate_contact_sheet(font,
                                           columns,
@@ -152,14 +153,18 @@ class main_dialogue(QDialog):
             # Download thumbnails
             self.__update_progress('Downloading thumbnails', False)
             for p in panels:
-                self.__update_progress('Downloading thumbnails for panel {}-{}'.format(p['id'], p['rev']))
+                self.__update_progress(
+                    'Downloading thumbnails for panel {}-{}'.format(p['id'],
+                                                                    p['rev']))
                 mo_path = self.wg_flix_ui.local_download(tmpdirname,
                                                          p.get('mo', None),
                                                          rev_number)
                 p['thumb'] = mo_path
 
             # Generate contact sheet
-            self.__update_progress('Generating contact sheet (stay patient might gonna take some times)', False)
+            self.__update_progress(
+                'Generating contact sheet (it might gonna take some times)',
+                False)
             self.wg_pdf_ui.generate_contact_sheet(font,
                                                   columns,
                                                   rows,

@@ -332,8 +332,9 @@ class flix_ui(QWidget):
             self.__error('Could not retrieve panels')
             return None
         fn_progress('get markers per panels')
-        panels_per_markers = self.get_flix_api().get_markers_per_panels(markers, panels)
-        mo_per_shots, ok = self.get_flix_api().mo_per_shots(panels_per_markers,
+        p_per_markers = self.get_flix_api().get_markers_per_panels(markers,
+                                                                   panels)
+        mo_per_shots, ok = self.get_flix_api().mo_per_shots(p_per_markers,
                                                             show_id,
                                                             seq_id,
                                                             seq_rev_number,
@@ -346,7 +347,7 @@ class flix_ui(QWidget):
                     shot_name, '.' * (r % 4)))
             fn_progress('export quicktime for shot {0}'.format(shot_name))
             mo = self.get_flix_api().get_mo_quicktime_export(
-                shot_name, panels_per_markers[shot_name],
+                shot_name, p_per_markers[shot_name],
                 show_id, seq_id, seq_rev_number, episode_id, on_retry)
             mo_per_shots[shot_name]['mov'] = mo
 
@@ -623,7 +624,7 @@ class flix_ui(QWidget):
             self.show_list.addItem(s)
         self.show_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
 
-    def __sort_alphanumeric(self, d: Dict, reverse: bool=False) -> Dict:
+    def __sort_alphanumeric(self, d: Dict, reverse: bool = False) -> Dict:
         """__sort_alphanumeric will sort a dictionnary alphanumerically by keys
 
         Arguments:
