@@ -187,7 +187,7 @@ class Pdf(object):
         dialogue = self.__trim_text(
             text_width - 22,
             text_height,
-            image_data.get(
+            panel_data.get(
                 'dialogue',
                 ''),
             self.styles['BodyText'])
