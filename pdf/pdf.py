@@ -122,6 +122,7 @@ class Pdf(object):
             # Handle next pages
             if rowCounter == self.row and not index == (len(self.panels) - 1):
                 self.canvas.showPage()
+                self.__set_header()
                 pageNumber += 1
                 rowCounter = 0
 
