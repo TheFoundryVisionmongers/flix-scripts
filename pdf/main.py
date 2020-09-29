@@ -199,7 +199,7 @@ class main_dialogue(QDialog):
 
             # Generate contact sheet
             self.__update_progress(
-                'Generating contact sheet (it might gonna take some times)',
+                'Generating contact sheet (this might take some time)',
                 False)
             self.wg_pdf_ui.generate_contact_sheet(font,
                                                   columns,
