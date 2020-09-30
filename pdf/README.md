@@ -14,6 +14,8 @@ requests==2.21.0
 
 PySide2==5.15.1
 
+matplotlib==3.3.2
+
 You can install them using pip (https://pip.pypa.io/en/stable/installing/)
 
 ```

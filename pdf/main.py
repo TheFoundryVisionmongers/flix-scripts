@@ -128,14 +128,14 @@ class main_dialogue(QDialog):
         _, episodic, show_tc = self.wg_flix_ui.get_selected_show()
         _, _, seq_tc = self.wg_flix_ui.get_selected_sequence()
 
-        header = '{0} - {1} -- Revisions: {2} - {3}'.format(
+        header = '{0} - {1} -- Revision: {2} - {3}'.format(
             show_tc,
             seq_tc,
             rev_number,
             seq_rev.get('comment'))
         if episodic:
             _, epi_tc = self.wg_flix_ui.get_selected_episode()
-            header = '{0} - {1} - {2} -- Revisions: {3} - {4}'.format(
+            header = '{0} - {1} - {2} -- Revision: {3} - {4}'.format(
                 show_tc,
                 epi_tc,
                 seq_tc,
