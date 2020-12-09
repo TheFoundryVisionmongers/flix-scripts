@@ -35,5 +35,10 @@ You have two options:
 
 ### Documentation
 
-You can go to `./docs` and open them in a browser, it's a generated documentation to show you the methods for each classes
+Generated documentation can be found in the form of `.html` files can be found in the `./docs` directory. This covers all methods and classes.
 
+To re-generate documentation you will need to install `pdoc3` (https://pypi.org/project/pdoc3/) and run this command:
+
+```
+pdoc3 --html *.py
+```
