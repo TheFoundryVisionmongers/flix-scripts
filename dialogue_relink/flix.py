@@ -8,6 +8,8 @@ import hashlib
 import hmac
 import json
 import time
+import urllib.request
+
 from collections import OrderedDict
 from datetime import datetime, timedelta
 from typing import Callable, Dict, List, Tuple
@@ -299,4 +301,121 @@ class flix:
             else:
                 print('Could not retrieve sequence revisions', err)
             return None
+        return response
+
+    def get_panel_dialogues(self,
+                            show_id: int,
+                            seq_id: int,
+                            episode_id: int = None,
+                            panel_id: int = 1
+                            ) -> Dict:
+        """get_sequence_revisions retrieve the list of sequence revisions
+
+        Arguments:
+            show_id {int} -- Show ID
+
+            seq_id {int} -- Sequence ID
+
+            episode_id {int} -- Episode ID (default: {None})
+
+            revision_id {int} -- Revision ID (default: {1})
+
+        Returns:
+            Dict -- Sequence revisions
+        """
+        url = '/show/{0}/sequence/{1}/panel/{2}/dialogues'.format(
+            show_id, seq_id, panel_id)
+        if episode_id is not None:
+            url = '/show/{0}/episode/{1}/sequence/{2}/panel/{3}/dialogues'.format(
+                show_id, episode_id, seq_id, panel_id)
+        headers = self.__get_headers(None, url, 'GET')
+        response = None
+        try:
+            r = requests.get(self.hostname + url, headers=headers,
+                             verify=False)
+            response = json.loads(r.content)
+            response = response.get('dialogues')
+        except requests.exceptions.RequestException as err:
+            if r is not None and r.status_code == 401:
+                print('Your token has been revoked')
+            else:
+                print('Could not retrieve sequence revisions', err)
+            return None
+        return response
+
+    def format_panel_for_revision(self, panels, dialogue):
+        """format_panel_for_revision will format the panels as
+        revisioned panels
+
+        Arguments:
+            panels {List} -- List of panels
+
+        Returns:
+            List -- Formatted list of panels
+        """
+        revisioned_panels = []
+        for p in panels:
+            revisioned_panels.append({
+                'dialogue': dialogue,
+                'duration': p.get('duration'),
+                'id': p.get('panel_id'),
+                'revision_number': p.get('revision_number')
+            })
+        return revisioned_panels
+
+    def create_new_sequence_revision(
+            self, show_id, sequence_id, revisioned_panels, revision,
+            comment='From AUTO Dialogue Relink'):
+        """new_sequence_revision will create a new sequence revision
+
+        Arguments:
+            show_id {int} -- Show ID
+
+            sequence_id {int} -- Sequence ID
+
+            revisioned_panels {List} -- List of revisionned panels
+
+            markers {List} -- List of Markers
+
+            comment {str} -- Comment (default: {'From Hiero'})
+
+        Returns:
+            Dict -- Sequence Revision
+        """
+        url = '/show/{0}/sequence/{1}/revision'.format(show_id, sequence_id)
+
+        # print('*******')
+        print(url)
+        # print('*******')
+
+        meta = revision.get('meta_data')
+
+        content = {
+            'comment': comment,
+            'imported': False,
+            'meta_data': {
+                'movie_asset_id': 0,
+                'audio_asset_id': 0,
+                'annotations': meta.get('annotations'),
+                'audio_timings': meta.get('audio_timings'),
+                'highlights': meta.get('highlights'),
+                'markers': meta.get('markers')
+            },
+            'revisioned_panels': revisioned_panels
+        }
+
+        data = urllib.parse.urlencode(content).encode("utf-8")
+
+        headers = self.__get_headers(data, url, 'POST')
+
+        response = None
+        # try:
+        req = urllib.request.Request(self.hostname + url,
+                                     headers=headers, data=json.dumps(data))
+
+        response = urllib.request.urlopen(req).read()
+        response = json.loads(response)
+        # except BaseException:
+        #     print('Could not create sequence revision')
+        #     return None
         return response

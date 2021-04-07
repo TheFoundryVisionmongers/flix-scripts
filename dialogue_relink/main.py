@@ -11,32 +11,46 @@ import sys
 import flix as flix_api
 
 
-# def fetch_all_sequence_revisions(show_id, seq_id, episode_id):
-#     seq_revisions = flix_api.get_sequence_revisions(
-#         show_id, seq_id, episode_id)
-
-#     print(seq_revisions)
-
-
 def fetch_sequence_revision_by_id(show_id, seq_id, episode_id, revision_id):
     seq_revision = flix_api.get_sequence_revision_by_id(
         show_id, seq_id, episode_id, revision_id)
 
-    print(seq_revision)
+    return seq_revision
 
 
 def fetch_sequence_revision_panels(show_id, seq_id, episode_id, revision_id):
-    seq_revision = flix_api.get_sequence_revision_panels(
+    panels = flix_api.get_sequence_revision_panels(
         show_id, seq_id,  episode_id, revision_id)
 
-    print(seq_revision)
+    return panels
 
 
-def fetch_sequence_revision_dialogues(show_id, seq_id, episode_id, revision_id):
-    seq_revision = flix_api.get_revision_dialogues(
+def fetch_panel_dialogues(show_id, seq_id, episode_id, panel_id):
+    dialogues = flix_api.get_panel_dialogues(
+        show_id, seq_id, episode_id, panel_id)
+
+    return dialogues
+
+    # print(dialogues)
+
+
+def loop_panels(panels, show_id, seq_id, episode_id, revision_id):
+    rev = fetch_sequence_revision_by_id(
         show_id, seq_id, episode_id, revision_id)
 
-    print(seq_revision)
+    for p in panels:
+        # print(p.get("panel_id"))
+        # get dialogues for each panel
+        latest_dialogue = fetch_panel_dialogues(
+            show_id, seq_id, episode_id, p.get("panel_id"))
+
+        # print(panels)
+
+        revisioned_panels = flix_api.format_panel_for_revision(
+            panels, latest_dialogue[0])
+
+        flix_api.create_new_sequence_revision(
+            show_id, seq_id, revisioned_panels, rev)
 
 
 # Initialise cli params
@@ -83,10 +97,14 @@ if __name__ == '__main__':
         print('could not authenticate to Flix Server')
         sys.exit(1)
     else:
-        print('YAY')
         # fetch_sequence_revision_by_id(
         #     args.showid, args.sequenceid, args.episodeid, args.revisionid)
         # fetch_sequence_revision_by_id(
         #     args.showid, args.sequenceid, args.episodeid, args.revisionid)
-        fetch_sequence_revision_dialogues(
+        # fetch_sequence_revision_dialogues(
+        #     args.showid, args.sequenceid, args.episodeid, args.revisionid)
+        foo = fetch_sequence_revision_panels(
             args.showid, args.sequenceid, args.episodeid, args.revisionid)
+
+        loop_panels(foo, args.showid, args.sequenceid,
+                    args.episodeid, args.revisionid)
