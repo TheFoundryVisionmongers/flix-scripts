@@ -40,8 +40,11 @@ def loop_panels(panels, show_id, seq_id, episode_id, revision_id):
 
     for p in panels:
         latest_dialogue = fetch_panel_dialogues(show_id, seq_id, episode_id, p.get("panel_id"))
+        
+        dialogue = None
+        if len(latest_dialogue):
+            dialogue = { 'id': latest_dialogue[0].get('dialogue_id'), 'text': "" }
 
-        dialogue = { 'id': latest_dialogue[0].get('dialogue_id'), 'text': "" }
         formatted_panel = flix_api.format_panel_for_revision(p, dialogue)
         revisioned_panels.append(formatted_panel)
         

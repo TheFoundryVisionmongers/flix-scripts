@@ -388,8 +388,8 @@ class flix:
             'comment': comment,
             'imported': False,
             'meta_data': {
-                'movie_asset_id': 0,
-                'audio_asset_id': 0,
+                'movie_asset_id': meta.get('movie_asset_id'),
+                'audio_asset_id': meta.get('audio_asset_id'),
                 'annotations': meta.get('annotations'),
                 'audio_timings': meta.get('audio_timings'),
                 'highlights': meta.get('highlights'),
