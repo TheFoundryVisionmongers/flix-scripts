@@ -11,6 +11,34 @@ import sys
 import flix as flix_api
 
 
+# def fetch_all_sequence_revisions(show_id, seq_id, episode_id):
+#     seq_revisions = flix_api.get_sequence_revisions(
+#         show_id, seq_id, episode_id)
+
+#     print(seq_revisions)
+
+
+def fetch_sequence_revision_by_id(show_id, seq_id, episode_id, revision_id):
+    seq_revision = flix_api.get_sequence_revision_by_id(
+        show_id, seq_id, episode_id, revision_id)
+
+    print(seq_revision)
+
+
+def fetch_sequence_revision_panels(show_id, seq_id, episode_id, revision_id):
+    seq_revision = flix_api.get_sequence_revision_panels(
+        show_id, seq_id,  episode_id, revision_id)
+
+    print(seq_revision)
+
+
+def fetch_sequence_revision_dialogues(show_id, seq_id, episode_id, revision_id):
+    seq_revision = flix_api.get_revision_dialogues(
+        show_id, seq_id, episode_id, revision_id)
+
+    print(seq_revision)
+
+
 # Initialise cli params
 def parse_cli():
     parser = argparse.ArgumentParser(add_help=False)
@@ -29,7 +57,9 @@ def parse_cli():
     required_group.add_argument(
         '--sequenceid', required=True, help='show ID')
     required_group.add_argument(
-        '--revisionid', required=True, help='show ID')
+        '--episodeid', required=True, help='Episode ID')
+    required_group.add_argument(
+        '--revisionid', required=True, help='Revision ID')
 
     return parser.parse_args()
 
@@ -54,3 +84,9 @@ if __name__ == '__main__':
         sys.exit(1)
     else:
         print('YAY')
+        # fetch_sequence_revision_by_id(
+        #     args.showid, args.sequenceid, args.episodeid, args.revisionid)
+        # fetch_sequence_revision_by_id(
+        #     args.showid, args.sequenceid, args.episodeid, args.revisionid)
+        fetch_sequence_revision_dialogues(
+            args.showid, args.sequenceid, args.episodeid, args.revisionid)

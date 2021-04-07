@@ -60,92 +60,6 @@ class flix:
             response['expiry_date'].split('.')[0], '%Y-%m-%dT%H:%M:%S')
         return response
 
-    def reset(self):
-        """reset will reset the user info
-        """
-        self.hostname = None
-        self.secret = None
-        self.expiry = None
-        self.login = None
-        self.password = None
-        self.key = None
-
-    def revoke_access_key(self, access_key: str) -> bool:
-        """revoke_access_key will revoke an access key
-
-        Args:
-            access_key (str): Access Key
-
-        Returns:
-            bool: State of the requests
-        """
-        url = '/authenticate/key/{}'.format(access_key)
-        headers = self.__get_headers(None, url, 'DELETE')
-
-        try:
-            r = requests.delete(self.hostname + url, headers=headers,
-                                verify=False)
-            r.raise_for_status()
-        except requests.exceptions.RequestException as err:
-            if r is not None and r.status_code == 401:
-                print('Your token has been revoked')
-            elif r is not None and r.status_code == 403:
-                print('could not revoke access key (need to be admin user)')
-                return None
-            else:
-                print('Could not revoke access key', err)
-            return False
-        return True
-
-    def get_info(self) -> Dict:
-        """get_info will get the server infos
-
-        Returns:
-            Dict: Server info
-        """
-        url = '/info'
-        headers = self.__get_headers(None, url, 'GET')
-        response = None
-
-        try:
-            r = requests.get(self.hostname + url, headers=headers,
-                             verify=False)
-            r.raise_for_status()
-            response = json.loads(r.content)
-        except requests.exceptions.RequestException as err:
-            if r is not None and r.status_code == 401:
-                print('Your token has been revoked')
-            else:
-                print('Could not retrieve info', err)
-            return None
-        return response
-
-    def get_users(self) -> Dict:
-        """get_users will get users access keys
-
-        Returns:
-            Dict: List of access keys with users
-        """
-        url = '/users/current'
-        headers = self.__get_headers(None, url, 'GET')
-        response = None
-
-        try:
-            r = requests.get(self.hostname + url, headers=headers,
-                             verify=False)
-            r.raise_for_status()
-            response = json.loads(r.content)
-        except requests.exceptions.RequestException as err:
-            if r is not None and r.status_code == 401:
-                print('Your token has been revoked')
-            elif r is not None and r.status_code == 403:
-                print('could not get infos (need to be admin user)')
-                return None
-            else:
-                print('Could not retrieve users', err)
-            return None
-        return response
-
     def __get_token(self) -> Tuple[str, str]:
         """__get_token will request a token and will reset it
         if it is too close to the expiry date
@@ -256,3 +170,133 @@ class flix:
             'Content-Type': 'application/json',
             'Date': dt.strftime('%a, %d %b %Y %H:%M:%S GMT'),
         }
+
+    def reset(self):
+        """reset will reset the user info
+        """
+        self.hostname = None
+        self.secret = None
+        self.expiry = None
+        self.login = None
+        self.password = None
+        self.key = None
+
+    # SHIVA
+    def get_sequence_revision_by_id(self,
+                                    show_id: int,
+                                    seq_id: int,
+                                    episode_id: int = None,
+                                    revision_id: int = 1
+                                    ) -> Dict:
+        """get_sequence_revisions retrieve the list of sequence revisions
+
+        Arguments:
+            show_id {int} -- Show ID
+
+            seq_id {int} -- Sequence ID
+
+            episode_id {int} -- Episode ID (default: {None})
+
+            revision_id {int} -- Revision ID (default: {1})
+
+        Returns:
+            Dict -- Sequence revisions
+        """
+        url = '/show/{0}/sequence/{1}/revision/{2}'.format(
+            show_id, seq_id, revision_id)
+        if episode_id is not None:
+            url = '/show/{0}/episode/{1}/sequence/{2}/revision/{3}'.format(
+                show_id, episode_id, seq_id, revision_id)
+        headers = self.__get_headers(None, url, 'GET')
+        response = None
+        try:
+            r = requests.get(self.hostname + url, headers=headers,
+                             verify=False)
+            response = json.loads(r.content)
+        except requests.exceptions.RequestException as err:
+            if r is not None and r.status_code == 401:
+                print('Your token has been revoked')
+            else:
+                print('Could not retrieve sequence revisions', err)
+            return None
+        return response
+
+    def get_sequence_revision_panels(self,
+                                     show_id: int,
+                                     seq_id: int,
+                                     episode_id: int = None,
+                                     revision_id: int = 1
+                                     ) -> Dict:
+        """get_sequence_revisions retrieve the list of sequence revisions
+
+        Arguments:
+            show_id {int} -- Show ID
+
+            seq_id {int} -- Sequence ID
+
+            episode_id {int} -- Episode ID (default: {None})
+
+            revision_id {int} -- Revision ID (default: {1})
+
+        Returns:
+            Dict -- Sequence revisions
+        """
+        url = '/show/{0}/sequence/{1}/revision/{2}/panels'.format(
+            show_id, seq_id, revision_id)
+        if episode_id is not None:
+            url = '/show/{0}/episode/{1}/sequence/{2}/revision/{3}/panels'.format(
+                show_id, episode_id, seq_id, revision_id)
+        headers = self.__get_headers(None, url, 'GET')
+        response = None
+        try:
+            r = requests.get(self.hostname + url, headers=headers,
+                             verify=False)
+            response = json.loads(r.content)
+            response = response.get('panels')
+        except requests.exceptions.RequestException as err:
+            if r is not None and r.status_code == 401:
+                print('Your token has been revoked')
+            else:
+                print('Could not retrieve sequence revisions', err)
+            return None
+        return response
+
+    def get_revision_dialogues(self,
+                               show_id: int,
+                               seq_id: int,
+                               episode_id: int = None,
+                               revision_id: int = 1
+                               ) -> Dict:
+        """get_sequence_revisions retrieve the list of sequence revisions
+
+        Arguments:
+            show_id {int} -- Show ID
+
+            seq_id {int} -- Sequence ID
+
+            episode_id {int} -- Episode ID (default: {None})
+
+            revision_id {int} -- Revision ID (default: {1})
+
+        Returns:
+            Dict -- Sequence revisions
+        """
+        url = '/show/{0}/sequence/{1}/revision/{2}/dialogues'.format(
+            show_id, seq_id, revision_id)
+        if episode_id is not None:
+            url = '/show/{0}/episode/{1}/sequence/{2}/revision/{3}/dialogues'.format(
+                show_id, episode_id, seq_id, revision_id)
+        headers = self.__get_headers(None, url, 'GET')
+        response = None
+        try:
+            r = requests.get(self.hostname + url, headers=headers,
+                             verify=False)
+            response = json.loads(r.content)
+            response = response.get('dialogues')
+        except requests.exceptions.RequestException as err:
+            if r is not None and r.status_code == 401:
+                print('Your token has been revoked')
+            else:
+                print('Could not retrieve sequence revisions', err)
+            return None
+        return response
