@@ -31,25 +31,22 @@ def fetch_panel_dialogues(show_id, seq_id, episode_id, panel_id):
 
     return dialogues
 
-    # print(dialogues)
-
 
 def loop_panels(panels, show_id, seq_id, episode_id, revision_id):
     rev = fetch_sequence_revision_by_id(
         show_id, seq_id, episode_id, revision_id)
+    
+    revisioned_panels = []
 
     for p in panels:
-        # print(p.get("panel_id"))
-        # get dialogues for each panel
-        latest_dialogue = fetch_panel_dialogues(
-            show_id, seq_id, episode_id, p.get("panel_id"))
+        latest_dialogue = fetch_panel_dialogues(show_id, seq_id, episode_id, p.get("panel_id"))
 
-        # print(panels)
-
-        revisioned_panels = flix_api.format_panel_for_revision(
-            panels, latest_dialogue[0])
-
-        flix_api.create_new_sequence_revision(
+        dialogue = { 'id': latest_dialogue[0].get('dialogue_id'), 'text': "" }
+        formatted_panel = flix_api.format_panel_for_revision(p, dialogue)
+        revisioned_panels.append(formatted_panel)
+        
+        
+    flix_api.create_new_sequence_revision(
             show_id, seq_id, revisioned_panels, rev)
 
 
@@ -97,12 +94,6 @@ if __name__ == '__main__':
         print('could not authenticate to Flix Server')
         sys.exit(1)
     else:
-        # fetch_sequence_revision_by_id(
-        #     args.showid, args.sequenceid, args.episodeid, args.revisionid)
-        # fetch_sequence_revision_by_id(
-        #     args.showid, args.sequenceid, args.episodeid, args.revisionid)
-        # fetch_sequence_revision_dialogues(
-        #     args.showid, args.sequenceid, args.episodeid, args.revisionid)
         foo = fetch_sequence_revision_panels(
             args.showid, args.sequenceid, args.episodeid, args.revisionid)
 

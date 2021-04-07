@@ -343,7 +343,7 @@ class flix:
             return None
         return response
 
-    def format_panel_for_revision(self, panels, dialogue):
+    def format_panel_for_revision(self, panel, dialogue):
         """format_panel_for_revision will format the panels as
         revisioned panels
 
@@ -353,15 +353,13 @@ class flix:
         Returns:
             List -- Formatted list of panels
         """
-        revisioned_panels = []
-        for p in panels:
-            revisioned_panels.append({
-                'dialogue': dialogue,
-                'duration': p.get('duration'),
-                'id': p.get('panel_id'),
-                'revision_number': p.get('revision_number')
-            })
-        return revisioned_panels
+        revisioned_panel = {
+            'dialogue': dialogue,
+            'duration': panel.get('duration'),
+            'id': panel.get('panel_id'),
+            'revision_number': panel.get('revision_number')
+        }
+        return revisioned_panel
 
     def create_new_sequence_revision(
             self, show_id, sequence_id, revisioned_panels, revision,
@@ -384,10 +382,6 @@ class flix:
         """
         url = '/show/{0}/sequence/{1}/revision'.format(show_id, sequence_id)
 
-        # print('*******')
-        print(url)
-        # print('*******')
-
         meta = revision.get('meta_data')
 
         content = {
@@ -404,18 +398,13 @@ class flix:
             'revisioned_panels': revisioned_panels
         }
 
-        data = urllib.parse.urlencode(content).encode("utf-8")
-
-        headers = self.__get_headers(data, url, 'POST')
+        headers = self.__get_headers(content, url, 'POST')
 
         response = None
-        # try:
-        req = urllib.request.Request(self.hostname + url,
-                                     headers=headers, data=json.dumps(data))
-
-        response = urllib.request.urlopen(req).read()
-        response = json.loads(response)
-        # except BaseException:
-        #     print('Could not create sequence revision')
-        #     return None
+        try:
+            r = requests.post(self.hostname + url, headers=headers, data=json.dumps(content), verify=False)
+            response = json.loads(r.content)
+        except BaseException:
+            print('Could not create sequence revision')
+            return None
         return response
