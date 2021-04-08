@@ -12,7 +12,7 @@ import requests
 
 from collections import OrderedDict
 from datetime import datetime, timedelta
-from typing import Callable, Dict, List, Tuple
+from typing import Callable, Dict, List, Tuple, Optional
 
 
 class flix:
@@ -330,7 +330,7 @@ class flix:
         return response
 
     # Returns formatted panel object as revisioned panels for POST request
-    def format_panel_for_revision(self, panel, dialogue):
+    def format_panel_for_revision(self, panel: Dict, dialogue: Dict) -> Dict:
         """format_panel_for_revision will format the panels as revisioned panels
 
         Arguments:
@@ -349,8 +349,8 @@ class flix:
 
     # Makes POST request to create a new sequence revision
     def create_new_sequence_revision(
-            self, show_id, episode_id, sequence_id, revisioned_panels, revision,
-            comment='Auto Dialogue Relink'):
+            self, show_id: int, episode_id: int, sequence_id: int, revisioned_panels: List[Dict], revision: Dict,
+            comment: Optional[str] = 'Auto Dialogue Relink') -> Dict:
         """new_sequence_revision will create a new sequence revision
 
         Arguments:
@@ -375,18 +375,18 @@ class flix:
             url = '/show/{0}/episode/{1}/sequence/{2}/revision'.format(
                 show_id, episode_id, sequence_id)
 
-        meta = revision.get('meta_data')
+        meta = revision.get('meta_data', {})
 
         content = {
             'comment': comment,
             'imported': False,
             'meta_data': {
-                'movie_asset_id': meta.get('movie_asset_id'),
-                'audio_asset_id': meta.get('audio_asset_id'),
-                'annotations': meta.get('annotations'),
-                'audio_timings': meta.get('audio_timings'),
-                'highlights': meta.get('highlights'),
-                'markers': meta.get('markers')
+                'movie_asset_id': meta.get('movie_asset_id', None),
+                'audio_asset_id': meta.get('audio_asset_id', None),
+                'annotations': meta.get('annotations', []),
+                'audio_timings': meta.get('audio_timings', None),
+                'highlights': meta.get('highlights', None),
+                'markers': meta.get('markers', None)
             },
             'revisioned_panels': revisioned_panels
         }

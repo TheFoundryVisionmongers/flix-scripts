@@ -17,6 +17,7 @@ def start_relink(show_id, episode_id, sequence_id, revision_id, comment):
         show_id, episode_id, sequence_id, revision_id)
 
     if revision == None:
+        print('Revision not found.')
         sys.exit(1)
 
     # Get all panels in the sequence revision
@@ -24,6 +25,7 @@ def start_relink(show_id, episode_id, sequence_id, revision_id, comment):
         show_id, episode_id, sequence_id, revision_id)
 
     if panels == None:
+        print('Panels not found.')
         sys.exit(1)
 
     revisioned_panels = []
