@@ -68,9 +68,9 @@ def parse_cli():
     required_group.add_argument(
         '--showid', required=True, help='Show ID')
     required_group.add_argument(
-        '--sequenceid', required=True, help='Sequence ID')
-    required_group.add_argument(
         '--episodeid', required=False, help='Episode ID')
+    required_group.add_argument(
+        '--sequenceid', required=True, help='Sequence ID')
     required_group.add_argument(
         '--revisionid', required=True, help='Revision ID')
     required_group.add_argument(

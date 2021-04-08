@@ -8,13 +8,11 @@ import hashlib
 import hmac
 import json
 import time
-import urllib.request
+import requests
 
 from collections import OrderedDict
 from datetime import datetime, timedelta
 from typing import Callable, Dict, List, Tuple
-
-import requests
 
 
 class flix:
