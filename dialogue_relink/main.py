@@ -44,8 +44,12 @@ def start_relink(show_id, episode_id, sequence_id, revision_id, comment):
         revisioned_panels.append(formatted_panel)
 
     # Sends POST request to create a new sequence revision with correct panels and dialogues
-    flix_api.create_new_sequence_revision(
+    new_revision = flix_api.create_new_sequence_revision(
         show_id, episode_id, sequence_id, revisioned_panels, revision, comment)
+
+    if new_revision:
+        print("Success, new sequence revision with ID {0} created.".format(
+            new_revision.get('revision')))
 
 
 # Initialise cli params
