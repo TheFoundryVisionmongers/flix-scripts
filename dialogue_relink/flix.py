@@ -350,7 +350,7 @@ class flix:
     # Makes POST request to create a new sequence revision
     def create_new_sequence_revision(
             self, show_id: int, episode_id: int, sequence_id: int, revisioned_panels: List[Dict], revision: Dict,
-            comment: Optional[str] = 'Auto Dialogue Relink') -> Dict:
+            comment: Optional[str]) -> Dict:
         """new_sequence_revision will create a new sequence revision
 
         Arguments:
@@ -369,6 +369,9 @@ class flix:
         Returns:
             Dict -- Sequence Revision
         """
+
+        if not comment:
+            comment = 'Auto Dialogue Relink'
 
         url = '/show/{0}/sequence/{1}/revision'.format(show_id, sequence_id)
         if episode_id is not None:

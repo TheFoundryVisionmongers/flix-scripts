@@ -59,5 +59,5 @@ The server URL is the hostname of your server (http://localhost:1234), user and 
 
 To update Show 2, episode 1, sequence 2, revision 3 with a comment:
 ```
-python3 main.py --server http://127.0.0.1:8080  --user admin --password admin --showid 2 --episodeid 1  --sequenceid 2  --revisionid 3 --comment My new sequence revision
+python3 main.py --server http://127.0.0.1:8080  --user admin --password admin --showid 2 --episodeid 1  --sequenceid 2  --revisionid 3 --comment 'My new sequence revision'
 
