@@ -23,7 +23,8 @@ You can install them using pip (https://pip.pypa.io/en/stable/installing/)
 
 ### Getting Started
 
-Start your Flix server.
+1. Backup your Flix databases.
+2. Start your Flix server.
 
 Run ```python3 main.py --help```:
 
@@ -52,7 +53,7 @@ required arguments:
   
 ```
 
-The server URL is the hostname of your server (http://localhost:1234), user and password have to be from an **Admin** user.
+The server URL is the hostname of your server (http://localhost:8080), user and password have to be from an **Admin** user.
 
 
 ### Examples
@@ -60,4 +61,16 @@ The server URL is the hostname of your server (http://localhost:1234), user and 
 To update Show 2, episode 1, sequence 2, revision 3 with a comment:
 ```
 python3 main.py --server http://127.0.0.1:8080  --user admin --password admin --showid 2 --episodeid 1  --sequenceid 2  --revisionid 3 --comment 'My new sequence revision'
+```
 
+### Finding IDs
+To find ID of sequence revision you are looking for follow the steps below:
+- Open Flix Client
+- Open Developer dev tools in Flix client by clicking top menu => View => Dev Tools
+- On Dev tools click on Network tab
+- In Flix client navigate to the Sequence Revision that needs to be updated
+- Check Revision number In Flix top bar e.g [Revision 7]
+- In the Network tab click on the revision number, e.g 7
+- After clicked make sure Header tab is selected
+- In the Header tab under General section, Requested URL should be visible e.g: http://localhost:8080/show/1/episode/2/sequence/3/revision/7
+- In the example above Show ID is 1, Episode ID is 2, Sequence ID is 3 and revision ID is 7
