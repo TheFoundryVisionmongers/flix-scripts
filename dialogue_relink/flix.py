@@ -195,7 +195,7 @@ class flix:
         Arguments:
             show_id {int} -- Show ID
 
-            episode_id {int} -- Episode ID 
+            episode_id {int} -- Episode ID
 
             sequence_id {int} -- Sequence ID
 
@@ -218,12 +218,19 @@ class flix:
             r = requests.get(self.hostname + url, headers=headers,
                              verify=False)
             response = json.loads(r.content)
+
+            if r.status_code == 404:
+                print('Could not retrieve sequence revision',
+                      response.get('message'))
+                return None
+
         except requests.exceptions.RequestException as err:
             if r is not None and r.status_code == 401:
                 print('Your token has been revoked')
             else:
-                print('Could not retrieve sequence revisions', err)
+                print('Could not retrieve sequence revision', err)
             return None
+
         return response
 
     # Returns the list of panels in the sequence revision
@@ -233,7 +240,7 @@ class flix:
                                      sequence_id: int,
                                      revision_id: int
                                      ) -> Dict:
-        """get_sequence_revision_panels retrieves the list of panels in given sequence revision 
+        """get_sequence_revision_panels retrieves the list of panels in given sequence revision
 
         Arguments:
             show_id {int} -- Show ID
@@ -261,11 +268,17 @@ class flix:
                              verify=False)
             response = json.loads(r.content)
             response = response.get('panels')
+
+            if r.status_code == 404:
+                print('Could not retrieve sequence revision panels',
+                      response.get('message'))
+                return None
+
         except requests.exceptions.RequestException as err:
             if r is not None and r.status_code == 401:
                 print('Your token has been revoked')
             else:
-                print('Could not retrieve sequence revisions', err)
+                print('Could not retrieve sequence revision panels', err)
             return None
         return response
 
@@ -285,7 +298,7 @@ class flix:
 
             sequence_id {int} -- Sequence ID
 
-            revision_id {int} -- Revision ID 
+            revision_id {int} -- Revision ID
 
         Returns:
             Dict -- Dialogues
@@ -304,11 +317,17 @@ class flix:
                              verify=False)
             response = json.loads(r.content)
             response = response.get('dialogues')
+
+            if r.status_code == 404:
+                print('Could not retrieve panel dialogues',
+                      response.get('message'))
+                return None
+
         except requests.exceptions.RequestException as err:
             if r is not None and r.status_code == 401:
                 print('Your token has been revoked')
             else:
-                print('Could not retrieve sequence revisions', err)
+                print('Could not retrieve panel dialogues', err)
             return None
         return response
 
@@ -381,6 +400,7 @@ class flix:
             r = requests.post(self.hostname + url, headers=headers,
                               data=json.dumps(content), verify=False)
             response = json.loads(r.content)
+
         except BaseException:
             print('Could not create sequence revision')
             return None

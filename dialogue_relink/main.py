@@ -16,9 +16,15 @@ def start_relink(show_id, episode_id, sequence_id, revision_id, comment):
     revision = flix_api.get_sequence_revision_by_id(
         show_id, episode_id, sequence_id, revision_id)
 
+    if revision == None:
+        sys.exit(1)
+
     # Get all panels in the sequence revision
     panels = flix_api.get_sequence_revision_panels(
         show_id, episode_id, sequence_id, revision_id)
+
+    if panels == None:
+        sys.exit(1)
 
     revisioned_panels = []
 
