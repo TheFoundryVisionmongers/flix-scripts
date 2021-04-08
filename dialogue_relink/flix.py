@@ -186,20 +186,20 @@ class flix:
     # Returns sequence revision by given ID
     def get_sequence_revision_by_id(self,
                                     show_id: int,
+                                    episode_id: int,
                                     sequence_id: int,
-                                    episode_id: int = None,
-                                    revision_id: int = 1
+                                    revision_id: int
                                     ) -> Dict:
         """get_sequence_revision_by_id retrieves sequence revision by given ID
 
         Arguments:
             show_id {int} -- Show ID
 
+            episode_id {int} -- Episode ID 
+
             sequence_id {int} -- Sequence ID
 
-            episode_id {int} -- Episode ID (default: {None})
-
-            revision_id {int} -- Revision ID (default: {1})
+            revision_id {int} -- Revision ID
 
         Returns:
             Dict -- Sequence revision
@@ -229,20 +229,20 @@ class flix:
     # Returns the list of panels in the sequence revision
     def get_sequence_revision_panels(self,
                                      show_id: int,
+                                     episode_id: int,
                                      sequence_id: int,
-                                     episode_id: int = None,
-                                     revision_id: int = 1
+                                     revision_id: int
                                      ) -> Dict:
         """get_sequence_revision_panels retrieves the list of panels in given sequence revision 
 
         Arguments:
             show_id {int} -- Show ID
 
+            episode_id {int} -- Episode ID
+
             sequence_id {int} -- Sequence ID
 
-            episode_id {int} -- Episode ID (default: {None})
-
-            revision_id {int} -- Revision ID (default: {1})
+            revision_id {int} -- Revision ID
 
         Returns:
             Dict -- Panels
@@ -269,66 +269,23 @@ class flix:
             return None
         return response
 
-    # Returns list of dialogues in the revision
-    # def get_revision_dialogues(self,
-    #                            show_id: int,
-    #                            sequence_id: int,
-    #                            episode_id: int = None,
-    #                            revision_id: int = 1
-    #                            ) -> Dict:
-    #     """get_revision_dialogues retrieve the list of dialogues in sequence revisions
-
-    #     Arguments:
-    #         show_id {int} -- Show ID
-
-    #         sequence_id {int} -- Sequence ID
-
-    #         episode_id {int} -- Episode ID (default: {None})
-
-    #         revision_id {int} -- Revision ID (default: {1})
-
-    #     Returns:
-    #         Dict -- Dialogues
-    #     """
-    #     url = '/show/{0}/sequence/{1}/revision/{2}/dialogues'.format(
-    #         show_id, sequence_id, revision_id)
-    #     if episode_id is not None:
-    #         url = '/show/{0}/episode/{1}/sequence/{2}/revision/{3}/dialogues'.format(
-    #             show_id, episode_id, sequence_id, revision_id)
-
-    #     headers = self.__get_headers(None, url, 'GET')
-    #     response = None
-
-    #     try:
-    #         r = requests.get(self.hostname + url, headers=headers,
-    #                          verify=False)
-    #         response = json.loads(r.content)
-    #         response = response.get('dialogues')
-    #     except requests.exceptions.RequestException as err:
-    #         if r is not None and r.status_code == 401:
-    #             print('Your token has been revoked')
-    #         else:
-    #             print('Could not retrieve sequence revisions', err)
-    #         return None
-    #     return response
-
     # Returns list of dialogues in the panel
     def get_panel_dialogues(self,
                             show_id: int,
+                            episode_id: int,
                             sequence_id: int,
-                            episode_id: int = None,
-                            panel_id: int = 1
+                            panel_id: int
                             ) -> Dict:
         """get_panel_dialogues retrieves the list of dialogues in given panel ID
 
         Arguments:
             show_id {int} -- Show ID
 
+            episode_id {int} -- Episode ID
+
             sequence_id {int} -- Sequence ID
 
-            episode_id {int} -- Episode ID (default: {None})
-
-            revision_id {int} -- Revision ID (default: {1})
+            revision_id {int} -- Revision ID 
 
         Returns:
             Dict -- Dialogues
@@ -375,25 +332,31 @@ class flix:
 
     # Makes POST request to create a new sequence revision
     def create_new_sequence_revision(
-            self, show_id, sequence_id, revisioned_panels, revision,
-            comment='From AUTO Dialogue Relink'):
+            self, show_id, episode_id, sequence_id, revisioned_panels, revision,
+            comment='Auto Dialogue Relink'):
         """new_sequence_revision will create a new sequence revision
 
         Arguments:
             show_id {int} -- Show ID
 
+            episode_id {int} -- Episode ID
+
             sequence_id {int} -- Sequence ID
 
             revisioned_panels {List} -- List of revisionned panels
 
-            markers {List} -- List of Markers
+            revision {Object} -- Sequence Revision
 
             comment {str} -- Comment (default: {'From AUTO Dialogue Relink'})
 
         Returns:
             Dict -- Sequence Revision
         """
+
         url = '/show/{0}/sequence/{1}/revision'.format(show_id, sequence_id)
+        if episode_id is not None:
+            url = '/show/{0}/episode/{1}/sequence/{2}/revision'.format(
+                show_id, episode_id, sequence_id)
 
         meta = revision.get('meta_data')
 

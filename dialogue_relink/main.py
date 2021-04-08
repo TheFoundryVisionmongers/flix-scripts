@@ -10,15 +10,15 @@ import sys
 import flix as flix_api
 
 
-def start_relink(show_id, sequence_id, episode_id, revision_id):
+def start_relink(show_id, episode_id, sequence_id, revision_id, comment):
 
     # Get selected revision
     revision = flix_api.get_sequence_revision_by_id(
-        show_id, sequence_id, episode_id, revision_id)
+        show_id, episode_id, sequence_id, revision_id)
 
     # Get all panels in the sequence revision
     panels = flix_api.get_sequence_revision_panels(
-        show_id, sequence_id, episode_id, revision_id)
+        show_id, episode_id, sequence_id, revision_id)
 
     revisioned_panels = []
 
@@ -26,7 +26,7 @@ def start_relink(show_id, sequence_id, episode_id, revision_id):
     # Select the latest dialogue
     for p in panels:
         dialogues = flix_api.get_panel_dialogues(
-            show_id, sequence_id, episode_id, p.get("panel_id"))
+            show_id, episode_id, sequence_id, p.get("panel_id"))
 
         dialogue = None
         if len(dialogues):
@@ -39,7 +39,7 @@ def start_relink(show_id, sequence_id, episode_id, revision_id):
 
     # Sends POST request to create a new sequence revision with correct panels and dialogues
     flix_api.create_new_sequence_revision(
-        show_id, sequence_id, revisioned_panels, revision)
+        show_id, episode_id, sequence_id, revisioned_panels, revision, comment)
 
 
 # Initialise cli params
@@ -60,9 +60,11 @@ def parse_cli():
     required_group.add_argument(
         '--sequenceid', required=True, help='Sequence ID')
     required_group.add_argument(
-        '--episodeid', required=True, help='Episode ID')
+        '--episodeid', required=False, help='Episode ID')
     required_group.add_argument(
         '--revisionid', required=True, help='Revision ID')
+    required_group.add_argument(
+        '--comment', required=False, help='New Sequence Revision Comment')
 
     return parser.parse_args()
 
@@ -87,5 +89,5 @@ if __name__ == '__main__':
         print('could not authenticate to Flix Server')
         sys.exit(1)
     else:
-        start_relink(args.showid, args.sequenceid,
-                     args.episodeid, args.revisionid)
+        start_relink(args.showid, args.episodeid, args.sequenceid,
+                     args.revisionid, args.comment)
