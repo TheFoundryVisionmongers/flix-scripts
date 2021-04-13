@@ -2,16 +2,22 @@
 # Copyright (C) Foundry 2020
 #
 
+import getpass
 import os
+import pathlib
 import sys
 import tempfile
 
+import yaml
 from PySide2.QtCore import QCoreApplication
 from PySide2.QtWidgets import (QApplication, QDialog, QErrorMessage,
                                QHBoxLayout, QMessageBox, QProgressDialog)
 
 import flix_ui as flix_widget
 import pdf_ui as pdf_widget
+
+
+SETTINGS_FILE_NAME = ".flix-contact-sheet"
 
 
 class progress_canceled(Exception):
@@ -26,8 +32,9 @@ class main_dialogue(QDialog):
         super(main_dialogue, self).__init__(parent)
         self.export_path = None
         self.setWindowTitle('Flix Contact Sheet')
-        self.wg_flix_ui = flix_widget.flix_ui()
-        self.wg_pdf_ui = pdf_widget.pdf_ui()
+        settings = self._read_settings()
+        self.wg_flix_ui = flix_widget.flix_ui(settings)
+        self.wg_pdf_ui = pdf_widget.pdf_ui(settings)
         self.wg_pdf_ui.e_generate.connect(self.on_generate)
 
         # Setup UI view
@@ -35,6 +42,75 @@ class main_dialogue(QDialog):
         h_main_box.addWidget(self.wg_flix_ui)
         h_main_box.addWidget(self.wg_pdf_ui)
         self.setLayout(h_main_box)
+
+        # Set cursor in the first empty field
+        if not self.wg_flix_ui.hostname.text():
+            self.wg_flix_ui.hostname.setFocus()
+        elif not self.wg_flix_ui.login.text():
+            self.wg_flix_ui.login.setFocus()
+        else:
+            self.wg_flix_ui.password.setFocus()
+
+    def closeEvent(self, event):
+        self._write_settings()
+
+    @property
+    def settings_path(self):
+        try:
+            home_dir = str(pathlib.Path.home())
+            return os.path.join(home_dir, SETTINGS_FILE_NAME)
+        except:
+            return None
+
+    def _read_settings(self):
+        """Read the user's settings yaml
+
+        """
+        if not self.settings_path:
+            return {}
+
+        settings = {}
+        try:
+            if os.path.exists(self.settings_path):
+                settings = yaml.safe_load(open(self.settings_path, 'r'))
+            else:
+                print("No settings file: {}".format(self.settings_path))
+
+        except Exception as err:
+            sys.stderr.write(err)
+
+        return settings
+
+    def _write_settings(self):
+        """Write the user's settings yaml
+
+        """
+        if not self.settings_path:
+            return
+
+        settings = self._read_settings()
+        curr_settings = {
+            "hostname": self.wg_flix_ui.hostname.text(),
+            "username": self.wg_flix_ui.login.text(),
+            "show": self.wg_flix_ui.show_list.currentText(),
+            "sequence": self.wg_flix_ui.sequence_list.currentText(),
+            "font_size": self.wg_pdf_ui.wg_font_size.text(),
+            "columns": self.wg_pdf_ui.wg_columns.text(),
+            "rows": self.wg_pdf_ui.wg_rows.text(),
+            "export_path": self.wg_pdf_ui.export_path.text()
+        }
+
+        # Only overwrite settings if the user inputted something
+        for key, setting in curr_settings.items():
+            if setting:
+                settings[key] = setting
+
+        try:
+            with open(self.settings_path, "w") as config_file:
+                config_file.write(yaml.dump(settings))
+
+        except Exception as err:
+            sys.stderr.write(err)
 
     def __error(self, message: str):
         """__error will show a error message with a given message
