@@ -28,15 +28,17 @@ def get_panels_with_media_objects(show_id, episode_id, sequence_id, revision_id)
         print('Panels not found.')
         sys.exit(1)
 
+    panels_with_media_object = []
+
     # Loop through panels and get media objects for each
     for p in panels:
         assets = flix_api.get_asset(p.get("asset").get('asset_id'))
-        # print(assets.get('media_objects'))
+
         updated_panel = flix_api.format_panel_with_media_objects(
             p, assets.get('media_objects'))
-        print(updated_panel)
+        panels_with_media_object.append(updated_panel)
 
-    # Sends GET request to get media objects
+    return panels_with_media_object
 
 
 # Initialise cli params
@@ -84,5 +86,7 @@ if __name__ == '__main__':
         print('could not authenticate to Flix Server')
         sys.exit(1)
     else:
-        get_panels_with_media_objects(args.showid, args.episodeid, args.sequenceid,
-                                      args.revisionid)
+        panels = get_panels_with_media_objects(args.showid, args.episodeid, args.sequenceid,
+                                               args.revisionid)
+
+        print(panels)
