@@ -11,7 +11,7 @@ import requests
 
 from collections import OrderedDict
 from datetime import datetime, timedelta
-from typing import Callable, Dict, List, Tuple, Optional
+from typing import Dict, Tuple, Optional
 
 
 class flix:

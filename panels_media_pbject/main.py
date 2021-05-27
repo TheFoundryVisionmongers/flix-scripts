@@ -3,9 +3,6 @@
 #
 
 import argparse
-import datetime
-import os
-import signal
 import sys
 import flix as flix_api
 
