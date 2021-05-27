@@ -1,10 +1,6 @@
 # Flix Dialogue Relink
 
-This is a script to help relink missing dialogue to the panels.
-
-Retrieves sequence revision data from Flix server.
-
-Creates a new sequence revision replacing missing dialogue for each panel.
+This is a script to fetch panels with media objects.
 
 ## Prerequisites
 
@@ -23,8 +19,7 @@ You can install them using pip (https://pip.pypa.io/en/stable/installing/)
 
 ### Getting Started
 
-1. Backup your Flix databases.
-2. Start your Flix server.
+1. Start your Flix server.
 
 Run ```python3 main.py --help```:
 
@@ -57,7 +52,7 @@ The server URL is the hostname of your server (http://localhost:8080), user and 
 
 ### Examples
 
-To update Show 2, episode 1, sequence 2, revision 3 with a comment:
+To fetch panels from Show 2, episode 1, sequence 2, revision 3:
 ```
 python3 main.py --server http://127.0.0.1:8080  --user admin --password admin --showid 2 --episodeid 1  --sequenceid 2  --revisionid 3 
 ```
