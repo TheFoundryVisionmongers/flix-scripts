@@ -4,10 +4,25 @@
 
 import argparse
 import sys
+from typing import Dict
 import flix as flix_api
 
 
-def get_panels_with_media_objects(show_id: int, episode_id: int, sequence_id: int, revision_id: int):
+def get_panels_with_media_objects(show_id: int, episode_id: int, sequence_id: int, revision_id: int) -> Dict:
+    """get_panels_with_media_objects returns panels with media objects by show, episode, sequence and revision ID
+
+        Arguments:
+            show_id {int} -- Show ID
+
+            episode_id {int} -- Episode ID
+
+            sequence_id {int} -- Sequence ID
+
+            revision_id {int} -- Revision ID
+
+        Returns:
+            Dict -- Panels
+        """
 
     # Get selected revision
     revision = flix_api.get_sequence_revision_by_id(
