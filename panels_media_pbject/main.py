@@ -7,13 +7,13 @@ import sys
 import flix as flix_api
 
 
-def get_panels_with_media_objects(show_id, episode_id, sequence_id, revision_id):
+def get_panels_with_media_objects(show_id: int, episode_id: int, sequence_id: int, revision_id: int):
 
     # Get selected revision
     revision = flix_api.get_sequence_revision_by_id(
         show_id, episode_id, sequence_id, revision_id)
 
-    if revision == None:
+    if revision is None:
         print('Revision not found.')
         sys.exit(1)
 
@@ -21,7 +21,7 @@ def get_panels_with_media_objects(show_id, episode_id, sequence_id, revision_id)
     panels = flix_api.get_sequence_revision_panels(
         show_id, episode_id, sequence_id, revision_id)
 
-    if panels == None:
+    if panels is None:
         print('Panels not found.')
         sys.exit(1)
 

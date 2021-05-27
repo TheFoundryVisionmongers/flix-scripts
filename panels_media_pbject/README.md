@@ -1,4 +1,4 @@
-# Flix Dialogue Relink
+# Flix Fetch Panels With Media Objects
 
 This is a script to fetch panels with media objects.
 
