@@ -31,8 +31,9 @@ class pdf_ui(QWidget):
     export_path = None
     font = None
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, settings, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.settings = settings
         self.setSizePolicy(
             QSizePolicy.MinimumExpanding,
             QSizePolicy.MinimumExpanding
@@ -55,17 +56,17 @@ class pdf_ui(QWidget):
             self.__on_font_changed(self.system_fonts[0])
 
         self.wg_font_size, self.wg_font_size_label = self.__create_line_label(
-            '8',
+            self.settings.get("font_size", '8'),
             'Font Size (1-8)',
             200,
             "[1-8]")
         self.wg_columns, self.wg_columns_label = self.__create_line_label(
-            '3',
+            self.settings.get("columns", '3'),
             'Columns (1-5)',
             350,
             "[1-5]")
         self.wg_rows, self.wg_rows_label = self.__create_line_label(
-            '3',
+            self.settings.get("rows", '3'),
             'Rows (1-5)',
             200,
             "[1-5]")
@@ -76,7 +77,7 @@ class pdf_ui(QWidget):
         self.export_path_button.clicked.connect(self.__browse_export_path)
 
         self.export_path, self.export_path_label = self.__create_line_label(
-            '',
+            self.settings.get("export_path", ''),
             'Export Path',
             200
         )
