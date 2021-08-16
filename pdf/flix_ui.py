@@ -238,9 +238,7 @@ class flix_ui(QWidget):
         seq_rev = self.get_selected_sequence_rev()
         seq_rev_number = seq_rev.get('revision')
         fn_progress('get sequence revision')
-        episode_id = None
-        if episodic:
-            episode_id, _ = self.get_selected_episode()
+
         fn_progress('get panels')
         panels = self.get_flix_api().get_panels(
             show_id, seq_id, seq_rev_number)
@@ -251,26 +249,33 @@ class flix_ui(QWidget):
         # Format panels
         formatted_panels = []
         pos = 1
+
         for p in panels:
-            asset = p.get('asset', {})
-            mos = asset.get('media_objects', [])
+            # Fetch the full asset from the ID.
+            asset = self.get_flix_api().\
+                get_asset(
+                p.
+                    get('asset', {}).
+                    get('asset_id', 0)
+            )
+
+            mos = asset.get('media_objects', {})
             thumbs = mos.get('thumbnail', [])
-            mo = None
             if len(thumbs) > 0:
                 mo = thumbs[0]
-            formatted_panels.append({
-                'mo': {
-                    'name': mo.get('name'),
+                formatted_panels.append({
+                    'mo': {
+                        'name': mo.get('name'),
+                        'id': p.get('panel_id'),
+                        'revision_number': p.get('revision_number'),
+                        'pos': pos,
+                        'mo': mo.get('id')
+                    },
                     'id': p.get('panel_id'),
-                    'revision_number': p.get('revision_number'),
-                    'pos': pos,
-                    'mo': mo.get('id')
-                },
-                'id': p.get('panel_id'),
-                'rev': p.get('revision_number'),
-                'published': p.get('published'),
-                'dialogue': dialogues.get(p.get('panel_id', 0), '')
-            })
+                    'rev': p.get('revision_number'),
+                    'published': p.get('published'),
+                    'dialogue': dialogues.get(p.get('panel_id', 0), '')
+                })
             pos += 1
 
         return formatted_panels
