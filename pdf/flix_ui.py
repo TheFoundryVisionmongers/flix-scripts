@@ -252,7 +252,12 @@ class flix_ui(QWidget):
 
         for p in panels:
             # Fetch the full asset from the ID.
-            asset = self.get_flix_api().get_asset(p.get('asset', {}).get('asset_id', 0))
+            asset = self.get_flix_api().\
+                get_asset(
+                p.
+                    get('asset', {}).
+                    get('asset_id', 0)
+            )
 
             mos = asset.get('media_objects', {})
             thumbs = mos.get('thumbnail', [])
