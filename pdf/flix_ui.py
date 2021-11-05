@@ -246,9 +246,15 @@ class flix_ui(QWidget):
             self.__error('Could not retrieve panels')
             return None
         dialogues = self.get_dialogues_by_panel_id()
+
+        markers = iter(self.get_flix_api().get_markers(seq_rev).items())
+        cur_marker_name = None
+        next_marker_time, next_marker_name = next(markers, (None, None))
+
         # Format panels
         formatted_panels = []
         pos = 1
+        panel_in = 0
 
         for p in panels:
             # Fetch the full asset from the ID.
@@ -258,6 +264,10 @@ class flix_ui(QWidget):
                     get('asset', {}).
                     get('asset_id', 0)
             )
+
+            while next_marker_time is not None and panel_in >= next_marker_time:
+                cur_marker_name = next_marker_name
+                next_marker_time, next_marker_name = next(markers, (None, None))
 
             mos = asset.get('media_objects', {})
             thumbs = mos.get('thumbnail', [])
@@ -274,9 +284,11 @@ class flix_ui(QWidget):
                     'id': p.get('panel_id'),
                     'rev': p.get('revision_number'),
                     'published': p.get('published'),
-                    'dialogue': dialogues.get(p.get('panel_id', 0), '')
+                    'dialogue': dialogues.get(p.get('panel_id', 0), ''),
+                    'marker': cur_marker_name
                 })
             pos += 1
+            panel_in += p.get('duration')
 
         return formatted_panels
 
