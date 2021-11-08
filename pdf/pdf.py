@@ -107,6 +107,10 @@ class Pdf(object):
             self.canvas.drawRightString(panel_x + panel_width,
                                         panel_y - 7, '%04d' % (index + 1))
 
+            # Set the marker
+            if image_data['marker'] is not None:
+                self.canvas.drawString(panel_x, panel_y + panel_height + 2, image_data['marker'])
+
             # Set the dialogue
             self.__set_panel_dialogue(image_data)
 
