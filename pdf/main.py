@@ -255,15 +255,16 @@ class main_dialogue(QDialog):
             self.__update_progress(
                 'Generating contact sheet (this might take some time)',
                 False)
-            self.wg_pdf_ui.generate_contact_sheet(font,
-                                                  columns,
-                                                  rows,
-                                                  export_path,
-                                                  panels,
-                                                  header,
-                                                  font_size)
+            output = self.wg_pdf_ui.generate_contact_sheet(font,
+                                                           columns,
+                                                           rows,
+                                                           export_path,
+                                                           panels,
+                                                           header,
+                                                           font_size)
+            output = pathlib.Path(output).absolute()
             self.__update_progress('', False)
-            self.__info('Contact sheet successfully created')
+            self.__info('Contact sheet successfully written to <a href="{}">{}</a>'.format(output.as_uri(), output.name))
 
 
 if __name__ == '__main__':

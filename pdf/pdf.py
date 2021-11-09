@@ -132,6 +132,7 @@ class Pdf(object):
 
         # save the pdf
         self.canvas.save()
+        return self.output
 
     def __set_panel_new_icon(self, panel_data: Dict):
         """__set_panel_new_icon will set the "new" for published panels only
