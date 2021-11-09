@@ -78,6 +78,7 @@ class main_dialogue(QDialog):
             "columns": self.wg_pdf_ui.wg_columns.value(),
             "rows": self.wg_pdf_ui.wg_rows.value(),
             "export_path": self.wg_pdf_ui.export_path.text(),
+            "disclaimer": self.wg_pdf_ui.disclaimer.toPlainText(),
         }
 
         try:
@@ -152,7 +153,8 @@ class main_dialogue(QDialog):
                     columns: int,
                     rows: int,
                     export_path: str,
-                    font_size: int):
+                    font_size: int,
+                    disclaimer: str):
         """on_generate will start the generatation of the contact sheet after
         retrieving all the data needed
 
@@ -166,6 +168,8 @@ class main_dialogue(QDialog):
             export_path {str} -- Export path (without the filename)
 
             font_size {int} -- Font size
+
+            disclaimer {str} -- A disclaimer to print at the bottom of each page
         """
         if self.wg_flix_ui.is_authenticated() is False:
             self.__error("You need to be authenticated")
@@ -200,7 +204,8 @@ class main_dialogue(QDialog):
                                           export_path,
                                           rev_number,
                                           header,
-                                          font_size)
+                                          font_size,
+                                          disclaimer)
         except progress_canceled:
             print('progress cancelled')
 
@@ -211,7 +216,8 @@ class main_dialogue(QDialog):
                                  export_path: str,
                                  rev_number: int,
                                  header: str,
-                                 font_size: int):
+                                 font_size: int,
+                                 disclaimer: str):
         """__generate_contact_sheet will download all the files and start
         generate the contact sheet
 
@@ -229,6 +235,8 @@ class main_dialogue(QDialog):
             header {str} -- Title of the header
 
             font_size {int} -- Font size
+
+            disclaimer {str} -- A disclaimer to print at the bottom of each page
         """
         self.__write_settings()
 
@@ -261,7 +269,8 @@ class main_dialogue(QDialog):
                                                            export_path,
                                                            panels,
                                                            header,
-                                                           font_size)
+                                                           font_size,
+                                                           disclaimer)
             output = pathlib.Path(output).absolute()
             self.__update_progress('', False)
             self.__info('Contact sheet successfully written to <a href="{}">{}</a>'.format(output.as_uri(), output.name))

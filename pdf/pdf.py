@@ -12,7 +12,7 @@ import matplotlib.font_manager as fontman
 import reportlab.lib.pagesizes
 import reportlab.pdfgen.canvas
 from reportlab.lib.colors import black
-from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle, TA_CENTER
 from reportlab.lib.utils import ImageReader, simpleSplit
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
@@ -28,7 +28,8 @@ class Pdf(object):
                  export_path,
                  panels,
                  header_title,
-                 font_size=8):
+                 font_size=8,
+                 disclaimer=''):
         self.row = rows
         self.column = columns
         self.margin_size = 25
@@ -41,6 +42,7 @@ class Pdf(object):
         self.output = os.path.join(export_path, filename)
         self.font_type_path = font
         self.font_size = font_size
+        self.disclaimer = disclaimer
         self.panels = panels
         self.title = header_title
         self.text_color = 'black'
@@ -70,6 +72,8 @@ class Pdf(object):
 
         # Set the header
         self.__set_header()
+
+        self.__set_disclaimer()
 
         # Set each panels (image / dialogue / New / etc.)
         for index, image_data in enumerate(self.panels):
@@ -127,6 +131,7 @@ class Pdf(object):
             if rowCounter == self.row and not index == (len(self.panels) - 1):
                 self.canvas.showPage()
                 self.__set_header()
+                self.__set_disclaimer()
                 pageNumber += 1
                 rowCounter = 0
 
@@ -302,6 +307,18 @@ class Pdf(object):
             (self.margin_size * 1.25),
             self.page_height - self.margin_header - .75 * self.header,
             title_split[0])
+
+    def __set_disclaimer(self):
+        """__set_disclaimer will set the disclaimer
+        """
+        if not self.disclaimer:
+            return
+
+        disclaimer_style = ParagraphStyle('Disclaimer', fontSize=6, textColor='grey', alignment=TA_CENTER)
+        paragraph = Paragraph(self.disclaimer, disclaimer_style)
+        w, h = paragraph.wrap(self.page_width - self.margin_size * 2, self.page_height)
+        paragraph.drawOn(self.canvas, self.margin_size, self.margin_size - h)
+
 
     def __get_panel_position(self,
                              panel_w: int,

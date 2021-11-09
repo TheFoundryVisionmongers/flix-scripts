@@ -15,7 +15,7 @@ from PySide2.QtGui import QPixmap, QRegExpValidator
 from PySide2.QtWidgets import (QApplication, QComboBox, QDialog, QErrorMessage,
                                QFileDialog, QHBoxLayout, QLabel, QLineEdit,
                                QMessageBox, QPushButton, QSizePolicy,
-                               QVBoxLayout, QWidget, QSpinBox)
+                               QVBoxLayout, QWidget, QSpinBox, QPlainTextEdit)
 
 import pdf as pdf_api
 
@@ -26,7 +26,7 @@ class pdf_ui(QWidget):
     e_generate: font_path, columns, rows, export_path, font_size
     """
 
-    e_generate = Signal(str, int, int, str, int)
+    e_generate = Signal(str, int, int, str, int, str)
 
     export_path = None
     font = None
@@ -77,6 +77,11 @@ class pdf_ui(QWidget):
             5,
             200)
 
+        self.disclaimer = QPlainTextEdit(settings.get('disclaimer', ''))
+        self.disclaimer.setMaximumHeight(100)
+        self.disclaimer_label = QLabel('Disclaimer')
+        self.disclaimer_label.setBuddy(self.disclaimer)
+
         # Setup Local Export option
         self.export_layout = QHBoxLayout()
         self.export_path_button = QPushButton('Browse')
@@ -103,6 +108,8 @@ class pdf_ui(QWidget):
                                     self.wg_columns,
                                     self.wg_rows_label,
                                     self.wg_rows,
+                                    self.disclaimer_label,
+                                    self.disclaimer,
                                     self.export_path_label)
         v_main_box.addLayout(self.export_layout)
         self.__add_widget_to_layout(v_main_box, generate_btn)
@@ -116,7 +123,8 @@ class pdf_ui(QWidget):
                                export_path,
                                panels,
                                header,
-                               font_size):
+                               font_size,
+                               disclaimer):
         pdf = pdf_api.Pdf(
             font,
             columns,
@@ -124,7 +132,8 @@ class pdf_ui(QWidget):
             export_path,
             panels,
             header,
-            font_size)
+            font_size,
+            disclaimer)
         return pdf.build_canvas()
 
     def __create_line_label(self,
@@ -266,7 +275,8 @@ class pdf_ui(QWidget):
                              self.wg_columns.value(),
                              self.wg_rows.value(),
                              self.export_path.text(),
-                             self.wg_font_size.value())
+                             self.wg_font_size.value(),
+                             self.disclaimer.toPlainText())
 
 
 class main_dialogue(QDialog):
