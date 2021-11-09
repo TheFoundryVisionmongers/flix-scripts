@@ -64,12 +64,12 @@ class flix_ui(QWidget):
 
         # Setup Flix Login view
         self.hostname, hostname_label = self.__create_line_label(
-            self.settings.get("hostname", ""), 'Flix Server')
+            self.settings.get('hostname', ''), 'Flix Server')
         self.hostname.setCursorPosition(0)
         self.login, login_label = self.__create_line_label(
-            self.settings.get("username", ""), 'Username')
+            self.settings.get('username', ''), 'Username')
         self.password, password_label = self.__create_line_label(
-            "", 'Password', echo_mode=True)
+            '', 'Password', echo_mode=True)
         self.submit = QPushButton('Log In')
         self.submit.clicked.connect(self.__authenticate)
 
@@ -565,7 +565,7 @@ class flix_ui(QWidget):
         for s in self.sequence_tracking_code:
             self.sequence_list.addItem(s)
         self.sequence_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
-        self.__set_default_combo(self.sequence_list, "sequence")
+        self.__set_default_combo(self.sequence_list, 'sequence')
 
     def __on_episode_changed(self, tracking_code: str):
         """__on_episode_changed triggered after an episode is selected,
@@ -590,7 +590,7 @@ class flix_ui(QWidget):
         for s in self.sequence_tracking_code:
             self.sequence_list.addItem(s)
         self.sequence_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
-        self.__set_default_combo(self.sequence_list, "sequence")
+        self.__set_default_combo(self.sequence_list, 'sequence')
 
     def __on_sequence_changed(self, tracking_code: str):
         """__on_sequence_changed triggered after a sequence is selected,
@@ -646,7 +646,7 @@ class flix_ui(QWidget):
         for s in self.show_tracking_code:
             self.show_list.addItem(s)
         self.show_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
-        self.__set_default_combo(self.show_list, "show")
+        self.__set_default_combo(self.show_list, 'show')
 
     def __sort_alphanumeric(self, d: Dict, reverse: bool = False) -> Dict:
         """__sort_alphanumeric will sort a dictionnary alphanumerically by keys

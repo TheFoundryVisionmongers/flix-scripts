@@ -46,12 +46,15 @@ class pdf_ui(QWidget):
 
         # Setup list for production handoff export option
         self.fonts_list = QComboBox()
-        for f in self.system_fonts:
-            self.fonts_list.addItem(f)
+        self.fonts_list.addItems(self.system_fonts)
         self.fonts_list_label = QLabel('Font')
         self.fonts_list_label.setBuddy(self.fonts_list)
         self.fonts_list.currentTextChanged.connect(
             self.__on_font_changed)
+        try:
+            self.fonts_list.setCurrentIndex(self.system_fonts.index(settings.get('font')))
+        except ValueError:
+            pass
         if len(self.system_fonts) > 0:
             self.__on_font_changed(self.fonts_list.currentText())
 

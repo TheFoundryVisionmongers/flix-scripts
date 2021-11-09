@@ -7,7 +7,9 @@ import os
 import pathlib
 import sys
 import tempfile
+import traceback
 
+import appdirs
 import yaml
 from PySide2.QtCore import QCoreApplication
 from PySide2.QtWidgets import (QApplication, QDialog, QErrorMessage,
@@ -17,7 +19,7 @@ import flix_ui as flix_widget
 import pdf_ui as pdf_widget
 
 
-SETTINGS_FILE_NAME = ".flix-contact-sheet"
+SETTINGS_FILE = pathlib.Path(appdirs.user_config_dir("Flix")) / ".contact_sheet"
 
 
 class progress_canceled(Exception):
@@ -32,9 +34,9 @@ class main_dialogue(QDialog):
         super(main_dialogue, self).__init__(parent)
         self.export_path = None
         self.setWindowTitle('Flix Contact Sheet')
-        settings = self._read_settings()
-        self.wg_flix_ui = flix_widget.flix_ui(settings)
-        self.wg_pdf_ui = pdf_widget.pdf_ui(settings)
+        self.settings = self.__read_settings()
+        self.wg_flix_ui = flix_widget.flix_ui(self.settings)
+        self.wg_pdf_ui = pdf_widget.pdf_ui(self.settings)
         self.wg_pdf_ui.e_generate.connect(self.on_generate)
 
         # Setup UI view
@@ -51,66 +53,40 @@ class main_dialogue(QDialog):
         else:
             self.wg_flix_ui.password.setFocus()
 
-    def closeEvent(self, event):
-        self._write_settings()
-
-    @property
-    def settings_path(self):
+    def __read_settings(self):
+        """Read the user's settings yaml"""
         try:
-            home_dir = str(pathlib.Path.home())
-            return os.path.join(home_dir, SETTINGS_FILE_NAME)
-        except:
-            return None
+            with open(SETTINGS_FILE, 'r') as f:
+                return yaml.safe_load(f) or {}
+        except FileNotFoundError:
+            pass
+        except OSError:
+            traceback.print_exc()
 
-    def _read_settings(self):
-        """Read the user's settings yaml
+        return {}
 
-        """
-        if not self.settings_path:
-            return {}
-
-        settings = {}
-        try:
-            if os.path.exists(self.settings_path):
-                settings = yaml.safe_load(open(self.settings_path, 'r'))
-            else:
-                print("No settings file: {}".format(self.settings_path))
-
-        except Exception as err:
-            sys.stderr.write(err)
-
-        return settings
-
-    def _write_settings(self):
-        """Write the user's settings yaml
-
-        """
-        if not self.settings_path:
-            return
-
-        settings = self._read_settings()
+    def __write_settings(self):
+        """Write the user's settings yaml"""
         curr_settings = {
+            **self.settings,
             "hostname": self.wg_flix_ui.hostname.text(),
             "username": self.wg_flix_ui.login.text(),
             "show": self.wg_flix_ui.show_list.currentText(),
             "sequence": self.wg_flix_ui.sequence_list.currentText(),
-            "font_size": self.wg_pdf_ui.wg_font_size.text(),
-            "columns": self.wg_pdf_ui.wg_columns.text(),
-            "rows": self.wg_pdf_ui.wg_rows.text(),
-            "export_path": self.wg_pdf_ui.export_path.text()
+            "font": self.wg_pdf_ui.font,
+            "font_size": self.wg_pdf_ui.wg_font_size.value(),
+            "columns": self.wg_pdf_ui.wg_columns.value(),
+            "rows": self.wg_pdf_ui.wg_rows.value(),
+            "export_path": self.wg_pdf_ui.export_path.text(),
         }
 
-        # Only overwrite settings if the user inputted something
-        for key, setting in curr_settings.items():
-            if setting:
-                settings[key] = setting
-
         try:
-            with open(self.settings_path, "w") as config_file:
-                config_file.write(yaml.dump(settings))
+            SETTINGS_FILE.parent.mkdir(parents=True, exist_ok=True)
+            with open(SETTINGS_FILE, "w") as config_file:
+                yaml.safe_dump(curr_settings, config_file)
+        except OSError as e:
+            traceback.print_exc()
 
-        except Exception as err:
-            sys.stderr.write(err)
 
     def __error(self, message: str):
         """__error will show a error message with a given message
@@ -254,6 +230,8 @@ class main_dialogue(QDialog):
 
             font_size {int} -- Font size
         """
+        self.__write_settings()
+
         self.__init_progress(4)
 
         # Get panels from from sequence revision
