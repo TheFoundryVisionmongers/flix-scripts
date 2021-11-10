@@ -4,8 +4,8 @@ This is an example of Contact Sheet Generation using the API
 
 ### Prerequisites
 
-You need python3 and pip3
-
+You need python3 and pip3.
+You can install the dependencies by running:
 ```
 pip3 install -r requirements.txt
 ```
