@@ -2,16 +2,24 @@
 # Copyright (C) Foundry 2020
 #
 
+import getpass
 import os
+import pathlib
 import sys
 import tempfile
+import traceback
 
+import appdirs
+import yaml
 from PySide2.QtCore import QCoreApplication
 from PySide2.QtWidgets import (QApplication, QDialog, QErrorMessage,
                                QHBoxLayout, QMessageBox, QProgressDialog)
 
 import flix_ui as flix_widget
 import pdf_ui as pdf_widget
+
+
+SETTINGS_FILE = pathlib.Path(appdirs.user_config_dir("Flix")) / ".contact_sheet"
 
 
 class progress_canceled(Exception):
@@ -26,8 +34,9 @@ class main_dialogue(QDialog):
         super(main_dialogue, self).__init__(parent)
         self.export_path = None
         self.setWindowTitle('Flix Contact Sheet')
-        self.wg_flix_ui = flix_widget.flix_ui()
-        self.wg_pdf_ui = pdf_widget.pdf_ui()
+        self.settings = self.__read_settings()
+        self.wg_flix_ui = flix_widget.flix_ui(self.settings)
+        self.wg_pdf_ui = pdf_widget.pdf_ui(self.settings)
         self.wg_pdf_ui.e_generate.connect(self.on_generate)
 
         # Setup UI view
@@ -35,6 +44,50 @@ class main_dialogue(QDialog):
         h_main_box.addWidget(self.wg_flix_ui)
         h_main_box.addWidget(self.wg_pdf_ui)
         self.setLayout(h_main_box)
+
+        # Set cursor in the first empty field
+        if not self.wg_flix_ui.hostname.text():
+            self.wg_flix_ui.hostname.setFocus()
+        elif not self.wg_flix_ui.login.text():
+            self.wg_flix_ui.login.setFocus()
+        else:
+            self.wg_flix_ui.password.setFocus()
+
+    def __read_settings(self):
+        """Read the user's settings yaml"""
+        try:
+            with open(SETTINGS_FILE, 'r') as f:
+                return yaml.safe_load(f) or {}
+        except FileNotFoundError:
+            pass
+        except OSError:
+            traceback.print_exc()
+
+        return {}
+
+    def __write_settings(self):
+        """Write the user's settings yaml"""
+        curr_settings = {
+            **self.settings,
+            "hostname": self.wg_flix_ui.hostname.text(),
+            "username": self.wg_flix_ui.login.text(),
+            "show": self.wg_flix_ui.show_list.currentText(),
+            "sequence": self.wg_flix_ui.sequence_list.currentText(),
+            "font": self.wg_pdf_ui.font,
+            "font_size": self.wg_pdf_ui.wg_font_size.value(),
+            "columns": self.wg_pdf_ui.wg_columns.value(),
+            "rows": self.wg_pdf_ui.wg_rows.value(),
+            "export_path": self.wg_pdf_ui.export_path.text(),
+            "disclaimer": self.wg_pdf_ui.disclaimer.toPlainText(),
+        }
+
+        try:
+            SETTINGS_FILE.parent.mkdir(parents=True, exist_ok=True)
+            with open(SETTINGS_FILE, "w") as config_file:
+                yaml.safe_dump(curr_settings, config_file)
+        except OSError:
+            traceback.print_exc()
+
 
     def __error(self, message: str):
         """__error will show a error message with a given message
@@ -100,7 +153,8 @@ class main_dialogue(QDialog):
                     columns: int,
                     rows: int,
                     export_path: str,
-                    font_size: int):
+                    font_size: int,
+                    disclaimer: str):
         """on_generate will start the generatation of the contact sheet after
         retrieving all the data needed
 
@@ -114,6 +168,8 @@ class main_dialogue(QDialog):
             export_path {str} -- Export path (without the filename)
 
             font_size {int} -- Font size
+
+            disclaimer {str} -- A disclaimer to print at the bottom of each page
         """
         if self.wg_flix_ui.is_authenticated() is False:
             self.__error("You need to be authenticated")
@@ -148,7 +204,8 @@ class main_dialogue(QDialog):
                                           export_path,
                                           rev_number,
                                           header,
-                                          font_size)
+                                          font_size,
+                                          disclaimer)
         except progress_canceled:
             print('progress cancelled')
 
@@ -159,7 +216,8 @@ class main_dialogue(QDialog):
                                  export_path: str,
                                  rev_number: int,
                                  header: str,
-                                 font_size: int):
+                                 font_size: int,
+                                 disclaimer: str):
         """__generate_contact_sheet will download all the files and start
         generate the contact sheet
 
@@ -177,7 +235,11 @@ class main_dialogue(QDialog):
             header {str} -- Title of the header
 
             font_size {int} -- Font size
+
+            disclaimer {str} -- A disclaimer to print at the bottom of each page
         """
+        self.__write_settings()
+
         self.__init_progress(4)
 
         # Get panels from from sequence revision
@@ -201,15 +263,17 @@ class main_dialogue(QDialog):
             self.__update_progress(
                 'Generating contact sheet (this might take some time)',
                 False)
-            self.wg_pdf_ui.generate_contact_sheet(font,
-                                                  columns,
-                                                  rows,
-                                                  export_path,
-                                                  panels,
-                                                  header,
-                                                  font_size)
+            output = self.wg_pdf_ui.generate_contact_sheet(font,
+                                                           columns,
+                                                           rows,
+                                                           export_path,
+                                                           panels,
+                                                           header,
+                                                           font_size,
+                                                           disclaimer)
+            output = pathlib.Path(output).absolute()
             self.__update_progress('', False)
-            self.__info('Contact sheet successfully created')
+            self.__info('Contact sheet successfully written to <a href="{}">{}</a>'.format(output.as_uri(), output.name))
 
 
 if __name__ == '__main__':

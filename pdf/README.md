@@ -4,20 +4,8 @@ This is an example of Contact Sheet Generation using the API
 
 ### Prerequisites
 
-You need python3 and pip3
-
-You will also need to install these libraries:
-
-reportlab==3.5.50
-
-requests==2.21.0
-
-PySide2==5.15.1
-
-matplotlib==3.3.2
-
-You can install them using pip (https://pip.pypa.io/en/stable/installing/)
-
+You need python3 and pip3.
+You can install the dependencies by running:
 ```
 pip3 install -r requirements.txt
 ```
@@ -45,3 +33,21 @@ To re-generate documentation you will need to install `pdoc3` (https://pypi.org/
 ```
 pdoc3 --html *.py
 ```
+
+### Packaging
+
+To package this into a MacOS app, use `virtualenv` and `pyinstaller`
+
+```
+virtualenv venv
+source venv/bin/activate
+pip install -r requirements.txt
+pip install pyinstaller
+pyinstaller -w -i icons/flix-contact-sheet.icns -n "Flix Contact Sheet" -F main.py
+```
+
+Then run the new MacOS app:
+```
+open "dist/Flix Contact Sheet.app"
+```
+

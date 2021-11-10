@@ -9,12 +9,13 @@ from collections import OrderedDict
 from typing import Callable, Dict, List, Tuple
 
 from PySide2.QtCore import QSize, Qt, Signal
-from PySide2.QtGui import QPixmap
+from PySide2.QtGui import QPixmap, QTextCursor
 from PySide2.QtWidgets import (QApplication, QComboBox, QDialog, QErrorMessage,
                                QHBoxLayout, QLabel, QLineEdit, QPushButton,
                                QSizePolicy, QVBoxLayout, QWidget)
 
 import flix as flix_api
+import resources
 
 
 class flix_ui(QWidget):
@@ -45,8 +46,9 @@ class flix_ui(QWidget):
     __err_sequence_not_found = 'Could not find sequence'
     __err_sequence_rev_not_found = 'Could not find sequence revision'
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, settings, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.settings = settings
         self.flix_api = flix_api.flix()
         self.authenticated = False
         self.setSizePolicy(
@@ -62,10 +64,12 @@ class flix_ui(QWidget):
 
         # Setup Flix Login view
         self.hostname, hostname_label = self.__create_line_label(
-            'http://127.0.0.1:1234', 'Flix Server')
-        self.login, login_label = self.__create_line_label('admin', 'Username')
+            self.settings.get('hostname', ''), 'Flix Server')
+        self.hostname.setCursorPosition(0)
+        self.login, login_label = self.__create_line_label(
+            self.settings.get('username', ''), 'Username')
         self.password, password_label = self.__create_line_label(
-            'admin', 'Password', echo_mode=True)
+            '', 'Password', echo_mode=True)
         self.submit = QPushButton('Log In')
         self.submit.clicked.connect(self.__authenticate)
 
@@ -108,7 +112,7 @@ class flix_ui(QWidget):
         v_main_box.addLayout(h_login_sequence)
 
         # Add Flix logo
-        picture = QPixmap('./flix.png')
+        picture = QPixmap(':/images/flix.png')
         picture = picture.scaledToHeight(120)
         label = QLabel()
         label.setPixmap(picture)
@@ -561,6 +565,7 @@ class flix_ui(QWidget):
         for s in self.sequence_tracking_code:
             self.sequence_list.addItem(s)
         self.sequence_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
+        self.__set_default_combo(self.sequence_list, 'sequence')
 
     def __on_episode_changed(self, tracking_code: str):
         """__on_episode_changed triggered after an episode is selected,
@@ -585,6 +590,7 @@ class flix_ui(QWidget):
         for s in self.sequence_tracking_code:
             self.sequence_list.addItem(s)
         self.sequence_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
+        self.__set_default_combo(self.sequence_list, 'sequence')
 
     def __on_sequence_changed(self, tracking_code: str):
         """__on_sequence_changed triggered after a sequence is selected,
@@ -640,6 +646,7 @@ class flix_ui(QWidget):
         for s in self.show_tracking_code:
             self.show_list.addItem(s)
         self.show_list.setSizeAdjustPolicy(QComboBox.AdjustToContents)
+        self.__set_default_combo(self.show_list, 'show')
 
     def __sort_alphanumeric(self, d: Dict, reverse: bool = False) -> Dict:
         """__sort_alphanumeric will sort a dictionnary alphanumerically by keys
@@ -734,6 +741,18 @@ class flix_ui(QWidget):
         for s in episodes:
             episode_tracking_codes[s.get('tracking_code')] = s.get('id')
         return self.__sort_alphanumeric(episode_tracking_codes)
+
+    def __set_default_combo(self, combo, setting):
+        """Sets the given combo box to the value specified by the given setting if present.
+
+        Arguments:
+            combo {QComboBox} -- The combo box to set the value of
+            setting {str} -- The name of the setting to read the value from
+        """
+        if self.settings.get(setting):
+            index = combo.findText(self.settings[setting], Qt.MatchFixedString)
+            if index >= 0:
+                combo.setCurrentIndex(index)
 
     def __error(self, message: str):
         """__error will show a error message with a given message

@@ -15,7 +15,7 @@ from PySide2.QtGui import QPixmap, QRegExpValidator
 from PySide2.QtWidgets import (QApplication, QComboBox, QDialog, QErrorMessage,
                                QFileDialog, QHBoxLayout, QLabel, QLineEdit,
                                QMessageBox, QPushButton, QSizePolicy,
-                               QVBoxLayout, QWidget)
+                               QVBoxLayout, QWidget, QSpinBox, QPlainTextEdit)
 
 import pdf as pdf_api
 
@@ -26,13 +26,14 @@ class pdf_ui(QWidget):
     e_generate: font_path, columns, rows, export_path, font_size
     """
 
-    e_generate = Signal(str, int, int, str, int)
+    e_generate = Signal(str, int, int, str, int, str)
 
     export_path = None
     font = None
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, settings, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.settings = settings
         self.setSizePolicy(
             QSizePolicy.MinimumExpanding,
             QSizePolicy.MinimumExpanding
@@ -45,30 +46,41 @@ class pdf_ui(QWidget):
 
         # Setup list for production handoff export option
         self.fonts_list = QComboBox()
-        for f in self.system_fonts:
-            self.fonts_list.addItem(f)
+        self.fonts_list.addItems(self.system_fonts)
         self.fonts_list_label = QLabel('Font')
         self.fonts_list_label.setBuddy(self.fonts_list)
         self.fonts_list.currentTextChanged.connect(
             self.__on_font_changed)
+        try:
+            self.fonts_list.setCurrentIndex(self.system_fonts.index(settings.get('font')))
+        except ValueError:
+            pass
         if len(self.system_fonts) > 0:
-            self.__on_font_changed(self.system_fonts[0])
+            self.__on_font_changed(self.fonts_list.currentText())
 
-        self.wg_font_size, self.wg_font_size_label = self.__create_line_label(
-            '8',
-            'Font Size (1-8)',
-            200,
-            "[1-8]")
-        self.wg_columns, self.wg_columns_label = self.__create_line_label(
-            '3',
-            'Columns (1-5)',
-            350,
-            "[1-5]")
-        self.wg_rows, self.wg_rows_label = self.__create_line_label(
-            '3',
-            'Rows (1-5)',
-            200,
-            "[1-5]")
+        self.wg_font_size, self.wg_font_size_label = self.__create_spinbox_label(
+            self.settings.get('font_size', 8),
+            'Font Size',
+            1,
+            8,
+            200)
+        self.wg_columns, self.wg_columns_label = self.__create_spinbox_label(
+            self.settings.get('columns', 3),
+            'Columns',
+            1,
+            5,
+            350)
+        self.wg_rows, self.wg_rows_label = self.__create_spinbox_label(
+            self.settings.get('rows', 3),
+            'Rows',
+            1,
+            5,
+            200)
+
+        self.disclaimer = QPlainTextEdit(settings.get('disclaimer', ''))
+        self.disclaimer.setMaximumHeight(100)
+        self.disclaimer_label = QLabel('Disclaimer')
+        self.disclaimer_label.setBuddy(self.disclaimer)
 
         # Setup Local Export option
         self.export_layout = QHBoxLayout()
@@ -76,7 +88,7 @@ class pdf_ui(QWidget):
         self.export_path_button.clicked.connect(self.__browse_export_path)
 
         self.export_path, self.export_path_label = self.__create_line_label(
-            '',
+            self.settings.get("export_path", ''),
             'Export Path',
             200
         )
@@ -96,6 +108,8 @@ class pdf_ui(QWidget):
                                     self.wg_columns,
                                     self.wg_rows_label,
                                     self.wg_rows,
+                                    self.disclaimer_label,
+                                    self.disclaimer,
                                     self.export_path_label)
         v_main_box.addLayout(self.export_layout)
         self.__add_widget_to_layout(v_main_box, generate_btn)
@@ -109,7 +123,8 @@ class pdf_ui(QWidget):
                                export_path,
                                panels,
                                header,
-                               font_size):
+                               font_size,
+                               disclaimer):
         pdf = pdf_api.Pdf(
             font,
             columns,
@@ -117,7 +132,8 @@ class pdf_ui(QWidget):
             export_path,
             panels,
             header,
-            font_size)
+            font_size,
+            disclaimer)
         return pdf.build_canvas()
 
     def __create_line_label(self,
@@ -126,7 +142,7 @@ class pdf_ui(QWidget):
                             min_width: int = 200,
                             reg_exp: str = None) -> Tuple[Dict,
                                                           Dict]:
-        """__create_line_label will create a line edit button and his label
+        """__create_line_label will create a text field and corresponding label
 
         Arguments:
             name {str} -- Default value
@@ -147,6 +163,38 @@ class pdf_ui(QWidget):
         label = QLabel(label)
         label.setBuddy(line_edit)
         return line_edit, label
+
+    def __create_spinbox_label(self,
+                               value: int,
+                               label: str,
+                               minimum: int,
+                               maximum: int,
+                               min_width: int = 200) -> Tuple[Dict,
+                                                              Dict]:
+        """__create_line_label will create a spinner and corresponding label
+
+        Arguments:
+            value {int} -- Default value
+
+            label {str} -- Label name
+
+            minimum {int} -- Minimum value
+
+            maximum {int} -- Maximum value
+
+            min_width {int} -- Minium width (default: {200})
+
+        Returns:
+            Tuple[Dict, Dict] -- Line Edit, Label
+        """
+        spin_box = QSpinBox()
+        spin_box.setValue(value)
+        spin_box.setMinimumWidth(min_width)
+        spin_box.setMinimum(minimum)
+        spin_box.setMaximum(maximum)
+        label = QLabel(label)
+        label.setBuddy(spin_box)
+        return spin_box, label
 
     def __add_widget_to_layout(self, layout: Dict, *widgets: Dict):
         """__add_widget_to_layout will add all the widget to a layout
@@ -213,20 +261,21 @@ class pdf_ui(QWidget):
         if self.font is None:
             self.__error("You need to select a font")
             return
-        if int(self.wg_columns.text()) < 1 or int(self.wg_rows.text()) < 1:
+        if self.wg_columns.value() < 1 or self.wg_rows.value() < 1:
             self.__error("You need to set columns / rows within 1-5")
             return
         if self.export_path is None or self.export_path.text() == '':
             self.__error("You need to select an export path")
             return
-        if int(self.wg_font_size.text()) < 1:
+        if self.wg_font_size.value() < 1:
             self.__error("You need to set columns / rows within 1-8")
             return
         self.e_generate.emit(self.font,
-                             int(self.wg_columns.text()),
-                             int(self.wg_rows.text()),
+                             self.wg_columns.value(),
+                             self.wg_rows.value(),
                              self.export_path.text(),
-                             int(self.wg_font_size.text()))
+                             self.wg_font_size.value(),
+                             self.disclaimer.toPlainText())
 
 
 class main_dialogue(QDialog):
