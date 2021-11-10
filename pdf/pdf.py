@@ -319,7 +319,6 @@ class Pdf(object):
         w, h = paragraph.wrap(self.page_width - self.margin_size * 2, self.page_height)
         paragraph.drawOn(self.canvas, self.margin_size, self.margin_size - h)
 
-
     def __get_panel_position(self,
                              panel_w: int,
                              panel_h: int,

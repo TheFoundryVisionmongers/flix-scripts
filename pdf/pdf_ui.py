@@ -142,7 +142,7 @@ class pdf_ui(QWidget):
                             min_width: int = 200,
                             reg_exp: str = None) -> Tuple[Dict,
                                                           Dict]:
-        """__create_line_label will create a line edit button and his label
+        """__create_line_label will create a text field and corresponding label
 
         Arguments:
             name {str} -- Default value
@@ -169,10 +169,9 @@ class pdf_ui(QWidget):
                                label: str,
                                minimum: int,
                                maximum: int,
-                               min_width: int = 200,
-                               reg_exp: str = None) -> Tuple[Dict,
-                                                             Dict]:
-        """__create_line_label will create a line edit button and his label
+                               min_width: int = 200) -> Tuple[Dict,
+                                                              Dict]:
+        """__create_line_label will create a spinner and corresponding label
 
         Arguments:
             value {int} -- Default value

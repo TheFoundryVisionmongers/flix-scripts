@@ -743,10 +743,12 @@ class flix_ui(QWidget):
         return self.__sort_alphanumeric(episode_tracking_codes)
 
     def __set_default_combo(self, combo, setting):
-        """
+        """Sets the given combo box to the value specified by the given setting if present.
 
+        Arguments:
+            combo {QComboBox} -- The combo box to set the value of
+            setting {str} -- The name of the setting to read the value from
         """
-        # Set default Show
         if self.settings.get(setting):
             index = combo.findText(self.settings[setting], Qt.MatchFixedString)
             if index >= 0:

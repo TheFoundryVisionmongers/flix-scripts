@@ -85,7 +85,7 @@ class main_dialogue(QDialog):
             SETTINGS_FILE.parent.mkdir(parents=True, exist_ok=True)
             with open(SETTINGS_FILE, "w") as config_file:
                 yaml.safe_dump(curr_settings, config_file)
-        except OSError as e:
+        except OSError:
             traceback.print_exc()
 
 
