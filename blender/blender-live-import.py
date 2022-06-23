@@ -38,9 +38,8 @@ class ReplaceImageInFlix(bpy.types.Operator):
     bl_options = {'REGISTER'}
 
     def execute(self, context) -> Set[str]:
-            filepaths = []
-            filepaths.append(generate_snapshot())
-            asyncio.get_event_loop().run_until_complete(live_replace(filepaths))
+            filepath = generate_snapshot()
+            asyncio.get_event_loop().run_until_complete(live_replace(filepath))
 
             return {'FINISHED'}
 
@@ -81,21 +80,21 @@ async def live_import(filepaths: List[str]) -> None:
     except OSError as err:
         print('could not connect to Flix client, ensure it is up and running and open the sequence in which you want to import panels')
 
-def send_replace(ws: websockets.WebSocketClientProtocol, filepaths: List[str]) -> Coroutine:
+def send_replace(ws: websockets.WebSocketClientProtocol, filepath: str) -> Coroutine:
     """send_replace will format a messages to replace a file and send the message through websocket"""
     file_import_message = {
         'data': {
             'command': 'DEFAULT_ACTION',
             'action': 'REPLACE_CURRENT',
             'data': {
-                'artwork': filepaths,
+                'artwork': filepath,
                 'origin': 'Blender'
             }
         }
     }
     return ws.send(json.dumps(file_import_message))
 
-async def live_replace(filepaths: List[str]) -> None:
+async def live_replace(filepath: str) -> None:
     """live_replace will make a websocket connection and send files to replace panels in flix"""
     try:
         async with websockets.connect('ws://localhost:54242') as websocket:
@@ -103,7 +102,7 @@ async def live_replace(filepaths: List[str]) -> None:
             await handshake(websocket)
 
             # Send files replace through websocket
-            await send_replace(websocket, filepaths)
+            await send_replace(websocket, filepath)
     except OSError as err:
         print('could not connect to Flix client, ensure it is up and running and open the sequence in which you want to import panels')
 
