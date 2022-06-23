@@ -50,7 +50,7 @@ def handshake(ws: websockets.WebSocketClientProtocol) -> Coroutine:
         'data': {
             'app': 'photoshop',
             'id': 'a8dcd02f',
-            'version': '6.3.5'
+            'version': '6.4.0'
         }
     }
     return ws.send(json.dumps(handshake_message))
