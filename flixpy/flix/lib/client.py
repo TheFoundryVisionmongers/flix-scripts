@@ -1,7 +1,7 @@
-import asyncio
+from collections.abc import Mapping
 import dataclasses
 import json
-from typing import Any
+from typing import Any, cast
 
 import aiohttp
 import dateutil.parser
@@ -16,7 +16,7 @@ __all__ = ["Client", "AccessKey"]
 class AccessKey:
     """Holds information about a user session."""
 
-    def __init__(self, access_key: dict[Any]):
+    def __init__(self, access_key: dict[str, Any]):
         """
         Constructs a new AccessKey object.
         :param access_key: The deserialised response from authenticating with a Flix server
@@ -26,7 +26,7 @@ class AccessKey:
         self.created_date = dateutil.parser.parse(access_key["created_date"])
         self.expiry_date = dateutil.parser.parse(access_key["expiry_date"])
 
-    def to_json(self) -> dict[Any]:
+    def to_json(self) -> dict[str, Any]:
         """Returns a JSON-serialisable representation of this access key.
         The output of this can be passed to the constructor to construct an AccessKey object from JSON."""
         return {
@@ -46,6 +46,7 @@ class Client:
         hostname: str,
         port: int,
         ssl: bool = False,
+        *,
         access_key: AccessKey | None = None,
     ):
         """
@@ -68,7 +69,7 @@ class Client:
 
     async def _request(
         self, method: str, path: str, body: Any | None = None, parse_body=True, **kwargs
-    ) -> dict[Any] | bytes | str:
+    ) -> dict[str, Any] | bytes | str:
         data = json.dumps(body) if body is not None else None
         headers = {"Content-Type": "application/json"}
         if self._access_key is not None:
@@ -91,7 +92,11 @@ class Client:
         )
         if response.status >= 400:
             if response.content_type == "application/json":
-                error_message = (await response.json())["message"]
+                error = await response.json()
+                if isinstance(error, Mapping) and "message" in error:
+                    error_message = error["message"]
+                else:
+                    error_message = str(error)
             else:
                 error_message = await response.text()
             if response.status == 401:
@@ -111,7 +116,7 @@ class Client:
 
     async def request(
         self, method: str, path: str, body: Any | None = None, **kwargs
-    ) -> dict[Any] | bytes | str:
+    ) -> dict[str, Any] | bytes | str:
         """
         Perform an HTTP request against the Flix server.
 
@@ -130,7 +135,7 @@ class Client:
 
     async def get(
         self, path: str, body: Any | None = None, **kwargs
-    ) -> dict[Any] | bytes | str:
+    ) -> dict[str, Any] | bytes | str:
         """
         Perform a GET request against the Flix server.
 
@@ -145,7 +150,7 @@ class Client:
 
     async def post(
         self, path: str, body: Any | None = None, **kwargs
-    ) -> dict[Any] | bytes | str:
+    ) -> dict[str, Any] | bytes | str:
         """
         Perform a POST request against the Flix server.
 
@@ -160,7 +165,7 @@ class Client:
 
     async def patch(
         self, path: str, body: Any | None = None, **kwargs
-    ) -> dict[Any] | bytes | str:
+    ) -> dict[str, Any] | bytes | str:
         """
         Perform a PATCH request against the Flix server.
 
@@ -175,7 +180,7 @@ class Client:
 
     async def put(
         self, path: str, body: Any | None = None, **kwargs
-    ) -> dict[Any] | bytes | str:
+    ) -> dict[str, Any] | bytes | str:
         """
         Perform a PUT request against the Flix server.
 
@@ -190,7 +195,7 @@ class Client:
 
     async def delete(
         self, path: str, body: Any | None = None, **kwargs
-    ) -> dict[Any] | bytes | str:
+    ) -> dict[str, Any] | bytes | str:
         """
         Perform a DELETE request against the Flix server.
 
@@ -212,7 +217,8 @@ class Client:
         :raises errors.FlixError: If the server returned an error
         :return: A object representing the creation form for the path
         """
-        return forms.Form(await self.get(f"{path}/form"))
+        resp = await self.get(f"{path}/form")
+        return forms.Form(cast(dict[str, Any], resp))
 
     async def authenticate(self, user, password):
         """

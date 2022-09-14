@@ -18,6 +18,14 @@ anyio = "^3.6.1"
 [tool.poetry.scripts]
 flix = 'flix.cli.main:main'
 
+[tool.poetry.group.dev.dependencies]
+mypy = "^0.971"
+types-python-dateutil = "^2.8.19"
+types-appdirs = "^1.4.3"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[mypy]
+python-version = "3.10"

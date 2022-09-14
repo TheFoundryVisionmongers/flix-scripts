@@ -20,7 +20,7 @@ class InteractiveClient(client.Client):
     def __init__(
         self,
         *args,
-        config: dict[Any],
+        config: dict[str, Any],
         username: str | None = None,
         password: str | None = None,
         **kwargs

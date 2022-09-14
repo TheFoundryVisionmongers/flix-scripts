@@ -40,7 +40,7 @@ def sign_request(
     if body:
         parts += [
             hashlib.md5(body.encode("utf-8")).hexdigest(),
-            content_type,
+            content_type or "",
         ]
     else:
         parts += ["", ""]

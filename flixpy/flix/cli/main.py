@@ -1,7 +1,7 @@
 import json
 import pathlib
 import urllib.parse
-from typing import Any
+from typing import Any, cast
 
 import appdirs
 import asyncclick as click
@@ -27,22 +27,19 @@ def write_config(cfg):
         json.dump(cfg, f, indent=2)
 
 
-def parse_url(server: str | None) -> tuple[str, int, bool]:
+async def get_client(ctx: click.Context, server: str | None = None) -> client.Client:
+    server = server or ctx.obj["server"]
     if server is None:
         raise click.UsageError("server not specified in config or as an option")
 
     parsed = urllib.parse.urlparse(server)
-    return parsed.hostname, parsed.port or 80, parsed.scheme == "https"
-
-
-async def get_client(ctx: click.Context, server=None) -> client.Client:
-    server = server or ctx.obj["server"]
-    hostname, port, ssl = parse_url(server)
+    if not parsed.hostname:
+        raise click.UsageError(f"missing hostname in server URL: {server}")
 
     return interactive_client.InteractiveClient(
-        hostname,
-        port,
-        ssl=ssl,
+        hostname=parsed.hostname,
+        port=parsed.port or 80,
+        ssl=parsed.scheme == "https",
         config=ctx.obj["config"],
         username=ctx.obj.get("username"),
         password=ctx.obj.get("password"),
@@ -121,11 +118,8 @@ async def curl(ctx: click.Context, url: str, data: Any | None, request: str | No
     path = url_parse.path
 
     async with await get_client(ctx, server=server) as flix_client:
-        print(
-            (
-                await flix_client.request(request, path, body=data, parse_body=False)
-            ).decode()
-        )
+        resp = await flix_client.request(request, path, body=data, parse_body=False)
+        print(cast(bytes, resp).decode())
 
 
 @flix_cli.group(help="Manage webhooks.")

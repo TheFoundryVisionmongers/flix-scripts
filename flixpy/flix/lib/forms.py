@@ -36,7 +36,7 @@ class Form:
         ),
     }
 
-    def __init__(self, spec: dict[Any]):
+    def __init__(self, spec: dict[str, Any]):
         """
         Constructs a new Form.
 
@@ -53,7 +53,7 @@ class Form:
                 field_type = Form._TYPES[field["type"]](field)
                 self.fields[field["id"]] = field_type(field)
 
-    def verify(self, parameters: dict[Any], ignore_required=False):
+    def verify(self, parameters: dict[str, Any], ignore_required=False):
         """
         Validates the given object against the creation form.
 
@@ -64,7 +64,7 @@ class Form:
         for field in self.fields.values():
             field.verify(parameters, ignore_required=ignore_required)
 
-    def prompt(self, parameters: dict[Any] = None) -> dict[Any]:
+    def prompt(self, parameters: dict[str, Any] = None) -> dict[str, Any]:
         """
         Prompt the user for input required to construct an object adhering to this creation form.
 
@@ -80,7 +80,7 @@ class Form:
                 parameters[field.id] = field.prompt()
         return parameters
 
-    def prompt_edit(self, parameters: dict[Any]) -> dict[Any]:
+    def prompt_edit(self, parameters: dict[str, Any]) -> dict[str, Any]:
         """
         Prompt the user for input to modify an existing object adhering to this creation form.
 
@@ -105,7 +105,7 @@ class Form:
                 parameters[option] = self.fields[option].prompt()
         return parameters
 
-    def print(self, parameters: dict[Any]):
+    def print(self, parameters: dict[str, Any]):
         """
         Pretty-print an instance of the object type defined by this form.
 
