@@ -29,3 +29,7 @@ build-backend = "poetry.core.masonry.api"
 
 [mypy]
 python-version = "3.10"
+enable-recursive-aliases = true
+
+[tool.black]
+line-length = 120
