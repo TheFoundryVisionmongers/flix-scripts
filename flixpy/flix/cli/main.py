@@ -134,12 +134,14 @@ async def webhook_add(ctx):
     async with await get_client(ctx) as flix_client:
         webhook_form = await flix_client.form("/webhook")
         data = webhook_form.prompt()
-        click.echo()
-        webhook_form.print(data)
-        if click.confirm("Save webhook?", True):
+        click.echo(err=True)
+        webhook_form.print(data, err=True)
+        if click.confirm("Save webhook?", True, err=True):
             wh = await flix_client.post("/webhook", data)
-            click.echo(f"New webhook secret: {wh['secret']}")
-            click.echo("Ensure that you have noted down the secret, as you will not be able to view it again.")
+            click.echo(f"New webhook secret: {wh['secret']}", err=True)
+            click.echo(
+                "Ensure that you have noted down the secret, as you will not be able to view it again.", err=True
+            )
 
 
 @webhook.command("list", help="List all webhooks.")
@@ -171,11 +173,11 @@ async def webhook_delete(ctx):
             prompt_suffix=" ",
         )
         wh = webhooks["webhooks"][j]
-        webhook_form.print(wh)
+        webhook_form.print(wh, err=True)
 
-        if click.confirm("Delete this webhook?", False):
+        if click.confirm("Delete this webhook?", False, err=True):
             await flix_client.delete("/webhook/{}".format(webhooks["webhooks"][j]["id"]))
-            click.echo("Deleted successfully. It may take a few seconds for your changes to be reflected.")
+            click.echo("Deleted successfully. It may take a few seconds for your changes to be reflected.", err=True)
 
 
 @webhook.command("edit", help="Edit a webhook.")
@@ -195,7 +197,7 @@ async def webhook_edit(ctx):
         wh = webhooks["webhooks"][j]
         wh = webhook_form.prompt_edit(wh)
         await flix_client.put(f"/webhook/{wh['id']}", wh)
-        click.echo("Saved successfully. It may take a few seconds for your changes to be reflected.")
+        click.echo("Saved successfully. It may take a few seconds for your changes to be reflected.", err=True)
 
 
 @webhook.command("ping", help="Ping a webhook.")
@@ -249,7 +251,7 @@ def main() -> int | None:
     try:
         return flix_cli(auto_envvar_prefix="FLIX", _anyio_backend="asyncio")
     except errors.FlixError as e:
-        click.echo(str(e))
+        click.echo(str(e), err=True)
         return 1
 
 

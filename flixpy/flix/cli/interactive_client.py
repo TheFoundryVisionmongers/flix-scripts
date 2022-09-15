@@ -32,15 +32,15 @@ class InteractiveClient(client.Client):
         self._password = password
 
     async def _sign_in(self):
-        click.echo("Not signed in, attempting to authenticate...")
+        click.echo("Not signed in, attempting to authenticate...", err=True)
 
         try:
             del self._config["access_key"]
         except KeyError:
             pass
 
-        username = self._username or click.prompt("Username", type=str)
-        password = self._password or click.prompt("Password", type=str, hide_input=True)
+        username = self._username or click.prompt("Username", type=str, err=True)
+        password = self._password or click.prompt("Password", type=str, hide_input=True, err=True)
         access_key = await self.authenticate(username, password)
         self._config["access_key"] = access_key.to_json()
 

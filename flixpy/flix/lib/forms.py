@@ -31,9 +31,7 @@ class Form:
         "int": lambda _: IntField,
         "float": lambda _: FloatField,
         "bool": lambda _: BoolField,
-        "multichoice": lambda field: (
-            MultichoiceField if field.get("multi_select_allowed") else EnumField
-        ),
+        "multichoice": lambda field: (MultichoiceField if field.get("multi_select_allowed") else EnumField),
     }
 
     def __init__(self, spec: dict[str, Any]):
@@ -105,15 +103,16 @@ class Form:
                 parameters[option] = self.fields[option].prompt()
         return parameters
 
-    def print(self, parameters: dict[str, Any]):
+    def print(self, parameters: dict[str, Any], *, err=False):
         """
         Pretty-print an instance of the object type defined by this form.
 
         :param parameters: The object to print
+        :param err: Whether to print to standard error
         """
         for name, field in self.fields.items():
             if name in parameters:
-                click.echo("{}: {}".format(field.label, field.format(parameters[name])))
+                click.echo("{}: {}".format(field.label, field.format(parameters[name])), err=err)
 
 
 class Field:
@@ -163,13 +162,9 @@ class StringField(Field):
             raise ValueError("not a string: {}".format(value))
 
         if len(value) < self.minimum:
-            raise ValueError(
-                "string must be at least {} characters: {}".format(self.minimum, value)
-            )
+            raise ValueError("string must be at least {} characters: {}".format(self.minimum, value))
         elif len(value) > self.maximum:
-            raise ValueError(
-                "string can be at most {} characters: {}".format(self.maximum, value)
-            )
+            raise ValueError("string can be at most {} characters: {}".format(self.maximum, value))
         elif self.format_type == "regex":
             if not re.match(self.format_pattern, value):
                 raise ValueError("does not match expected format: {}".format(value))
@@ -191,6 +186,7 @@ class StringField(Field):
                 default=self.default,
                 type=str,
                 hide_input=self.format_type == "password",
+                err=True,
             )
             try:
                 self.verify_value(value)
@@ -215,20 +211,16 @@ class IntField(Field):
             raise ValueError("not an integer: {}".format(value))
 
         if value < self.minimum:
-            raise ValueError(
-                "value below minimum allowed value ({}): {}".format(self.minimum, value)
-            )
+            raise ValueError("value below minimum allowed value ({}): {}".format(self.minimum, value))
         elif value > self.maximum:
-            raise ValueError(
-                "value above maximum allowed value ({}): {}".format(self.maximum, value)
-            )
+            raise ValueError("value above maximum allowed value ({}): {}".format(self.maximum, value))
 
     def prompt(self):
         field_type = click.IntRange(
             max=self.maximum if self.maximum < math.inf else None,
             min=self.minimum if self.minimum > -math.inf else None,
         )
-        return click.prompt(self.label, default=self.default, type=field_type)
+        return click.prompt(self.label, default=self.default, type=field_type, err=True)
 
 
 class FloatField(Field):
@@ -247,20 +239,16 @@ class FloatField(Field):
             raise ValueError("not a float: {}".format(value))
 
         if value < self.minimum:
-            raise ValueError(
-                "value below minimum allowed value ({}): {}".format(self.minimum, value)
-            )
+            raise ValueError("value below minimum allowed value ({}): {}".format(self.minimum, value))
         elif value > self.maximum:
-            raise ValueError(
-                "value above maximum allowed value ({}): {}".format(self.maximum, value)
-            )
+            raise ValueError("value above maximum allowed value ({}): {}".format(self.maximum, value))
 
     def prompt(self):
         field_type = click.FloatRange(
             max=self.maximum if self.maximum < math.inf else None,
             min=self.minimum if self.minimum > -math.inf else None,
         )
-        return click.prompt(self.label, default=self.default, type=field_type)
+        return click.prompt(self.label, default=self.default, type=field_type, err=True)
 
 
 class BoolField(Field):
@@ -276,7 +264,7 @@ class BoolField(Field):
             raise ValueError("not a boolean: {}".format(value))
 
     def prompt(self):
-        return click.confirm(self.label, default=self.default)
+        return click.confirm(self.label, default=self.default, err=True)
 
     def format(self, value):
         return "Y" if value else "N"
@@ -295,9 +283,7 @@ class EnumField(Field):
             raise ValueError("not a valid option: {}".format(value))
 
     def prompt(self):
-        choices = [
-            Choice(choice["value"], choice["display_value"]) for choice in self.options
-        ]
+        choices = [Choice(choice["value"], choice["display_value"]) for choice in self.options]
         return prompt_enum(choices, label=self.label, default=self.default)
 
     def format(self, value):
@@ -333,26 +319,18 @@ class MultichoiceField(Field):
                 click.echo(f"Error: {str(e)}", err=True)
 
     def _prompt_multichoice(self):
-        click.echo(f"{self.label}:")
+        click.echo(f"{self.label}:", err=True)
         for i, choice in enumerate(self.options, 1):
-            click.echo("  {}) {}".format(i, choice["display_value"]))
+            click.echo("  {}) {}".format(i, choice["display_value"]), err=True)
 
         default = (
-            _set_to_range(
-                {
-                    i + 1
-                    for i, choice in enumerate(self.options)
-                    if choice["value"] == self.default
-                }
-            )
+            _set_to_range({i + 1 for i, choice in enumerate(self.options) if choice["value"] == self.default})
             if self.default is not None
             else None
         )
 
         while True:
-            selection = click.prompt(
-                "Specify one or more comma-separated options", default=default, type=str
-            )
+            selection = click.prompt("Specify one or more comma-separated options", default=default, type=str, err=True)
             try:
                 choices = _range_to_set(selection)
             except ValueError:
@@ -367,11 +345,7 @@ class MultichoiceField(Field):
     def format(self, value):
         return ", ".join(
             next(
-                (
-                    choice["display_value"]
-                    for choice in self.options
-                    if choice["value"] == val
-                ),
+                (choice["display_value"] for choice in self.options if choice["value"] == val),
                 repr(val),
             )
             for val in value
@@ -407,9 +381,9 @@ def prompt_enum(
     :return: The value corresponding to the user's choice, or None if allow_empty is True and no input was given
     """
     if label is not None:
-        click.echo(f"{label}:")
+        click.echo(f"{label}:", err=True)
     for i, choice in enumerate(options, 1):
-        click.echo("  {}) {}".format(i, choice.display_value))
+        click.echo("  {}) {}".format(i, choice.display_value), err=True)
 
     default_index = None
     if default is not None:
@@ -423,6 +397,7 @@ def prompt_enum(
         prompt,
         default=default_index,
         type=click.IntRange(1 if not allow_empty else 0, len(options)),
+        err=True,
         **kwargs,
     )
     return options[selection - 1].value if selection > 0 else None
