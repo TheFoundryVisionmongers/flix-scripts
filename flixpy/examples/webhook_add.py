@@ -3,7 +3,7 @@ import asyncio
 import flix
 
 
-async def main():
+async def main() -> None:
     async with flix.Client("localhost", 8080) as client:
         await client.authenticate("admin", "admin")
         webhook = await client.post(
