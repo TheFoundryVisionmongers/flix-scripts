@@ -224,7 +224,7 @@ class Client:
         resp = await self.get(f"{path}/form")
         return forms.Form(cast(dict[str, Any], resp))
 
-    async def authenticate(self, user, password):
+    async def authenticate(self, user, password) -> AccessKey:
         """
         Authenticate as a Flix user.
 
@@ -237,10 +237,9 @@ class Client:
         """
         self._access_key = None
         # call _request directly to avoid recursion during interactive sessions
-        response = await self._request(
-            "POST", "/authenticate", auth=aiohttp.BasicAuth(user, password)
-        )
-        self._access_key = AccessKey(response)
+        response = await self._request("POST", "/authenticate", auth=aiohttp.BasicAuth(user, password))
+        self._access_key = AccessKey(await response.json())
+        return self._access_key
 
     async def close(self):
         """Closes the underlying HTTP session. Does not need to be called when using the client as a context manager."""

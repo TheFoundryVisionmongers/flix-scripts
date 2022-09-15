@@ -1,5 +1,6 @@
 from typing import Any
 
+import aiohttp
 import asyncclick as click
 
 from ..lib import client, errors
@@ -18,12 +19,7 @@ class InteractiveClient(client.Client):
     """
 
     def __init__(
-        self,
-        *args,
-        config: dict[str, Any],
-        username: str | None = None,
-        password: str | None = None,
-        **kwargs
+        self, *args, config: dict[str, Any], username: str | None = None, password: str | None = None, **kwargs
     ):
         try:
             access_key = client.AccessKey(config["access_key"])
@@ -37,23 +33,20 @@ class InteractiveClient(client.Client):
 
     async def _sign_in(self):
         click.echo("Not signed in, attempting to authenticate...")
-        username = self._username or click.prompt("Username", type=str)
-        password = self._password or click.prompt("Password", type=str, hide_input=True)
-        await self.authenticate(username, password)
-
-    async def request(self, *args, **kwargs):
-        try:
-            return await super().request(*args, **kwargs)
-        except errors.FlixNotVerifiedError:
-            await self._sign_in()
-            return await super().request(*args, **kwargs)
-
-    async def close(self):
-        await super().close()
 
         try:
             del self._config["access_key"]
         except KeyError:
             pass
-        if self.access_key is not None:
-            self._config["access_key"] = self.access_key.to_json()
+
+        username = self._username or click.prompt("Username", type=str)
+        password = self._password or click.prompt("Password", type=str, hide_input=True)
+        access_key = await self.authenticate(username, password)
+        self._config["access_key"] = access_key.to_json()
+
+    async def request(self, *args, **kwargs) -> aiohttp.ClientResponse:
+        try:
+            return await super().request(*args, **kwargs)
+        except errors.FlixNotVerifiedError:
+            await self._sign_in()
+            return await super().request(*args, **kwargs)
