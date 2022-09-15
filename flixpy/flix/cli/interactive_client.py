@@ -19,7 +19,12 @@ class InteractiveClient(client.Client):
     """
 
     def __init__(
-        self, *args, config: dict[str, Any], username: str | None = None, password: str | None = None, **kwargs
+        self,
+        *args: Any,
+        config: dict[str, Any],
+        username: str | None = None,
+        password: str | None = None,
+        **kwargs: Any
     ):
         try:
             access_key = client.AccessKey(config["access_key"])
@@ -31,7 +36,7 @@ class InteractiveClient(client.Client):
         self._username = username
         self._password = password
 
-    async def _sign_in(self):
+    async def _sign_in(self) -> None:
         click.echo("Not signed in, attempting to authenticate...", err=True)
 
         try:
@@ -44,7 +49,7 @@ class InteractiveClient(client.Client):
         access_key = await self.authenticate(username, password)
         self._config["access_key"] = access_key.to_json()
 
-    async def request(self, *args, **kwargs) -> aiohttp.ClientResponse:
+    async def request(self, *args: Any, **kwargs: Any) -> aiohttp.ClientResponse:
         try:
             return await super().request(*args, **kwargs)
         except errors.FlixNotVerifiedError:

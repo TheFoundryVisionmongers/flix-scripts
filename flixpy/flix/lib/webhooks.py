@@ -154,7 +154,7 @@ class WebhookHandler:
 
         return decorator
 
-    def _add_handler(self, event_type: Type[T], handler: WebhookHandlerType[T]):
+    def _add_handler(self, event_type: Type[T], handler: WebhookHandlerType[T]) -> None:
         if event_type not in self._sub_handlers:
             self._sub_handlers[event_type] = []
         self._sub_handlers[event_type].append(cast(WebhookHandlerType[WebhookEvent], handler))

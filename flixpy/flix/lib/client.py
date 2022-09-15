@@ -1,7 +1,8 @@
 from collections.abc import Mapping
 import dataclasses
 import json
-from typing import Any, cast
+from types import TracebackType
+from typing import Any, cast, Type
 
 import aiohttp
 import dateutil.parser
@@ -67,7 +68,7 @@ class Client:
         """The access key if authenticated; None otherwise."""
         return self._access_key
 
-    async def _request(self, method: str, path: str, body: Any | None = None, **kwargs) -> aiohttp.ClientResponse:
+    async def _request(self, method: str, path: str, body: Any | None = None, **kwargs: Any) -> aiohttp.ClientResponse:
         data = json.dumps(body) if body is not None else None
         headers = {"Content-Type": "application/json"}
         if self._access_key is not None:
@@ -101,7 +102,7 @@ class Client:
 
         return response
 
-    async def request(self, method: str, path: str, body: Any | None = None, **kwargs) -> aiohttp.ClientResponse:
+    async def request(self, method: str, path: str, body: Any | None = None, **kwargs: Any) -> aiohttp.ClientResponse:
         """
         Perform an HTTP request against the Flix server.
 
@@ -118,7 +119,7 @@ class Client:
         """
         return await self._request(method, path, body, **kwargs)
 
-    async def request_json(self, method: str, path: str, body: Any | None = None, **kwargs) -> dict[str, Any]:
+    async def request_json(self, method: str, path: str, body: Any | None = None, **kwargs: Any) -> dict[str, Any]:
         """
         Perform an HTTP request against the Flix server and parse the result as JSON.
 
@@ -131,9 +132,9 @@ class Client:
         :return: The response parsed as JSON
         """
         response = await self.request(method, path, body, **kwargs)
-        return await response.json()
+        return cast(dict[str, Any], await response.json())
 
-    async def get(self, path: str, body: Any | None = None, **kwargs) -> dict[str, Any]:
+    async def get(self, path: str, body: Any | None = None, **kwargs: Any) -> dict[str, Any]:
         """
         Perform a GET request against the Flix server.
 
@@ -146,7 +147,7 @@ class Client:
         """
         return await self.request_json("GET", path, body, **kwargs)
 
-    async def post(self, path: str, body: Any | None = None, **kwargs) -> dict[str, Any]:
+    async def post(self, path: str, body: Any | None = None, **kwargs: Any) -> dict[str, Any]:
         """
         Perform a POST request against the Flix server.
 
@@ -159,7 +160,7 @@ class Client:
         """
         return await self.request_json("POST", path, body, **kwargs)
 
-    async def patch(self, path: str, body: Any | None = None, **kwargs) -> dict[str, Any]:
+    async def patch(self, path: str, body: Any | None = None, **kwargs: Any) -> dict[str, Any]:
         """
         Perform a PATCH request against the Flix server.
 
@@ -172,7 +173,7 @@ class Client:
         """
         return await self.request_json("PATCH", path, body, **kwargs)
 
-    async def put(self, path: str, body: Any | None = None, **kwargs) -> dict[str, Any]:
+    async def put(self, path: str, body: Any | None = None, **kwargs: Any) -> dict[str, Any]:
         """
         Perform a PUT request against the Flix server.
 
@@ -185,7 +186,7 @@ class Client:
         """
         return await self.request_json("PUT", path, body, **kwargs)
 
-    async def delete(self, path: str, body: Any | None = None, **kwargs) -> aiohttp.ClientResponse:
+    async def delete(self, path: str, body: Any | None = None, **kwargs: Any) -> aiohttp.ClientResponse:
         """
         Perform a DELETE request against the Flix server.
 
@@ -198,7 +199,7 @@ class Client:
         """
         return await self.request("DELETE", path, body, **kwargs)
 
-    async def text(self, path: str, *, method: str = "GET", **kwargs) -> str:
+    async def text(self, path: str, *, method: str = "GET", **kwargs: Any) -> str:
         """
         Perform a request against the Flix server and parse the result as text.
 
@@ -212,7 +213,7 @@ class Client:
         response = await self.request(method, path, **kwargs)
         return await response.text()
 
-    async def form(self, path) -> forms.Form:
+    async def form(self, path: str) -> forms.Form:
         """
         Fetch the appropriate creation form for the given path.
 
@@ -222,9 +223,9 @@ class Client:
         :return: A object representing the creation form for the path
         """
         resp = await self.get(f"{path}/form")
-        return forms.Form(cast(dict[str, Any], resp))
+        return forms.Form(cast(forms.FormSectionModel, resp))
 
-    async def authenticate(self, user, password) -> AccessKey:
+    async def authenticate(self, user: str, password: str) -> AccessKey:
         """
         Authenticate as a Flix user.
 
@@ -241,12 +242,14 @@ class Client:
         self._access_key = AccessKey(await response.json())
         return self._access_key
 
-    async def close(self):
+    async def close(self) -> None:
         """Closes the underlying HTTP session. Does not need to be called when using the client as a context manager."""
         await self._session.close()
 
     async def __aenter__(self) -> "Client":
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(
+        self, exc_type: Type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
+    ) -> None:
         await self.close()

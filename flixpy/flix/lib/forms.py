@@ -3,7 +3,7 @@ import dataclasses
 import math
 import re
 import urllib.parse
-from typing import Any, Generic, TypeVar
+from typing import Any, Generic, TypeVar, TypedDict, Callable, Type, cast, Mapping
 
 import asyncclick as click
 
@@ -22,110 +22,38 @@ __all__ = [
 ]
 
 
-class Form:
-    """This class can be used to validate data against a Flix creation form,
-    or to prompt a user for input to construct or modify an object adhering to a creation form."""
+class FormOptionModel(TypedDict):
+    display_value: str
+    value: Any
 
-    _TYPES = {
-        "string": lambda _: StringField,
-        "int": lambda _: IntField,
-        "float": lambda _: FloatField,
-        "bool": lambda _: BoolField,
-        "multichoice": lambda field: (MultichoiceField if field.get("multi_select_allowed") else EnumField),
-    }
 
-    def __init__(self, spec: dict[str, Any]):
-        """
-        Constructs a new Form.
-
-        :param spec: A creation form as returned by a /form Flix endpoint
-        """
-        self.fields: collections.OrderedDict[str, Field] = collections.OrderedDict()
-        self._read_fields(spec["elements"])
-
-    def _read_fields(self, section):
-        for field in section:
-            if "elements" in field:
-                self._read_fields(field["elements"])
-            else:
-                field_type = Form._TYPES[field["type"]](field)
-                self.fields[field["id"]] = field_type(field)
-
-    def verify(self, parameters: dict[str, Any], ignore_required=False):
-        """
-        Validates the given object against the creation form.
-
-        :param parameters: The object to validate
-        :param ignore_required: If true, no error will be raised for missing required parameters
-        :raises ValueError: If the object does not adhere to the creation form
-        """
-        for field in self.fields.values():
-            field.verify(parameters, ignore_required=ignore_required)
-
-    def prompt(self, parameters: dict[str, Any] = None) -> dict[str, Any]:
-        """
-        Prompt the user for input required to construct an object adhering to this creation form.
-
-        :param parameters: An optional partial object; only parameters not already set will be queried
-        :raises ValueError: If a partial object was passed, and the set fields are not valid
-        :return: A new instance of the object type described by this creation form
-        """
-        parameters = parameters or {}
-        self.verify(parameters, ignore_required=True)
-
-        for field in self.fields.values():
-            if field.id not in parameters:
-                parameters[field.id] = field.prompt()
-        return parameters
-
-    def prompt_edit(self, parameters: dict[str, Any]) -> dict[str, Any]:
-        """
-        Prompt the user for input to modify an existing object adhering to this creation form.
-
-        :param parameters: A fully-constructed instance of the object type described by this creation form
-        :return: The given object, modified according to user input
-        """
-        while True:
-            option = prompt_enum(
-                [
-                    Choice(
-                        field_id,
-                        f"{field.label}: {field.format(parameters.get(field_id))}",
-                    )
-                    for field_id, field in self.fields.items()
-                ],
-                prompt="Select field to edit, or press ENTER to save",
-                allow_empty=True,
-            )
-            if option is None:
-                break
-            else:
-                parameters[option] = self.fields[option].prompt()
-        return parameters
-
-    def print(self, parameters: dict[str, Any], *, err=False):
-        """
-        Pretty-print an instance of the object type defined by this form.
-
-        :param parameters: The object to print
-        :param err: Whether to print to standard error
-        """
-        for name, field in self.fields.items():
-            if name in parameters:
-                click.echo("{}: {}".format(field.label, field.format(parameters[name])), err=err)
+class FormSectionModel(TypedDict, total=False):
+    type: str
+    elements: list["FormSectionModel"]  # type: ignore # recursive types not supported yet
+    heading: str
+    label: str
+    id: str
+    default: Any
+    required: bool
+    minimum: int
+    maximum: int
+    format: str
+    format_value: str
+    options: list[FormOptionModel]
+    multi_select_allowed: bool
 
 
 class Field:
     """A generic form field."""
 
-    def __init__(self, spec):
+    def __init__(self, spec: FormSectionModel):
         self.label = spec["label"]
         self.id = spec["id"]
         self.type = spec["type"]
         self.required = spec.get("required", False)
         self.default = spec.get("default")
 
-    def verify(self, parameters, ignore_required=False):
+    def verify(self, parameters: dict[str, Any], ignore_required: bool = False) -> None:
         if self.id not in parameters:
             if self.required and self.default is None and not ignore_required:
                 raise ValueError("missing required field {}".format(self.id))
@@ -136,28 +64,28 @@ class Field:
         except ValueError as e:
             raise ValueError("{}: {}".format(self.id, str(e))) from e
 
-    def verify_value(self, value):
+    def verify_value(self, value: Any) -> None:
         raise NotImplementedError
 
-    def prompt(self):
+    def prompt(self) -> Any:
         raise NotImplementedError
 
-    def format(self, value):
+    def format(self, value: Any) -> str:
         return str(value)
 
 
 class StringField(Field):
     """A string field."""
 
-    def __init__(self, spec):
+    def __init__(self, spec: FormSectionModel):
         super().__init__(spec)
 
         self.minimum = spec.get("minimum", -math.inf)
         self.maximum = spec.get("maximum", math.inf)
         self.format_type = spec.get("format")
-        self.format_pattern = spec.get("format_value")
+        self.format_pattern = spec.get("format_value", ".*")
 
-    def verify_value(self, value):
+    def verify_value(self, value: Any) -> None:
         if not isinstance(value, str):
             raise ValueError("not a string: {}".format(value))
 
@@ -179,7 +107,7 @@ class StringField(Field):
             if "@" not in value:
                 raise ValueError("not an email address: {}".format(value))
 
-    def prompt(self):
+    def prompt(self) -> str:
         while True:
             value = click.prompt(
                 self.label,
@@ -190,7 +118,7 @@ class StringField(Field):
             )
             try:
                 self.verify_value(value)
-                return value
+                return cast(str, value)
             except ValueError as e:
                 click.echo(f"Error: {str(e)}", err=True)
 
@@ -198,7 +126,7 @@ class StringField(Field):
 class IntField(Field):
     """An integer field."""
 
-    def __init__(self, spec):
+    def __init__(self, spec: FormSectionModel):
         super().__init__(spec)
 
         self.minimum = spec.get("minimum", -math.inf)
@@ -206,7 +134,7 @@ class IntField(Field):
         if not self.required:
             self.default = self.default or 0
 
-    def verify_value(self, value):
+    def verify_value(self, value: Any) -> None:
         if not isinstance(value, int):
             raise ValueError("not an integer: {}".format(value))
 
@@ -215,18 +143,18 @@ class IntField(Field):
         elif value > self.maximum:
             raise ValueError("value above maximum allowed value ({}): {}".format(self.maximum, value))
 
-    def prompt(self):
+    def prompt(self) -> int:
         field_type = click.IntRange(
             max=self.maximum if self.maximum < math.inf else None,
             min=self.minimum if self.minimum > -math.inf else None,
         )
-        return click.prompt(self.label, default=self.default, type=field_type, err=True)
+        return cast(int, click.prompt(self.label, default=self.default, type=field_type, err=True))
 
 
 class FloatField(Field):
     """A floating point field."""
 
-    def __init__(self, spec):
+    def __init__(self, spec: FormSectionModel):
         super().__init__(spec)
 
         self.minimum = spec.get("minimum", -math.inf)
@@ -234,7 +162,7 @@ class FloatField(Field):
         if not self.required:
             self.default = self.default or 0.0
 
-    def verify_value(self, value):
+    def verify_value(self, value: Any) -> None:
         if not isinstance(value, float):
             raise ValueError("not a float: {}".format(value))
 
@@ -243,50 +171,50 @@ class FloatField(Field):
         elif value > self.maximum:
             raise ValueError("value above maximum allowed value ({}): {}".format(self.maximum, value))
 
-    def prompt(self):
+    def prompt(self) -> float:
         field_type = click.FloatRange(
             max=self.maximum if self.maximum < math.inf else None,
             min=self.minimum if self.minimum > -math.inf else None,
         )
-        return click.prompt(self.label, default=self.default, type=field_type, err=True)
+        return cast(float, click.prompt(self.label, default=self.default, type=field_type, err=True))
 
 
 class BoolField(Field):
     """A boolean field."""
 
-    def __init__(self, spec):
+    def __init__(self, spec: FormSectionModel):
         super().__init__(spec)
         # force boolean default
         self.default = self.default or False
 
-    def verify_value(self, value):
+    def verify_value(self, value: Any) -> None:
         if not isinstance(value, bool):
             raise ValueError("not a boolean: {}".format(value))
 
-    def prompt(self):
+    def prompt(self) -> bool:
         return click.confirm(self.label, default=self.default, err=True)
 
-    def format(self, value):
+    def format(self, value: Any) -> str:
         return "Y" if value else "N"
 
 
 class EnumField(Field):
     """An enum field, allowing you to pick a single option from a list."""
 
-    def __init__(self, spec):
+    def __init__(self, spec: FormSectionModel):
         super().__init__(spec)
 
-        self.options = spec.get("options", [])
+        self.options: list[FormOptionModel] = spec.get("options", [])
 
-    def verify_value(self, value):
+    def verify_value(self, value: Any) -> None:
         if not any(value == choice["value"] for choice in self.options):
             raise ValueError("not a valid option: {}".format(value))
 
-    def prompt(self):
+    def prompt(self) -> Any:
         choices = [Choice(choice["value"], choice["display_value"]) for choice in self.options]
         return prompt_enum(choices, label=self.label, default=self.default)
 
-    def format(self, value):
+    def format(self, value: Any) -> str:
         for choice in self.options:
             if choice["value"] == value:
                 return choice["display_value"]
@@ -296,12 +224,12 @@ class EnumField(Field):
 class MultichoiceField(Field):
     """A multi-choice field, allowing you to pick one or more options from a list."""
 
-    def __init__(self, spec):
+    def __init__(self, spec: FormSectionModel):
         super().__init__(spec)
 
-        self.options = spec.get("options", [])
+        self.options: list[FormOptionModel] = spec.get("options", [])
 
-    def verify_value(self, value):
+    def verify_value(self, value: Any) -> None:
         if not isinstance(value, list):
             raise ValueError("must be a list: {}".format(value))
 
@@ -309,7 +237,7 @@ class MultichoiceField(Field):
             if not any(val == choice["value"] for choice in self.options):
                 raise ValueError("not a valid option: {}".format(val))
 
-    def prompt(self):
+    def prompt(self) -> list[Any]:
         while True:
             value = self._prompt_multichoice()
             try:
@@ -318,7 +246,7 @@ class MultichoiceField(Field):
             except ValueError as e:
                 click.echo(f"Error: {str(e)}", err=True)
 
-    def _prompt_multichoice(self):
+    def _prompt_multichoice(self) -> list[Any]:
         click.echo(f"{self.label}:", err=True)
         for i, choice in enumerate(self.options, 1):
             click.echo("  {}) {}".format(i, choice["display_value"]), err=True)
@@ -342,7 +270,7 @@ class MultichoiceField(Field):
             except IndexError:
                 click.echo("Error: choices not in range", err=True)
 
-    def format(self, value):
+    def format(self, value: Any) -> str:
         return ", ".join(
             next(
                 (choice["display_value"] for choice in self.options if choice["value"] == val),
@@ -366,9 +294,8 @@ def prompt_enum(
     label: str | None = None,
     default: T | None = None,
     prompt: str = "Specify an option",
-    allow_empty: bool = False,
-    **kwargs,
-) -> T | None:
+    **kwargs: Any,
+) -> T:
     """
     Prompt the user to select a single item from a list.
 
@@ -376,31 +303,26 @@ def prompt_enum(
     :param label: A label to display at the top of the list
     :param default: The default value if no choice is given
     :param prompt: The text to show for the prompt line
-    :param allow_empty: Allow no input, in which case None is returned
     :param kwargs: Additional options to pass to click.prompt
-    :return: The value corresponding to the user's choice, or None if allow_empty is True and no input was given
+    :return: The value corresponding to the user's choice, or default if not None and no input was given
     """
     if label is not None:
         click.echo(f"{label}:", err=True)
     for i, choice in enumerate(options, 1):
         click.echo("  {}) {}".format(i, choice.display_value), err=True)
 
-    default_index = None
-    if default is not None:
-        default_index = next(
-            (i + 1 for i, choice in enumerate(options) if choice.value == default),
-            None,
-        )
-    elif allow_empty:
-        default_index = 0
-    selection = click.prompt(
+    default_index = None if default is None else 0
+    selection: int = click.prompt(
         prompt,
         default=default_index,
-        type=click.IntRange(1 if not allow_empty else 0, len(options)),
+        type=click.IntRange(1 if default is None else 0, len(options)),
         err=True,
         **kwargs,
     )
-    return options[selection - 1].value if selection > 0 else None
+    if default is None:
+        return options[selection - 1].value
+    else:
+        return options[selection - 1].value if selection > 0 else default
 
 
 def _set_to_range(choices: set[int]) -> str | None:
@@ -430,3 +352,102 @@ def _range_to_set(rng: str) -> set[int]:
         else:
             choices.add(int(x))
     return choices
+
+
+TDict = TypeVar("TDict", bound=Mapping[str, Any])
+
+
+class Form:
+    """This class can be used to validate data against a Flix creation form,
+    or to prompt a user for input to construct or modify an object adhering to a creation form."""
+
+    _TYPES: dict[str, Callable[[FormSectionModel], Type[Field]]] = {
+        "string": lambda _: StringField,
+        "int": lambda _: IntField,
+        "float": lambda _: FloatField,
+        "bool": lambda _: BoolField,
+        "multichoice": lambda field: (MultichoiceField if field.get("multi_select_allowed") else EnumField),
+    }
+
+    def __init__(self, spec: FormSectionModel):
+        """
+        Constructs a new Form.
+
+        :param spec: A creation form as returned by a /form Flix endpoint
+        """
+        self.fields: collections.OrderedDict[str, Field] = collections.OrderedDict()
+        self._read_fields(spec["elements"])
+
+    def _read_fields(self, section: list[FormSectionModel]) -> None:
+        for field in section:
+            if "elements" in field:
+                self._read_fields(field["elements"])
+            else:
+                field_type = Form._TYPES[field["type"]](field)
+                self.fields[field["id"]] = field_type(field)
+
+    def verify(self, parameters: dict[str, Any], ignore_required: bool = False) -> None:
+        """
+        Validates the given object against the creation form.
+
+        :param parameters: The object to validate
+        :param ignore_required: If true, no error will be raised for missing required parameters
+        :raises ValueError: If the object does not adhere to the creation form
+        """
+        for field in self.fields.values():
+            field.verify(parameters, ignore_required=ignore_required)
+
+    def prompt(self, parameters: dict[str, Any] | None = None) -> dict[str, Any]:
+        """
+        Prompt the user for input required to construct an object adhering to this creation form.
+
+        :param parameters: An optional partial object; only parameters not already set will be queried
+        :raises ValueError: If a partial object was passed, and the set fields are not valid
+        :return: A new instance of the object type described by this creation form
+        """
+        parameters = parameters or {}
+        self.verify(parameters, ignore_required=True)
+
+        for field in self.fields.values():
+            if field.id not in parameters:
+                parameters[field.id] = field.prompt()
+        return parameters
+
+    def prompt_edit(self, parameters: TDict) -> TDict:
+        """
+        Prompt the user for input to modify an existing object adhering to this creation form.
+
+        :param parameters: A fully-constructed instance of the object type described by this creation form
+        :return: The given object, modified according to user input
+        """
+        # a bit ugly, but needed to work around typing limitations
+        # the creation form specification guarantees type correctness
+        params = cast(dict[str, Any], parameters)
+        while True:
+            option: str = prompt_enum(
+                [
+                    Choice(
+                        field_id,
+                        f"{field.label}: {field.format(params.get(field_id))}",
+                    )
+                    for field_id, field in self.fields.items()
+                ],
+                default="",
+                prompt="Select field to edit, or press ENTER to save",
+            )
+            if option == "":
+                break
+            else:
+                params[option] = self.fields[option].prompt()
+        return cast(TDict, params)
+
+    def print(self, parameters: TDict, *, err: bool = False) -> None:
+        """
+        Pretty-print an instance of the object type defined by this form.
+
+        :param parameters: The object to print
+        :param err: Whether to print to standard error
+        """
+        for name, field in self.fields.items():
+            if name in parameters:
+                click.echo("{}: {}".format(field.label, field.format(parameters[name])), err=err)

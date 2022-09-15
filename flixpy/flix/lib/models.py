@@ -224,3 +224,21 @@ class SequenceRevisionCreatedEvent(Event):
 class PingEvent(Event):
     event_time: str
     user: User
+
+
+class WebhookEvent(TypedDict):
+    id: int
+    name: str
+
+
+class Webhook(TypedDict):
+    id: int
+    name: str
+    events: list[WebhookEvent]
+    protocol: str
+    url: str
+    user: User
+    skip_tls: bool
+    retry_count: int
+    email_on_failure: bool
+    disabled: bool

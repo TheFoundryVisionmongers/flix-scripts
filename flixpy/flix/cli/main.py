@@ -3,28 +3,28 @@ import json
 import pathlib
 import ssl
 import urllib.parse
-from typing import Any, cast
+from typing import Any, cast, TypedDict
 
 import aiohttp.web
 import appdirs
 import asyncclick as click
 
 from . import interactive_client
-from ..lib import client, errors, forms, webhooks
+from ..lib import client, errors, forms, webhooks, models
 
 _CONFIG_DIR = pathlib.Path(appdirs.user_config_dir("flix-cli", "foundry"))
 _CONFIG_FILE = _CONFIG_DIR / "config.json"
 
 
-def read_config():
+def read_config() -> dict[str, Any]:
     try:
         with _CONFIG_FILE.open("r") as f:
-            return json.load(f)
+            return cast(dict[str, Any], json.load(f))
     except FileNotFoundError:
         return {}
 
 
-def write_config(cfg):
+def write_config(cfg: dict[str, Any]) -> None:
     _CONFIG_DIR.mkdir(parents=True, exist_ok=True)
     with _CONFIG_FILE.open("w") as f:
         json.dump(cfg, f, indent=2)
@@ -54,7 +54,7 @@ async def get_client(ctx: click.Context, server: str | None = None) -> client.Cl
 @click.option("-u", "--username", type=str, help="The username to authenticate with.")
 @click.option("-p", "--password", type=str, help="The password to authenticate with.")
 @click.pass_context
-async def flix_cli(ctx: click.Context, server: str | None, username: str | None, password: str | None):
+async def flix_cli(ctx: click.Context, server: str | None, username: str | None, password: str | None) -> None:
     cfg = read_config()
     ctx.ensure_object(dict)
     ctx.obj["config"] = cfg
@@ -65,7 +65,7 @@ async def flix_cli(ctx: click.Context, server: str | None, username: str | None,
 
 @flix_cli.result_callback()
 @click.pass_context
-def save_config(ctx: click.Context, *args, **kwargs):
+def save_config(ctx: click.Context, *args: Any, **kwargs: Any) -> None:
     write_config(ctx.obj["config"])
     pass
 
@@ -82,7 +82,7 @@ def config(
     username: str | None,
     password: str | None,
     clear: bool,
-):
+) -> None:
     cfg = ctx.obj["config"]
     if server:
         cfg["server"] = server
@@ -110,7 +110,7 @@ def config(
     help="The HTTP method. By default GET for requests with no payload, and POST for requests with a payload.",
 )
 @click.pass_context
-async def curl(ctx: click.Context, url: str, data: Any | None, request: str | None):
+async def curl(ctx: click.Context, url: str, data: Any | None, request: str | None) -> None:
     if request is None:
         request = "GET" if data is None else "POST"
 
@@ -124,13 +124,13 @@ async def curl(ctx: click.Context, url: str, data: Any | None, request: str | No
 
 
 @flix_cli.group(help="Manage webhooks.")
-def webhook():
+def webhook() -> None:
     pass
 
 
 @webhook.command("add", help="Add a new webhook.")
 @click.pass_context
-async def webhook_add(ctx):
+async def webhook_add(ctx: click.Context) -> None:
     async with await get_client(ctx) as flix_client:
         webhook_form = await flix_client.form("/webhook")
         data = webhook_form.prompt()
@@ -146,7 +146,7 @@ async def webhook_add(ctx):
 
 @webhook.command("list", help="List all webhooks.")
 @click.pass_context
-async def webhook_list(ctx):
+async def webhook_list(ctx: click.Context) -> None:
     async with await get_client(ctx) as flix_client:
         webhooks = await flix_client.get("/webhooks")
         webhook_form = await flix_client.form("/webhook")
@@ -158,11 +158,14 @@ async def webhook_list(ctx):
                 click.echo()
 
 
+_WebhookResponse = TypedDict("_WebhookResponse", {"webhooks": list[models.Webhook]})
+
+
 @webhook.command("delete", help="Delete a webhook.")
 @click.pass_context
-async def webhook_delete(ctx):
+async def webhook_delete(ctx: click.Context) -> None:
     async with await get_client(ctx) as flix_client:
-        webhooks: dict[Any] = await flix_client.get("/webhooks")
+        webhooks: _WebhookResponse = cast(_WebhookResponse, await flix_client.get("/webhooks"))
         if len(webhooks["webhooks"]) == 0:
             raise click.ClickException("No webhooks added.")
         webhook_form = await flix_client.form("/webhook")
@@ -182,9 +185,9 @@ async def webhook_delete(ctx):
 
 @webhook.command("edit", help="Edit a webhook.")
 @click.pass_context
-async def webhook_edit(ctx):
+async def webhook_edit(ctx: click.Context) -> None:
     async with await get_client(ctx) as flix_client:
-        webhooks: dict[Any] = await flix_client.get("/webhooks")
+        webhooks: _WebhookResponse = cast(_WebhookResponse, await flix_client.get("/webhooks"))
         if len(webhooks["webhooks"]) == 0:
             raise click.ClickException("No webhooks added.")
         webhook_form = await flix_client.form("/webhook")
@@ -202,9 +205,9 @@ async def webhook_edit(ctx):
 
 @webhook.command("ping", help="Ping a webhook.")
 @click.pass_context
-async def webhook_ping(ctx: click.Context):
+async def webhook_ping(ctx: click.Context) -> None:
     async with await get_client(ctx) as flix_client:
-        webhooks = cast(dict[str, Any], await flix_client.get("/webhooks"))
+        webhooks = cast(_WebhookResponse, await flix_client.get("/webhooks"))
         if len(webhooks["webhooks"]) == 0:
             raise click.ClickException("No webhooks added.")
 
@@ -224,9 +227,11 @@ async def webhook_ping(ctx: click.Context):
 @click.option("--secret", type=str, required=True)
 @click.option("--certfile", type=str)
 @click.option("--keyfile", type=str)
-async def webhook_server(path: str, port: int, address: str, secret: str, certfile: str | None, keyfile: str | None):
+async def webhook_server(
+    path: str, port: int, address: str, secret: str, certfile: str | None, keyfile: str | None
+) -> None:
     @webhooks.webhook(secret=secret)
-    async def _handler(event: webhooks.WebhookEvent):
+    async def _handler(event: webhooks.WebhookEvent) -> None:
         click.echo(event.event_payload)
 
     ssl_context = None
@@ -247,7 +252,7 @@ async def webhook_server(path: str, port: int, address: str, secret: str, certfi
         await asyncio.sleep(3600)
 
 
-def main() -> int | None:
+def main() -> Any:
     try:
         return flix_cli(auto_envvar_prefix="FLIX", _anyio_backend="asyncio")
     except errors.FlixError as e:

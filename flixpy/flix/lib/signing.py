@@ -54,7 +54,7 @@ def sign_request(
     }
 
 
-def signature(msg: bytes, secret: str, as_hex=False) -> str:
+def signature(msg: bytes, secret: str, as_hex: bool = False) -> str:
     """
     Generate a signature for a message using HMAC with SHA256.
 
