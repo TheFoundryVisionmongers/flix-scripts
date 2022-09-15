@@ -1,13 +1,16 @@
+import asyncio
 import json
 import pathlib
+import ssl
 import urllib.parse
 from typing import Any, cast
 
+import aiohttp.web
 import appdirs
 import asyncclick as click
 
 from . import interactive_client
-from ..lib import client, errors, forms
+from ..lib import client, errors, forms, webhooks
 
 _CONFIG_DIR = pathlib.Path(appdirs.user_config_dir("flix-cli", "foundry"))
 _CONFIG_FILE = _CONFIG_DIR / "config.json"
@@ -51,9 +54,7 @@ async def get_client(ctx: click.Context, server: str | None = None) -> client.Cl
 @click.option("-u", "--username", type=str, help="The username to authenticate with.")
 @click.option("-p", "--password", type=str, help="The password to authenticate with.")
 @click.pass_context
-async def flix_cli(
-    ctx: click.Context, server: str | None, username: str | None, password: str | None
-):
+async def flix_cli(ctx: click.Context, server: str | None, username: str | None, password: str | None):
     cfg = read_config()
     ctx.ensure_object(dict)
     ctx.obj["config"] = cfg
@@ -138,9 +139,7 @@ async def webhook_add(ctx):
         if click.confirm("Save webhook?", True):
             wh = await flix_client.post("/webhook", data)
             click.echo(f"New webhook secret: {wh['secret']}")
-            click.echo(
-                "Ensure that you have noted down the secret, as you will not be able to view it again."
-            )
+            click.echo("Ensure that you have noted down the secret, as you will not be able to view it again.")
 
 
 @webhook.command("list", help="List all webhooks.")
@@ -175,12 +174,8 @@ async def webhook_delete(ctx):
         webhook_form.print(wh)
 
         if click.confirm("Delete this webhook?", False):
-            await flix_client.delete(
-                "/webhook/{}".format(webhooks["webhooks"][j]["id"])
-            )
-            click.echo(
-                "Deleted successfully. It may take a few seconds for your changes to be reflected."
-            )
+            await flix_client.delete("/webhook/{}".format(webhooks["webhooks"][j]["id"]))
+            click.echo("Deleted successfully. It may take a few seconds for your changes to be reflected.")
 
 
 @webhook.command("edit", help="Edit a webhook.")
@@ -200,12 +195,57 @@ async def webhook_edit(ctx):
         wh = webhooks["webhooks"][j]
         wh = webhook_form.prompt_edit(wh)
         await flix_client.put(f"/webhook/{wh['id']}", wh)
-        click.echo(
-            "Saved successfully. It may take a few seconds for your changes to be reflected."
+        click.echo("Saved successfully. It may take a few seconds for your changes to be reflected.")
+
+
+@webhook.command("ping", help="Ping a webhook.")
+@click.pass_context
+async def webhook_ping(ctx: click.Context):
+    async with await get_client(ctx) as flix_client:
+        webhooks = cast(dict[str, Any], await flix_client.get("/webhooks"))
+        if len(webhooks["webhooks"]) == 0:
+            raise click.ClickException("No webhooks added.")
+
+        j = forms.prompt_enum(
+            [forms.Choice(i, wh["name"]) for i, wh in enumerate(webhooks["webhooks"])],
+            prompt="Which webhook do you want to ping?",
+            prompt_suffix=" ",
         )
+        wh = webhooks["webhooks"][j]
+        print(await flix_client.post(f"/webhook/{wh['id']}", wh))
 
 
-def main():
+@webhook.command("run_server", help="")
+@click.argument("path", type=str)
+@click.option("-p", "--port", type=int, default=8080)
+@click.option("--address", type=str, default="0.0.0.0")
+@click.option("--secret", type=str, required=True)
+@click.option("--certfile", type=str)
+@click.option("--keyfile", type=str)
+async def webhook_server(path: str, port: int, address: str, secret: str, certfile: str | None, keyfile: str | None):
+    @webhooks.webhook(secret=secret)
+    async def _handler(event: webhooks.WebhookEvent):
+        click.echo(event.event_payload)
+
+    ssl_context = None
+    if certfile is not None:
+        ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        ssl_context.load_cert_chain(certfile, keyfile)
+
+    app = aiohttp.web.Application()
+    app.add_routes([aiohttp.web.post(path, _handler)])
+    # run application on current loop
+    runner = aiohttp.web.AppRunner(app)
+    await runner.setup()
+    site = aiohttp.web.TCPSite(runner, address, port, ssl_context=ssl_context)
+    await site.start()
+
+    click.echo(f"Listening for events on {address}:{port} (press CTRL+C to abort)...", err=True)
+    while True:
+        await asyncio.sleep(3600)
+
+
+def main() -> int | None:
     try:
         return flix_cli(auto_envvar_prefix="FLIX", _anyio_backend="asyncio")
     except errors.FlixError as e:
