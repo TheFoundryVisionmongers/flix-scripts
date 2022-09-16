@@ -227,7 +227,6 @@ class PingEvent(Event):
 
 
 class WebhookEvent(TypedDict):
-    id: int
     name: str
 
 
