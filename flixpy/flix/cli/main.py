@@ -119,8 +119,8 @@ async def curl(ctx: click.Context, url: str, data: Any | None, request: str | No
     path = url_parse.path
 
     async with await get_client(ctx, server=server) as flix_client:
-        resp = await flix_client.request(request, path, body=data, parse_body=False)
-        print(cast(bytes, resp).decode())
+        resp = await flix_client.request(request, path, body=data)
+        print(await resp.text())
 
 
 @flix_cli.group(help="Manage webhooks.")
