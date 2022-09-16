@@ -1,7 +1,8 @@
-import asyncio
+from collections.abc import Mapping
 import dataclasses
 import json
-from typing import Any
+from types import TracebackType
+from typing import Any, cast, Type
 
 import aiohttp
 import dateutil.parser
@@ -16,17 +17,17 @@ __all__ = ["Client", "AccessKey"]
 class AccessKey:
     """Holds information about a user session."""
 
-    def __init__(self, access_key: dict[Any]):
+    def __init__(self, access_key: dict[str, Any]):
         """
         Constructs a new AccessKey object.
         :param access_key: The deserialised response from authenticating with a Flix server
         """
-        self.id = access_key["id"]
-        self.secret_access_key = access_key["secret_access_key"]
+        self.id: str = access_key["id"]
+        self.secret_access_key: str = access_key["secret_access_key"]
         self.created_date = dateutil.parser.parse(access_key["created_date"])
         self.expiry_date = dateutil.parser.parse(access_key["expiry_date"])
 
-    def to_json(self) -> dict[Any]:
+    def to_json(self) -> dict[str, Any]:
         """Returns a JSON-serialisable representation of this access key.
         The output of this can be passed to the constructor to construct an AccessKey object from JSON."""
         return {
@@ -46,6 +47,7 @@ class Client:
         hostname: str,
         port: int,
         ssl: bool = False,
+        *,
         access_key: AccessKey | None = None,
     ):
         """
@@ -66,9 +68,7 @@ class Client:
         """The access key if authenticated; None otherwise."""
         return self._access_key
 
-    async def _request(
-        self, method: str, path: str, body: Any | None = None, parse_body=True, **kwargs
-    ) -> dict[Any] | bytes | str:
+    async def _request(self, method: str, path: str, body: Any | None = None, **kwargs: Any) -> aiohttp.ClientResponse:
         data = json.dumps(body) if body is not None else None
         headers = {"Content-Type": "application/json"}
         if self._access_key is not None:
@@ -83,15 +83,15 @@ class Client:
                 )
             )
 
-        url = "{}://{}:{}{}".format(
-            "https" if self._ssl else "http", self._hostname, self._port, path
-        )
-        response = await self._session.request(
-            method, url, data=data, headers=headers, **kwargs
-        )
+        url = "{}://{}:{}{}".format("https" if self._ssl else "http", self._hostname, self._port, path)
+        response = await self._session.request(method, url, data=data, headers=headers, **kwargs)
         if response.status >= 400:
             if response.content_type == "application/json":
-                error_message = (await response.json())["message"]
+                error = await response.json()
+                if isinstance(error, Mapping) and "message" in error:
+                    error_message = error["message"]
+                else:
+                    error_message = str(error)
             else:
                 error_message = await response.text()
             if response.status == 401:
@@ -100,18 +100,9 @@ class Client:
             else:
                 raise errors.FlixError(response.status, error_message)
 
-        if not parse_body:
-            return await response.read()
-        elif response.content_type == "application/json":
-            return await response.json()
-        elif response.content_type == "text/plain":
-            return await response.text()
-        else:
-            return await response.read()
+        return response
 
-    async def request(
-        self, method: str, path: str, body: Any | None = None, **kwargs
-    ) -> dict[Any] | bytes | str:
+    async def request(self, method: str, path: str, body: Any | None = None, **kwargs: Any) -> aiohttp.ClientResponse:
         """
         Perform an HTTP request against the Flix server.
 
@@ -124,13 +115,26 @@ class Client:
         :param kwargs: Additional arguments passed to aiohttp.ClientSession.request
         :raises errors.FlixNotVerifiedError: If the client failed to authenticate
         :raises errors.FlixError: If the server returned an error
-        :return: The response payload, decoded based on its content type
+        :return: The HTTP response
         """
         return await self._request(method, path, body, **kwargs)
 
-    async def get(
-        self, path: str, body: Any | None = None, **kwargs
-    ) -> dict[Any] | bytes | str:
+    async def request_json(self, method: str, path: str, body: Any | None = None, **kwargs: Any) -> dict[str, Any]:
+        """
+        Perform an HTTP request against the Flix server and parse the result as JSON.
+
+        :param method: The HTTP method
+        :param path: The path to request; should not include the server hostname
+        :param body: A JSON-serialisable object to be used as the payload
+        :param kwargs: Additional arguments passed to aiohttp.ClientSession.request
+        :raises errors.FlixNotVerifiedError: If the client failed to authenticate
+        :raises errors.FlixError: If the server returned an error
+        :return: The response parsed as JSON
+        """
+        response = await self.request(method, path, body, **kwargs)
+        return cast(dict[str, Any], await response.json())
+
+    async def get(self, path: str, body: Any | None = None, **kwargs: Any) -> dict[str, Any]:
         """
         Perform a GET request against the Flix server.
 
@@ -139,13 +143,11 @@ class Client:
         :param kwargs: Additional arguments passed to aiohttp.ClientSession.request
         :raises errors.FlixNotVerifiedError: If the client failed to authenticate
         :raises errors.FlixError: If the server returned an error
-        :return: The response payload, decoded based on its content type
+        :return: The response parsed as JSON
         """
-        return await self.request("GET", path, body, **kwargs)
+        return await self.request_json("GET", path, body, **kwargs)
 
-    async def post(
-        self, path: str, body: Any | None = None, **kwargs
-    ) -> dict[Any] | bytes | str:
+    async def post(self, path: str, body: Any | None = None, **kwargs: Any) -> dict[str, Any]:
         """
         Perform a POST request against the Flix server.
 
@@ -154,13 +156,11 @@ class Client:
         :param kwargs: Additional arguments passed to aiohttp.ClientSession.request
         :raises errors.FlixNotVerifiedError: If the client failed to authenticate
         :raises errors.FlixError: If the server returned an error
-        :return: The response payload, decoded based on its content type
+        :return: The response parsed as JSON
         """
-        return await self.request("POST", path, body, **kwargs)
+        return await self.request_json("POST", path, body, **kwargs)
 
-    async def patch(
-        self, path: str, body: Any | None = None, **kwargs
-    ) -> dict[Any] | bytes | str:
+    async def patch(self, path: str, body: Any | None = None, **kwargs: Any) -> dict[str, Any]:
         """
         Perform a PATCH request against the Flix server.
 
@@ -169,13 +169,11 @@ class Client:
         :param kwargs: Additional arguments passed to aiohttp.ClientSession.request
         :raises errors.FlixNotVerifiedError: If the client failed to authenticate
         :raises errors.FlixError: If the server returned an error
-        :return: The response payload, decoded based on its content type
+        :return: The response parsed as JSON
         """
-        return await self.request("PATCH", path, body, **kwargs)
+        return await self.request_json("PATCH", path, body, **kwargs)
 
-    async def put(
-        self, path: str, body: Any | None = None, **kwargs
-    ) -> dict[Any] | bytes | str:
+    async def put(self, path: str, body: Any | None = None, **kwargs: Any) -> dict[str, Any]:
         """
         Perform a PUT request against the Flix server.
 
@@ -184,13 +182,11 @@ class Client:
         :param kwargs: Additional arguments passed to aiohttp.ClientSession.request
         :raises errors.FlixNotVerifiedError: If the client failed to authenticate
         :raises errors.FlixError: If the server returned an error
-        :return: The response payload, decoded based on its content type
+        :return: The response parsed as JSON
         """
-        return await self.request("PUT", path, body, **kwargs)
+        return await self.request_json("PUT", path, body, **kwargs)
 
-    async def delete(
-        self, path: str, body: Any | None = None, **kwargs
-    ) -> dict[Any] | bytes | str:
+    async def delete(self, path: str, body: Any | None = None, **kwargs: Any) -> aiohttp.ClientResponse:
         """
         Perform a DELETE request against the Flix server.
 
@@ -199,11 +195,25 @@ class Client:
         :param kwargs: Additional arguments passed to aiohttp.ClientSession.request
         :raises errors.FlixNotVerifiedError: If the client failed to authenticate
         :raises errors.FlixError: If the server returned an error
-        :return: The response payload, decoded based on its content type
+        :return: The HTTP response
         """
         return await self.request("DELETE", path, body, **kwargs)
 
-    async def form(self, path) -> forms.Form:
+    async def text(self, path: str, *, method: str = "GET", **kwargs: Any) -> str:
+        """
+        Perform a request against the Flix server and parse the result as text.
+
+        :param path: The path to request; should not include the server hostname
+        :param method: The HTTP method
+        :param kwargs: Additional arguments passed to aiohttp.ClientSession.request
+        :raises errors.FlixNotVerifiedError: If the client failed to authenticate
+        :raises errors.FlixError: If the server returned an error
+        :return: The response payload as text
+        """
+        response = await self.request(method, path, **kwargs)
+        return await response.text()
+
+    async def form(self, path: str) -> forms.Form:
         """
         Fetch the appropriate creation form for the given path.
 
@@ -212,9 +222,10 @@ class Client:
         :raises errors.FlixError: If the server returned an error
         :return: A object representing the creation form for the path
         """
-        return forms.Form(await self.get(f"{path}/form"))
+        resp = await self.get(f"{path}/form")
+        return forms.Form(cast(forms.FormSectionModel, resp))
 
-    async def authenticate(self, user, password):
+    async def authenticate(self, user: str, password: str) -> AccessKey:
         """
         Authenticate as a Flix user.
 
@@ -227,17 +238,18 @@ class Client:
         """
         self._access_key = None
         # call _request directly to avoid recursion during interactive sessions
-        response = await self._request(
-            "POST", "/authenticate", auth=aiohttp.BasicAuth(user, password)
-        )
-        self._access_key = AccessKey(response)
+        response = await self._request("POST", "/authenticate", auth=aiohttp.BasicAuth(user, password))
+        self._access_key = AccessKey(await response.json())
+        return self._access_key
 
-    async def close(self):
+    async def close(self) -> None:
         """Closes the underlying HTTP session. Does not need to be called when using the client as a context manager."""
         await self._session.close()
 
     async def __aenter__(self) -> "Client":
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(
+        self, exc_type: Type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
+    ) -> None:
         await self.close()

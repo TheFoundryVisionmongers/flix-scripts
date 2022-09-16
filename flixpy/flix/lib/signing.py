@@ -40,7 +40,7 @@ def sign_request(
     if body:
         parts += [
             hashlib.md5(body.encode("utf-8")).hexdigest(),
-            content_type,
+            content_type or "",
         ]
     else:
         parts += ["", ""]
@@ -54,12 +54,17 @@ def sign_request(
     }
 
 
-def signature(msg: bytes, secret: str) -> str:
+def signature(msg: bytes, secret: str, as_hex: bool = False) -> str:
     """
     Generate a signature for a message using HMAC with SHA256.
 
     :param msg: The message to sign
     :param secret: The secret to sign the message using
-    :return: The signature, encoded with Base64
+    :param as_hex: Whether to return the signature hex-encoded instead of Base64-encoded
+    :return: The signature, encoded with Base64 by default
     """
-    return base64.b64encode(hmac.digest(secret.encode(), msg, "sha256")).decode()
+    sig = hmac.digest(secret.encode(), msg, "sha256")
+    if as_hex:
+        return sig.hex()
+    else:
+        return base64.b64encode(sig).decode()
