@@ -220,16 +220,26 @@ async def webhook_ping(ctx: click.Context) -> None:
         print(await flix_client.post(f"/webhook/{wh['id']}", wh))
 
 
-@webhook.command("run_server", help="")
+@webhook.command("server")
 @click.argument("path", type=str)
-@click.option("-p", "--port", type=int, default=8080)
-@click.option("--address", type=str, default="0.0.0.0")
-@click.option("--secret", type=str, required=True)
-@click.option("--certfile", type=str)
-@click.option("--keyfile", type=str)
+@click.option("-p", "--port", type=int, default=8080, help="The port on which to listen for events.", show_default=True)
+@click.option("--address", type=str, default="0.0.0.0", help="The address to listen on.", show_default=True)
+@click.option(
+    "--secret",
+    type=str,
+    required=True,
+    help="The secret given when registering the webhook, used to authenticate events.",
+)
+@click.option("--certfile", type=str, help="Path to a signed certificate. Providing this will enable HTTPS.")
+@click.option("--keyfile", type=str, help="Path to the private key used to sign the certificate.")
 async def webhook_server(
     path: str, port: int, address: str, secret: str, certfile: str | None, keyfile: str | None
 ) -> None:
+    """Run a test server that prints events to standard out.
+
+    PATH should be the path of the endpoint that events will be posted to, not including the hostname, e.g. /events.
+    """
+
     @webhooks.webhook(secret=secret)
     async def _handler(event: webhooks.WebhookEvent) -> None:
         click.echo(event.event_payload)
