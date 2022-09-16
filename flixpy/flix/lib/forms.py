@@ -311,11 +311,14 @@ def prompt_enum(
     for i, choice in enumerate(options, 1):
         click.echo("  {}) {}".format(i, choice.display_value), err=True)
 
-    default_index = None if default is None else 0
+    default_index = None
+    if default is not None:
+        default_index = next((i for i, choice in enumerate(options, 1) if choice.value == default), 0)
+
     selection: int = click.prompt(
         prompt,
         default=default_index,
-        type=click.IntRange(1 if default is None else 0, len(options)),
+        type=click.IntRange(0 if default_index == 0 else 1, len(options)),
         err=True,
         **kwargs,
     )
