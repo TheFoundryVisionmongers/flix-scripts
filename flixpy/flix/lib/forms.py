@@ -27,6 +27,18 @@ class FormOptionModel(TypedDict):
     value: Any
 
 
+RequirementModel = TypedDict(
+    "RequirementModel",
+    {
+        "required_id": str,
+        "required_value": Any,
+        "or": list["RequirementModel"],  # type: ignore # recursive type not supported yet
+        "and": list["RequirementModel"],  # type: ignore
+    },
+    total=False,
+)
+
+
 class FormSectionModel(TypedDict, total=False):
     type: str
     elements: list["FormSectionModel"]  # type: ignore # recursive types not supported yet
@@ -41,6 +53,23 @@ class FormSectionModel(TypedDict, total=False):
     format_value: str
     options: list[FormOptionModel]
     multi_select_allowed: bool
+    requirements: list[RequirementModel]
+
+
+class Requirement:
+    def __init__(self, spec: RequirementModel):
+        self.required_id = spec.get("required_id")
+        self.required_value = spec.get("required_value")
+        self.and_requirements = [Requirement(req) for req in spec.get("and") or []]
+        self.or_requirements = [Requirement(req) for req in spec.get("or") or []]
+
+    def holds(self, parameters: Mapping[str, Any]) -> bool:
+        if self.and_requirements:
+            return all(req.holds(parameters) for req in self.and_requirements)
+        elif self.or_requirements:
+            return any(req.holds(parameters) for req in self.or_requirements)
+        else:
+            return parameters.get(str(self.required_id)) == self.required_value
 
 
 class Field:
@@ -52,8 +81,12 @@ class Field:
         self.type = spec["type"]
         self.required = spec.get("required", False)
         self.default = spec.get("default")
+        self.requirements = [Requirement(req) for req in spec.get("requirements") or []]
 
     def verify(self, parameters: dict[str, Any], ignore_required: bool = False) -> None:
+        if not self.requirements_hold(parameters):
+            return
+
         if self.id not in parameters:
             if self.required and self.default is None and not ignore_required:
                 raise ValueError("missing required field {}".format(self.id))
@@ -72,6 +105,9 @@ class Field:
 
     def format(self, value: Any) -> str:
         return str(value)
+
+    def requirements_hold(self, parameters: Mapping[str, Any]) -> bool:
+        return all(req.holds(parameters) for req in self.requirements)
 
 
 class StringField(Field):
@@ -412,7 +448,7 @@ class Form:
         self.verify(parameters, ignore_required=True)
 
         for field in self.fields.values():
-            if field.id not in parameters:
+            if field.id not in parameters and field.requirements_hold(parameters):
                 parameters[field.id] = field.prompt()
         return parameters
 
@@ -427,6 +463,9 @@ class Form:
         # the creation form specification guarantees type correctness
         params = cast(dict[str, Any], parameters)
         while True:
+            # query for any unset fields, or fields that became enabled after a change to another field
+            params = self.prompt(params)
+
             option: str = prompt_enum(
                 [
                     Choice(
@@ -434,6 +473,7 @@ class Form:
                         f"{field.label}: {field.format(params.get(field_id))}",
                     )
                     for field_id, field in self.fields.items()
+                    if field.requirements_hold(params)
                 ],
                 default="",
                 prompt="Select field to edit, or press ENTER to save",
@@ -452,5 +492,5 @@ class Form:
         :param err: Whether to print to standard error
         """
         for name, field in self.fields.items():
-            if name in parameters:
+            if name in parameters and field.requirements_hold(parameters):
                 click.echo("{}: {}".format(field.label, field.format(parameters[name])), err=err)
