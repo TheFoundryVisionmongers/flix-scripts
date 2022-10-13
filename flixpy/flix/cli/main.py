@@ -262,6 +262,83 @@ async def webhook_server(
         await asyncio.sleep(3600)
 
 
+@flix_cli.group(help="Manage contact sheet templates.")
+def contactsheet() -> None:
+    pass
+
+
+@contactsheet.command("add", help="Add a new contact sheet template.")
+@click.pass_context
+async def contactsheet_add(ctx: click.Context) -> None:
+    async with await get_client(ctx) as flix_client:
+        contactsheet_form = await flix_client.form("/contactsheet")
+        data = contactsheet_form.prompt()
+        click.echo(err=True)
+        contactsheet_form.print(data, err=True)
+        if click.confirm("Save contact sheet template?", True, err=True):
+            await flix_client.post("/contactsheet", data)
+            click.echo(f"Contact sheet template saved successfully.", err=True)
+
+
+_ContactSheetResponse = TypedDict("_ContactSheetResponse", {"contact_sheets": list[models.ContactSheet]})
+
+
+@contactsheet.command("list", help="List all contact sheet templates.")
+@click.pass_context
+async def contactsheet_list(ctx: click.Context) -> None:
+    async with await get_client(ctx) as flix_client:
+        contactsheets = cast(_ContactSheetResponse, await flix_client.get("/contactsheets"))
+        contactsheet_form = await flix_client.form("/contactsheet")
+
+        for i, cs in enumerate(contactsheets["contact_sheets"]):
+            click.echo("ID: {}".format(cs["id"]))
+            contactsheet_form.print(cs)
+            if i < len(contactsheets["contact_sheets"]) - 1:
+                click.echo()
+
+
+@contactsheet.command("delete", help="Delete a contact sheet template.")
+@click.pass_context
+async def contactsheet_delete(ctx: click.Context) -> None:
+    async with await get_client(ctx) as flix_client:
+        contactsheets = cast(_ContactSheetResponse, await flix_client.get("/contactsheets"))
+        if len(contactsheets["contact_sheets"]) == 0:
+            raise click.ClickException("No contact sheet templates added.")
+        contactsheet_form = await flix_client.form("/contactsheet")
+
+        j = forms.prompt_enum(
+            [forms.Choice(i, cs["name"]) for i, cs in enumerate(contactsheets["contact_sheets"])],
+            prompt="Which contact sheet template do you want to delete?",
+            prompt_suffix=" ",
+        )
+        cs = contactsheets["contact_sheets"][j]
+        contactsheet_form.print(cs, err=True)
+
+        if click.confirm("Delete this contact sheet template?", False, err=True):
+            await flix_client.delete("/contactsheet/{}".format(contactsheets["contact_sheets"][j]["id"]))
+            click.echo("Deleted successfully. It may take a few seconds for your changes to be reflected.", err=True)
+
+
+@contactsheet.command("edit", help="Edit a contact sheet template.")
+@click.pass_context
+async def contactsheet_edit(ctx: click.Context) -> None:
+    async with await get_client(ctx) as flix_client:
+        contactsheets = cast(_ContactSheetResponse, await flix_client.get("/contactsheets"))
+        if len(contactsheets["contact_sheets"]) == 0:
+            raise click.ClickException("No contact sheet templates added.")
+        contactsheet_form = await flix_client.form("/contactsheet")
+
+        j = forms.prompt_enum(
+            [forms.Choice(i, cs["name"]) for i, cs in enumerate(contactsheets["contact_sheets"])],
+            prompt="Which contact sheet template do you want to edit?",
+            prompt_suffix=" ",
+        )
+        cs = contactsheets["contact_sheets"][j]
+        cs = contactsheet_form.prompt_edit(cs)
+        await flix_client.patch(f"/contactsheet/{cs['id']}", cs)
+        click.echo("Saved successfully. It may take a few seconds for your changes to be reflected.", err=True)
+
+
 def main() -> Any:
     try:
         return flix_cli(auto_envvar_prefix="FLIX", _anyio_backend="asyncio")
