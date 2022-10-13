@@ -274,37 +274,8 @@ class MultichoiceField(Field):
                 raise ValueError("not a valid option: {}".format(val))
 
     def prompt(self) -> list[Any]:
-        while True:
-            value = self._prompt_multichoice()
-            try:
-                self.verify_value(value)
-                return value
-            except ValueError as e:
-                click.echo(f"Error: {str(e)}", err=True)
-
-    def _prompt_multichoice(self) -> list[Any]:
-        click.echo(f"{self.label}:", err=True)
-        for i, choice in enumerate(self.options, 1):
-            click.echo("  {}) {}".format(i, choice["display_value"]), err=True)
-
-        default = (
-            _set_to_range({i + 1 for i, choice in enumerate(self.options) if choice["value"] == self.default})
-            if self.default is not None
-            else None
-        )
-
-        while True:
-            selection = click.prompt("Specify one or more comma-separated options", default=default, type=str, err=True)
-            try:
-                choices = _range_to_set(selection)
-            except ValueError:
-                click.echo("Error: not a valid range set", err=True)
-                continue
-
-            try:
-                return [self.options[i - 1]["value"] for i in choices]
-            except IndexError:
-                click.echo("Error: choices not in range", err=True)
+        choices = [Choice(choice["value"], choice["display_value"]) for choice in self.options]
+        return prompt_multichoice(choices, label=self.label, default=self.default)
 
     def format(self, value: Any) -> str:
         return ", ".join(
@@ -362,6 +333,37 @@ def prompt_enum(
         return options[selection - 1].value
     else:
         return options[selection - 1].value if selection > 0 else default
+
+
+def prompt_multichoice(
+    options: list[Choice[T]],
+    label: str | None = None,
+    default: T | None = None,
+    prompt: str = "Specify one or more comma-separated options",
+) -> list[T]:
+    if label is not None:
+        click.echo(f"{label}:", err=True)
+    for i, choice in enumerate(options, 1):
+        click.echo("  {}) {}".format(i, choice.display_value), err=True)
+
+    default_range = (
+        _set_to_range({i + 1 for i, choice in enumerate(options) if choice.value == default})
+        if default is not None
+        else None
+    )
+
+    while True:
+        selection = click.prompt(prompt, default=default_range, type=str, err=True)
+        try:
+            choices = _range_to_set(selection)
+        except ValueError:
+            click.echo("Error: not a valid range set", err=True)
+            continue
+
+        try:
+            return [options[i - 1].value for i in choices]
+        except IndexError:
+            click.echo("Error: choices not in range", err=True)
 
 
 def _set_to_range(choices: set[int]) -> str | None:

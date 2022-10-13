@@ -293,6 +293,10 @@ async def contactsheet_list(ctx: click.Context) -> None:
         for i, cs in enumerate(contactsheets["contact_sheets"]):
             click.echo("ID: {}".format(cs["id"]))
             contactsheet_form.print(cs)
+            show_list = ", ".join(
+                "{} [{}]".format(show["title"], show["tracking_code"]) for show in cs.get("shows") or []
+            )
+            click.echo("Assigned shows: {}".format(show_list or "None"))
             if i < len(contactsheets["contact_sheets"]) - 1:
                 click.echo()
 
@@ -334,9 +338,82 @@ async def contactsheet_edit(ctx: click.Context) -> None:
             prompt_suffix=" ",
         )
         cs = contactsheets["contact_sheets"][j]
+        try:
+            # don't update shows
+            del cs["shows"]
+        except KeyError:
+            pass
+
         cs = contactsheet_form.prompt_edit(cs)
         await flix_client.patch(f"/contactsheet/{cs['id']}", cs)
         click.echo("Saved successfully. It may take a few seconds for your changes to be reflected.", err=True)
+
+
+_ShowResponse = TypedDict("_ShowResponse", {"shows": list[models.Show]})
+
+
+@contactsheet.command("assign", help="Assign a contact sheet template to shows.")
+@click.pass_context
+async def contactsheet_assign(ctx: click.Context) -> None:
+    async with await get_client(ctx) as flix_client:
+        contactsheets = cast(_ContactSheetResponse, await flix_client.get("/contactsheets"))
+        if len(contactsheets["contact_sheets"]) == 0:
+            raise click.ClickException("No contact sheet templates added.")
+
+        j = forms.prompt_enum(
+            [forms.Choice(i, cs["name"]) for i, cs in enumerate(contactsheets["contact_sheets"])],
+            prompt="Which contact sheet template do you want assign?",
+            prompt_suffix=" ",
+        )
+        cs = contactsheets["contact_sheets"][j]
+        assigned_shows: list[models.Show] = cs.get("shows") or []
+
+        all_shows = cast(_ShowResponse, await flix_client.get("/shows"))["shows"]
+
+        while True:
+            show_list = ", ".join(
+                "{} [{}]".format(show["title"], show["tracking_code"]) for show in assigned_shows or []
+            )
+            click.echo("Currently assigned shows: {}".format(show_list or "None"), err=True)
+
+            action = forms.prompt_enum(
+                [
+                    forms.Choice("assign", "Assign shows"),
+                    forms.Choice("unassign", "Unassign shows"),
+                    forms.Choice("save", "Save"),
+                ],
+                prompt="What would you like to do?",
+                prompt_suffix=" ",
+            )
+            assigned_show_ids = {show["id"] for show in assigned_shows or []}
+            if action == "assign":
+                shows = [show for show in all_shows if show["id"] not in assigned_show_ids]
+            elif action == "unassign":
+                shows = assigned_shows
+            else:
+                break
+
+            if len(shows) == 0:
+                click.echo("Error: No shows to {}".format(action), err=True)
+                continue
+
+            selected_shows = forms.prompt_multichoice(
+                [
+                    forms.Choice(i, "{} [{}]".format(show["title"], show["tracking_code"]))
+                    for i, show in enumerate(shows)
+                ],
+                prompt="Specify a comma-separated list of shows to {}".format(action),
+            )
+
+            if action == "assign":
+                assigned_shows = assigned_shows + [shows[i] for i in selected_shows]
+            else:
+                assigned_shows = [show for i, show in enumerate(shows) if i not in selected_shows]
+
+        updated_contactsheet: models.ContactSheet = {
+            "shows": assigned_shows,
+        }
+        await flix_client.patch("/contactsheet/{}".format(cs["id"]), body=updated_contactsheet)
 
 
 def main() -> Any:
