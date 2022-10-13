@@ -183,6 +183,33 @@ class PanelRevision(TypedDict, total=False):
     related_panels: list["PanelRevision"]  # type: ignore # recursive types not supported yet
 
 
+class PageSize(TypedDict):
+    width: int
+    height: int
+
+
+class ContactSheet(TypedDict, total=False):
+    id: int
+    name: str
+    created_date: str
+    modified_date: str
+    owner: User
+    shows: list[Show]
+    orientation: int
+    page_size: PageSize
+    style: int
+    columns: int
+    rows: int
+    panel_options: list[str]
+    show_header: bool
+    show_comments: bool
+    show_watermark: bool
+    show_company: bool
+    show_cover: bool
+    cover_options: list[str]
+    cover_description: str
+
+
 class Event(TypedDict, total=False):
     event_type: str
 
