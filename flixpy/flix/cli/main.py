@@ -35,7 +35,7 @@ async def get_client(ctx: click.Context, server: str | None = None) -> client.Cl
     if server is None:
         raise click.UsageError("server not specified in config or as an option")
 
-    parsed = urllib.parse.urlparse(server)
+    parsed = urllib.parse.urlsplit(server)
     if not parsed.hostname:
         raise click.UsageError(f"missing hostname in server URL: {server}")
 
@@ -114,13 +114,16 @@ async def curl(ctx: click.Context, url: str, data: Any | None, request: str | No
     if request is None:
         request = "GET" if data is None else "POST"
 
-    url_parse = urllib.parse.urlparse(url)
+    url_parse = urllib.parse.urlsplit(url)
     server = url if url_parse.hostname else None
-    path = url_parse.path
+    path = urllib.parse.urlunsplit(("", "", url_parse.path, url_parse.query, url_parse.fragment))
 
     async with await get_client(ctx, server=server) as flix_client:
         resp = await flix_client.request(request, path, body=data)
-        print(await resp.text())
+        if resp.content_type in ("application/json", "text/plain"):
+            click.echo(await resp.text())
+        else:
+            click.echo(await resp.read())
 
 
 @flix_cli.group(help="Manage webhooks.")
