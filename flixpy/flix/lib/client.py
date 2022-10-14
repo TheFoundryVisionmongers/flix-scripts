@@ -1,3 +1,5 @@
+import urllib.parse
+
 from collections.abc import Mapping
 import dataclasses
 import json
@@ -71,19 +73,28 @@ class Client:
     async def _request(self, method: str, path: str, body: Any | None = None, **kwargs: Any) -> aiohttp.ClientResponse:
         data = json.dumps(body) if body is not None else None
         headers = {"Content-Type": "application/json"}
+        split = urllib.parse.urlsplit(path)
         if self._access_key is not None:
             headers.update(
                 signing.sign_request(
                     self._access_key.id,
                     self._access_key.secret_access_key,
                     method,
-                    path,
+                    split.path,
                     data,
                     "application/json",
                 )
             )
 
-        url = "{}://{}:{}{}".format("https" if self._ssl else "http", self._hostname, self._port, path)
+        url = urllib.parse.urlunsplit(
+            (
+                "https" if self._ssl else "http",
+                "{}:{}".format(self._hostname, self._port),
+                split.path,
+                split.query,
+                split.fragment,
+            )
+        )
         response = await self._session.request(method, url, data=data, headers=headers, **kwargs)
         if response.status >= 400:
             if response.content_type == "application/json":
