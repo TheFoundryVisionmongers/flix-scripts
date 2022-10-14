@@ -120,6 +120,8 @@ class StringField(Field):
         self.maximum = spec.get("maximum", math.inf)
         self.format_type = spec.get("format")
         self.format_pattern = spec.get("format_value", ".*")
+        if self.default is None and self.minimum == 0:
+            self.default = ""
 
     def verify_value(self, value: Any) -> None:
         if not isinstance(value, str):
