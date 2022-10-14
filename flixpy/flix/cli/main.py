@@ -275,7 +275,7 @@ def contactsheet() -> None:
 async def contactsheet_edit_loop(
     flix_client: client.Client, contactsheet_form: forms.Form, data: models.ContactSheet
 ) -> models.ContactSheet:
-    preview_image = "preview.png"
+    preview_file = "preview.pdf"
     while True:
         action = forms.prompt_enum(
             [forms.Choice("edit", "Edit"), forms.Choice("preview", "Preview"), forms.Choice("save", "Save")],
@@ -285,14 +285,16 @@ async def contactsheet_edit_loop(
         if action == "edit":
             data = contactsheet_form.prompt_edit(data)
         elif action == "preview":
-            preview_image = click.prompt(
-                "Where would you like to save the preview?", default=preview_image, show_default=True
+            preview_file = click.prompt(
+                "Where would you like to save the preview?", default=preview_file, show_default=True
             )
             data_str = json.dumps(data)
             b64 = base64.b64encode(data_str.encode()).decode()
-            img_response = await flix_client.request("GET", "/contactsheet/preview", params={"data": b64})
-            with open(preview_image, "wb") as f:
-                f.write(await img_response.read())
+            pdf_response = await flix_client.request(
+                "GET", "/contactsheet/preview", params={"data": b64, "format": "pdf"}
+            )
+            with open(preview_file, "wb") as f:
+                f.write(await pdf_response.read())
         elif action == "save":
             return data
 
