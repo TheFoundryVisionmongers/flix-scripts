@@ -1,3 +1,5 @@
+import base64
+
 import asyncio
 import json
 import pathlib
@@ -35,7 +37,7 @@ async def get_client(ctx: click.Context, server: str | None = None) -> client.Cl
     if server is None:
         raise click.UsageError("server not specified in config or as an option")
 
-    parsed = urllib.parse.urlparse(server)
+    parsed = urllib.parse.urlsplit(server)
     if not parsed.hostname:
         raise click.UsageError(f"missing hostname in server URL: {server}")
 
@@ -114,13 +116,16 @@ async def curl(ctx: click.Context, url: str, data: Any | None, request: str | No
     if request is None:
         request = "GET" if data is None else "POST"
 
-    url_parse = urllib.parse.urlparse(url)
+    url_parse = urllib.parse.urlsplit(url)
     server = url if url_parse.hostname else None
-    path = url_parse.path
+    path = urllib.parse.urlunsplit(("", "", url_parse.path, url_parse.query, url_parse.fragment))
 
     async with await get_client(ctx, server=server) as flix_client:
         resp = await flix_client.request(request, path, body=data)
-        print(await resp.text())
+        if resp.content_type in ("application/json", "text/plain"):
+            click.echo(await resp.text())
+        else:
+            click.echo(await resp.read())
 
 
 @flix_cli.group(help="Manage webhooks.")
@@ -267,6 +272,33 @@ def contactsheet() -> None:
     pass
 
 
+async def contactsheet_edit_loop(
+    flix_client: client.Client, contactsheet_form: forms.Form, data: models.ContactSheet
+) -> models.ContactSheet:
+    preview_file = "preview.pdf"
+    while True:
+        action = forms.prompt_enum(
+            [forms.Choice("edit", "Edit"), forms.Choice("preview", "Preview"), forms.Choice("save", "Save")],
+            prompt="What would you like to do?",
+            prompt_suffix=" ",
+        )
+        if action == "edit":
+            data = contactsheet_form.prompt_edit(data)
+        elif action == "preview":
+            preview_file = click.prompt(
+                "Where would you like to save the preview?", default=preview_file, show_default=True
+            )
+            data_str = json.dumps(data)
+            b64 = base64.b64encode(data_str.encode()).decode()
+            pdf_response = await flix_client.request(
+                "GET", "/contactsheet/preview", params={"data": b64, "format": "pdf"}
+            )
+            with open(preview_file, "wb") as f:
+                f.write(await pdf_response.read())
+        elif action == "save":
+            return data
+
+
 @contactsheet.command("add", help="Add a new contact sheet template.")
 @click.pass_context
 async def contactsheet_add(ctx: click.Context) -> None:
@@ -275,6 +307,9 @@ async def contactsheet_add(ctx: click.Context) -> None:
         data = contactsheet_form.prompt()
         click.echo(err=True)
         contactsheet_form.print(data, err=True)
+
+        data = await contactsheet_edit_loop(flix_client, contactsheet_form, data)
+
         if click.confirm("Save contact sheet template?", True, err=True):
             await flix_client.post("/contactsheet", data)
             click.echo(f"Contact sheet template saved successfully.", err=True)
@@ -345,6 +380,9 @@ async def contactsheet_edit(ctx: click.Context) -> None:
             pass
 
         cs = contactsheet_form.prompt_edit(cs)
+
+        cs = await contactsheet_edit_loop(flix_client, contactsheet_form, cs)
+
         await flix_client.patch(f"/contactsheet/{cs['id']}", cs)
         click.echo("Saved successfully. It may take a few seconds for your changes to be reflected.", err=True)
 
