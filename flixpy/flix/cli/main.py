@@ -97,6 +97,15 @@ def config(
     ctx.obj["config"] = cfg
 
 
+@flix_cli.command("logout", help="Remove any active access key, logging out the current user from Flix.")
+@click.pass_context
+def logout(ctx: click.Context) -> None:
+    try:
+        del ctx.obj["config"]["access_key"]
+    except KeyError:
+        pass
+
+
 @flix_cli.command(help="Perform cURL-like requests to a Flix server.")
 @click.argument("url")
 @click.option(

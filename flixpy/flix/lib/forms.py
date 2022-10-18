@@ -328,6 +328,7 @@ def prompt_enum(
         prompt,
         default=default_index,
         type=click.IntRange(0 if default_index == 0 else 1, len(options)),
+        show_default=default_index != 0,
         err=True,
         **kwargs,
     )
