@@ -313,7 +313,7 @@ async def contactsheet_edit_loop(
 async def contactsheet_add(ctx: click.Context) -> None:
     async with await get_client(ctx) as flix_client:
         contactsheet_form = await flix_client.form("/contactsheet")
-        data = contactsheet_form.prompt()
+        data = cast(models.ContactSheet, contactsheet_form.prompt())
         click.echo(err=True)
         contactsheet_form.print(data, err=True)
 
