@@ -248,6 +248,14 @@ class SequenceRevisionCreatedEvent(Event):
     sequence_revision: SequenceRevision
 
 
+class ContactSheetCreatedEvent(Event):
+    asset: Asset
+    sequence: Sequence
+    sequence_revision: SequenceRevision
+    show: Show
+    user: User
+
+
 class PingEvent(Event):
     event_time: str
     user: User
