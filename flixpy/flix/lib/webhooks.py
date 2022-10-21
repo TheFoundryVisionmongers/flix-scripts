@@ -33,6 +33,7 @@ class EventType(enum.Enum):
     EXPORT_SBP = "Sequence revision sent to SBP"
     NEW_SEQUENCE_REVISION = "Sequence revision created"
     NEW_PANEL_REVISION = "Panel revision created"
+    NEW_CONTACT_SHEET = "Contact sheet created"
     PING = "Ping"
 
 
@@ -100,6 +101,18 @@ class NewPanelRevisionEvent(WebhookEvent):
     def __init__(self, event_data: models.PanelRevisionCreatedEvent):
         super().__init__(event_data)
         self.panel_revision = types.PanelRevision.from_dict(event_data["panel_revision"])
+
+
+class NewContactSheetEvent(WebhookEvent):
+    """An event sent when a new contact sheet is exported."""
+
+    def __init__(self, event_data: models.ContactSheetCreatedEvent):
+        super().__init__(event_data)
+        self.asset = types.Asset.from_dict(event_data["asset"])
+        self.user = types.User.from_dict(event_data["user"])
+        self.sequence = types.Sequence.from_dict(event_data["sequence"])
+        self.sequence_revision = types.SequenceRevision.from_dict(event_data["sequence_revision"])
+        self.show = types.Show.from_dict(event_data["show"])
 
 
 class PingEvent(WebhookEvent):
@@ -205,6 +218,7 @@ _EVENT_TYPES: dict[EventType, Type[WebhookEvent]] = {
     EventType.EXPORT_SBP: ExportSBPEvent,
     EventType.NEW_SEQUENCE_REVISION: NewSequenceRevisionEvent,
     EventType.NEW_PANEL_REVISION: NewPanelRevisionEvent,
+    EventType.NEW_CONTACT_SHEET: NewContactSheetEvent,
     EventType.PING: PingEvent,
 }
 
