@@ -1,11 +1,13 @@
 import dataclasses
 import datetime
 import enum
-from typing import Any, Type, cast, TypedDict
+import os
+import pathlib
+from typing import Any, Type, cast, TypedDict, BinaryIO
 
 import dateutil.parser
 
-from . import models, client
+from . import models, client, transfers
 
 __all__ = [
     "Group",
@@ -215,6 +217,30 @@ class MediaObject(FlixType):
         into.show_id = data.get("show_id", 0)
         into._client = _client
         return into
+
+    async def update(self) -> None:
+        path = f"/file/{self.media_object_id}"
+        result = cast(models.MediaObject, await self.client.get(path))
+        self.from_dict(result, into=self, _client=self.client)
+
+    async def upload(self, f: BinaryIO) -> None:
+        await transfers.upload(self.client, f, self.asset_id, self.media_object_id)
+        await self.update()
+
+    async def download(self) -> bytes:
+        return b"".join([chunk async for chunk in transfers.download(self.client, self.asset_id, self.media_object_id)])
+
+    async def download_to(self, directory: str | os.PathLike[str], filename: str | None = None) -> None:
+        dirpath = pathlib.Path(directory)
+        dirpath.mkdir(parents=True, exist_ok=True)
+        if filename is None:
+            path = dirpath / f"{self.media_object_id}_{self.filename}"
+        else:
+            path = dirpath / filename
+
+        with path.open("wb") as f:
+            async for chunk in transfers.download(self.client, self.asset_id, self.media_object_id):
+                f.write(chunk)
 
 
 class Episode(FlixType):

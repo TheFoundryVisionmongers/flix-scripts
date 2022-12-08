@@ -1,0 +1,143 @@
+syntax = "proto3";
+
+package flix.transfer_util.pkg;
+
+option go_package = "./;proto";
+
+// FileTransfer is the server which handles data transfers.
+service FileTransfer {
+  // Transfer is the primary endpoint for the service.
+  rpc Transfer(stream TransferReq) returns (stream TransferResp) {};
+}
+
+// TransferReq is a request message which is streamed to the Transfer endpoint.
+message TransferReq {
+  // StartMessage is the message sent at the beginning of a stream to the Transfer endpoint. This should be the first
+  // message, and should be the only StartMessage in the stream.
+  message StartMessage {
+    // StartAction is the direction of the transfer, up or down.
+    enum StartAction {
+      UPLOAD = 0;
+      DOWNLOAD = 1;
+    }
+
+    // StartState is the state this transfer is starting in.
+    enum StartState {
+      // NEW is for when this transfer is new and requires initialising.
+      NEW = 0;
+      // RESUME is for when this transfer has already been initialised and needs to start part way through the data.
+      RESUME = 1;
+      // CANCEL is for when this transfer is being cancelled from the calling end. This is the only StartState where the
+      // client should send no further messages. The client should immediately close the send stream after this message.
+      CANCEL = 2;
+    }
+
+    // Action is the action for this message.
+    StartAction Action = 1;
+    // State is the state this message should start in.
+    StartState State = 2;
+    // StartFrom is only used when the client is requesting data. This is the amount of bytes to seek before sending the
+    // first chunk.
+    int64 StartFrom = 3;
+    // TotalBytes is only used when the client is providing data. This is the total number of bytes the server should
+    // ultimately expect for the file, and is used to calculate percentage completion.
+    int64 TotalBytes = 4;
+    // Metadata holds any data required by the src application.
+    bytes Metadata = 5;
+    // OriginalExt is the original extension of the file, if being uploaded. This will preserve the extension during the
+    // upload. If this is not set, the resultant uploaded file will have no extension. The string, if set, should
+    // contain the leading '.'.
+    string OriginalExt = 6;
+  }
+
+  // DataMessage is used while providing data from the client to the server. It either provides a chunk of data, or a
+  // pause instruction.
+  message DataMessage {
+    // DataAction is the instruction type of this DataMessage.
+    enum DataAction {
+      // DATA indicates this message is providing data.
+      DATA = 0;
+      // PAUSE indicates this is the last message of this stream, however the transfer will be resumed at a later stage.
+      PAUSE = 1;
+    }
+
+    // Action is the action type for this message.
+    DataAction Action = 1;
+    // Data is the chunk data for this message. This will be empty on a PAUSE action.
+    ChunkData Data = 2;
+  }
+
+  // CloseMessage concludes the stream and sets the final status. This may complete the transfer, or cancel it part way
+  // through.
+  message CloseMessage {
+    // CloseStatus is the status of this close message.
+    enum CloseStatus {
+      // COMPLETE is when the transfer has completed successfully.
+      COMPLETE = 0;
+      // CANCEL is when the stream is ending before the transfer has completed.
+      CANCEL = 1;
+    }
+    // Status is the status of this message.
+    CloseStatus Status = 1;
+  }
+
+  // Message is the content of the message.
+  oneof Message {
+    // StartMsg is the first message sent in the stream; there will only be one StartMsg sent per stream. It will either
+    // initialise a transfer, or cancel a paused transfer.
+    StartMessage StartMsg = 1;
+    // DataMsg make up the bulk of the stream when sending data from client to server.
+    DataMessage DataMsg = 2;
+    // CloseMessage concludes a stream. No further messages will be sent after this message.
+    CloseMessage CloseMsg = 3;
+  }
+
+  string UUID = 4;
+}
+
+// TransferResp is the response message streamed from the Transfer endpoint.
+message TransferResp {
+  // RecvResp is the response structure when the server has received data on a client to server transfer.
+  message RecvResp {
+    // RespStatus is the receive status. Upon error, the send can be retried without cancelling the stream/transfer.
+    enum RespStatus {
+      SUCCESS = 0;
+      ERROR = 1;
+    }
+    // Status is whether this chunk was received successfully or if it needs resending.
+    RespStatus Status = 1;
+    // StartFrom will only be set on the first response of a client to server transfer. This indicates to the client
+    // where to seek to in the data before sending the first chunk.
+    int64 StartFrom = 2;
+    // TotalBytes is only used when the server is providing data. This is the total number of bytes the client should
+    // ultimately expect for the file, and is used to calculate percentage completion.
+    int64 TotalBytes = 3;
+    // Error will be set to the string representation of the error, if one has occurred. Otherwise this will not be set.
+    string Error = 4;
+  }
+
+  // SendResp is the response message for when the client is receiving the data.
+  message SendResp {
+    // Error will be set to the string representation of the server-side error, if and only if one occurred. This will
+    //  otherwise be an empty string. An error here would be a total failure of transfer.
+    string Error = 1;
+    // Data holds the chunk data for the response.
+    ChunkData Data = 2;
+  }
+
+  // Resp is the response message.
+  oneof Resp {
+    // Received is used when the client is sending the server data.
+    RecvResp Received = 1;
+    // Returned is used when the server is sending the client data.
+    SendResp Returned = 2;
+  }
+}
+
+// ChunkData holds a chunk of data.
+message ChunkData {
+  // ChunkSize is the number of bytes in this chunk.
+  int64 ChunkSize = 1;
+  // ChunkData is the byte data.
+  bytes ChunkData = 2;
+}
