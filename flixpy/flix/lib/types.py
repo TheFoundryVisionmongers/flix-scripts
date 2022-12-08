@@ -1141,3 +1141,32 @@ class SequenceRevision(FlixType):
             path = self.path_prefix()
             result = cast(models.SequenceRevision, await self.client.patch(path, body=self.to_dict()))
         self.from_dict(result, into=self, _sequence=self._sequence, _client=self.client)
+
+
+@dataclasses.dataclass
+class Server:
+    uuid: str
+    region: str
+    ip: str
+    port: int
+    running: bool
+    start_date: datetime.datetime
+    hostname: str
+    db_ident: str
+    is_ssl: bool
+    transfer_port: int
+
+    @classmethod
+    def from_dict(cls, data: models.Server) -> "Server":
+        return cls(
+            uuid=data["id"],
+            region=data["region"],
+            ip=data["ip"],
+            port=data["port"],
+            running=data["running"],
+            start_date=dateutil.parser.parse(data["start_date"]),
+            hostname=data["hostname"],
+            db_ident=data["db_ident"],
+            is_ssl=data["is_ssl"],
+            transfer_port=data["transfer_port"],
+        )

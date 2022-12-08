@@ -306,3 +306,16 @@ class Webhook(TypedDict):
     retry_count: int
     email_on_failure: bool
     disabled: bool
+
+
+class Server(TypedDict):
+    id: str
+    region: str
+    ip: str
+    port: int
+    running: bool
+    start_date: str
+    hostname: str
+    db_ident: str
+    is_ssl: bool
+    transfer_port: int

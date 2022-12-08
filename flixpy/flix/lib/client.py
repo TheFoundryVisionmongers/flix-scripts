@@ -10,7 +10,7 @@ from typing import Any, cast, Type, TypedDict, TypeVar
 import aiohttp
 import dateutil.parser
 
-from . import signing, errors, forms, types, models
+from . import signing, errors, forms, types, models, utils
 
 __all__ = ["Client", "AccessKey"]
 
@@ -365,3 +365,10 @@ class Client(BaseClient):
         all_groups_model = TypedDict("all_groups_model", {"groups": list[models.Group]})
         groups = cast(all_groups_model, await self.get("/groups", params=params))
         return [types.Group.from_dict(group) for group in groups["groups"]]
+
+    @utils.cache(30)
+    async def servers(self) -> list[types.Server]:
+        path = "/servers"
+        servers_model = TypedDict("servers_model", {"servers": list[models.Server]})
+        servers = cast(servers_model, await self.get(path))
+        return [types.Server.from_dict(server) for server in servers["servers"]]
