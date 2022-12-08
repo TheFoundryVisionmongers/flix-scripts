@@ -71,6 +71,18 @@ class Sequence(TypedDict, total=False):
     tracking_code: str
 
 
+class Episode(TypedDict, total=False):
+    id: int
+    created_date: str
+    episode_number: int
+    owner: User
+    description: str
+    title: str
+    meta_data: dict[str, Any]
+    tracking_code: str
+    sequences: list[Sequence]
+
+
 class RevisionedDialogue(TypedDict, total=False):
     id: int
 
@@ -130,11 +142,14 @@ class PanelComment(TypedDict, total=False):
 
 
 class OriginAvid(TypedDict, total=False):
-    pass
+    effects_hash: str
 
 
 class OriginSBP(TypedDict, total=False):
     project_path: str
+    sbp_id: str
+    mastercomment2: str
+    layer_transform_hash: str | None
 
 
 class DuplicateRef(TypedDict, total=False):
@@ -167,10 +182,7 @@ class PanelRevision(TypedDict, total=False):
     metadata: dict[str, Any]
     asset: Asset
     owner: User
-    duration: int
-    trim_in_frame: int
-    trim_out_frame: int
-    published: bool
+    published: int | None
     revision_counter: int
     is_ref: bool
     latest_open_comment: PanelComment
@@ -180,7 +192,25 @@ class PanelRevision(TypedDict, total=False):
     keyframes: list[Keyframe]
     layer_transform: bool
     duplicate: DuplicateRef
-    related_panels: list["PanelRevision"]  # type: ignore # recursive types not supported yet
+    related_panels: list["PanelRevision"]
+
+    # only present when fetching panel in sequence revision
+    duration: int
+    trim_in_frame: int
+    trim_out_frame: int
+
+
+class Panel(TypedDict):
+    id: int
+    sequence_id: int
+    show_id: int
+    created_date: str
+    revision_count: int
+    owner: User
+    deleted: bool
+    metadata: dict[str, Any]
+    asset: Asset
+    revision: PanelRevision
 
 
 class PageSize(TypedDict):

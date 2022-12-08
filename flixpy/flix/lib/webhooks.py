@@ -60,11 +60,15 @@ class PublishEditorialEvent(WebhookEvent):
     def __init__(self, event_data: models.PublishToEditorialEvent):
         super().__init__(event_data)
         self.target_app = event_data["target_app"]
-        self.user = types.User.from_dict(event_data["user"])
-        self.created_media_objects = [types.MediaObject.from_dict(mo) for mo in event_data["created_media_objects"]]
-        self.sequence = types.Sequence.from_dict(event_data["sequence"])
-        self.sequence_revision = types.SequenceRevision.from_dict(event_data["sequence_revision"])
-        self.show = types.Show.from_dict(event_data["show"])
+        self.user = types.User.from_dict(event_data["user"], _client=None)
+        self.created_media_objects = [
+            types.MediaObject.from_dict(mo, _client=None) for mo in event_data["created_media_objects"]
+        ]
+        self.show = types.Show.from_dict(event_data["show"], _client=None)
+        self.sequence = types.Sequence.from_dict(event_data["sequence"], _show=self.show, _client=None, _episode=None)
+        self.sequence_revision = types.SequenceRevision.from_dict(
+            event_data["sequence_revision"], _client=None, _sequence=self.sequence
+        )
 
 
 class PublishFlixEvent(WebhookEvent):
@@ -73,10 +77,12 @@ class PublishFlixEvent(WebhookEvent):
     def __init__(self, event_data: models.PublishToFlixEvent):
         super().__init__(event_data)
         self.source_app = event_data["source_app"]
-        self.user = types.User.from_dict(event_data["user"])
-        self.new_sequence_revision = types.SequenceRevision.from_dict(event_data["new_sequence_revision"])
-        self.sequence = types.Sequence.from_dict(event_data["sequence"])
-        self.show = types.Show.from_dict(event_data["show"])
+        self.user = types.User.from_dict(event_data["user"], _client=None)
+        self.show = types.Show.from_dict(event_data["show"], _client=None)
+        self.sequence = types.Sequence.from_dict(event_data["sequence"], _show=self.show, _client=None, _episode=None)
+        self.new_sequence_revision = types.SequenceRevision.from_dict(
+            event_data["new_sequence_revision"], _client=None, _sequence=self.sequence
+        )
 
 
 class ExportSBPEvent(WebhookEvent):
@@ -84,7 +90,9 @@ class ExportSBPEvent(WebhookEvent):
 
     def __init__(self, event_data: models.ExportToSBPEvent):
         super().__init__(event_data)
-        self.sequence_revision = types.SequenceRevision.from_dict(event_data["sequence_revision"])
+        self.sequence_revision = types.SequenceRevision.from_dict(
+            event_data["sequence_revision"], _client=None, _sequence=None
+        )
 
 
 class NewSequenceRevisionEvent(WebhookEvent):
@@ -92,7 +100,9 @@ class NewSequenceRevisionEvent(WebhookEvent):
 
     def __init__(self, event_data: models.SequenceRevisionCreatedEvent):
         super().__init__(event_data)
-        self.sequence_revision = types.SequenceRevision.from_dict(event_data["sequence_revision"])
+        self.sequence_revision = types.SequenceRevision.from_dict(
+            event_data["sequence_revision"], _client=None, _sequence=None
+        )
 
 
 class NewPanelRevisionEvent(WebhookEvent):
@@ -100,7 +110,7 @@ class NewPanelRevisionEvent(WebhookEvent):
 
     def __init__(self, event_data: models.PanelRevisionCreatedEvent):
         super().__init__(event_data)
-        self.panel_revision = types.PanelRevision.from_dict(event_data["panel_revision"])
+        self.panel_revision = types.PanelRevision.from_dict(event_data["panel_revision"], _sequence=None, _client=None)
 
 
 class NewContactSheetEvent(WebhookEvent):
@@ -108,11 +118,13 @@ class NewContactSheetEvent(WebhookEvent):
 
     def __init__(self, event_data: models.ContactSheetCreatedEvent):
         super().__init__(event_data)
-        self.asset = types.Asset.from_dict(event_data["asset"])
-        self.user = types.User.from_dict(event_data["user"])
-        self.sequence = types.Sequence.from_dict(event_data["sequence"])
-        self.sequence_revision = types.SequenceRevision.from_dict(event_data["sequence_revision"])
-        self.show = types.Show.from_dict(event_data["show"])
+        self.asset = types.Asset.from_dict(event_data["asset"], _client=None)
+        self.user = types.User.from_dict(event_data["user"], _client=None)
+        self.show = types.Show.from_dict(event_data["show"], _client=None)
+        self.sequence = types.Sequence.from_dict(event_data["sequence"], _show=self.show, _client=None, _episode=None)
+        self.sequence_revision = types.SequenceRevision.from_dict(
+            event_data["sequence_revision"], _client=None, _sequence=self.sequence
+        )
 
 
 class PingEvent(WebhookEvent):
@@ -121,7 +133,7 @@ class PingEvent(WebhookEvent):
     def __init__(self, event_data: models.PingEvent):
         super().__init__(event_data)
         self.event_time = dateutil.parser.parse(event_data["event_time"])
-        self.user = types.User.from_dict(event_data["user"])
+        self.user = types.User.from_dict(event_data["user"], _client=None)
 
 
 T = TypeVar("T", bound=WebhookEvent)
