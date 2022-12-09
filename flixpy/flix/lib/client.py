@@ -1,16 +1,16 @@
+import base64
 import urllib.parse
 
 from collections.abc import Mapping
 import dataclasses
 import json
 from types import TracebackType
-from typing import Any, cast, Type
+from typing import Any, cast, Type, TypedDict, TypeVar
 
 import aiohttp
 import dateutil.parser
 
-from . import signing, errors, forms
-
+from . import signing, errors, forms, types, models, utils
 
 __all__ = ["Client", "AccessKey"]
 
@@ -40,7 +40,10 @@ class AccessKey:
         }
 
 
-class Client:
+ClientSelf = TypeVar("ClientSelf", bound="BaseClient")
+
+
+class BaseClient:
     """A thin wrapper around aiohttp.ClientSession, providing automatic signing of requests
     and a helper function for authenticating."""
 
@@ -69,6 +72,14 @@ class Client:
     def access_key(self) -> AccessKey | None:
         """The access key if authenticated; None otherwise."""
         return self._access_key
+
+    @property
+    def hostname(self) -> str:
+        return self._hostname
+
+    @property
+    def ssl(self) -> bool:
+        return self._ssl
 
     async def _request(self, method: str, path: str, body: Any | None = None, **kwargs: Any) -> aiohttp.ClientResponse:
         data = json.dumps(body) if body is not None else None
@@ -257,10 +268,107 @@ class Client:
         """Closes the underlying HTTP session. Does not need to be called when using the client as a context manager."""
         await self._session.close()
 
-    async def __aenter__(self) -> "Client":
+    async def __aenter__(self: ClientSelf) -> ClientSelf:
         return self
 
     async def __aexit__(
         self, exc_type: Type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
     ) -> None:
         await self.close()
+
+
+class Client(BaseClient):
+    """A thin wrapper around aiohttp.ClientSession, providing automatic signing of requests
+    and a helper function for authenticating."""
+
+    def __init__(
+        self,
+        hostname: str,
+        port: int,
+        ssl: bool = False,
+        *,
+        access_key: AccessKey | None = None,
+    ):
+        """
+        Instantiate a new Flix client.
+        :param hostname: The hostname of the Flix server
+        :param port: The port the server is running on
+        :param ssl: Whether to use HTTPS to communicate with the server
+        :param access_key: The access key of an already authenticated user.
+        """
+        super().__init__(hostname, port, ssl, access_key=access_key)
+
+    async def get_all_shows(self, include_hidden: bool = False) -> list[types.Show]:
+        params = {"display_hidden": "true" if include_hidden else "falsae"}
+        all_shows_model = TypedDict("all_shows_model", {"shows": list[models.Show]})
+        shows = cast(all_shows_model, await self.get("/shows", params=params))
+        return [types.Show.from_dict(show, _client=self) for show in shows["shows"]]
+
+    async def get_show(self, show_id: int) -> types.Show:
+        show = cast(models.Show, await self.get(f"/show/{show_id}"))
+        return types.Show.from_dict(show, _client=self)
+
+    async def get_asset(self, asset_id: int) -> types.Asset:
+        asset = cast(models.Asset, await self.get(f"/asset/{asset_id}"))
+        return types.Asset.from_dict(asset, _client=self)
+
+    async def get_media_object(self, media_object_id: int) -> types.MediaObject:
+        media_object = cast(models.MediaObject, await self.get(f"/file/{media_object_id}"))
+        return types.MediaObject.from_dict(media_object, _client=self)
+
+    def new_show(
+        self,
+        tracking_code: str,
+        aspect_ratio: float = 1.77,
+        frame_rate: float = 24,
+        title: str = "",
+        description: str = "",
+        episodic: bool = False,
+    ) -> types.Show:
+        return types.Show(
+            tracking_code=tracking_code,
+            aspect_ratio=aspect_ratio,
+            frame_rate=frame_rate,
+            title=title or tracking_code,
+            description=description,
+            episodic=episodic,
+            _client=self,
+        )
+
+    async def get_all_users(self) -> list[types.User]:
+        all_users_model = TypedDict("all_users_model", {"users": list[models.User]})
+        users = cast(all_users_model, await self.get("/users"))
+        return [types.User.from_dict(user, _client=self) for user in users["users"]]
+
+    async def new_user(
+        self,
+        username: str,
+        password: str,
+        email: str = "",
+        is_admin: bool = False,
+        groups: list[types.GroupRolePair] | None = None,
+    ) -> types.User:
+        return types.User(
+            username=username,
+            password=password,
+            email=email,
+            is_admin=is_admin,
+            groups=groups,
+            _client=self,
+        )
+
+    async def get_all_groups(self, with_permission: types.Permission | None = None) -> list[types.Group]:
+        params = None
+        if with_permission is not None:
+            perm = json.dumps(with_permission.to_dict())
+            params = {"permissions": base64.b64encode(perm.encode()).decode()}
+        all_groups_model = TypedDict("all_groups_model", {"groups": list[models.Group]})
+        groups = cast(all_groups_model, await self.get("/groups", params=params))
+        return [types.Group.from_dict(group) for group in groups["groups"]]
+
+    @utils.cache(30)
+    async def servers(self) -> list[types.Server]:
+        path = "/servers"
+        servers_model = TypedDict("servers_model", {"servers": list[models.Server]})
+        servers = cast(servers_model, await self.get(path))
+        return [types.Server.from_dict(server) for server in servers["servers"]]
