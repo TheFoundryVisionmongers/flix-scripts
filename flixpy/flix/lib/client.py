@@ -120,7 +120,7 @@ class BaseClient:
                 self._access_key = None
                 raise errors.FlixNotVerifiedError(response.status, error_message)
             else:
-                raise errors.FlixError(response.status, error_message)
+                raise errors.FlixHTTPError(response.status, error_message)
 
         return response
 
