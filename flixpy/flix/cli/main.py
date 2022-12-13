@@ -14,7 +14,7 @@ import asyncclick as click
 from . import interactive_client
 from ..lib import client, errors, forms, webhooks, models
 
-_CONFIG_DIR = pathlib.Path(appdirs.user_config_dir("flix-cli", "foundry"))
+_CONFIG_DIR = pathlib.Path(appdirs.user_config_dir("flix-sdk", "foundry"))
 _CONFIG_FILE = _CONFIG_DIR / "config.json"
 
 
