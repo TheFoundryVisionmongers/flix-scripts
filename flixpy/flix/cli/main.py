@@ -76,6 +76,11 @@ def save_config(ctx: click.Context, *args: Any, **kwargs: Any) -> None:
 @click.option("-s", "--server", type=str, help="The default server URL.")
 @click.option("-u", "--username", type=str, help="The default username.")
 @click.option("-p", "--password", type=str, help="The default password.")
+@click.option(
+    "--disable-ssl-validation",
+    type=bool,
+    help="Disables validation of SSL certificates. WARNING: This option enables MITM attacks.",
+)
 @click.option("--clear", is_flag=True, help="Clear the config.")
 @click.pass_context
 def config(
@@ -83,9 +88,11 @@ def config(
     server: str | None,
     username: str | None,
     password: str | None,
+    disable_ssl_validation: bool,
     clear: bool,
 ) -> None:
     cfg = ctx.obj["config"]
+    cfg["disable_ssl_validation"] = disable_ssl_validation
     if server:
         cfg["server"] = server
     if username:
