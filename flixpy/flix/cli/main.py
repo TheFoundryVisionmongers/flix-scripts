@@ -466,7 +466,7 @@ async def contactsheet_assign(ctx: click.Context) -> None:
 def main() -> Any:
     try:
         return flix_cli(auto_envvar_prefix="FLIX", _anyio_backend="asyncio")
-    except errors.FlixError as e:
+    except errors.FlixHTTPError as e:
         click.echo(str(e), err=True)
         return 1
 

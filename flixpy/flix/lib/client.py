@@ -10,7 +10,7 @@ from typing import Any, cast, Type, TypedDict, TypeVar
 import aiohttp
 import dateutil.parser
 
-from . import signing, errors, forms, types, models, utils
+from . import signing, errors, forms, types, models, utils, websocket
 
 __all__ = ["Client", "AccessKey"]
 
@@ -78,6 +78,10 @@ class BaseClient:
         return self._hostname
 
     @property
+    def port(self) -> int:
+        return self._port
+
+    @property
     def ssl(self) -> bool:
         return self._ssl
 
@@ -120,7 +124,7 @@ class BaseClient:
                 self._access_key = None
                 raise errors.FlixNotVerifiedError(response.status, error_message)
             else:
-                raise errors.FlixError(response.status, error_message)
+                raise errors.FlixHTTPError(response.status, error_message)
 
         return response
 
@@ -297,6 +301,9 @@ class Client(BaseClient):
         :param access_key: The access key of an already authenticated user.
         """
         super().__init__(hostname, port, ssl, access_key=access_key)
+
+    def websocket(self) -> websocket.Websocket:
+        return websocket.Websocket(self._session, self)
 
     async def get_all_shows(self, include_hidden: bool = False) -> list[types.Show]:
         params = {"display_hidden": "true" if include_hidden else "falsae"}

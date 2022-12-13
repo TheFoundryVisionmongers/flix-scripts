@@ -1,11 +1,15 @@
 import dataclasses
 
 
-__all__ = ["FlixError", "FlixNotVerifiedError"]
+__all__ = ["FlixError", "FlixHTTPError", "FlixNotVerifiedError"]
+
+
+class FlixError(OSError):
+    pass
 
 
 @dataclasses.dataclass
-class FlixError(OSError):
+class FlixHTTPError(FlixError):
     """A generic Flix error."""
 
     status_code: int
@@ -15,7 +19,7 @@ class FlixError(OSError):
         return f"Error {self.status_code}: {self.error_message}"
 
 
-class FlixNotVerifiedError(FlixError):
+class FlixNotVerifiedError(FlixHTTPError):
     """Raised when a request failed due to not being authenticated.
 
     This can happen if no access key was set, the access key was expired or invalid,

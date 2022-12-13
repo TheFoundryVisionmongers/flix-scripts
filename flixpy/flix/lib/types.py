@@ -3,11 +3,12 @@ import datetime
 import enum
 import os
 import pathlib
-from typing import Any, Type, cast, TypedDict, BinaryIO
+from collections.abc import Mapping
+from typing import Any, Type, cast, TypedDict, BinaryIO, Callable
 
 import dateutil.parser
 
-from . import models, client, transfers
+from . import models, client, transfers, websocket
 
 __all__ = [
     "Group",
@@ -469,6 +470,43 @@ class Sequence(FlixType):
         all_panels = cast(all_panels_model, await self.client.get(path, params=params))
         return [PanelRevision.from_dict(panel, _sequence=self, _client=self.client) for panel in all_panels["panels"]]
 
+    async def import_aaf(
+        self,
+        aaf_asset: "Asset",
+        comment: str = "",
+        extra_params: Mapping[str, Any] | None = None,
+        timeout: float | None = None,
+        chain_status_callback: Callable[[websocket.MessageJobChainStatus], None] | None = None,
+        panel_status_callback: Callable[[websocket.MessageEditorialImportStatus], None] | None = None,
+    ) -> "SequenceRevision":
+        path = f"{self.path_prefix()}/revision/0/reconform/avid"
+        params = extra_params or {}
+        async with self.client.websocket() as ws:
+            await self.client.post(
+                path,
+                body={
+                    "asset_id": aaf_asset.asset_id,
+                    "client_id": ws.client_id,
+                    "comment": comment,
+                    "publish_settings": {
+                        "bitrate": "36M",
+                    },
+                    **params,
+                },
+            )
+
+            waiter = ws.wait_on_chain(
+                websocket.MessageEditorialImportComplete,
+                message_filter=(websocket.MessageEditorialImportStatus,),
+                timeout=timeout,
+            )
+            async for msg in waiter:
+                if isinstance(msg, websocket.MessageJobChainStatus) and chain_status_callback is not None:
+                    chain_status_callback(msg)
+                elif isinstance(msg, websocket.MessageEditorialImportStatus) and panel_status_callback is not None:
+                    panel_status_callback(msg)
+            return await waiter.result.get_sequence_revision(self)
+
     async def save(self, force_create_new: bool = False) -> None:
         if self.sequence_id is None or force_create_new:
             path = f"{self._show.path_prefix()}/sequence"
@@ -663,6 +701,12 @@ class Show(FlixType):
                 asset.media_objects.setdefault(ref, []).append(mo)
 
         return media_objects
+
+    async def upload_file(self, f: BinaryIO, ref: str) -> Asset:
+        asset = (await self.create_assets(1))[0]
+        mo = await asset.create_media_object(ref)
+        await mo.upload(f)
+        return asset
 
     def new_episode(
         self,
