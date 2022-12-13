@@ -4,8 +4,9 @@ import json
 import time
 import urllib.parse
 import uuid
-from collections.abc import Iterable
-from typing import TypeVar, AsyncIterable, TypedDict, cast, Type, Generic
+from collections.abc import Iterable, AsyncIterator, Generator
+from types import TracebackType
+from typing import TypeVar, AsyncIterable, TypedDict, cast, Type, Generic, Any
 
 import aiohttp
 import yarl
@@ -225,7 +226,7 @@ class MessageDialogueComplete(AssetCreatedMessage):
         super().__init__(flix_client, msg_type, raw_data)
         data = cast(MessageDialogueComplete.Model, self.data)
         # asset ID is set in AssetCreatedMessage
-        self.task_id = data["task_id"]
+        self.task_id = data["taskId"]
 
 
 class MessageAssetStatus(KnownWebsocketMessage):
@@ -283,9 +284,15 @@ class ChainWaiter(Generic[WebsocketMessageType]):
         self._complete_message_type = complete_message_type
         self._filter: tuple[Type[WebsocketMessage], ...] = (MessageJobChainStatus, *message_filter)
         self.timeout = timeout
-        self.result: WebsocketMessageType | None = None
+        self._result: WebsocketMessageType | None = None
 
-    async def __aiter__(self) -> AsyncIterable[WebsocketMessage]:
+    @property
+    def result(self) -> WebsocketMessageType:
+        if self._result is None:
+            raise RuntimeError("attempted to access result before completion")
+        return self._result
+
+    async def __aiter__(self) -> AsyncIterator[WebsocketMessage]:
         start_time = time.time()
         it = aiter(self._ws)
         while True:
@@ -296,7 +303,7 @@ class ChainWaiter(Generic[WebsocketMessageType]):
             msg = await asyncio.wait_for(anext(it), timeout=timeout)
 
             if isinstance(msg, self._complete_message_type):
-                self.result = msg
+                self._result = msg
                 break
             elif isinstance(msg, MessageJobError):
                 raise errors.FlixError(f"{msg.status}: {msg.error}")
@@ -310,7 +317,7 @@ class ChainWaiter(Generic[WebsocketMessageType]):
             pass
         return self.result
 
-    def __await__(self):
+    def __await__(self) -> Generator[Any, None, WebsocketMessageType]:
         return self._run_until_complete().__await__()
 
 
@@ -340,21 +347,25 @@ class Websocket:
         protocol = "wss" if self._client.ssl else "ws"
         return yarl.URL(f"{protocol}://{self._client.hostname}:{self._client.port}/ws", encoded=True)
 
-    async def open(self):
+    async def open(self) -> None:
         self._ws = await self._session.ws_connect(self.signed_path)
 
-    async def close(self):
-        await self._ws.close()
+    async def close(self) -> None:
+        if self._ws is not None:
+            await self._ws.close()
 
     def wait_on_chain(
         self,
         complete_message_type: Type[WebsocketMessageType],
-        message_filter: Iterable[Type[WebsocketMessage]] | None = None,
+        message_filter: Iterable[Type[WebsocketMessage]] = (),
         timeout: float | None = None,
     ) -> ChainWaiter[WebsocketMessageType]:
         return ChainWaiter(self, complete_message_type, message_filter=message_filter, timeout=timeout)
 
-    async def __aiter__(self) -> AsyncIterable[WebsocketMessage]:
+    async def __aiter__(self) -> AsyncIterator[WebsocketMessage]:
+        if self._ws is None:
+            raise RuntimeError("must open websocket before iterating")
+
         msg: aiohttp.WSMessage
         async for msg in self._ws:
             if msg.type == aiohttp.WSMsgType.ERROR:
@@ -377,5 +388,7 @@ class Websocket:
         await self.open()
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(
+        self, exc_type: Type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
+    ) -> None:
         await self.close()

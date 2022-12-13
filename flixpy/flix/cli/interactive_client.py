@@ -20,18 +20,25 @@ class InteractiveClient(client.Client):
 
     def __init__(
         self,
-        *args: Any,
+        hostname: str,
+        port: int,
+        ssl: bool,
         config: dict[str, Any],
         username: str | None = None,
         password: str | None = None,
-        **kwargs: Any
     ):
         try:
             access_key = client.AccessKey(config["access_key"])
         except KeyError:
             access_key = None
 
-        super().__init__(*args, access_key=access_key, **kwargs)
+        super().__init__(
+            hostname,
+            port,
+            ssl=ssl,
+            access_key=access_key,
+            disable_ssl_validation=config.get("disable_ssl_validation", False),
+        )
         self._config = config
         self._username = username
         self._password = password
