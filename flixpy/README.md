@@ -9,6 +9,7 @@ Install the SDK using `pip`:
 ```
 $ pip install flix-sdk
 ```
+after which the CLI utility can be accessed as `flix` or `python -m flix`.
 
 An installation of Python 3.10 or higher is required.
 
