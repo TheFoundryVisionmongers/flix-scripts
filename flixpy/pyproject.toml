@@ -2,7 +2,7 @@
 name = "flix-sdk"
 version = "1.0.0"
 description = "Python SDK and command-line utilities for Flix"
-authors = ["Your Name <you@example.com>"]
+authors = []
 homepage = "https://www.foundry.com/products/flix"
 repository = "https://github.com/TheFoundryVisionmongers/flix-scripts/tree/master/flixpy"
 license = "Apache-2.0"

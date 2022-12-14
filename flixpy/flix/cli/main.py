@@ -104,7 +104,7 @@ def config(
     ctx.obj["config"] = cfg
 
 
-@flix_cli.command("logout", help="Remove any active access key, logging out the current user from Flix.")
+@flix_cli.command("logout", help="Log out the user from Flix by removing any active access key.")
 @click.pass_context
 def logout(ctx: click.Context) -> None:
     try:

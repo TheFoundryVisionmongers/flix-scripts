@@ -30,9 +30,11 @@ Options:
   --help               Show this message and exit.
 
 Commands:
-  config   Set default configuration values.
-  curl     Perform cURL-like requests to a Flix server.
-  webhook  Manage webhooks.
+  config        Set default configuration values.
+  contactsheet  Manage contact sheet templates.
+  curl          Perform cURL-like requests to a Flix server.
+  logout        Log out the user from Flix by removing any active access...
+  webhook       Manage webhooks.
 ```
 
 To use the `flix` utility, you should configure what server and credentials to use.
