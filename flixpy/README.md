@@ -80,6 +80,15 @@ Password:
 This package also comes with an asyncio-based library to help you interact with Flix from your own Python scripts.
 See the `examples` folder for examples of how to use it.
 
+# Versioning policy
+
+The Flix SDK follows semantic versioning:
+* The major version is increased if a breaking change is introduced, either at the Flix API level, or in the Flix SDK itself.
+* The minor version is increased if new features are added without breaking existing functionality, with a note in the documentation explaining what Flix version is required for the new features.
+* The patch version is increased if a bug fix is made without changing functionality.
+
+To ensure that an update will not break existing applications, we recommend specifying a dependency on `flix-sdk` in the form of `^1.2.3` or, equivalently, `>=1.2.3 <2.0.0`.
+
 # Development
 
 This project makes use of [Poetry](https://python-poetry.org/) for packaging and dependency management.
