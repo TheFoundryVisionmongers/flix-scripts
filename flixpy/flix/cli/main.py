@@ -14,7 +14,7 @@ import asyncclick as click
 from . import interactive_client
 from ..lib import client, errors, forms, webhooks, models
 
-_CONFIG_DIR = pathlib.Path(appdirs.user_config_dir("flix-cli", "foundry"))
+_CONFIG_DIR = pathlib.Path(appdirs.user_config_dir("flix-sdk", "foundry"))
 _CONFIG_FILE = _CONFIG_DIR / "config.json"
 
 
@@ -76,6 +76,11 @@ def save_config(ctx: click.Context, *args: Any, **kwargs: Any) -> None:
 @click.option("-s", "--server", type=str, help="The default server URL.")
 @click.option("-u", "--username", type=str, help="The default username.")
 @click.option("-p", "--password", type=str, help="The default password.")
+@click.option(
+    "--disable-ssl-validation",
+    type=bool,
+    help="Disables validation of SSL certificates. WARNING: This option enables MITM attacks.",
+)
 @click.option("--clear", is_flag=True, help="Clear the config.")
 @click.pass_context
 def config(
@@ -83,9 +88,11 @@ def config(
     server: str | None,
     username: str | None,
     password: str | None,
+    disable_ssl_validation: bool,
     clear: bool,
 ) -> None:
     cfg = ctx.obj["config"]
+    cfg["disable_ssl_validation"] = disable_ssl_validation
     if server:
         cfg["server"] = server
     if username:
@@ -97,7 +104,7 @@ def config(
     ctx.obj["config"] = cfg
 
 
-@flix_cli.command("logout", help="Remove any active access key, logging out the current user from Flix.")
+@flix_cli.command("logout", help="Log out the user from Flix by removing any active access key.")
 @click.pass_context
 def logout(ctx: click.Context) -> None:
     try:

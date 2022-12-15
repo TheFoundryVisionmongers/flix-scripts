@@ -52,6 +52,7 @@ class BaseClient:
         hostname: str,
         port: int,
         ssl: bool = False,
+        disable_ssl_validation: bool = False,
         *,
         access_key: AccessKey | None = None,
     ):
@@ -60,6 +61,7 @@ class BaseClient:
         :param hostname: The hostname of the Flix server
         :param port: The port the server is running on
         :param ssl: Whether to use HTTPS to communicate with the server
+        :param disable_ssl_validation: Whether to disable validation of SSL certificates; enables MITM attacks
         :param access_key: The access key of an already authenticated user.
         """
         self._hostname = hostname
@@ -67,6 +69,7 @@ class BaseClient:
         self._ssl = ssl
         self._access_key = access_key
         self._session = aiohttp.ClientSession()
+        self._disable_ssl_validation = disable_ssl_validation
 
     @property
     def access_key(self) -> AccessKey | None:
@@ -110,7 +113,14 @@ class BaseClient:
                 split.fragment,
             )
         )
-        response = await self._session.request(method, url, data=data, headers=headers, **kwargs)
+        response = await self._session.request(
+            method,
+            url,
+            data=data,
+            headers=headers,
+            ssl=False if self._disable_ssl_validation else None,
+            **kwargs,
+        )
         if response.status >= 400:
             if response.content_type == "application/json":
                 error = await response.json()
@@ -282,14 +292,14 @@ class BaseClient:
 
 
 class Client(BaseClient):
-    """A thin wrapper around aiohttp.ClientSession, providing automatic signing of requests
-    and a helper function for authenticating."""
+    """An extension of BaseClient, providing helper functions for interacting with the Flix API."""
 
     def __init__(
         self,
         hostname: str,
         port: int,
         ssl: bool = False,
+        disable_ssl_validation: bool = False,
         *,
         access_key: AccessKey | None = None,
     ):
@@ -298,9 +308,10 @@ class Client(BaseClient):
         :param hostname: The hostname of the Flix server
         :param port: The port the server is running on
         :param ssl: Whether to use HTTPS to communicate with the server
+        :param disable_ssl_validation: Whether to disable validation of SSL certificates; enables MITM attacks
         :param access_key: The access key of an already authenticated user.
         """
-        super().__init__(hostname, port, ssl, access_key=access_key)
+        super().__init__(hostname, port, ssl, disable_ssl_validation=disable_ssl_validation, access_key=access_key)
 
     def websocket(self) -> websocket.Websocket:
         return websocket.Websocket(self._session, self)

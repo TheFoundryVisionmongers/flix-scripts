@@ -5,7 +5,13 @@ along with a command line utility providing commands for some of the most common
 
 # Installing
 
-TBA
+Install the SDK using `pip`:
+```
+$ pip install flix-sdk
+```
+after which the CLI utility can be accessed as `flix` or `python -m flix`.
+
+An installation of Python 3.10 or higher is required.
 
 # Usage
 
@@ -25,45 +31,47 @@ Options:
   --help               Show this message and exit.
 
 Commands:
-  config   Set default configuration values.
-  curl     Perform cURL-like requests to a Flix server.
-  webhook  Manage webhooks.
+  config        Set default configuration values.
+  contactsheet  Manage contact sheet templates.
+  curl          Perform cURL-like requests to a Flix server.
+  logout        Log out the user from Flix by removing any active access...
+  webhook       Manage webhooks.
 ```
 
-There are four ways of authenticating with the `flix` utility:
+To use the `flix` utility, you should configure what server and credentials to use.
+This is best done either using environment variables, or the `flix config` command.
 
-1. Supply credentials when prompted:
+To use environment variables, you need to set the `FLIX_SERVER`, `FLIX_USERNAME`, and `FLIX_PASSWORD` variables:
 ```
-$ flix curl http://localhost:8080/servers
+$ export FLIX_SERVER=http://localhost:8080
+$ export FLIX_USERNAME=admin
+$ export FLIX_PASSWORD=admin
+$ flix curl /servers
+Not signed in, attempting to authenticate...
+{"servers": ...}
+```
+
+You can also tell `flix` to remember your information using `flix config`:
+```
+$ flix config -s http://localhost:8080 -u admin -p admin
+$ flix curl /servers
+Not signed in, attempting to authenticate...
+{"servers": ...}
+```
+
+Alternatively, you can provide the information directly to the `flix` command:
+```
+$ flix -s http://localhost:8080 -u admin -p admin curl /servers
+Not signed in, attempting to authenticate...
+{"servers": ...}
+```
+
+If you do not configure your credentials, `flix` will ask for them when attempting to log in:
+```
+$ flix -s http://localhost:8080 curl /servers
 Not signed in, attempting to authenticate...
 Username: admin
 Password:
-{"servers": ...}
-```
-2. Specify using command-line flags:
-```
-$ flix -u admin -p admin curl http://localhost:8080/servers
-Not signed in, attempting to authenticate...
-{"servers": ...}
-```
-3. Specify using environment variables:
-```
-$ FLIX_USERNAME=admin FLIX_PASSWORD=admin flix curl http://localhost:8080/servers
-Not signed in, attempting to authenticate...
-{"servers": ...}
-```
-4. Add to configuration:
-```
-$ flix config -u admin -p admin
-$ flix curl http://localhost:8080/servers
-Not signed in, attempting to authenticate...
-{"servers": ...}
-```
-
-You should also configure what server to use by default:
-```
-$ flix config -s http://localhost:8080
-$ flix curl /servers
 {"servers": ...}
 ```
 
@@ -71,6 +79,15 @@ $ flix curl /servers
 
 This package also comes with an asyncio-based library to help you interact with Flix from your own Python scripts.
 See the `examples` folder for examples of how to use it.
+
+# Versioning policy
+
+The Flix SDK follows semantic versioning:
+* The major version is increased if a breaking change is introduced, either at the Flix API level, or in the Flix SDK itself.
+* The minor version is increased if new features are added without breaking existing functionality, with a note in the documentation explaining what Flix version is required for the new features.
+* The patch version is increased if a bug fix is made without changing functionality.
+
+To ensure that an update will not break existing applications, we recommend specifying a dependency on `flix-sdk` in the form of `^1.2.3` or, equivalently, `>=1.2.3 <2.0.0`.
 
 # Development
 

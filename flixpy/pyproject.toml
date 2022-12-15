@@ -1,8 +1,10 @@
 [tool.poetry]
-name = "foundry-flix"
-version = "0.1.0"
-description = ""
-authors = ["Your Name <you@example.com>"]
+name = "flix-sdk"
+version = "1.0.0"
+description = "Python SDK and command-line utilities for Flix"
+authors = []
+homepage = "https://www.foundry.com/products/flix"
+repository = "https://github.com/TheFoundryVisionmongers/flix-scripts/tree/master/flixpy"
 license = "Apache-2.0"
 readme = "README.md"
 packages = [{include = "flix"}]
@@ -15,7 +17,7 @@ python-dateutil = "^2.8.2"
 asyncclick = "^8.1.3.2"
 anyio = "^3.6.1"
 grpcio = "^1.51.1"
-protobuf = "^4.21.10"
+protobuf = "^4.21.11"
 cryptography = "^38.0.4"
 
 [tool.poetry.scripts]
@@ -36,7 +38,6 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.mypy]
 strict = true
-#enable-recursive-aliases = true
 
 [tool.black]
 line-length = 120
