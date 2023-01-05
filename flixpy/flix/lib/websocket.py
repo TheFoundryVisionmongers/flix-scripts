@@ -35,6 +35,7 @@ __all__ = [
     "MessageDialogueComplete",
     "MessageStoryboardProImportComplete",
     "MessageThumbnailCreationError",
+    "MessageStateYAMLCreated",
     "Websocket",
     "ChainWaiter",
 ]
@@ -56,6 +57,8 @@ class MessageType(enum.Enum):
     DIALOGUE_COMPLETE = 16
     ASSET_STATUS = 17
     THUMBNAIL_CREATION_ERROR = 18
+    CONTACT_SHEET_CREATED = 19
+    STATE_YAML_CREATED = 20
 
 
 class WebsocketMessage:
@@ -249,6 +252,10 @@ class MessageContactSheetCreated(AssetCreatedMessage):
     pass
 
 
+class MessageStateYAMLCreated(AssetCreatedMessage):
+    pass
+
+
 _MESSAGE_TYPES: dict[MessageType, Type[KnownWebsocketMessage]] = {
     MessageType.PING: MessagePing,
     MessageType.ASSET_UPDATED: MessageAssetUpdated,
@@ -265,6 +272,8 @@ _MESSAGE_TYPES: dict[MessageType, Type[KnownWebsocketMessage]] = {
     MessageType.DIALOGUE_COMPLETE: MessageDialogueComplete,
     MessageType.ASSET_STATUS: MessageAssetStatus,
     MessageType.THUMBNAIL_CREATION_ERROR: MessageThumbnailCreationError,
+    MessageType.CONTACT_SHEET_CREATED: MessageContactSheetCreated,
+    MessageType.STATE_YAML_CREATED: MessageStateYAMLCreated,
 }
 
 
