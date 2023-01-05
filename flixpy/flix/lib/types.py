@@ -3,7 +3,7 @@ import datetime
 import enum
 import os
 import pathlib
-from collections.abc import Mapping
+from collections.abc import Mapping, Iterable
 from typing import Any, Type, cast, TypedDict, BinaryIO, Callable
 
 import dateutil.parser
@@ -569,6 +569,136 @@ class Asset(FlixType):
         return media_object
 
 
+class ContactSheetOrientation(enum.Enum):
+    LANDSCAPE = 0
+    PORTRAIT = 1
+
+
+class ContactSheetStyle(enum.Enum):
+    SINGLE_PANEL = 0
+    GRID = 1
+    LIST = 2
+
+
+class ContactSheetPanelOptions(enum.Enum):
+    PANEL_ID = "panel id"
+    PANEL_NUMBER = "panel number"
+    DIALOGUE = "dialogue"
+    HIGHLIGHT_TAG = "highlight tag"
+    NEW_MARKER = "new marker"
+    PANEL_DURATION = "panel duration"
+    ANNOTATIONS = "annotations"
+    DATE_AND_TIME = "date and time"
+
+
+class ContactSheetCoverOptions(enum.Enum):
+    SHOW_NAME = "show name"
+    SEQUENCE_NAME = "sequence name"
+    REVISION = "revision"
+    REVISION_COMMENT = "revision comment"
+
+
+class ContactSheet(FlixType):
+    def __init__(
+        self,
+        name: str = "",
+        orientation: ContactSheetOrientation = ContactSheetOrientation.PORTRAIT,
+        width: int = 210,
+        height: int = 297,
+        style: ContactSheetStyle = ContactSheetStyle.SINGLE_PANEL,
+        columns: int | None = None,
+        rows: int | None = None,
+        panel_options: Iterable[ContactSheetPanelOptions] = (),
+        show_header: bool = True,
+        show_comments: bool = True,
+        show_watermark: bool = True,
+        show_company: bool = True,
+        show_cover: bool = False,
+        cover_options: Iterable[ContactSheetCoverOptions] = (),
+        cover_description: str = "",
+        *,
+        contactsheet_id: int | None = None,
+        owner: User | None = None,
+        created_date: datetime.datetime | None = None,
+        modified_date: datetime.datetime | None = None,
+        _client: "client.Client | None",
+    ):
+        super().__init__(_client)
+        self.contactsheet_id = contactsheet_id
+        self.name = name
+        self.owner = owner
+        self.created_date: datetime.datetime = created_date or datetime.datetime.utcnow()
+        self.modified_date: datetime.datetime = modified_date or datetime.datetime.utcnow()
+
+        self.orientation = orientation
+        self.width = width
+        self.height = height
+        self.style = style
+        self.columns = columns
+        self.rows = rows
+        self.panel_options = set(panel_options)
+        self.show_header = show_header
+        self.show_comments = show_comments
+        self.show_watermark = show_watermark
+        self.show_company = show_company
+        self.show_cover = show_cover
+        self.cover_options = set(cover_options)
+        self.cover_description = cover_description
+
+    @classmethod
+    def from_dict(
+        cls, data: models.ContactSheet, *, into: "ContactSheet | None" = None, _client: "client.Client | None"
+    ) -> "ContactSheet":
+        if into is None:
+            into = cls(_client=_client)
+        into.contactsheet_id = data["id"]
+        into.name = data["name"]
+        into.owner = User.from_dict(data["owner"], _client=_client) if data.get("owner") else None
+        into.created_date = dateutil.parser.parse(data["created_date"])
+        into.modified_date = dateutil.parser.parse(data["modified_date"])
+        into.orientation = ContactSheetOrientation(data["orientation"])
+        into.width = data["page_size"]["width"]
+        into.height = data["page_size"]["height"]
+        into.style = ContactSheetStyle(data["style"])
+        into.columns = data.get("columns")
+        into.rows = data.get("rows")
+        into.panel_options = {ContactSheetPanelOptions(opt) for opt in data.get("panel_options") or ()}
+        into.show_header = data["show_header"]
+        into.show_comments = data["show_comments"]
+        into.show_watermark = data["show_watermark"]
+        into.show_company = data["show_company"]
+        into.show_cover = data["show_cover"]
+        into.cover_options = {ContactSheetCoverOptions(opt) for opt in data.get("cover_options") or ()}
+        into.cover_description = data["cover_description"]
+        return into
+
+    def to_dict(self) -> models.ContactSheet:
+        cs = models.ContactSheet(
+            name=self.name,
+            orientation=self.orientation.value,
+            page_size=models.PageSize(
+                width=self.width,
+                height=self.height,
+            ),
+            style=self.style.value,
+            panel_options=[opt.value for opt in self.panel_options],
+            show_header=self.show_header,
+            show_comments=self.show_comments,
+            show_watermark=self.show_watermark,
+            show_company=self.show_company,
+            show_cover=self.show_cover,
+            cover_options=[opt.value for opt in self.cover_options],
+            cover_description=self.cover_description,
+        )
+        if self.contactsheet_id is not None:
+            cs["id"] = self.contactsheet_id
+        if self.columns is not None:
+            cs["columns"] = self.columns
+        if self.rows is not None:
+            cs["rows"] = self.rows
+        return cs
+
+
 class Show(FlixType):
     def __init__(
         self,
@@ -681,6 +811,12 @@ class Show(FlixType):
         all_episodes = cast(all_episodes_model, await self.client.get(path))
         return [Episode.from_dict(episode, _show=self, _client=self.client) for episode in all_episodes["episodes"]]
 
+    async def get_assigned_contactsheets(self) -> list[ContactSheet]:
+        path = f"{self.path_prefix()}/contactsheets"
+        all_contactsheets_model = TypedDict("all_contactsheets_model", {"contact_sheets": list[models.ContactSheet]})
+        all_contactsheets = cast(all_contactsheets_model, await self.client.get(path))
+        return [ContactSheet.from_dict(cs, _client=self.client) for cs in all_contactsheets["contact_sheets"]]
+
     async def create_assets(self, num_assets: int) -> list[Asset]:
         path = f"{self.path_prefix()}/asset"
         body = {"asset_count": num_assets}
@@ -734,6 +870,21 @@ class Show(FlixType):
             _episode=None,
             _client=self.client,
         )
+
+    async def export_yaml(
+        self, anonymize_strings: bool = False, sequences: list[Sequence] | None = None
+    ) -> MediaObject:
+        path = f"{self.path_prefix()}/export/yaml"
+        params: dict[str, Any] = {"anonymize_strings": anonymize_strings}
+        if sequences is not None:
+            params["sequence_ids"] = [seq.sequence_id for seq in sequences]
+
+        async with self.client.websocket() as ws:
+            await self.client.post(path, body=params, headers={"Flix-Client-Id": ws.client_id})
+            complete_msg: websocket.MessageStateYAMLCreated = await ws.wait_on_chain(websocket.MessageStateYAMLCreated)
+
+        asset = await complete_msg.get_asset()
+        return asset.media_objects["state_yaml"][0]
 
     async def save(self, force_create_new: bool = False) -> None:
         if self.show_id is None or force_create_new:
@@ -1199,6 +1350,56 @@ class SequenceRevision(FlixType):
             SequencePanel.from_dict(panel, _sequence=self._sequence, _client=self.client)
             for panel in all_panels["panels"]
         ]
+
+    async def export_quicktime(
+        self, include_dialogue: bool = False, panels: list[PanelRevision] | None = None
+    ) -> MediaObject:
+        path = f"{self.path_prefix()}/export/quicktime"
+        params: dict[str, Any] = {"include_dialogue": include_dialogue}
+        if panels is not None:
+            params["panel_revisions"] = [panel.to_dict() for panel in panels]
+
+        async with self.client.websocket() as ws:
+            await self.client.post(path, body=params, headers={"Flix-Client-Id": ws.client_id})
+            complete_msg: websocket.MessageQuicktimeCreated = await ws.wait_on_chain(websocket.MessageQuicktimeCreated)
+
+        asset = await complete_msg.get_asset()
+        return asset.media_objects["artwork"][0]
+
+    async def export_dialogue(self, clip_name: str, panels: list[PanelRevision] | None = None) -> MediaObject:
+        path = f"{self.path_prefix()}/export/dialogue"
+        params: dict[str, Any] = {
+            "target_editor": "avid",
+            "clip_name": clip_name,
+        }
+        if panels is not None:
+            params["panel_revisions"] = [panel.to_dict() for panel in panels]
+
+        async with self.client.websocket() as ws:
+            await self.client.post(path, body=params, headers={"Flix-Client-Id": ws.client_id})
+            complete_msg: websocket.MessageDialogueComplete = await ws.wait_on_chain(websocket.MessageDialogueComplete)
+
+        asset = await complete_msg.get_asset()
+        return asset.media_objects["dialogue"][0]
+
+    async def export_contactsheet(
+        self, template: ContactSheet, panels: list[PanelRevision] | None = None
+    ) -> MediaObject:
+        path = f"{self.path_prefix()}/export/contactsheet"
+        params: dict[str, Any] = {
+            "contactsheet_id": template.contactsheet_id,
+        }
+        if panels is not None:
+            params["panel_revisions"] = [panel.to_dict() for panel in panels]
+
+        async with self.client.websocket() as ws:
+            await self.client.post(path, body=params, headers={"Flix-Client-Id": ws.client_id})
+            complete_msg: websocket.MessageContactSheetCreated = await ws.wait_on_chain(
+                websocket.MessageContactSheetCreated
+            )
+
+        asset = await complete_msg.get_asset()
+        return asset.media_objects["contactsheet"][0]
 
     async def save(self, force_create_new: bool = False) -> None:
         if self._sequence is None:

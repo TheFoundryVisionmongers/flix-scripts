@@ -12,7 +12,7 @@ import appdirs
 import asyncclick as click
 
 from . import interactive_client
-from ..lib import client, errors, forms, webhooks, models
+from ..lib import client, errors, forms, webhooks, models, types
 
 _CONFIG_DIR = pathlib.Path(appdirs.user_config_dir("flix-sdk", "foundry"))
 _CONFIG_FILE = _CONFIG_DIR / "config.json"
@@ -468,6 +468,121 @@ async def contactsheet_assign(ctx: click.Context) -> None:
             "shows": assigned_shows,
         }
         await flix_client.patch("/contactsheet/{}".format(cs["id"]), body=updated_contactsheet)
+
+
+@flix_cli.group(help="Export Flix data.")
+def export() -> None:
+    pass
+
+
+async def choose_show(flix_client: client.Client) -> types.Show:
+    shows = await flix_client.get_all_shows()
+    return forms.prompt_enum(
+        [forms.Choice(shw, f"{shw.title} [{shw.tracking_code}]") for shw in shows],
+        prompt="Select a show",
+    )
+
+
+async def choose_sequence(flix_client: client.Client) -> tuple[types.Show, types.Sequence]:
+    show = await choose_show(flix_client)
+    seqs = await show.get_all_sequences()
+    return show, forms.prompt_enum(
+        [forms.Choice(seq, f"{seq.description} [{seq.tracking_code}]") for seq in seqs],
+        prompt="Select a sequence",
+    )
+
+
+async def choose_sequence_revision(
+    flix_client: client.Client,
+) -> tuple[types.Show, types.Sequence, types.SequenceRevision]:
+    show, seq = await choose_sequence(flix_client)
+    revs = await seq.get_all_sequence_revisions()
+    return (
+        show,
+        seq,
+        forms.prompt_enum(
+            [
+                forms.Choice(
+                    rev,
+                    f"{rev.comment or '[No comment]'} - {rev.owner.username if rev.owner is not None else ''} "
+                    "({rev.created_date})",
+                )
+                for rev in revs
+            ],
+            prompt="Select a sequence revision",
+        ),
+    )
+
+
+async def download_file(mo: types.MediaObject) -> None:
+    save_path = pathlib.Path(
+        click.prompt(
+            "Path to save to",
+            default=f"{mo.media_object_id}_{mo.filename}",
+            show_default=True,
+            err=True,
+        )
+    )
+    await mo.download_to(save_path.parent, save_path.name)
+
+
+@export.command("contactsheet", help="Export a sequence revision as a contact sheet PDF.")
+@click.pass_context
+async def export_contactsheet(ctx: click.Context) -> None:
+    async with await get_client(ctx) as flix_client:
+        show, _, rev = await choose_sequence_revision(flix_client)
+        templates = await show.get_assigned_contactsheets()
+        if len(templates) == 0:
+            raise click.ClickException("no contact sheet templates assigned to show")
+
+        cs = forms.prompt_enum(
+            [forms.Choice(cs, cs.name) for cs in templates],
+            prompt="Select a contact sheet template",
+        )
+
+        cs_media_object = await rev.export_contactsheet(cs)
+        await download_file(cs_media_object)
+
+
+@export.command("quicktime", help="Export a sequence revision as a MOV.")
+@click.option("--include-dialogue", is_flag=True, help="Include dialogue in the MOV.")
+@click.pass_context
+async def export_quicktime(ctx: click.Context, include_dialogue: bool) -> None:
+    async with await get_client(ctx) as flix_client:
+        _, _, rev = await choose_sequence_revision(flix_client)
+        quicktime_media_object = await rev.export_quicktime(include_dialogue=include_dialogue)
+        await download_file(quicktime_media_object)
+
+
+@export.command("dialogue", help="Export the dialogue of a sequence revision as a text file.")
+@click.pass_context
+async def export_dialogue(ctx: click.Context) -> None:
+    async with await get_client(ctx) as flix_client:
+        _, _, rev = await choose_sequence_revision(flix_client)
+        clip_name = click.prompt("Avid clip name", type=str, err=True)
+        dialogue_media_object = await rev.export_dialogue(clip_name)
+        await download_file(dialogue_media_object)
+
+
+@export.command("yaml", help="Export a show as a YAML file.")
+@click.option("--anonymize", is_flag=True, help="Anonymize strings.")
+@click.pass_context
+async def export_yaml(ctx: click.Context, anonymize: bool) -> None:
+    async with await get_client(ctx) as flix_client:
+        show = await choose_show(flix_client)
+        sequences: list[types.Sequence] | None = None
+        if not click.confirm("Export all sequences?", err=True, default=True):
+            all_sequences = await show.get_all_sequences()
+            sequences = forms.prompt_multichoice(
+                [forms.Choice(seq, f"{seq.description} [{seq.tracking_code}]") for seq in all_sequences],
+                label="Select sequences to export",
+            )
+
+        yaml_media_object = await show.export_yaml(
+            anonymize_strings=anonymize,
+            sequences=sequences,
+        )
+        await download_file(yaml_media_object)
 
 
 def main() -> Any:

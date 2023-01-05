@@ -88,12 +88,19 @@ class BaseClient:
     def ssl(self) -> bool:
         return self._ssl
 
-    async def _request(self, method: str, path: str, body: Any | None = None, **kwargs: Any) -> aiohttp.ClientResponse:
+    async def _request(
+        self,
+        method: str,
+        path: str,
+        body: Any | None = None,
+        headers: Mapping[str, str] | None = None,
+        **kwargs: Any,
+    ) -> aiohttp.ClientResponse:
         data = json.dumps(body) if body is not None else None
-        headers = {"Content-Type": "application/json"}
+        flix_headers = {"Content-Type": "application/json", **(headers or {})}
         split = urllib.parse.urlsplit(path)
         if self._access_key is not None:
-            headers.update(
+            flix_headers.update(
                 signing.sign_request(
                     self._access_key.id,
                     self._access_key.secret_access_key,
@@ -117,7 +124,7 @@ class BaseClient:
             method,
             url,
             data=data,
-            headers=headers,
+            headers=flix_headers,
             ssl=False if self._disable_ssl_validation else None,
             **kwargs,
         )
