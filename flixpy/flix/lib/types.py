@@ -871,6 +871,21 @@ class Show(FlixType):
             _client=self.client,
         )
 
+    async def export_yaml(
+        self, anonymize_strings: bool = False, sequences: list[Sequence] | None = None
+    ) -> MediaObject:
+        path = f"{self.path_prefix()}/export/yaml"
+        params: dict[str, Any] = {"anonymize_strings": anonymize_strings}
+        if sequences is not None:
+            params["sequence_ids"] = [seq.sequence_id for seq in sequences]
+
+        async with self.client.websocket() as ws:
+            await self.client.post(path, body=params, headers={"Flix-Client-Id": ws.client_id})
+            complete_msg: websocket.MessageStateYAMLCreated = await ws.wait_on_chain(websocket.MessageStateYAMLCreated)
+
+        asset = await complete_msg.get_asset()
+        return asset.media_objects["state_yaml"][0]
+
     async def save(self, force_create_new: bool = False) -> None:
         if self.show_id is None or force_create_new:
             path = "/show"
@@ -1335,6 +1350,56 @@ class SequenceRevision(FlixType):
             SequencePanel.from_dict(panel, _sequence=self._sequence, _client=self.client)
             for panel in all_panels["panels"]
         ]
+
+    async def export_quicktime(
+        self, include_dialogue: bool = False, panels: list[PanelRevision] | None = None
+    ) -> MediaObject:
+        path = f"{self.path_prefix()}/export/quicktime"
+        params: dict[str, Any] = {"include_dialogue": include_dialogue}
+        if panels is not None:
+            params["panel_revisions"] = [panel.to_dict() for panel in panels]
+
+        async with self.client.websocket() as ws:
+            await self.client.post(path, body=params, headers={"Flix-Client-Id": ws.client_id})
+            complete_msg: websocket.MessageQuicktimeCreated = await ws.wait_on_chain(websocket.MessageQuicktimeCreated)
+
+        asset = await complete_msg.get_asset()
+        return asset.media_objects["artwork"][0]
+
+    async def export_dialogue(self, clip_name: str, panels: list[PanelRevision] | None = None) -> MediaObject:
+        path = f"{self.path_prefix()}/export/dialogue"
+        params: dict[str, Any] = {
+            "target_editor": "avid",
+            "clip_name": clip_name,
+        }
+        if panels is not None:
+            params["panel_revisions"] = [panel.to_dict() for panel in panels]
+
+        async with self.client.websocket() as ws:
+            await self.client.post(path, body=params, headers={"Flix-Client-Id": ws.client_id})
+            complete_msg: websocket.MessageDialogueComplete = await ws.wait_on_chain(websocket.MessageDialogueComplete)
+
+        asset = await complete_msg.get_asset()
+        return asset.media_objects["dialogue"][0]
+
+    async def export_contactsheet(
+        self, template: ContactSheet, panels: list[PanelRevision] | None = None
+    ) -> MediaObject:
+        path = f"{self.path_prefix()}/export/contactsheet"
+        params: dict[str, Any] = {
+            "contactsheet_id": template.contactsheet_id,
+        }
+        if panels is not None:
+            params["panel_revisions"] = [panel.to_dict() for panel in panels]
+
+        async with self.client.websocket() as ws:
+            await self.client.post(path, body=params, headers={"Flix-Client-Id": ws.client_id})
+            complete_msg: websocket.MessageContactSheetCreated = await ws.wait_on_chain(
+                websocket.MessageContactSheetCreated
+            )
+
+        asset = await complete_msg.get_asset()
+        return asset.media_objects["contactsheet"][0]
 
     async def save(self, force_create_new: bool = False) -> None:
         if self._sequence is None:
