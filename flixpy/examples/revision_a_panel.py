@@ -26,7 +26,7 @@ async def main() -> None:
         # Get the show from the server
         show = await client.get_show(SHOW_ID)
         # Create an 'artwork' media object with the file and transcode it to create a thumbnail
-        with open(FILEPATH, 'rb') as f:
+        with open(FILEPATH, "rb") as f:
             asset = await show.upload_file(f, "artwork")
         job_ids = await show.transcode_assets([asset])
 
