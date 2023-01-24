@@ -838,6 +838,18 @@ class Show(FlixType):
 
         return media_objects
 
+    async def transcode_assets(self, assets: list[Asset]) -> list[str]:
+        """
+        Transcodes an asset with an 'artwork' media object into thumbnail, scaled and fullres images
+        :param assets: The list of assets which need to be transcoded
+        :return: The list of task IDs which have been created to perform the transcode jobs.
+        """
+        path = f"{self.path_prefix()}/asset/transcode"
+        body = {"asset_ids": [a.asset_id for a in assets]}
+        tasks_model = TypedDict("tasks_model", {"task_ids": list[str]})
+        task_ids = cast(tasks_model, await self.client.post(path, body))
+        return task_ids["task_ids"]
+
     async def upload_file(self, f: BinaryIO, ref: str) -> Asset:
         asset = (await self.create_assets(1))[0]
         mo = await asset.create_media_object(ref)
