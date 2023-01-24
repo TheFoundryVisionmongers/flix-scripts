@@ -1,3 +1,9 @@
+"""
+This example shows how to create a new revision of a panel, using a new file for the new panel revision.
+
+The new panel revision will then be available within Flix. We are not creating a new sequence revision with this
+example.
+"""
 import asyncio
 
 import flix
@@ -43,11 +49,4 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    """
-    This example shows how to create a new revision of a panel, using a new file for the new panel revision.
-    
-    The new panel revision will then be available within Flix. We are not creating a new sequence revision with this
-    example.
-    """
-
     asyncio.run(main())
