@@ -21,6 +21,11 @@ __all__ = [
     "Episode",
     "Sequence",
     "Asset",
+    "ContactSheetOrientation",
+    "ContactSheetStyle",
+    "ContactSheetPanelOptions",
+    "ContactSheetCoverOptions",
+    "ContactSheet",
     "Show",
     "Keyframe",
     "PanelComment",
@@ -28,7 +33,9 @@ __all__ = [
     "OriginAvid",
     "DuplicateRef",
     "PanelRevision",
+    "SequencePanel",
     "SequenceRevision",
+    "Server",
 ]
 
 
