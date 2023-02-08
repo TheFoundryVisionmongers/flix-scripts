@@ -18,7 +18,7 @@ asyncclick = "^8.1.3.2"
 anyio = "^3.6.1"
 grpcio = "^1.51.1"
 protobuf = "^4.21.11"
-cryptography = "^38.0.4"
+cryptography = ">=38.0.4,<40.0.0"
 
 [tool.poetry.scripts]
 flix = 'flix.cli.main:main'
