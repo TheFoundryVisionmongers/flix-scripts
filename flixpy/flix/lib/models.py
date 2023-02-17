@@ -158,6 +158,11 @@ class DuplicateRef(TypedDict, total=False):
     sequence_id: int
 
 
+class Viewport(TypedDict):
+    width: int
+    height: int
+
+
 class Keyframe(TypedDict, total=False):
     show_id: int
     sequence_id: int
@@ -170,6 +175,7 @@ class Keyframe(TypedDict, total=False):
     center_vert: float
     anchor_point_horiz: float
     anchor_point_vert: float
+    viewport: Viewport
 
 
 class PanelRevision(TypedDict, total=False):
