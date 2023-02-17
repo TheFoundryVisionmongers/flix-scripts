@@ -917,6 +917,11 @@ class Show(FlixType):
 
 @dataclasses.dataclass
 class Keyframe:
+    @dataclasses.dataclass
+    class Viewport:
+        width: int
+        height: int
+
     start_key: int
     scale: float = 100
     rotation: float = 0
@@ -924,6 +929,7 @@ class Keyframe:
     center_vert: float = 0
     anchor_point_horiz: float = 0
     anchor_point_vert: float = 0
+    viewport: Viewport | None = None
     show_id: int | None = None
     sequence_id: int | None = None
     panel_id: int | None = None
@@ -943,6 +949,9 @@ class Keyframe:
             center_vert=data.get("center_vert", 0),
             anchor_point_horiz=data.get("anchor_point_horiz", 0),
             anchor_point_vert=data.get("anchor_point_vert", 0),
+            viewport=Keyframe.Viewport(data["viewport"]["width"], data["viewport"]["height"])
+            if data.get("viewport")
+            else None,
         )
 
     def to_dict(self) -> models.Keyframe:
@@ -955,6 +964,8 @@ class Keyframe:
             anchor_point_horiz=self.anchor_point_horiz,
             anchor_point_vert=self.anchor_point_vert,
         )
+        if self.viewport is not None:
+            kf["viewport"] = models.Viewport(width=self.viewport.width, height=self.viewport.height)
         if self.show_id is not None:
             kf["show_id"] = self.show_id
         if self.sequence_id is not None:
@@ -1202,6 +1213,7 @@ class PanelRevision(FlixType):
         center_vert: float = 0,
         anchor_point_horiz: float = 0,
         anchor_point_vert: float = 0,
+        viewport: Keyframe.Viewport | None = None,
     ) -> Keyframe:
         kf = Keyframe(
             start_key=start_key,
@@ -1211,6 +1223,7 @@ class PanelRevision(FlixType):
             center_vert=center_vert,
             anchor_point_horiz=anchor_point_horiz,
             anchor_point_vert=anchor_point_vert,
+            viewport=viewport,
         )
         self.keyframes.append(kf)
         return kf
