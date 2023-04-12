@@ -891,10 +891,13 @@ class Show(FlixType):
         )
 
     async def export_yaml(
-        self, anonymize_strings: bool = False, sequences: list[Sequence] | None = None
+        self, anonymize_strings: bool = False, include_assets: bool = False, sequences: list[Sequence] | None = None
     ) -> MediaObject:
         path = f"{self.path_prefix()}/export/yaml"
-        params: dict[str, Any] = {"anonymize_strings": anonymize_strings}
+        params: dict[str, Any] = {
+            "anonymize_strings": anonymize_strings,
+            "include_assets": include_assets,
+        }
         if sequences is not None:
             params["sequence_ids"] = [seq.sequence_id for seq in sequences]
 
@@ -921,6 +924,9 @@ class Keyframe:
     class Viewport:
         width: int
         height: int
+        offset_x: float
+        offset_y: float
+        scale: float
 
     start_key: int
     scale: float = 100
@@ -949,7 +955,13 @@ class Keyframe:
             center_vert=data.get("center_vert", 0),
             anchor_point_horiz=data.get("anchor_point_horiz", 0),
             anchor_point_vert=data.get("anchor_point_vert", 0),
-            viewport=Keyframe.Viewport(data["viewport"]["width"], data["viewport"]["height"])
+            viewport=Keyframe.Viewport(
+                width=data["viewport"]["width"],
+                height=data["viewport"]["height"],
+                offset_x=data["viewport"].get("offset_x", 0),
+                offset_y=data["viewport"].get("offset_y", 0),
+                scale=data["viewport"].get("scale", 1),
+            )
             if data.get("viewport")
             else None,
         )
@@ -965,7 +977,13 @@ class Keyframe:
             anchor_point_vert=self.anchor_point_vert,
         )
         if self.viewport is not None:
-            kf["viewport"] = models.Viewport(width=self.viewport.width, height=self.viewport.height)
+            kf["viewport"] = models.Viewport(
+                width=self.viewport.width,
+                height=self.viewport.height,
+                offset_x=self.viewport.offset_x,
+                offset_y=self.viewport.offset_y,
+                scale=self.viewport.scale,
+            )
         if self.show_id is not None:
             kf["show_id"] = self.show_id
         if self.sequence_id is not None:

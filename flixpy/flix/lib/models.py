@@ -161,6 +161,9 @@ class DuplicateRef(TypedDict, total=False):
 class Viewport(TypedDict):
     width: int
     height: int
+    offset_x: float
+    offset_y: float
+    scale: float
 
 
 class Keyframe(TypedDict, total=False):
