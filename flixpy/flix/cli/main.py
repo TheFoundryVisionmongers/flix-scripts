@@ -566,8 +566,9 @@ async def export_dialogue(ctx: click.Context) -> None:
 
 @export.command("yaml", help="Export a show as a YAML file.")
 @click.option("--anonymize", is_flag=True, help="Anonymize strings.")
+@click.option("--include-assets", is_flag=True, help="Include asset file names.")
 @click.pass_context
-async def export_yaml(ctx: click.Context, anonymize: bool) -> None:
+async def export_yaml(ctx: click.Context, anonymize: bool, include_assets: bool) -> None:
     async with await get_client(ctx) as flix_client:
         show = await choose_show(flix_client)
         sequences: list[types.Sequence] | None = None
@@ -580,6 +581,7 @@ async def export_yaml(ctx: click.Context, anonymize: bool) -> None:
 
         yaml_media_object = await show.export_yaml(
             anonymize_strings=anonymize,
+            include_assets=include_assets,
             sequences=sequences,
         )
         await download_file(yaml_media_object)

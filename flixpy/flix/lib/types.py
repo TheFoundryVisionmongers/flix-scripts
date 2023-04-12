@@ -891,10 +891,13 @@ class Show(FlixType):
         )
 
     async def export_yaml(
-        self, anonymize_strings: bool = False, sequences: list[Sequence] | None = None
+        self, anonymize_strings: bool = False, include_assets: bool = False, sequences: list[Sequence] | None = None
     ) -> MediaObject:
         path = f"{self.path_prefix()}/export/yaml"
-        params: dict[str, Any] = {"anonymize_strings": anonymize_strings}
+        params: dict[str, Any] = {
+            "anonymize_strings": anonymize_strings,
+            "include_assets": include_assets,
+        }
         if sequences is not None:
             params["sequence_ids"] = [seq.sequence_id for seq in sequences]
 
