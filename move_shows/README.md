@@ -1,6 +1,9 @@
 # Move sequence between shows script
 This script will move a sequence, and all associated data and media, from one show to another.
 
+**Warning** This script will move data in place, both on disk and within the Flix database. This is irreversible and
+should be tested on a staging setup before production.
+
 ## Requirements
 The script needs access and permission to connect to the Flix database and read/write permission on the asset directory.
 
