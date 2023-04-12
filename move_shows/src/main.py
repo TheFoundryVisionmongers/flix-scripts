@@ -135,12 +135,14 @@ def connect_to_database() -> CMySQLConnection:
 
 def copy_files(asset_dir: str, filenames: List[str], source_show: ShowMap, dest_show: ShowMap) -> None:
     click.echo(f'Copying {len(filenames)} files')
-    [copyfile(f'{asset_dir}{source_show.show_id}/{fn}', f'{asset_dir}{dest_show.show_id}/{fn}') for fn in filenames]
+    for fn in filenames:
+        copyfile(f'{asset_dir}{source_show.show_id}/{fn}', f'{asset_dir}{dest_show.show_id}/{fn}')
 
 
 def delete_files(asset_dir: str, filenames: List[str], source_show: ShowMap) -> None:
     click.echo(f'Deleting {len(filenames)} files')
-    [remove(f'{asset_dir}{source_show.show_id}/{fn}') for fn in filenames]
+    for fn in filenames:
+        remove(f'{asset_dir}{source_show.show_id}/{fn}')
 
 
 def get_asset_dir_path() -> str:
@@ -244,8 +246,8 @@ def pick_show(shows: List[ShowMap], prompt: str) -> ShowMap:
 
 def update_tables(cur: CMySQLCursor, flix_version: str, source_show: ShowMap, dest_show: ShowMap, seq: SequenceMap) -> None:
     cur.execute('SET FOREIGN_KEY_CHECKS=0')
-    [cur.execute(query, (dest_show.show_id, source_show.show_id, seq.sequence_id,))
-     for query in get_update_queries(flix_version)]
+    for query in get_update_queries(flix_version):
+        cur.execute(query, (dest_show.show_id, source_show.show_id, seq.sequence_id,))
     cur.execute('SET FOREIGN_KEY_CHECKS=1')
 
 
