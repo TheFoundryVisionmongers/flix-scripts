@@ -8,7 +8,7 @@ from typing import Any, Type, cast, TypedDict, BinaryIO, Callable
 
 import dateutil.parser
 
-from . import models, client, transfers, websocket
+from . import models, client, transfers, websocket, errors
 
 __all__ = [
     "Group",
@@ -233,7 +233,12 @@ class MediaObject(FlixType):
 
     async def upload(self, f: BinaryIO) -> None:
         await transfers.upload(self.client, f, self.asset_id, self.media_object_id)
-        await self.update()
+        try:
+            await self.update()
+        except errors.FlixHTTPError:
+            # fetching the media object info requires download permissions,
+            # so if we only have upload permissions, skip updating the local mo info
+            pass
 
     async def download(self) -> bytes:
         return b"".join([chunk async for chunk in transfers.download(self.client, self.asset_id, self.media_object_id)])
