@@ -13,10 +13,10 @@ from shutil import copyfile
 
 from typing import List
 
-MYSQL_QUERY_INSTALL_VERSION: str = "SELECT `value` FROM `settings` WHERE `key` = 'version'"
-MYSQL_QUERY_SHOWS: str = "SELECT `show_id`, `title` FROM `shows`"
-MYSQL_QUERY_SEQUENCES: str = "SELECT `id`, `tracking_code` FROM `sequence` WHERE `show_id` = %s"
-MYSQL_QUERY_MEDIA_OBJECTS: str = """SELECT
+MYSQL_QUERY_INSTALL_VERSION = "SELECT `value` FROM `settings` WHERE `key` = 'version'"
+MYSQL_QUERY_SHOWS = "SELECT `show_id`, `title` FROM `shows`"
+MYSQL_QUERY_SEQUENCES = "SELECT `id`, `tracking_code` FROM `sequence` WHERE `show_id` = %s"
+MYSQL_QUERY_MEDIA_OBJECTS = """SELECT
     CONCAT(`media_object`.`id`, '_', `media_object`.`filename`) AS 'FilePath'
 FROM
     `media_object`
@@ -29,20 +29,20 @@ WHERE
     `vPanel_asset_ref`.show_id = %s AND
     `vPanel_asset_ref`.`sequence_id`= %s
 """
-MYSQL_UPDATE_SEQUENCE_DIALOGUE: str = 'UPDATE `sequence_dialogue` SET `show_id` = %s WHERE `show_id` = %s AND `sequence_id` = %s'
-MYSQL_UPDATE_VDIALOGUE: str = 'UPDATE `vDialogue` SET `show_id` = %s WHERE `show_id` = %s AND `sequence_id` = %s'
-MYSQL_UPDATE_COMMENT_TO_PANEL: str = 'UPDATE `comment_to_panel` SET `show_id` = %s WHERE `show_id` = %s AND `sequence_id` = %s'
-MYSQL_UPDATE_SEQUENCE_PANEL: str = 'UPDATE `sequence_panel` SET `show_id` = %s WHERE `show_id` = %s AND `sequence_id` = %s'
-MYSQL_UPDATE_PANEL_KEY_FRAME: str = 'UPDATE `panel_key_frame` SET `show_id` = %s WHERE `show_id` = %s AND `sequence_id` = %s'
-MYSQL_UPDATE_RELATED_PANELS: str = 'UPDATE `related_panels` SET `show_id` = %s WHERE `show_id` = %s AND `sequence_id` = %s'
-MYSQL_UPDATE_PANEL_ORIGIN: str = 'UPDATE `panelOrigin` SET `show_id` = %s WHERE `show_id` = %s AND sequence_id = %s'
-MYSQL_UPDATE_VPANEL_ASSET_REF: str = 'UPDATE `vPanel_asset_ref` SET `show_id` = %s WHERE `show_id` = %s AND `sequence_id` = %s'
-MYSQL_UPDATE_SEQUENCE_REVISION_ENTITY_TYPE: str = 'UPDATE `sequence_revision_entity_type` SET `show_id` = %s WHERE `show_id` = %s AND `sequence_id` = %s'
-MYSQL_UPDATE_PANEL: str = 'UPDATE `panel` SET `show_id` = %s WHERE `show_id` = %s AND `sequence_id` = %s'
-MYSQL_UPDATE_VMASTER: str = 'UPDATE `vMaster` SET `show_id` = %s WHERE `show_id` = %s AND `sequence_id` = %s'
-MYSQL_UPDATE_VPANEL: str = 'UPDATE `vPanel` SET `show_id` = %s WHERE `show_id` = %s AND `sequence_id` = %s'
-MYSQL_UPDATE_VSEQUENCE: str = 'UPDATE `vSequence` SET `show_id` = %s WHERE `show_id` = %s AND `sequence_id` = %s'
-MYSQL_UPDATE_ENTITY: str = """UPDATE
+MYSQL_UPDATE_SEQUENCE_DIALOGUE = 'UPDATE `sequence_dialogue` SET `show_id` = %s WHERE `show_id` = %s AND `sequence_id` = %s'
+MYSQL_UPDATE_VDIALOGUE = 'UPDATE `vDialogue` SET `show_id` = %s WHERE `show_id` = %s AND `sequence_id` = %s'
+MYSQL_UPDATE_COMMENT_TO_PANEL = 'UPDATE `comment_to_panel` SET `show_id` = %s WHERE `show_id` = %s AND `sequence_id` = %s'
+MYSQL_UPDATE_SEQUENCE_PANEL = 'UPDATE `sequence_panel` SET `show_id` = %s WHERE `show_id` = %s AND `sequence_id` = %s'
+MYSQL_UPDATE_PANEL_KEY_FRAME = 'UPDATE `panel_key_frame` SET `show_id` = %s WHERE `show_id` = %s AND `sequence_id` = %s'
+MYSQL_UPDATE_RELATED_PANELS = 'UPDATE `related_panels` SET `show_id` = %s WHERE `show_id` = %s AND `sequence_id` = %s'
+MYSQL_UPDATE_PANEL_ORIGIN = 'UPDATE `panelOrigin` SET `show_id` = %s WHERE `show_id` = %s AND sequence_id = %s'
+MYSQL_UPDATE_VPANEL_ASSET_REF = 'UPDATE `vPanel_asset_ref` SET `show_id` = %s WHERE `show_id` = %s AND `sequence_id` = %s'
+MYSQL_UPDATE_SEQUENCE_REVISION_ENTITY_TYPE = 'UPDATE `sequence_revision_entity_type` SET `show_id` = %s WHERE `show_id` = %s AND `sequence_id` = %s'
+MYSQL_UPDATE_PANEL = 'UPDATE `panel` SET `show_id` = %s WHERE `show_id` = %s AND `sequence_id` = %s'
+MYSQL_UPDATE_VMASTER = 'UPDATE `vMaster` SET `show_id` = %s WHERE `show_id` = %s AND `sequence_id` = %s'
+MYSQL_UPDATE_VPANEL = 'UPDATE `vPanel` SET `show_id` = %s WHERE `show_id` = %s AND `sequence_id` = %s'
+MYSQL_UPDATE_VSEQUENCE = 'UPDATE `vSequence` SET `show_id` = %s WHERE `show_id` = %s AND `sequence_id` = %s'
+MYSQL_UPDATE_ENTITY = """UPDATE
     `entity`
 JOIN
     `sequence_revision_entity_type` ON `sequence_revision_entity_type`.`entity_id` = `entity`.`id`
@@ -52,7 +52,7 @@ WHERE
     `sequence_revision_entity_type`.`show_id` = %s AND
     `sequence_revision_entity_type`.`sequence_id` = %s
 """
-MYSQL_UPDATE_ASSET: str = """UPDATE 
+MYSQL_UPDATE_ASSET = """UPDATE 
     `asset`
 JOIN
     `vPanel_asset_ref` ON `vPanel_asset_ref`.`asset_id` = `asset`.`asset_id`
@@ -63,9 +63,9 @@ WHERE
     `vPanel_asset_ref`.`sequence_id` = %s
     
 """
-MYSQL_UPDATE_SEQUENCE: str = 'UPDATE `sequence` SET `show_id` = %s WHERE `show_id` = %s AND `id` = %s'
+MYSQL_UPDATE_SEQUENCE = 'UPDATE `sequence` SET `show_id` = %s WHERE `show_id` = %s AND `id` = %s'
 
-FLIX_DB_VERSIONS_TO_RELEASE: dict = {
+FLIX_DB_VERSIONS_TO_RELEASE = {
     '42': '6.4.1',
     '56': '6.5.0',
     '57': '6.6.0',
