@@ -151,7 +151,7 @@ def main():
 
 
 def connect_to_database() -> MySQLConnection:
-    click.echo("Establishing connection to database. Please provide MyySQL connection details")
+    click.echo("Establishing connection to database. Please provide MySQL connection details")
     user = click.prompt("Username", type=str, err=True, default="flix")
     password = click.prompt(
         "Password", type=str, hide_input=True, err=True, default="password"
