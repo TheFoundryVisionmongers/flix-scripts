@@ -151,7 +151,9 @@ def main():
 
 
 def connect_to_database() -> MySQLConnection:
-    click.echo("Establishing connection to database. Please provide MySQL connection details")
+    click.echo(
+        "Establishing connection to database. Please provide MySQL connection details"
+    )
     user = click.prompt("Username", type=str, err=True, default="flix")
     password = click.prompt(
         "Password", type=str, hide_input=True, err=True, default="password"
@@ -225,9 +227,7 @@ def get_flix_version(cur: MySQLCursor) -> str:
         raise Exception("Unsupported Flix version")
 
 
-def get_source_filenames(
-    cur: MySQLCursor, show_id: int, sequence_id: int
-) -> List[str]:
+def get_source_filenames(cur: MySQLCursor, show_id: int, sequence_id: int) -> List[str]:
     click.echo(f"Fetching media objects associated with sequence ID {sequence_id}")
 
     ret: List[str] = []
