@@ -4,6 +4,8 @@ import mysql.connector
 from collections import namedtuple
 
 from mysql.connector import errorcode
+from mysql.connector.connection_cext import MySQLConnection
+from mysql.connector.cursor_cext import MySQLCursor
 
 from os import remove
 
@@ -148,7 +150,7 @@ def main():
         click.echo(f"An error occurred: {err}")
 
 
-def connect_to_database() -> any:
+def connect_to_database() -> MySQLConnection:
     click.echo("Establishing connection to database. Please provide MyySQL connection details")
     user = click.prompt("Username", type=str, err=True, default="flix")
     password = click.prompt(
@@ -207,7 +209,7 @@ def get_asset_dir_path() -> str:
     return asset_dir_path
 
 
-def get_flix_version(cur: any) -> str:
+def get_flix_version(cur: MySQLCursor) -> str:
     try:
         click.echo("Getting Flix install version from database")
         cur.execute(MYSQL_QUERY_INSTALL_VERSION)
@@ -224,7 +226,7 @@ def get_flix_version(cur: any) -> str:
 
 
 def get_source_filenames(
-    cur: any, show_id: int, sequence_id: int
+    cur: MySQLCursor, show_id: int, sequence_id: int
 ) -> List[str]:
     click.echo(f"Fetching media objects associated with sequence ID {sequence_id}")
 
@@ -242,7 +244,7 @@ def get_source_filenames(
     return ret
 
 
-def get_sequences(cur: any, show_id: int) -> List[SequenceMap]:
+def get_sequences(cur: MySQLCursor, show_id: int) -> List[SequenceMap]:
     click.echo(f"Fetching sequences from show ID {show_id}")
     ret: List[SequenceMap] = []
     cur.execute(MYSQL_QUERY_SEQUENCES, (show_id,))
@@ -252,7 +254,7 @@ def get_sequences(cur: any, show_id: int) -> List[SequenceMap]:
     return ret
 
 
-def get_shows(cur: any) -> List[ShowMap]:
+def get_shows(cur: MySQLCursor) -> List[ShowMap]:
     click.echo("Fetching shows from database")
     ret: List[ShowMap] = []
     cur.execute(MYSQL_QUERY_SHOWS)
@@ -310,7 +312,7 @@ def pick_show(shows: List[ShowMap], prompt: str) -> ShowMap:
 
 
 def update_tables(
-    cur: any,
+    cur: MySQLCursor,
     flix_version: str,
     source_show: ShowMap,
     dest_show: ShowMap,
