@@ -91,7 +91,7 @@ def main():
         flix_version = get_flix_version(cur)
         shows = get_shows(cur)
         source_show = pick_show(shows, 'Which show contains the sequence you want to move')
-        dest_show = pick_show(shows, 'Which should would you like to move the sequence to')
+        dest_show = pick_show(shows, 'Which show would you like to move the sequence to')
         if source_show.show_id == dest_show.show_id:
             raise Exception('Source and destination show cannot be the same')
 
@@ -122,9 +122,10 @@ def connect_to_database() -> CMySQLConnection:
     password = click.prompt('Password', type=str, hide_input=True, err=True, default='password')
     host = click.prompt('Host address', type=str, err=True, default='192.168.1.67')
     database_name = click.prompt('Database name', type=str, err=True, default='flix', show_default=True)
+    enable_ssl = click.prompt('Enable SSL', type=bool, err=True, default=False, show_default=True)
 
     try:
-        return mysql.connector.connect(user=user, password=password, host=host, database=database_name)
+        return mysql.connector.connect(user=user, password=password, host=host, database=database_name, ssl_disabled=not enable_ssl)
     except mysql.connector.Error as err:
         if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
             click.echo("Something is wrong with your user name or password")
