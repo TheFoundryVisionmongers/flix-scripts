@@ -82,7 +82,7 @@ MYSQL_UPDATE_SEQUENCE = (
 FLIX_DB_VERSIONS_TO_RELEASE = {
     "42": "6.4.1",
     "56": "6.5.0",
-    "57": "6.6.0",
+    "58": "6.6.0",
 }
 
 SequenceMap = namedtuple("SequenceMap", "sequence_id tracking_code")
