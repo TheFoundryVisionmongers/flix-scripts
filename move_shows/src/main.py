@@ -4,8 +4,8 @@ import mysql.connector
 from collections import namedtuple
 
 from mysql.connector import errorcode
-from mysql.connector.connection_cext import MySQLConnection
-from mysql.connector.cursor_cext import MySQLCursor
+from mysql.connector.connection import MySQLConnection
+from mysql.connector.cursor import MySQLCursor
 
 from os import remove
 
