@@ -303,12 +303,12 @@ def pick_sequence(sequences: List[SequenceMap]) -> SequenceMap:
 
 
 def pick_show(shows: List[ShowMap], prompt: str) -> ShowMap:
-    title_to_id = {s.title: s for s in shows}
-    show_title = click.prompt(
+    tracking_code_to_id = {s.tracking_code: s for s in shows}
+    show_tracking_code = click.prompt(
         prompt,
-        type=click.Choice([v for v in title_to_id.keys()]),
+        type=click.Choice([v for v in tracking_code_to_id.keys()]),
     )
-    return title_to_id[show_title]
+    return tracking_code_to_id[show_tracking_code]
 
 
 def update_tables(
