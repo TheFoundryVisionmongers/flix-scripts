@@ -154,7 +154,7 @@ def connect_to_database() -> any:
     password = click.prompt(
         "Password", type=str, hide_input=True, err=True, default="password"
     )
-    host = click.prompt("Host address", type=str, err=True, default="192.168.1.67")
+    host = click.prompt("Host address", type=str, err=True, default="127.0.0.1")
     database_name = click.prompt(
         "Database name", type=str, err=True, default="flix", show_default=True
     )
@@ -213,7 +213,7 @@ def get_flix_version(cur: any) -> str:
         cur.execute(MYSQL_QUERY_INSTALL_VERSION)
         (db_version,) = next(cur)
 
-        flix_version = FLIX_DB_VERSIONS_TO_RELEASE[db_version]
+        flix_version = FLIX_DB_VERSIONS_TO_RELEASE[f"{db_version}"]
         click.echo(f"Found Flix version: {flix_version}")
         return flix_version
     except KeyError:
