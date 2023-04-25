@@ -14,7 +14,7 @@ from shutil import copyfile
 from typing import List
 
 MYSQL_QUERY_INSTALL_VERSION = "SELECT `value` FROM `settings` WHERE `key` = 'version'"
-MYSQL_QUERY_SHOWS = "SELECT `show_id`, `title` FROM `shows`"
+MYSQL_QUERY_SHOWS = "SELECT `show_id`, `tracking_code` FROM `shows`"
 MYSQL_QUERY_SEQUENCES = (
     "SELECT `id`, `tracking_code` FROM `sequence` WHERE `show_id` = %s"
 )
@@ -88,7 +88,7 @@ FLIX_DB_VERSIONS_TO_RELEASE = {
 }
 
 SequenceMap = namedtuple("SequenceMap", "sequence_id tracking_code")
-ShowMap = namedtuple("ShowMap", "show_id title")
+ShowMap = namedtuple("ShowMap", "show_id tracking_code")
 
 
 @click.command()
@@ -258,8 +258,8 @@ def get_shows(cur: MySQLCursor) -> List[ShowMap]:
     click.echo("Fetching shows from database")
     ret: List[ShowMap] = []
     cur.execute(MYSQL_QUERY_SHOWS)
-    for show_id, title in cur:
-        ret.append(ShowMap(show_id, title))
+    for show_id, tracking_code in cur:
+        ret.append(ShowMap(show_id, tracking_code))
 
     click.echo(f"Found {len(ret)} shows")
     return ret
