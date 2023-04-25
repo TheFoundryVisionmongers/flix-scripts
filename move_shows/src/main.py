@@ -199,7 +199,7 @@ def get_asset_dir_path() -> str:
     asset_dir_path = click.prompt(
         "Please enter the path to your asset directory",
         type=str,
-        default="/home/ben/flix/flix-server/assets",
+        default="/path/to/assets",
     )
     if asset_dir_path[-1] != "/":
         asset_dir_path += "/"
