@@ -149,7 +149,7 @@ def main():
 
 
 def connect_to_database() -> any:
-    click.echo("Establishing connection to database. Please provide connection details")
+    click.echo("Establishing connection to database. Please provide MyySQL connection details")
     user = click.prompt("Username", type=str, err=True, default="flix")
     password = click.prompt(
         "Password", type=str, hide_input=True, err=True, default="password"
