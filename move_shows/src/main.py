@@ -273,12 +273,12 @@ def get_update_queries(flix_version: str) -> List[str]:
         MYSQL_UPDATE_SEQUENCE_PANEL,
         MYSQL_UPDATE_PANEL_KEY_FRAME,
         MYSQL_UPDATE_PANEL_ORIGIN,
+        MYSQL_UPDATE_ASSET,
         MYSQL_UPDATE_VPANEL_ASSET_REF,
         MYSQL_UPDATE_PANEL,
         MYSQL_UPDATE_VMASTER,
         MYSQL_UPDATE_VPANEL,
         MYSQL_UPDATE_VSEQUENCE,
-        MYSQL_UPDATE_ASSET,
         MYSQL_UPDATE_SEQUENCE,
     ]
 
@@ -287,8 +287,8 @@ def get_update_queries(flix_version: str) -> List[str]:
         "6.6.0",
     ):
         queries.append(MYSQL_UPDATE_RELATED_PANELS)
-        queries.append(MYSQL_UPDATE_SEQUENCE_REVISION_ENTITY_TYPE)
         queries.append(MYSQL_UPDATE_ENTITY)
+        queries.append(MYSQL_UPDATE_SEQUENCE_REVISION_ENTITY_TYPE)
 
     return queries
 
