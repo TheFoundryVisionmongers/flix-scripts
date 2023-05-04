@@ -320,7 +320,6 @@ def update_tables(
 ) -> None:
     cur.execute("SET FOREIGN_KEY_CHECKS=0")
     for query in get_update_queries(flix_version):
-        click.echo(f"Executing '{query}' with DestShowID:{dest_show.show_id} SourceShowID:{source_show.show_id} SeqID:{seq.sequence_id}")
         cur.execute(
             query,
             (
