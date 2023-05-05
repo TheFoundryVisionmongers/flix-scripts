@@ -135,7 +135,7 @@ def main():
 
         source_episode_id: Optional[int] = None
         dest_episode_id: Optional[int] = None
-        if source_show.episodic == 1:
+        if source_show.episodic:
             source_episodes = get_episodes(cur, source_show.show_id)
             dest_episodes = get_episodes(cur, dest_show.show_id)
 
