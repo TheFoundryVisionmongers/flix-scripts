@@ -140,7 +140,7 @@ def main():
             dest_episodes = get_episodes(cur, dest_show.show_id)
 
             source_episode = pick_episode(
-                source_episodes, "Which episode contains the sequence you to move"
+                source_episodes, "Which episode contains the sequence you want to move"
             )
             dest_episode = pick_episode(
                 dest_episodes,
