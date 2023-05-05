@@ -1,5 +1,6 @@
 import click
 import mysql.connector
+import os
 
 from collections import namedtuple
 
@@ -7,7 +8,6 @@ from mysql.connector import errorcode
 from mysql.connector.connection import MySQLConnection
 from mysql.connector.cursor import MySQLCursor
 
-from os import remove
 
 from shutil import copyfile
 
@@ -77,8 +77,12 @@ WHERE
     `vPanel_asset_ref`.`sequence_id` = %s
     
 """
-MYSQL_UPDATE_SEQUENCE = "UPDATE `sequence` SET `show_id` = %s WHERE `show_id` = %s AND `id` = %s"
-MYSQL_UPDATE_SEQUENCE_EPISODE = "UPDATE `sequence` SET `episode_id` = %s WHERE `show_id` = %s AND `id` = %s"
+MYSQL_UPDATE_SEQUENCE = (
+    "UPDATE `sequence` SET `show_id` = %s WHERE `show_id` = %s AND `id` = %s"
+)
+MYSQL_UPDATE_SEQUENCE_EPISODE = (
+    "UPDATE `sequence` SET `episode_id` = %s WHERE `show_id` = %s AND `id` = %s"
+)
 
 FLIX_DB_VERSIONS_TO_RELEASE = {
     "42": "6.4.1",
@@ -139,7 +143,8 @@ def main():
                 source_episodes, "Which episode contains the sequence you to move"
             )
             dest_episode = pick_episode(
-                dest_episodes, "Which episode in the destination show would you like to move the sequence to"
+                dest_episodes,
+                "Which episode in the destination show would you like to move the sequence to",
             )
 
             source_episode_id = source_episode.episode_id
@@ -208,6 +213,7 @@ def copy_files(
     asset_dir: str, filenames: List[str], source_show: ShowMap, dest_show: ShowMap
 ) -> None:
     click.echo(f"Copying {len(filenames)} files")
+    create_dest_dir(asset_dir, dest_show)
     for fn in filenames:
         copyfile(
             f"{asset_dir}{source_show.show_id}/{fn}",
@@ -215,10 +221,19 @@ def copy_files(
         )
 
 
+def create_dest_dir(asset_dir: str, dest_show: ShowMap) -> None:
+    dest_path = os.path.join(asset_dir, str(dest_show.show_id))
+    try:
+        os.mkdir(dest_path)
+    except FileExistsError:
+        return
+    click.echo(f"Created destination show directory: '{dest_path}'")
+
+
 def delete_files(asset_dir: str, filenames: List[str], source_show: ShowMap) -> None:
     click.echo(f"Deleting {len(filenames)} files")
     for fn in filenames:
-        remove(f"{asset_dir}{source_show.show_id}/{fn}")
+        os.remove(f"{asset_dir}{source_show.show_id}/{fn}")
 
 
 def get_asset_dir_path() -> str:
@@ -289,7 +304,10 @@ def get_sequences(
     else:
         cur.execute(
             MYSQL_QUERY_SEQUENCES_EPISODIC,
-            (show_id, episode_id,),
+            (
+                show_id,
+                episode_id,
+            ),
         )
 
     for seq_id, code in cur:
@@ -382,7 +400,14 @@ def update_tables(
             ),
         )
     if source_show.episodic:
-        cur.execute(MYSQL_UPDATE_SEQUENCE_EPISODE, (dest_episode_id, dest_show.show_id, seq.sequence_id,))
+        cur.execute(
+            MYSQL_UPDATE_SEQUENCE_EPISODE,
+            (
+                dest_episode_id,
+                dest_show.show_id,
+                seq.sequence_id,
+            ),
+        )
     cur.execute("SET FOREIGN_KEY_CHECKS=1")
 
 
