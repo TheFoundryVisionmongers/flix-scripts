@@ -1,5 +1,6 @@
 import click
 import mysql.connector
+import os
 
 from collections import namedtuple
 
@@ -7,17 +8,16 @@ from mysql.connector import errorcode
 from mysql.connector.connection import MySQLConnection
 from mysql.connector.cursor import MySQLCursor
 
-from os import remove
 
 from shutil import copyfile
 
-from typing import List
+from typing import List, Optional
 
+MYSQL_QUERY_EPISODE = "SELECT `id`, `tracking_code` FROM `episode` WHERE `show_id` = %s"
 MYSQL_QUERY_INSTALL_VERSION = "SELECT `value` FROM `settings` WHERE `key` = 'version'"
-MYSQL_QUERY_SHOWS = "SELECT `show_id`, `tracking_code` FROM `shows`"
-MYSQL_QUERY_SEQUENCES = (
-    "SELECT `id`, `tracking_code` FROM `sequence` WHERE `show_id` = %s"
-)
+MYSQL_QUERY_SHOWS = "SELECT `show_id`, `tracking_code`, `episodic` FROM `shows`"
+MYSQL_QUERY_SEQUENCES = "SELECT `id`, `tracking_code` FROM `sequence` WHERE `show_id` = %s AND `episode_id` IS NULL"
+MYSQL_QUERY_SEQUENCES_EPISODIC = "SELECT `id`, `tracking_code` FROM `sequence` WHERE `show_id` = %s AND `episode_id` = %s"
 MYSQL_QUERY_MEDIA_OBJECTS = """SELECT
     CONCAT(`media_object`.`id`, '_', `media_object`.`filename`) AS 'FilePath'
 FROM
@@ -80,6 +80,9 @@ WHERE
 MYSQL_UPDATE_SEQUENCE = (
     "UPDATE `sequence` SET `show_id` = %s WHERE `show_id` = %s AND `id` = %s"
 )
+MYSQL_UPDATE_SEQUENCE_EPISODE = (
+    "UPDATE `sequence` SET `episode_id` = %s WHERE `show_id` = %s AND `id` = %s"
+)
 
 FLIX_DB_VERSIONS_TO_RELEASE = {
     "42": "6.4.1",
@@ -87,8 +90,9 @@ FLIX_DB_VERSIONS_TO_RELEASE = {
     "58": "6.6.0",
 }
 
+EpisodeMap = namedtuple("EpisodeMap", "episode_id tracking_code")
 SequenceMap = namedtuple("SequenceMap", "sequence_id tracking_code")
-ShowMap = namedtuple("ShowMap", "show_id tracking_code")
+ShowMap = namedtuple("ShowMap", "show_id tracking_code episodic")
 
 
 @click.command()
@@ -124,8 +128,29 @@ def main():
         )
         if source_show.show_id == dest_show.show_id:
             raise Exception("Source and destination show cannot be the same")
+        if source_show.episodic != dest_show.episodic:
+            raise Exception(
+                "Source and destination shows must be either both episodic or both non-episodic"
+            )
 
-        source_sequences = get_sequences(cur, source_show.show_id)
+        source_episode_id: Optional[int] = None
+        dest_episode_id: Optional[int] = None
+        if source_show.episodic:
+            source_episodes = get_episodes(cur, source_show.show_id)
+            dest_episodes = get_episodes(cur, dest_show.show_id)
+
+            source_episode = pick_episode(
+                source_episodes, "Which episode contains the sequence you want to move"
+            )
+            dest_episode = pick_episode(
+                dest_episodes,
+                "Which episode in the destination show would you like to move the sequence to",
+            )
+
+            source_episode_id = source_episode.episode_id
+            dest_episode_id = dest_episode.episode_id
+
+        source_sequences = get_sequences(cur, source_show.show_id, source_episode_id)
         source_sequence = pick_sequence(source_sequences)
         source_files = get_source_filenames(
             cur, source_show.show_id, source_sequence.sequence_id
@@ -134,7 +159,9 @@ def main():
         asset_dir = get_asset_dir_path()
         copy_files(asset_dir, source_files, source_show, dest_show)
 
-        update_tables(cur, flix_version, source_show, dest_show, source_sequence)
+        update_tables(
+            cur, flix_version, source_show, dest_show, source_sequence, dest_episode_id
+        )
 
         if click.confirm(
             "All updates made, please confirm you would like to commit the changes"
@@ -186,6 +213,7 @@ def copy_files(
     asset_dir: str, filenames: List[str], source_show: ShowMap, dest_show: ShowMap
 ) -> None:
     click.echo(f"Copying {len(filenames)} files")
+    create_dest_dir(asset_dir, dest_show)
     for fn in filenames:
         copyfile(
             f"{asset_dir}{source_show.show_id}/{fn}",
@@ -193,10 +221,19 @@ def copy_files(
         )
 
 
+def create_dest_dir(asset_dir: str, dest_show: ShowMap) -> None:
+    dest_path = os.path.join(asset_dir, str(dest_show.show_id))
+    try:
+        os.mkdir(dest_path)
+    except FileExistsError:
+        return
+    click.echo(f"Created destination show directory: '{dest_path}'")
+
+
 def delete_files(asset_dir: str, filenames: List[str], source_show: ShowMap) -> None:
     click.echo(f"Deleting {len(filenames)} files")
     for fn in filenames:
-        remove(f"{asset_dir}{source_show.show_id}/{fn}")
+        os.remove(f"{asset_dir}{source_show.show_id}/{fn}")
 
 
 def get_asset_dir_path() -> str:
@@ -209,6 +246,16 @@ def get_asset_dir_path() -> str:
         asset_dir_path += "/"
 
     return asset_dir_path
+
+
+def get_episodes(cur: MySQLCursor, show_id: int) -> List[EpisodeMap]:
+    click.echo(f"Fetching episodes from show ID {show_id}")
+    ret: List[EpisodeMap] = []
+    cur.execute(MYSQL_QUERY_EPISODE, (show_id,))
+    for ep_id, tracking_code in cur:
+        ret.append(EpisodeMap(ep_id, tracking_code))
+
+    return ret
 
 
 def get_flix_version(cur: MySQLCursor) -> str:
@@ -244,10 +291,25 @@ def get_source_filenames(cur: MySQLCursor, show_id: int, sequence_id: int) -> Li
     return ret
 
 
-def get_sequences(cur: MySQLCursor, show_id: int) -> List[SequenceMap]:
+def get_sequences(
+    cur: MySQLCursor, show_id: int, episode_id: Optional[int]
+) -> List[SequenceMap]:
     click.echo(f"Fetching sequences from show ID {show_id}")
     ret: List[SequenceMap] = []
-    cur.execute(MYSQL_QUERY_SEQUENCES, (show_id,))
+    if episode_id is None:
+        cur.execute(
+            MYSQL_QUERY_SEQUENCES,
+            (show_id,),
+        )
+    else:
+        cur.execute(
+            MYSQL_QUERY_SEQUENCES_EPISODIC,
+            (
+                show_id,
+                episode_id,
+            ),
+        )
+
     for seq_id, code in cur:
         ret.append(SequenceMap(seq_id, code))
 
@@ -258,8 +320,8 @@ def get_shows(cur: MySQLCursor) -> List[ShowMap]:
     click.echo("Fetching shows from database")
     ret: List[ShowMap] = []
     cur.execute(MYSQL_QUERY_SHOWS)
-    for show_id, tracking_code in cur:
-        ret.append(ShowMap(show_id, tracking_code))
+    for show_id, tracking_code, episodic in cur:
+        ret.append(ShowMap(show_id, tracking_code, episodic))
 
     click.echo(f"Found {len(ret)} shows")
     return ret
@@ -293,6 +355,14 @@ def get_update_queries(flix_version: str) -> List[str]:
     return queries
 
 
+def pick_episode(episodes: List[EpisodeMap], prompt: str) -> EpisodeMap:
+    tracking_code_to_episode = {e.tracking_code: e for e in episodes}
+    episode_code = click.prompt(
+        prompt, type=click.Choice([v for v in tracking_code_to_episode.keys()])
+    )
+    return tracking_code_to_episode[episode_code]
+
+
 def pick_sequence(sequences: List[SequenceMap]) -> SequenceMap:
     tracking_code_to_id = {s.tracking_code: s for s in sequences}
     sequence_code = click.prompt(
@@ -317,6 +387,7 @@ def update_tables(
     source_show: ShowMap,
     dest_show: ShowMap,
     seq: SequenceMap,
+    dest_episode_id: Optional[int],
 ) -> None:
     cur.execute("SET FOREIGN_KEY_CHECKS=0")
     for query in get_update_queries(flix_version):
@@ -325,6 +396,15 @@ def update_tables(
             (
                 dest_show.show_id,
                 source_show.show_id,
+                seq.sequence_id,
+            ),
+        )
+    if source_show.episodic:
+        cur.execute(
+            MYSQL_UPDATE_SEQUENCE_EPISODE,
+            (
+                dest_episode_id,
+                dest_show.show_id,
                 seq.sequence_id,
             ),
         )
