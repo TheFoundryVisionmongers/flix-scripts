@@ -6,12 +6,31 @@ import abc
 import collections.abc
 import flix.lib.proto.transfer_pb2
 import grpc
+import grpc.aio
+import typing
+
+_T = typing.TypeVar('_T')
+
+class _MaybeAsyncIterator(collections.abc.AsyncIterator[_T], collections.abc.Iterator[_T], metaclass=abc.ABCMeta):
+    ...
+
+class _ServicerContext(grpc.ServicerContext, grpc.aio.ServicerContext):  # type: ignore
+    ...
 
 class FileTransferStub:
     """FileTransfer is the server which handles data transfers."""
 
-    def __init__(self, channel: grpc.Channel) -> None: ...
+    def __init__(self, channel: typing.Union[grpc.Channel, grpc.aio.Channel]) -> None: ...
     Transfer: grpc.StreamStreamMultiCallable[
+        flix.lib.proto.transfer_pb2.TransferReq,
+        flix.lib.proto.transfer_pb2.TransferResp,
+    ]
+    """Transfer is the primary endpoint for the service."""
+
+class FileTransferAsyncStub:
+    """FileTransfer is the server which handles data transfers."""
+
+    Transfer: grpc.aio.StreamStreamMultiCallable[
         flix.lib.proto.transfer_pb2.TransferReq,
         flix.lib.proto.transfer_pb2.TransferResp,
     ]
@@ -23,9 +42,9 @@ class FileTransferServicer(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def Transfer(
         self,
-        request_iterator: collections.abc.Iterator[flix.lib.proto.transfer_pb2.TransferReq],
-        context: grpc.ServicerContext,
-    ) -> collections.abc.Iterator[flix.lib.proto.transfer_pb2.TransferResp]:
+        request_iterator: _MaybeAsyncIterator[flix.lib.proto.transfer_pb2.TransferReq],
+        context: _ServicerContext,
+    ) -> typing.Union[collections.abc.Iterator[flix.lib.proto.transfer_pb2.TransferResp], collections.abc.AsyncIterator[flix.lib.proto.transfer_pb2.TransferResp]]:
         """Transfer is the primary endpoint for the service."""
 
-def add_FileTransferServicer_to_server(servicer: FileTransferServicer, server: grpc.Server) -> None: ...
+def add_FileTransferServicer_to_server(servicer: FileTransferServicer, server: typing.Union[grpc.Server, grpc.aio.Server]) -> None: ...
