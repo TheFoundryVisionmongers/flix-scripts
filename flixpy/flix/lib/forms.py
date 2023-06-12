@@ -32,8 +32,8 @@ RequirementModel = TypedDict(
     {
         "required_id": str,
         "required_value": Any,
-        "or": list["RequirementModel"],  # type: ignore # recursive type not supported yet
-        "and": list["RequirementModel"],  # type: ignore
+        "or": list["RequirementModel"],
+        "and": list["RequirementModel"],
     },
     total=False,
 )
@@ -41,7 +41,7 @@ RequirementModel = TypedDict(
 
 class FormSectionModel(TypedDict, total=False):
     type: str
-    elements: list["FormSectionModel"]  # type: ignore # recursive types not supported yet
+    elements: list["FormSectionModel"]
     heading: str
     label: str
     id: str
