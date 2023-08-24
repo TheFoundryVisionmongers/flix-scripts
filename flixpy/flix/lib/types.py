@@ -38,6 +38,7 @@ __all__ = [
     "OriginAvid",
     "OriginFCPXML",
     "DuplicateRef",
+    "Panel",
     "PanelRevision",
     "SequencePanel",
     "SequenceRevision",
@@ -725,10 +726,10 @@ class Sequence(FlixType):
 
     async def save_panels(self, panels: list["PanelRevision"]) -> None:
         path = f"{self.path_prefix(False)}/panels"
-        panels_model = TypedDict("panels_model", {"panels": list[models.Panel]})
+        panels_model = TypedDict("panels_model", {"panels": list[models.PanelRevision]})
         result = cast(panels_model, await self.client.post(path, body=[panel.to_dict() for panel in panels]))
         for i, result_panel in enumerate(result["panels"]):
-            PanelRevision.from_dict(result_panel["revision"], into=panels[i], _sequence=self, _client=self.client)
+            PanelRevision.from_dict(result_panel, into=panels[i], _sequence=self, _client=self.client)
 
     async def get_sequence_revision(self, revision_number: int) -> "SequenceRevision":
         path = f"{self.path_prefix()}/revision/{revision_number}"
@@ -1396,6 +1397,66 @@ class DuplicateRef:
         )
 
 
+class Panel(FlixType):
+    def __init__(
+        self,
+        *,
+        panel_id: int | None = None,
+        sequence_id: int | None = None,
+        show_id: int | None = None,
+        revision_count: int = 0,
+        owner: User | None = None,
+        created_date: datetime.datetime | None = None,
+        metadata: Mapping[str, Any] | None = None,
+        _sequence: Sequence | None,
+        _client: "client.Client | None",
+    ):
+        super().__init__(_client)
+        self.panel_id = panel_id
+        self.sequence_id = sequence_id
+        self.show_id = show_id
+        self.revision_count = revision_count
+        self.owner = owner
+        self.created_date = created_date or datetime.datetime.now(datetime.timezone.utc)
+        self.metadata = Metadata(metadata, parent=self, _client=_client)
+        self._sequence = _sequence
+
+    @classmethod
+    def from_dict(
+        cls,
+        data: models.Panel,
+        *,
+        into: "Panel | None" = None,
+        _sequence: Sequence | None,
+        _client: "client.Client | None",
+    ) -> "Panel":
+        if into is None:
+            into = cls(_sequence=_sequence, _client=_client)
+        into.panel_id = data["id"]
+        into.sequence_id = data["sequence_id"]
+        into.show_id = data["show_id"]
+        into.revision_count = data["revision_count"]
+        into.owner = User.from_dict(data["owner"], _client=_client) if data.get("owner") else None
+        into.created_date = dateutil.parser.parse(data["created_date"])
+        into.metadata = Metadata.from_dict(data.get("metadata"), parent=into, _client=_client)
+        return into
+
+    def to_dict(self) -> models.Panel:
+        panel = models.Panel(metadata=self.metadata.to_dict())
+        if self.panel_id is not None:
+            panel["id"] = self.panel_id
+        if self.sequence_id is not None:
+            panel["sequence_id"] = self.sequence_id
+        if self.show_id is not None:
+            panel["show_id"] = self.show_id
+        return panel
+
+    def path_prefix(self) -> str:
+        if self._sequence is None:
+            raise RuntimeError("sequence is not set")
+        return f"{self._sequence.path_prefix(False)}/panel/{self.panel_id}"
+
+
 class PanelRevision(FlixType):
     def __init__(
         self,
@@ -1420,6 +1481,7 @@ class PanelRevision(FlixType):
         origin_fcpxml: OriginFCPXML | None = None,
         layer_transform: bool = False,
         duplicate: DuplicateRef | None = None,
+        panel: Panel | None = None,
         metadata: Mapping[str, Any] | None = None,
         _sequence: Sequence | None,
         _client: "client.Client | None",
@@ -1446,6 +1508,7 @@ class PanelRevision(FlixType):
         self.origin_fcpxml = origin_fcpxml
         self.layer_transform = layer_transform
         self.duplicate = duplicate
+        self.panel = panel
         self.metadata = Metadata(metadata, parent=self, _client=_client)
 
     @classmethod
@@ -1471,9 +1534,7 @@ class PanelRevision(FlixType):
             PanelRevision.from_dict(panel, _sequence=_sequence, _client=_client)
             for panel in data.get("related_panels") or []
         ]
-        into.revision_counter = data.get("revision_counter", 0)
         into.created_date = dateutil.parser.parse(data["created_date"])
-        into.modified_date = dateutil.parser.parse(data["modified_date"])
         into.owner = User.from_dict(data["owner"], _client=_client) if data.get("owner") else None
         into.published = data.get("published", None)
         into.latest_open_comment = (
@@ -1486,6 +1547,7 @@ class PanelRevision(FlixType):
         into.origin_fcpxml = OriginFCPXML.from_dict(data["origin_fcpxml"]) if data.get("origin_fcpxml") else None
         into.layer_transform = data.get("layer_transform", False)
         into.duplicate = DuplicateRef.from_dict(data["duplicate"]) if data.get("duplicate") else None
+        into.panel = Panel.from_dict(data["panel"], _sequence=_sequence, _client=_client) if data.get("panel") else None
         into.metadata = Metadata.from_dict(data.get("metadata"), parent=into, _client=_client)
         return into
 
@@ -1526,12 +1588,14 @@ class PanelRevision(FlixType):
         duration: int = 12,
         trim_in_frame: int | None = None,
         trim_out_frame: int | None = None,
+        sequence_revision: int | None = None,
     ) -> "SequencePanel":
         return SequencePanel(
             panel=self,
             duration=duration,
             trim_in_frame=trim_in_frame or 0,
             trim_out_frame=trim_out_frame or 0,
+            sequence_revision=sequence_revision,
         )
 
     def new_keyframe(
@@ -1564,8 +1628,7 @@ class PanelRevision(FlixType):
 
         if self.panel_id is None or force_create_new_panel:
             path = f"{self._sequence.path_prefix()}/panel"
-            panel = cast(models.Panel, await self.client.post(path, body=self.to_dict()))
-            result = panel["revision"]
+            result = cast(models.PanelRevision, await self.client.post(path, body=self.to_dict()))
         else:
             path = f"{self._sequence.path_prefix()}/panel/{self.panel_id}/revision"
             result = cast(models.PanelRevision, await self.client.post(path, body=self.to_dict()))
@@ -1578,14 +1641,16 @@ class SequencePanel:
     duration: int
     trim_in_frame: int
     trim_out_frame: int
+    sequence_revision: int | None = None
 
     @classmethod
     def from_dict(
-        cls, data: models.PanelRevision, *, _sequence: Sequence | None, _client: "client.Client | None"
+        cls, data: models.SequencePanel, *, _sequence: Sequence | None, _client: "client.Client | None"
     ) -> "SequencePanel":
         return cls(
             panel=PanelRevision.from_dict(data, _sequence=_sequence, _client=_client),
-            duration=data.get("duration") or 12,
+            sequence_revision=data["sequence_revision"],
+            duration=data["duration"],
             trim_in_frame=data.get("trim_in_frame") or 0,
             trim_out_frame=data.get("trim_out_frame") or 0,
         )
@@ -1597,7 +1662,7 @@ class SequencePanel:
             trim_out_frame=self.trim_out_frame,
         )
         if self.panel.panel_id is not None:
-            pr["id"] = self.panel.panel_id
+            pr["panel_id"] = self.panel.panel_id
         if self.panel.revision_number is not None:
             pr["revision_number"] = self.panel.revision_number
         return pr
@@ -1703,6 +1768,7 @@ class SequenceRevision(FlixType):
                 duration=duration,
                 trim_in_frame=trim_in_frame,
                 trim_out_frame=trim_out_frame,
+                sequence_revision=self.revision_number,
             )
         )
 
@@ -1711,7 +1777,7 @@ class SequenceRevision(FlixType):
 
     async def get_all_panel_revisions(self) -> list[SequencePanel]:
         path = f"{self.path_prefix()}/panels"
-        all_panels_model = TypedDict("all_panels_model", {"panels": list[models.PanelRevision]})
+        all_panels_model = TypedDict("all_panels_model", {"panels": list[models.SequencePanel]})
         all_panels = cast(all_panels_model, await self.client.get(path))
         return [
             SequencePanel.from_dict(panel, _sequence=self._sequence, _client=self.client)

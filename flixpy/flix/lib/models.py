@@ -88,6 +88,7 @@ class Sequence(TypedDict, total=False):
 
 class Episode(TypedDict, total=False):
     id: int
+    show_id: int
     created_date: str
     episode_number: int
     owner: User
@@ -103,7 +104,7 @@ class RevisionedDialogue(TypedDict, total=False):
 
 
 class RevisionedPanel(TypedDict, total=False):
-    id: int
+    panel_id: int
     revision_number: int
     duration: int
     dialogue: RevisionedDialogue
@@ -121,8 +122,8 @@ class SequenceRevision(TypedDict, total=False):
     published: bool
     imported: bool
     sequence_id: int
-    episode_id: int
     show_id: int
+    episode_id: int
     task_id: str
     source_files: list[Asset]
 
@@ -201,18 +202,27 @@ class Keyframe(TypedDict, total=False):
     viewport: Viewport
 
 
+class Panel(TypedDict, total=False):
+    id: int
+    sequence_id: int
+    show_id: int
+    created_date: str
+    revision_count: int
+    owner: User
+    deleted: bool
+    metadata: list[MetadataField]
+
+
 class PanelRevision(TypedDict, total=False):
     sequence_id: int
     show_id: int
     panel_id: int
     revision_number: int
     created_date: str
-    modified_date: str
     metadata: list[MetadataField]
     asset: Asset
     owner: User
     published: int | None
-    revision_counter: int
     is_ref: bool
     latest_open_comment: PanelComment
     origin: str
@@ -223,24 +233,14 @@ class PanelRevision(TypedDict, total=False):
     layer_transform: bool
     duplicate: DuplicateRef
     related_panels: list["PanelRevision"]
+    panel: Panel
 
-    # only present when fetching panel in sequence revision
+
+class SequencePanel(PanelRevision):
+    sequence_revision: int
     duration: int
     trim_in_frame: int
     trim_out_frame: int
-
-
-class Panel(TypedDict):
-    id: int
-    sequence_id: int
-    show_id: int
-    created_date: str
-    revision_count: int
-    owner: User
-    deleted: bool
-    metadata: dict[str, Any]
-    asset: Asset
-    revision: PanelRevision
 
 
 class PageSize(TypedDict):
