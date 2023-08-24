@@ -1,17 +1,20 @@
 import base64
+import collections.abc
 import dataclasses
 import datetime
 import enum
 import os
 import pathlib
-from collections.abc import Mapping, Iterable
-from typing import Any, Type, cast, TypedDict, BinaryIO, Callable
+from collections.abc import Mapping, Iterable, MutableMapping
+from typing import Any, Type, cast, TypedDict, BinaryIO, Callable, Iterator, Protocol
 
 import dateutil.parser
 
 from . import models, client, transfers, websocket, errors
 
 __all__ = [
+    "MetadataField",
+    "Metadata",
     "Group",
     "Permission",
     "Role",
@@ -56,6 +59,253 @@ class FlixType:
         if self._client is None:
             raise RuntimeError("client is not set")
         return self._client
+
+
+class AddressableFlixType(Protocol):
+    def path_prefix(self) -> str:
+        ...
+
+
+class MetadataField:
+    def __init__(
+        self,
+        value: Any | None,
+        *,
+        value_type: str = "",
+        created_date: datetime.datetime | None = None,
+        modified_date: datetime.datetime | None = None,
+    ):
+        self._value = value
+        self._value_type = value_type
+        self.created_date = created_date or datetime.datetime.now(datetime.timezone.utc)
+        self.modified_date = modified_date or datetime.datetime.now(datetime.timezone.utc)
+
+    @classmethod
+    def from_dict(cls, data: models.MetadataField) -> "MetadataField":
+        if data["value"] and data["value_type"] == "datetime":
+            value = dateutil.parser.parse(data["value"])
+        else:
+            value = data["value"]
+
+        return cls(
+            value=value,
+            value_type=data["value_type"],
+            created_date=dateutil.parser.parse(data["created_date"]),
+            modified_date=dateutil.parser.parse(data["modified_date"]),
+        )
+
+    def to_dict(self, name: str) -> models.MetadataField:
+        return models.MetadataField(
+            name=name,
+            value=self.json_value,
+            value_type=self.value_type,
+        )
+
+    @property
+    def value(self) -> Any | None:
+        return self._value
+
+    @value.setter
+    def value(self, value: Any) -> None:
+        self._value = value
+        # leave any existing value type unchanged if just nulling out the value
+        if value is not None:
+            self._value_type = ""
+        self.modified_date = datetime.datetime.now(datetime.timezone.utc)
+
+    @property
+    def value_type(self) -> str:
+        if self._value_type == "":
+            self._value_type = MetadataField.get_value_type(self.value)
+        return self._value_type
+
+    @staticmethod
+    def get_value_type(value: Any) -> str:
+        match value:
+            case bool():
+                return "bool"
+            case int():
+                return "int"
+            case float():
+                return "float"
+            case datetime.datetime():
+                return "datetime"
+            case str():
+                return "string"
+            case collections.abc.Sequence() as seq if all(isinstance(elem, str) for elem in seq):
+                return "stringarray"
+        return "object"
+
+    @property
+    def json_value(self) -> Any | None:
+        match self.value:
+            case datetime.datetime() as d:
+                if d.tzinfo is None:
+                    # make timezone aware to ensure correct date format; assume UTC
+                    d = d.replace(tzinfo=datetime.timezone.utc)
+                return d.isoformat()
+            case _:
+                return self.value
+
+    @property
+    def string_value(self) -> str | None:
+        if self.value is None:
+            return None
+        return str(self.value)
+
+    @property
+    def int_value(self) -> int | None:
+        if self.value is None:
+            return None
+        return int(self.value)
+
+    @property
+    def float_value(self) -> float | None:
+        if self.value is None:
+            return None
+        return float(self.value)
+
+    @property
+    def bool_value(self) -> bool | None:
+        if self.value is None:
+            return None
+        return bool(self.value)
+
+    @property
+    def stringarray_value(self) -> list[str] | None:
+        match self.value:
+            case None:
+                return None
+            case [*elems]:
+                return [str(elem) for elem in elems]
+            case other:
+                return [str(other)]
+
+    def __repr__(self) -> str:
+        return "MetadataField(value={}, value_type={}, created_date={}, modified_date={})".format(
+            self.value, self.value_type, self.created_date, self.modified_date
+        )
+
+
+class Metadata(FlixType, MutableMapping[str, Any]):
+    def __init__(
+        self,
+        metadata: Mapping[str, Any] | None = None,
+        *,
+        parent: AddressableFlixType | None,
+        _client: "client.Client | None",
+    ):
+        super().__init__(_client)
+        self._fields = dict[str, MetadataField]()
+        self._parent = parent
+        if metadata is not None:
+            if isinstance(metadata, Metadata):
+                self._fields = metadata._fields
+            else:
+                for name, value in metadata.items():
+                    self[name] = value
+
+    @classmethod
+    def from_dict(
+        cls,
+        data: list[models.MetadataField] | None,
+        *,
+        into: "Metadata | None" = None,
+        parent: AddressableFlixType | None,
+        _client: "client.Client | None",
+    ) -> "Metadata":
+        if into is None:
+            into = cls(parent=parent, _client=_client)
+        else:
+            into.clear()
+
+        if data is not None:
+            for field in data:
+                into.set_field(field["name"], MetadataField.from_dict(field))
+        return into
+
+    def to_dict(self) -> list[models.MetadataField]:
+        return [field.to_dict(name) for name, field in self._fields.items()]
+
+    def get_field(self, key: str) -> MetadataField:
+        return self._fields[key]
+
+    def get_string(self, key: str) -> str | None:
+        return self._fields[key].string_value
+
+    def get_bool(self, key: str) -> bool | None:
+        return self._fields[key].bool_value
+
+    def get_int(self, key: str) -> int | None:
+        return self._fields[key].int_value
+
+    def get_float(self, key: str) -> float | None:
+        return self._fields[key].float_value
+
+    def get_stringarray(self, key: str) -> list[str] | None:
+        return self._fields[key].stringarray_value
+
+    def set_field(self, key: str, value: MetadataField) -> None:
+        self._fields[key] = value
+
+    def path_prefix(self) -> str:
+        if self._parent is None:
+            raise RuntimeError("metadata parent is not set")
+        return f"{self._parent.path_prefix()}/metadata"
+
+    class _MetadataModel(TypedDict):
+        metadata: list[models.MetadataField]
+
+    async def fetch_metadata(self) -> "Metadata":
+        result = cast(Metadata._MetadataModel, await self.client.get(self.path_prefix()))
+        Metadata.from_dict(result["metadata"], into=self, parent=self._parent, _client=self.client)
+        return self
+
+    async def fetch_field(self, name: str) -> MetadataField:
+        result = cast(models.MetadataField, await self.client.get(self.path_prefix(), params={"name": name}))
+        field = MetadataField.from_dict(result)
+        self.set_field(name, field)
+        return field
+
+    async def delete_field(self, name: str) -> None:
+        del self[name]
+        await self.client.delete(self.path_prefix(), params={"name": name})
+
+    async def set_and_save(self, name: str, value: Any) -> None:
+        self[name] = value
+        await self.client.put(self.path_prefix(), body=self.get_field(name).to_dict(name), params={"name": name})
+
+    async def set_field_and_save(self, name: str, field: MetadataField) -> None:
+        self.set_field(name, field)
+        await self.client.put(self.path_prefix(), body=self.get_field(name).to_dict(name), params={"name": name})
+
+    async def save(self, clear_missing: bool = False) -> None:
+        method = "PUT" if clear_missing else "PATCH"
+        await self.client.request(method, self.path_prefix(), body=Metadata._MetadataModel(metadata=self.to_dict()))
+
+    def __getitem__(self, key: str) -> Any:
+        return self.get_field(key).value
+
+    def __setitem__(self, key: str, value: Any) -> None:
+        if field := self._fields.get("key"):
+            field.value = value
+        else:
+            self._fields[key] = MetadataField(value)
+
+    def __delitem__(self, key: str) -> None:
+        del self._fields[key]
+
+    def __len__(self) -> int:
+        return len(self._fields)
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self._fields)
+
+    def clear(self) -> None:
+        self._fields.clear()
+
+    def __repr__(self) -> str:
+        return f"Metadata({', '.join('{}={}'.format(name, field.value) for name, field in self._fields.items())})"
 
 
 @dataclasses.dataclass
@@ -141,6 +391,7 @@ class User(FlixType):
         is_third_party: bool = False,
         user_type: str = "flix",
         deleted: bool = False,
+        metadata: Mapping[str, Any] | None = None,
         _client: "client.Client | None",
     ):
         super().__init__(_client)
@@ -155,6 +406,7 @@ class User(FlixType):
         self.is_system = is_system
         self.is_third_party = is_third_party
         self.deleted = deleted
+        self.metadata = Metadata(metadata, parent=self, _client=_client)
 
     @classmethod
     def from_dict(cls, data: models.User, *, into: "User | None" = None, _client: "client.Client | None") -> "User":
@@ -170,7 +422,11 @@ class User(FlixType):
         into.is_system = data.get("is_system", False)
         into.is_third_party = data.get("is_third_party", False)
         into.deleted = data.get("deleted", False)
+        into.metadata = Metadata.from_dict(data.get("metadata"), parent=into, _client=_client)
         return into
+
+    def path_prefix(self) -> str:
+        return f"/user/{self.user_id}"
 
 
 class MediaObjectStatus(enum.Enum):
@@ -294,7 +550,7 @@ class Episode(FlixType):
         episode_id: int | None = None,
         created_date: datetime.datetime | None = None,
         owner: User | None = None,
-        metadata: dict[str, Any] | None = None,
+        metadata: Mapping[str, Any] | None = None,
         _show: "Show",
         _client: "client.Client | None",
     ):
@@ -307,7 +563,7 @@ class Episode(FlixType):
         self.episode_number = episode_number
         self.created_date = created_date
         self.owner = owner
-        self.metadata = metadata or {}
+        self.metadata = Metadata(metadata, parent=self, _client=_client)
 
     @classmethod
     def from_dict(
@@ -322,7 +578,7 @@ class Episode(FlixType):
         into.title = data.get("title", "")
         into.created_date = dateutil.parser.parse(data["created_date"])
         into.owner = User.from_dict(data["owner"], _client=_client)
-        into.metadata = data.get("meta_data") or {}
+        into.metadata = Metadata.from_dict(data.get("metadata"), parent=into, _client=_client)
         return into
 
     def to_dict(self) -> models.Episode:
@@ -331,7 +587,7 @@ class Episode(FlixType):
             tracking_code=self.tracking_code,
             description=self.description,
             title=self.title,
-            meta_data=self.metadata,
+            metadata=self.metadata.to_dict(),
         )
         if self.episode_id is not None:
             episode["id"] = self.episode_id
@@ -378,7 +634,7 @@ class Sequence(FlixType):
         owner: User | None = None,
         revision_count: int = 0,
         panel_revision_count: int = 0,
-        metadata: dict[str, Any] | None = None,
+        metadata: Mapping[str, Any] | None = None,
         _show: "Show",
         _episode: "Episode | None",
         _client: "client.Client | None",
@@ -393,7 +649,7 @@ class Sequence(FlixType):
         self.owner = owner
         self.revision_count = revision_count
         self.panel_revision_count = panel_revision_count
-        self.metadata: dict[str, Any] = metadata or {}
+        self.metadata = Metadata(metadata, parent=self, _client=_client)
         self.hidden = hidden
 
     @classmethod
@@ -415,7 +671,7 @@ class Sequence(FlixType):
         into.owner = User.from_dict(data["owner"], _client=_client) if data.get("owner") else None
         into.revision_count = data.get("revisions_count", 0)
         into.panel_revision_count = data.get("panel_revision_count", 0)
-        into.metadata = data.get("meta_data") or {}
+        into.metadata = Metadata.from_dict(data.get("metadata"), parent=into, _client=_client)
         into.hidden = data.get("hidden", False)
         return into
 
@@ -424,7 +680,7 @@ class Sequence(FlixType):
             tracking_code=self.tracking_code,
             description=self.description,
             hidden=self.hidden,
-            meta_data=self.metadata,
+            metadata=self.metadata.to_dict(),
         )
         if self.sequence_id is not None:
             sequence["id"] = self.sequence_id
@@ -754,7 +1010,7 @@ class Show(FlixType):
         show_id: int | None = None,
         owner: User | None = None,
         created_date: datetime.datetime | None = None,
-        metadata: dict[str, Any] | None = None,
+        metadata: Mapping[str, Any] | None = None,
         _client: "client.Client | None",
     ):
         super().__init__(_client)
@@ -769,8 +1025,8 @@ class Show(FlixType):
         self.show_thumbnail_id = show_thumbnail_id
         self.hidden = hidden
         self.owner = owner
-        self.metadata = metadata or {}
         self.created_date: datetime.datetime = created_date or datetime.datetime.now(datetime.timezone.utc)
+        self.metadata = Metadata(metadata, parent=self, _client=_client)
 
     @classmethod
     def from_dict(
@@ -789,7 +1045,7 @@ class Show(FlixType):
         into.show_thumbnail_id = data.get("show_thumbnail_id")
         into.owner = User.from_dict(data["owner"], _client=_client) if data.get("owner") else None
         into.created_date = dateutil.parser.parse(data["created_date"])
-        into.metadata = data.get("metadata") or {}
+        into.metadata = Metadata.from_dict(data.get("metadata"), parent=into, _client=_client)
         into.hidden = data.get("hidden", False)
         return into
 
@@ -802,7 +1058,7 @@ class Show(FlixType):
             episodic=self.episodic,
             frame_rate=self.frame_rate,
             hidden=self.hidden,
-            metadata=self.metadata,
+            metadata=self.metadata.to_dict(),
         )
         if self.show_id is not None:
             show["id"] = self.show_id
@@ -1164,7 +1420,7 @@ class PanelRevision(FlixType):
         origin_fcpxml: OriginFCPXML | None = None,
         layer_transform: bool = False,
         duplicate: DuplicateRef | None = None,
-        metadata: dict[str, Any] | None = None,
+        metadata: Mapping[str, Any] | None = None,
         _sequence: Sequence | None,
         _client: "client.Client | None",
     ):
@@ -1190,7 +1446,7 @@ class PanelRevision(FlixType):
         self.origin_fcpxml = origin_fcpxml
         self.layer_transform = layer_transform
         self.duplicate = duplicate
-        self.metadata: dict[str, Any] = metadata or {}
+        self.metadata = Metadata(metadata, parent=self, _client=_client)
 
     @classmethod
     def from_dict(
@@ -1230,7 +1486,7 @@ class PanelRevision(FlixType):
         into.origin_fcpxml = OriginFCPXML.from_dict(data["origin_fcpxml"]) if data.get("origin_fcpxml") else None
         into.layer_transform = data.get("layer_transform", False)
         into.duplicate = DuplicateRef.from_dict(data["duplicate"]) if data.get("duplicate") else None
-        into.metadata = data.get("metadata") or {}
+        into.metadata = Metadata.from_dict(data.get("metadata"), parent=into, _client=_client)
         return into
 
     def to_dict(self) -> models.PanelRevision:
@@ -1240,7 +1496,7 @@ class PanelRevision(FlixType):
             keyframes=[keyframe.to_dict() for keyframe in self.keyframes],
             related_panels=[panel.to_dict() for panel in self.related_panels],
             published=self.published,
-            metadata=self.metadata,
+            metadata=self.metadata.to_dict(),
         )
         if self.asset is not None:
             pr["asset"] = self.asset.to_dict()
@@ -1263,7 +1519,7 @@ class PanelRevision(FlixType):
     def path_prefix(self, include_episode: bool = False) -> str:
         if self._sequence is None:
             raise RuntimeError("sequence is not set")
-        return f"{self._sequence.path_prefix(include_episode)}/panel/{self.panel_id}"
+        return f"{self._sequence.path_prefix(include_episode)}/panel/{self.panel_id}/revision/{self.revision_number}"
 
     def new_sequence_panel(
         self,
@@ -1311,7 +1567,7 @@ class PanelRevision(FlixType):
             panel = cast(models.Panel, await self.client.post(path, body=self.to_dict()))
             result = panel["revision"]
         else:
-            path = f"{self.path_prefix()}/revision"
+            path = f"{self._sequence.path_prefix()}/panel/{self.panel_id}/revision"
             result = cast(models.PanelRevision, await self.client.post(path, body=self.to_dict()))
         self.from_dict(result, into=self, _sequence=self._sequence, _client=self.client)
 
@@ -1368,7 +1624,7 @@ class SequenceRevision(FlixType):
         imported: bool = False,
         task_id: str | None = None,
         source_files: list[Asset] | None = None,
-        metadata: dict[str, Any] | None = None,
+        metadata: Mapping[str, Any] | None = None,
         _sequence: Sequence | None,
         _client: "client.Client | None",
     ):
@@ -1386,7 +1642,7 @@ class SequenceRevision(FlixType):
         self.imported = imported
         self.task_id = task_id
         self.source_files = source_files or []
-        self.metadata: dict[str, Any] = metadata or {}
+        self.metadata = Metadata(metadata, parent=self, _client=_client)
 
     @classmethod
     def from_dict(
@@ -1410,7 +1666,7 @@ class SequenceRevision(FlixType):
         into.imported = data.get("imported", False)
         into.task_id = data.get("task_id")
         into.source_files = [Asset.from_dict(asset, _client=_client) for asset in data.get("source_files") or []]
-        into.metadata = data.get("meta_data") or {}
+        into.metadata = Metadata.from_dict(data.get("metadata"), parent=into, _client=_client)
         return into
 
     def to_dict(self) -> models.SequenceRevision:
@@ -1418,7 +1674,7 @@ class SequenceRevision(FlixType):
             comment=self.comment,
             revisioned_panels=[panel.to_dict() for panel in self.panels],
             source_files=[asset.to_dict() for asset in self.source_files],
-            meta_data=self.metadata,
+            metadata=self.metadata.to_dict(),
         )
         if self.show_id is not None:
             revision["show_id"] = self.show_id

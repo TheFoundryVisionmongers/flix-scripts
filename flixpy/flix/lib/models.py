@@ -1,6 +1,14 @@
 from typing import TypedDict, Any
 
 
+class MetadataField(TypedDict, total=False):
+    name: str
+    value: Any
+    value_type: str
+    created_date: str
+    modified_date: str
+
+
 class Group(TypedDict, total=False):
     id: int
     title: str
@@ -33,6 +41,7 @@ class User(TypedDict, total=False):
     is_third_party: bool
     type: str
     username: str
+    metadata: list[MetadataField]
 
 
 class Hash(TypedDict, total=False):
@@ -73,7 +82,7 @@ class Sequence(TypedDict, total=False):
     panel_revision_count: int
     deleted: bool
     hidden: bool
-    meta_data: dict[str, Any]
+    metadata: list[MetadataField]
     tracking_code: str
 
 
@@ -84,7 +93,7 @@ class Episode(TypedDict, total=False):
     owner: User
     description: str
     title: str
-    meta_data: dict[str, Any]
+    metadata: list[MetadataField]
     tracking_code: str
     sequences: list[Sequence]
 
@@ -106,7 +115,7 @@ class SequenceRevision(TypedDict, total=False):
     revision: int
     owner: User
     created_date: str
-    meta_data: dict[str, Any]
+    metadata: list[MetadataField]
     revisioned_panels: list[RevisionedPanel]
     comment: str
     published: bool
@@ -127,7 +136,7 @@ class Show(TypedDict, total=False):
     frame_rate: float
     groups: list[Group]
     hidden: bool
-    metadata: dict[str, Any]
+    metadata: list[MetadataField]
     owner: User
     show_thumbnail_id: int
     title: str
@@ -199,7 +208,7 @@ class PanelRevision(TypedDict, total=False):
     revision_number: int
     created_date: str
     modified_date: str
-    metadata: dict[str, Any]
+    metadata: list[MetadataField]
     asset: Asset
     owner: User
     published: int | None
