@@ -1,3 +1,4 @@
+import base64
 import dataclasses
 import datetime
 import enum
@@ -176,6 +177,29 @@ class MediaObjectStatus(enum.Enum):
 
 
 @dataclasses.dataclass
+class MediaObjectHash:
+    value: str
+    source_type: str
+    data: bytes | None
+
+    @classmethod
+    def from_dict(cls, data: models.Hash) -> "MediaObjectHash":
+        return cls(
+            value=data["value"],
+            source_type=data["source_type"],
+            data=base64.b64decode(data["data"]) if data.get("data") else None,
+        )
+
+    def to_dict(self) -> models.Hash:
+        h = models.Hash(
+            value=self.value,
+            source_type=self.source_type,
+        )
+        if self.data is not None:
+            h["data"] = base64.b64encode(self.data).decode()
+        return h
+
+
 class MediaObject(FlixType):
     def __init__(
         self,
@@ -184,7 +208,7 @@ class MediaObject(FlixType):
         filename: str = "",
         content_type: str = "",
         content_length: int = 0,
-        content_hash: str = "",
+        content_hashes: list[MediaObjectHash] | None = None,
         created_date: datetime.datetime | None = None,
         status: MediaObjectStatus = MediaObjectStatus.INITIALIZED,
         owner: User | None = None,
@@ -199,8 +223,8 @@ class MediaObject(FlixType):
         self.filename = filename
         self.content_type = content_type
         self.content_length = content_length
-        self.content_hash = content_hash
-        self.created_date = created_date or datetime.datetime.utcnow()
+        self.content_hashes = content_hashes or []
+        self.created_date = created_date or datetime.datetime.now(datetime.timezone.utc)
         self.status = status
         self.owner = owner
         self.asset_type = asset_type
@@ -217,7 +241,7 @@ class MediaObject(FlixType):
         into.filename = data.get("name", "")
         into.content_type = data.get("content_type", "")
         into.content_length = data.get("content_length", 0)
-        into.content_hash = data.get("content_hash", "")
+        into.content_hashes = [MediaObjectHash.from_dict(h) for h in data.get("content_hashes") or []]
         into.created_date = dateutil.parser.parse(data["created_date"])
         into.status = MediaObjectStatus(data["status"]) if data.get("status") else MediaObjectStatus.INITIALIZED
         into.owner = User.from_dict(data["owner"], _client=_client) if data.get("owner") else None

@@ -35,13 +35,19 @@ class User(TypedDict, total=False):
     username: str
 
 
+class Hash(TypedDict, total=False):
+    value: str
+    source_type: str
+    data: str
+
+
 class MediaObject(TypedDict, total=False):
     id: int
     asset_id: int
     name: str
     content_type: str
     content_length: int
-    content_hash: str
+    content_hashes: list[Hash]
     created_date: str
     status: int
     owner: User
