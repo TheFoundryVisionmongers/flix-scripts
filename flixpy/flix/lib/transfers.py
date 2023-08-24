@@ -168,26 +168,26 @@ async def transfer(
 
     servers = await flix_client.servers()
     server: "types.Server" = random.choice(servers)
-    channel = get_channel(server.hostname, server.transfer_port, access_key)
-    metadata = json.dumps(
-        {
-            "AssetID": asset_id,
-            "MediaObjectID": media_object_id,
-            "Filepath": filepath,
-        }
-    ).encode()
+    async with get_channel(server.hostname, server.transfer_port, access_key) as channel:
+        metadata = json.dumps(
+            {
+                "AssetID": asset_id,
+                "MediaObjectID": media_object_id,
+                "Filepath": filepath,
+            }
+        ).encode()
 
-    stub = transfer_pb2_grpc.FileTransferStub(channel)
-    if TYPE_CHECKING:
-        async_stub = cast(transfer_pb2_grpc.FileTransferAsyncStub, stub)
-    else:
-        async_stub = stub
+        stub = transfer_pb2_grpc.FileTransferStub(channel)
+        if TYPE_CHECKING:
+            async_stub = cast(transfer_pb2_grpc.FileTransferAsyncStub, stub)
+        else:
+            async_stub = stub
 
-    async for resp in async_stub.Transfer(
-        streamer(metadata),
-        metadata=grpc.aio.Metadata(("x-flix-metadata", metadata)),
-    ):
-        yield resp
+        async for resp in async_stub.Transfer(
+            streamer(metadata),
+            metadata=grpc.aio.Metadata(("x-flix-metadata", metadata)),
+        ):
+            yield resp
 
 
 async def upload(
