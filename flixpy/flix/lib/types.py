@@ -149,7 +149,7 @@ class User(FlixType):
         self.password = password
         self.email = email
         self.groups = groups or []
-        self.created_date: datetime.datetime = created_date or datetime.datetime.utcnow()
+        self.created_date: datetime.datetime = created_date or datetime.datetime.now(datetime.timezone.utc)
         self.user_type = user_type
         self.is_admin = is_admin
         self.is_system = is_system
@@ -389,7 +389,7 @@ class Sequence(FlixType):
         self.sequence_id = sequence_id
         self.tracking_code = tracking_code
         self.description = description
-        self.created_date: datetime.datetime = created_date or datetime.datetime.utcnow()
+        self.created_date: datetime.datetime = created_date or datetime.datetime.now(datetime.timezone.utc)
         self.owner = owner
         self.revision_count = revision_count
         self.panel_revision_count = panel_revision_count
@@ -574,7 +574,7 @@ class Asset(FlixType):
         super().__init__(_client)
         self.asset_id = asset_id
         self.show_id = show_id
-        self.created_date = created_date or datetime.datetime.utcnow()
+        self.created_date = created_date or datetime.datetime.now(datetime.timezone.utc)
         self.owner = owner
         self.media_objects = media_objects or {}
 
@@ -666,8 +666,8 @@ class ContactSheet(FlixType):
         self.contactsheet_id = contactsheet_id
         self.name = name
         self.owner = owner
-        self.created_date: datetime.datetime = created_date or datetime.datetime.utcnow()
-        self.modified_date: datetime.datetime = modified_date or datetime.datetime.utcnow()
+        self.created_date: datetime.datetime = created_date or datetime.datetime.now(datetime.timezone.utc)
+        self.modified_date: datetime.datetime = modified_date or datetime.datetime.now(datetime.timezone.utc)
 
         self.orientation = orientation
         self.width = width
@@ -769,8 +769,8 @@ class Show(FlixType):
         self.show_thumbnail_id = show_thumbnail_id
         self.hidden = hidden
         self.owner = owner
-        self.created_date: datetime.datetime = created_date or datetime.datetime.utcnow()
         self.metadata = metadata or {}
+        self.created_date: datetime.datetime = created_date or datetime.datetime.now(datetime.timezone.utc)
 
     @classmethod
     def from_dict(
@@ -1180,8 +1180,8 @@ class PanelRevision(FlixType):
         self.keyframes = keyframes or []
         self.related_panels = related_panels or []
         self.revision_counter = revision_counter
-        self.created_date: datetime.datetime = created_date or datetime.datetime.utcnow()
-        self.modified_date: datetime.datetime = modified_date or datetime.datetime.utcnow()
+        self.created_date: datetime.datetime = created_date or datetime.datetime.now(datetime.timezone.utc)
+        self.modified_date: datetime.datetime = modified_date or datetime.datetime.now(datetime.timezone.utc)
         self.owner = owner
         self.published = published
         self.latest_open_comment = latest_open_comment
@@ -1381,7 +1381,7 @@ class SequenceRevision(FlixType):
         self.panels = panels or []
         self.comment = comment
         self.owner = owner
-        self.created_date: datetime.datetime = created_date or datetime.datetime.utcnow()
+        self.created_date: datetime.datetime = created_date or datetime.datetime.now(datetime.timezone.utc)
         self.published = published
         self.imported = imported
         self.task_id = task_id
