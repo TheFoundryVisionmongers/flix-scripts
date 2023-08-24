@@ -596,12 +596,25 @@ async def export_yaml(ctx: click.Context, anonymize: bool, include_assets: bool)
         await download_file(yaml_media_object)
 
 
-def main() -> Any:
+async def _main() -> Any:
     try:
-        return flix_cli(auto_envvar_prefix="FLIX", _anyio_backend="asyncio")
+        # disable standalone mode to prevent click from calling sys.exit
+        # as a workaround for https://github.com/grpc/grpc/issues/34139
+        # the downside is we have to handle click exceptions manually
+        return await flix_cli.main(auto_envvar_prefix="FLIX", standalone_mode=False)
+    except click.ClickException as e:
+        e.show()
+        return e.exit_code
+    except (click.Abort, EOFError, KeyboardInterrupt):
+        click.echo("Aborted!", err=True)
+        return 1
     except errors.FlixHTTPError as e:
         click.echo(str(e), err=True)
         return 1
+
+
+def main() -> Any:
+    return asyncio.run(_main())
 
 
 if __name__ == "__main__":
