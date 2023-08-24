@@ -505,7 +505,7 @@ async def choose_sequence_revision(
                 forms.Choice(
                     rev,
                     f"{rev.comment or '[No comment]'} - {rev.owner.username if rev.owner is not None else ''} "
-                    "({rev.created_date})",
+                    f"({rev.created_date})",
                 )
                 for rev in revs
             ],
@@ -555,12 +555,21 @@ async def export_quicktime(ctx: click.Context, include_dialogue: bool) -> None:
 
 
 @export.command("dialogue", help="Export the dialogue of a sequence revision as a text file.")
+@click.option(
+    "--file-format",
+    type=click.Choice(["srt", "avid"]),
+    default="srt",
+    help="The file format to use for the exported dialogue.",
+)
 @click.pass_context
-async def export_dialogue(ctx: click.Context) -> None:
+async def export_dialogue(ctx: click.Context, file_format: str) -> None:
     async with await get_client(ctx) as flix_client:
         _, _, rev = await choose_sequence_revision(flix_client)
-        clip_name = click.prompt("Avid clip name", type=str, err=True)
-        dialogue_media_object = await rev.export_dialogue(clip_name)
+        clip_name = click.prompt("Avid clip name", type=str, err=True) if file_format == "avid" else ""
+        dialogue_media_object = await rev.export_dialogue(
+            file_format=types.DialogueFormat(file_format),
+            clip_name=clip_name,
+        )
         await download_file(dialogue_media_object)
 
 
