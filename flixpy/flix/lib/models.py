@@ -158,6 +158,11 @@ class OriginSBP(TypedDict, total=False):
     layer_transform_hash: str | None
 
 
+class OriginFCPXML(TypedDict, total=False):
+    editorial_id: str
+    effect_hash: str
+
+
 class DuplicateRef(TypedDict, total=False):
     panel_id: int
     panel_revision: int
@@ -204,6 +209,7 @@ class PanelRevision(TypedDict, total=False):
     origin: str
     origin_avid: OriginAvid
     origin_sbp: OriginSBP
+    origin_fcpxml: OriginFCPXML
     keyframes: list[Keyframe]
     layer_transform: bool
     duplicate: DuplicateRef

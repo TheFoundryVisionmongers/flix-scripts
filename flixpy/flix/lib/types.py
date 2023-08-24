@@ -18,6 +18,7 @@ __all__ = [
     "GroupRolePair",
     "User",
     "MediaObjectStatus",
+    "MediaObjectHash",
     "MediaObject",
     "Episode",
     "Sequence",
@@ -32,6 +33,7 @@ __all__ = [
     "PanelComment",
     "OriginSBP",
     "OriginAvid",
+    "OriginFCPXML",
     "DuplicateRef",
     "PanelRevision",
     "SequencePanel",
@@ -1095,6 +1097,27 @@ class OriginAvid:
 
 
 @dataclasses.dataclass
+class OriginFCPXML:
+    effect_hash: str | None
+    editorial_id: str | None
+
+    @staticmethod
+    def from_dict(data: models.OriginFCPXML) -> "OriginFCPXML":
+        return OriginFCPXML(
+            effect_hash=data.get("effect_hash"),
+            editorial_id=data.get("editorial_id"),
+        )
+
+    def to_dict(self) -> models.OriginFCPXML:
+        origin = models.OriginFCPXML()
+        if self.effect_hash:
+            origin["effect_hash"] = self.effect_hash
+        if self.editorial_id:
+            origin["editorial_id"] = self.editorial_id
+        return origin
+
+
+@dataclasses.dataclass
 class DuplicateRef:
     panel_id: int
     panel_revision: int
@@ -1137,6 +1160,7 @@ class PanelRevision(FlixType):
         latest_open_comment: PanelComment | None = None,
         origin_sbp: OriginSBP | None = None,
         origin_avid: OriginAvid | None = None,
+        origin_fcpxml: OriginFCPXML | None = None,
         layer_transform: bool = False,
         duplicate: DuplicateRef | None = None,
         metadata: dict[str, Any] | None = None,
@@ -1162,6 +1186,7 @@ class PanelRevision(FlixType):
         self.latest_open_comment = latest_open_comment
         self.origin_sbp = origin_sbp
         self.origin_avid = origin_avid
+        self.origin_fcpxml = origin_fcpxml
         self.layer_transform = layer_transform
         self.duplicate = duplicate
         self.metadata: dict[str, Any] = metadata or {}
@@ -1201,6 +1226,7 @@ class PanelRevision(FlixType):
         )
         into.origin_sbp = OriginSBP.from_dict(data["origin_sbp"]) if data.get("origin_sbp") else None
         into.origin_avid = OriginAvid.from_dict(data["origin_avid"]) if data.get("origin_avid") else None
+        into.origin_fcpxml = OriginFCPXML.from_dict(data["origin_fcpxml"]) if data.get("origin_fcpxml") else None
         into.layer_transform = data.get("layer_transform", False)
         into.duplicate = DuplicateRef.from_dict(data["duplicate"]) if data.get("duplicate") else None
         into.metadata = data.get("metadata") or {}
