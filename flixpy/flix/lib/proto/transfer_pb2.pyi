@@ -34,7 +34,7 @@ class TransferReq(google.protobuf.message.Message):
             ValueType = typing.NewType("ValueType", builtins.int)
             V: typing_extensions.TypeAlias = ValueType
 
-        class _StartActionEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[TransferReq.StartMessage._StartAction.ValueType], builtins.type):  # noqa: F821
+        class _StartActionEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[TransferReq.StartMessage._StartAction.ValueType], builtins.type):
             DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
             UPLOAD: TransferReq.StartMessage._StartAction.ValueType  # 0
             DOWNLOAD: TransferReq.StartMessage._StartAction.ValueType  # 1
@@ -49,7 +49,7 @@ class TransferReq(google.protobuf.message.Message):
             ValueType = typing.NewType("ValueType", builtins.int)
             V: typing_extensions.TypeAlias = ValueType
 
-        class _StartStateEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[TransferReq.StartMessage._StartState.ValueType], builtins.type):  # noqa: F821
+        class _StartStateEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[TransferReq.StartMessage._StartState.ValueType], builtins.type):
             DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
             NEW: TransferReq.StartMessage._StartState.ValueType  # 0
             """NEW is for when this transfer is new and requires initialising."""
@@ -121,7 +121,7 @@ class TransferReq(google.protobuf.message.Message):
             ValueType = typing.NewType("ValueType", builtins.int)
             V: typing_extensions.TypeAlias = ValueType
 
-        class _DataActionEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[TransferReq.DataMessage._DataAction.ValueType], builtins.type):  # noqa: F821
+        class _DataActionEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[TransferReq.DataMessage._DataAction.ValueType], builtins.type):
             DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
             DATA: TransferReq.DataMessage._DataAction.ValueType  # 0
             """DATA indicates this message is providing data."""
@@ -164,7 +164,7 @@ class TransferReq(google.protobuf.message.Message):
             ValueType = typing.NewType("ValueType", builtins.int)
             V: typing_extensions.TypeAlias = ValueType
 
-        class _CloseStatusEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[TransferReq.CloseMessage._CloseStatus.ValueType], builtins.type):  # noqa: F821
+        class _CloseStatusEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[TransferReq.CloseMessage._CloseStatus.ValueType], builtins.type):
             DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
             COMPLETE: TransferReq.CloseMessage._CloseStatus.ValueType  # 0
             """COMPLETE is when the transfer has completed successfully."""
@@ -235,7 +235,7 @@ class TransferResp(google.protobuf.message.Message):
             ValueType = typing.NewType("ValueType", builtins.int)
             V: typing_extensions.TypeAlias = ValueType
 
-        class _RespStatusEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[TransferResp.RecvResp._RespStatus.ValueType], builtins.type):  # noqa: F821
+        class _RespStatusEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[TransferResp.RecvResp._RespStatus.ValueType], builtins.type):
             DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
             SUCCESS: TransferResp.RecvResp._RespStatus.ValueType  # 0
             ERROR: TransferResp.RecvResp._RespStatus.ValueType  # 1

@@ -279,6 +279,7 @@ _MESSAGE_TYPES: dict[MessageType, Type[KnownWebsocketMessage]] = {
 
 WebsocketSelf = TypeVar("WebsocketSelf", bound="Websocket")
 WebsocketMessageType = TypeVar("WebsocketMessageType", bound="WebsocketMessage")
+AssetCreatedMessageType = TypeVar("AssetCreatedMessageType", bound="AssetCreatedMessage")
 
 
 class ChainWaiter(Generic[WebsocketMessageType]):
