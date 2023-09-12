@@ -39,7 +39,7 @@ class Extension:
     """This class provides functions for interacting with the Flix Client, useful for implementing extensions that
     communicate with Flix.
 
-    The class is best used as an extension manager in a with statement::
+    The class is best used as a context manager in a with statement::
 
         with Extension("My Extension", client_uid="97c8fd5d-c1f8-4561-9268-8701b5fa48d4") as extension:
             await extension.import_panels(["/path/to/image.png"])
