@@ -4,3 +4,6 @@ from .lib.signing import *
 from .lib.types import *
 from .lib.webhooks import *
 from .lib.websocket import *
+
+from .extension.client import *
+from .extension.types import *
