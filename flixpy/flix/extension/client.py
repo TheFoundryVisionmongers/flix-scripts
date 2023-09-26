@@ -1,8 +1,11 @@
+import asyncio
 from types import TracebackType
 
-from typing import TypeVar, cast
+from typing import TypeVar, cast, Any
 
+import aiohttp
 import httpx
+import socketio
 
 from ..lib import errors
 
@@ -71,6 +74,40 @@ class Extension:
         self.base_url = base_url
         self._client = extension_api.Client(base_url=self.base_url)
         self._registered_client: extension_api.AuthenticatedClient | None = None
+        self.sio = socketio.AsyncClient()
+        self._register_events()
+
+    def _register_events(self):
+        self.sio.on("message", self._on_message)
+        self.sio.on("connect", self._on_connect)
+        self.sio.on("disconnect", self._on_disconnect)
+        self.sio.on("unauthorised", self._on_unauthorized)
+
+    async def _on_connect(self) -> None:
+        from .extension_api.models import event_type, event_subscribe_data
+
+        print("connected")
+        events = event_subscribe_data.EventSubscribeData(
+            event_types=[
+                event_type.EventType.PROJECT,
+                event_type.EventType.OPEN,
+            ],
+        )
+        await self.sio.emit("subscribe", data=events.to_dict())
+
+    async def _on_disconnect(self) -> None:
+        print("disconnected")
+
+    async def _on_message(self, data: dict[str, Any]) -> None:
+        from .extension_api.models import websocket_event, extension_open_file_data, event_type
+
+        event = websocket_event.WebsocketEvent.from_dict(data)
+        if event.data.type == event_type.EventType.OPEN:
+            open_event = extension_open_file_data.ExtensionOpenFileData.from_dict(event.data.data)
+            print(open_event)
+
+    async def _on_unauthorized(self, data: dict[str, Any]) -> None:
+        print("unauthorized:", data)
 
     async def register(self) -> None:
         """Registers the extension with the Flix Client.
@@ -79,7 +116,8 @@ class Extension:
         when attempting to use a method that requires authorisation, but it can be useful if you want to ensure
         that the registration succeeded before continuing with further initialisation of your extension.
         """
-        await self._get_registered_client()
+        registered_client = await self._get_registered_client()
+        await self.sio.connect(self.base_url, auth={"token": registered_client.token})
 
     async def _get_registered_client(self) -> extension_api.AuthenticatedClient:
         if self._registered_client is not None:
@@ -220,3 +258,12 @@ class Extension:
         await self._client.__aexit__(exc_type, exc_val, exc_tb)
         if self._registered_client is not None:
             await self._registered_client.__aexit__(exc_type, exc_val, exc_tb)
+
+
+async def main():
+    async with Extension("My test extension", "1234567890") as ext:
+        await asyncio.sleep(1000)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
