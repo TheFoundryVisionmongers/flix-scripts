@@ -387,3 +387,76 @@ components:
         - episode
         - sequence
         - sequenceRevision
+    EventType:
+      type: string
+      enum:
+        - PING
+        - ACTION
+        - PUBLISH
+        - OPEN
+        - PROJECT
+    WebsocketEvent:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            type:
+              $ref: "#/components/schemas/EventType"
+            data:
+              type: object
+          required:
+            - type
+            - data
+      required:
+        - data
+    EventSubscribeData:
+      type: object
+      properties:
+        eventTypes:
+          type: array
+          items:
+            $ref: "#/components/schemas/EventType"
+      required:
+        - eventTypes
+    ExtensionOpenFileData:
+      type: object
+      properties:
+        project:
+          $ref: "#/components/schemas/ProjectIds"
+        panels:
+          $ref: "#/components/schemas/ExtensionOpenFilePanelData"
+      required:
+        - project
+        - panels
+    ProjectIds:
+      type: object
+      properties:
+        showId:
+          type: integer
+        episodeId:
+          type: integer
+          nullable: true
+        sequenceId:
+          type: integer
+        sequenceRevisionId:
+          type: integer
+    ExtensionOpenFilePanelData:
+      type: object
+      properties:
+        id:
+          type: integer
+        assetId:
+          type: integer
+        isAnimated:
+          type: boolean
+        hasSourceFile:
+          type: boolean
+        annotationAssetId:
+          type: integer
+          nullable: true
+      required:
+        - id
+        - assetId
+        - isAnimated
+        - hasSourceFile
