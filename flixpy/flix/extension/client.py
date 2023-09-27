@@ -1,9 +1,9 @@
 import asyncio
+import logging
 from types import TracebackType
 
 from typing import TypeVar, cast, Any
 
-import aiohttp
 import httpx
 import socketio
 
@@ -13,6 +13,8 @@ from . import extension_api
 from .extension_api import models, types as api_types
 
 from . import types
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     "Extension",
@@ -72,6 +74,8 @@ class Extension:
         self.client_uid = client_uid
         self.version = version
         self.base_url = base_url
+        self.online = False
+
         self._client = extension_api.Client(base_url=self.base_url)
         self._registered_client: extension_api.AuthenticatedClient | None = None
         self.sio = socketio.AsyncClient()
@@ -86,7 +90,7 @@ class Extension:
     async def _on_connect(self) -> None:
         from .extension_api.models import event_type, event_subscribe_data
 
-        print("connected")
+        logger.info("connected to Flix Client, subscribing to events")
         events = event_subscribe_data.EventSubscribeData(
             event_types=[
                 event_type.EventType.PROJECT,
@@ -96,18 +100,40 @@ class Extension:
         await self.sio.emit("subscribe", data=events.to_dict())
 
     async def _on_disconnect(self) -> None:
-        print("disconnected")
+        logger.warning("disconnected from Flix Client")
+        self.online = False
 
     async def _on_message(self, data: dict[str, Any]) -> None:
         from .extension_api.models import websocket_event, extension_open_file_data, event_type
 
-        event = websocket_event.WebsocketEvent.from_dict(data)
-        if event.data.type == event_type.EventType.OPEN:
-            open_event = extension_open_file_data.ExtensionOpenFileData.from_dict(event.data.data)
-            print(open_event)
+        # set online here rather than in _on_connect, since we still get a connect event if unauthorised
+        self.online = True
 
-    async def _on_unauthorized(self, data: dict[str, Any]) -> None:
-        print("unauthorized:", data)
+        event = websocket_event.WebsocketEvent.from_dict(data)
+        logger.debug("got event from Flix Client: %s", event)
+        if event.data.type == event_type.EventType.OPEN:
+            open_event = extension_open_file_data.ExtensionOpenFileData.from_dict(event.data.data.additional_properties)
+            logger.debug("got open event: %s", open_event)
+
+    async def _on_unauthorized(self) -> None:
+        logger.warning("extension is unauthorised, attempting to re-register")
+        # connect in background
+        asyncio.create_task(self._try_connect())
+
+    async def _try_connect(self) -> None:
+        await self.sio.disconnect()
+        self._registered_client = None
+        while True:
+            try:
+                registered_client = await self._get_registered_client()
+            except (errors.FlixError, httpx.HTTPError):
+                logger.exception("could not connect to client, waiting 10 seconds before retrying...")
+                await asyncio.sleep(10)
+                continue
+
+            break
+
+        await self.sio.connect(self.base_url, auth={"token": registered_client.token})
 
     async def register(self) -> None:
         """Registers the extension with the Flix Client.
@@ -116,8 +142,8 @@ class Extension:
         when attempting to use a method that requires authorisation, but it can be useful if you want to ensure
         that the registration succeeded before continuing with further initialisation of your extension.
         """
-        registered_client = await self._get_registered_client()
-        await self.sio.connect(self.base_url, auth={"token": registered_client.token})
+        # TODO: do we really want to block until successfully connected here?
+        await self._try_connect()
 
     async def _get_registered_client(self) -> extension_api.AuthenticatedClient:
         if self._registered_client is not None:
@@ -241,6 +267,7 @@ class Extension:
     async def close(self) -> None:
         """Closes the underlying HTTP clients."""
         await self._client.get_async_httpx_client().aclose()
+        await self.sio.disconnect()
         if self._registered_client is not None:
             await self._registered_client.get_async_httpx_client().aclose()
 
@@ -256,14 +283,17 @@ class Extension:
         exc_tb: TracebackType | None,
     ) -> None:
         await self._client.__aexit__(exc_type, exc_val, exc_tb)
+        await self.sio.disconnect()
         if self._registered_client is not None:
             await self._registered_client.__aexit__(exc_type, exc_val, exc_tb)
 
 
 async def main():
-    async with Extension("My test extension", "1234567890") as ext:
+    async with Extension("My test extension", "fab1215c-0ac3-4044-8ef8-70996a4d7b52") as ext:
         await asyncio.sleep(1000)
 
 
 if __name__ == "__main__":
+    logging.basicConfig()
+    logger.setLevel(logging.DEBUG)
     asyncio.run(main())
