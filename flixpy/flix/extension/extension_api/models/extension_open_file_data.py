@@ -16,17 +16,21 @@ class ExtensionOpenFileData:
     """
     Attributes:
         project (ProjectIds):
-        panels (ExtensionOpenFilePanelData):
+        panels (List['ExtensionOpenFilePanelData']):
     """
 
     project: "ProjectIds"
-    panels: "ExtensionOpenFilePanelData"
+    panels: List["ExtensionOpenFilePanelData"]
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
         project = self.project.to_dict()
 
-        panels = self.panels.to_dict()
+        panels = []
+        for panels_item_data in self.panels:
+            panels_item = panels_item_data.to_dict()
+
+            panels.append(panels_item)
 
         field_dict: Dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -47,7 +51,12 @@ class ExtensionOpenFileData:
         d = src_dict.copy()
         project = ProjectIds.from_dict(d.pop("project"))
 
-        panels = ExtensionOpenFilePanelData.from_dict(d.pop("panels"))
+        panels = []
+        _panels = d.pop("panels")
+        for panels_item_data in _panels:
+            panels_item = ExtensionOpenFilePanelData.from_dict(panels_item_data)
+
+            panels.append(panels_item)
 
         extension_open_file_data = cls(
             project=project,

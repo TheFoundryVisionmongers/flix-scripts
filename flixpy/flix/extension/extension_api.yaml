@@ -425,7 +425,9 @@ components:
         project:
           $ref: "#/components/schemas/ProjectIds"
         panels:
-          $ref: "#/components/schemas/ExtensionOpenFilePanelData"
+          type: array
+          items:
+            $ref: "#/components/schemas/ExtensionOpenFilePanelData"
       required:
         - project
         - panels
