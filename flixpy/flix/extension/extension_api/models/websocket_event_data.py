@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Type, TypeVar
+from typing import TYPE_CHECKING, Any, Dict, List, Type, TypeVar, Union
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -6,7 +6,11 @@ from attrs import field as _attrs_field
 from ..models.event_type import EventType
 
 if TYPE_CHECKING:
-    from ..models.websocket_event_data_data import WebsocketEventDataData
+    from ..models.action_event import ActionEvent
+    from ..models.open_event import OpenEvent
+    from ..models.ping_event import PingEvent
+    from ..models.project_details_dto import ProjectDetailsDto
+    from ..models.unknown_event import UnknownEvent
 
 
 T = TypeVar("T", bound="WebsocketEventData")
@@ -17,17 +21,37 @@ class WebsocketEventData:
     """
     Attributes:
         type (EventType):
-        data (WebsocketEventDataData):
+        data (Union['ActionEvent', 'OpenEvent', 'PingEvent', 'ProjectDetailsDto', 'UnknownEvent']):
     """
 
     type: EventType
-    data: "WebsocketEventDataData"
+    data: Union["ActionEvent", "OpenEvent", "PingEvent", "ProjectDetailsDto", "UnknownEvent"]
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
+        from ..models.action_event import ActionEvent
+        from ..models.open_event import OpenEvent
+        from ..models.ping_event import PingEvent
+        from ..models.project_details_dto import ProjectDetailsDto
+
         type = self.type.value
 
-        data = self.data.to_dict()
+        data: Dict[str, Any]
+
+        if isinstance(self.data, ActionEvent):
+            data = self.data.to_dict()
+
+        elif isinstance(self.data, ProjectDetailsDto):
+            data = self.data.to_dict()
+
+        elif isinstance(self.data, OpenEvent):
+            data = self.data.to_dict()
+
+        elif isinstance(self.data, PingEvent):
+            data = self.data.to_dict()
+
+        else:
+            data = self.data.to_dict()
 
         field_dict: Dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -42,12 +66,57 @@ class WebsocketEventData:
 
     @classmethod
     def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
-        from ..models.websocket_event_data_data import WebsocketEventDataData
+        from ..models.action_event import ActionEvent
+        from ..models.open_event import OpenEvent
+        from ..models.ping_event import PingEvent
+        from ..models.project_details_dto import ProjectDetailsDto
+        from ..models.unknown_event import UnknownEvent
 
         d = src_dict.copy()
         type = EventType(d.pop("type"))
 
-        data = WebsocketEventDataData.from_dict(d.pop("data"))
+        def _parse_data(
+            data: object,
+        ) -> Union["ActionEvent", "OpenEvent", "PingEvent", "ProjectDetailsDto", "UnknownEvent"]:
+            try:
+                if not isinstance(data, dict):
+                    raise TypeError()
+                data_type_0 = ActionEvent.from_dict(data)
+
+                return data_type_0
+            except:  # noqa: E722
+                pass
+            try:
+                if not isinstance(data, dict):
+                    raise TypeError()
+                data_type_1 = ProjectDetailsDto.from_dict(data)
+
+                return data_type_1
+            except:  # noqa: E722
+                pass
+            try:
+                if not isinstance(data, dict):
+                    raise TypeError()
+                data_type_2 = OpenEvent.from_dict(data)
+
+                return data_type_2
+            except:  # noqa: E722
+                pass
+            try:
+                if not isinstance(data, dict):
+                    raise TypeError()
+                data_type_3 = PingEvent.from_dict(data)
+
+                return data_type_3
+            except:  # noqa: E722
+                pass
+            if not isinstance(data, dict):
+                raise TypeError()
+            data_type_4 = UnknownEvent.from_dict(data)
+
+            return data_type_4
+
+        data = _parse_data(d.pop("data"))
 
         websocket_event_data = cls(
             type=type,

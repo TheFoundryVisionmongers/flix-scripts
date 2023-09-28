@@ -8,11 +8,11 @@ if TYPE_CHECKING:
     from ..models.project_ids import ProjectIds
 
 
-T = TypeVar("T", bound="ExtensionOpenFileData")
+T = TypeVar("T", bound="OpenEvent")
 
 
 @_attrs_define
-class ExtensionOpenFileData:
+class OpenEvent:
     """
     Attributes:
         project (ProjectIds):
@@ -58,13 +58,13 @@ class ExtensionOpenFileData:
 
             panels.append(panels_item)
 
-        extension_open_file_data = cls(
+        open_event = cls(
             project=project,
             panels=panels,
         )
 
-        extension_open_file_data.additional_properties = d
-        return extension_open_file_data
+        open_event.additional_properties = d
+        return open_event
 
     @property
     def additional_keys(self) -> List[str]:

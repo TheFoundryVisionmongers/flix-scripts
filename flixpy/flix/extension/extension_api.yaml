@@ -404,13 +404,18 @@ components:
             type:
               $ref: "#/components/schemas/EventType"
             data:
-              type: object
+              oneOf:
+                - $ref: "#/components/schemas/ActionEvent"
+                - $ref: "#/components/schemas/ProjectEvent"
+                - $ref: "#/components/schemas/OpenEvent"
+                - $ref: "#/components/schemas/PingEvent"
+                - $ref: "#/components/schemas/UnknownEvent"
           required:
             - type
             - data
       required:
         - data
-    EventSubscribeData:
+    SubscribeEvent:
       type: object
       properties:
         eventTypes:
@@ -419,7 +424,49 @@ components:
             $ref: "#/components/schemas/EventType"
       required:
         - eventTypes
-    ExtensionOpenFileData:
+    UnknownEvent:
+      type: object
+    PingEvent:
+      type: object
+      properties:
+        apiClientId:
+          type: integer
+      required:
+        - apiClientId
+    ProjectEvent:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/ProjectDetailsDto"
+    ActionEvent:
+      type: object
+      properties:
+        apiClientId:
+          type: integer
+          nullable: true
+        state:
+          $ref: "#/components/schemas/ActionState"
+        action:
+          $ref: "#/components/schemas/ActionType"
+        actionId:
+          type: integer
+      required:
+        - apiClientId
+        - state
+        - action
+        - actionId
+    ActionState:
+      type: string
+      enum:
+        - completed
+        - progress
+        - error
+        - started
+    ActionType:
+      type: string
+      enum:
+        - PANEL_CREATE
+        - PANEL_UPDATE
+    OpenEvent:
       type: object
       properties:
         project:
