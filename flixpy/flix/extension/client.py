@@ -1,5 +1,7 @@
 import asyncio
 import logging
+import weakref
+from collections.abc import AsyncIterable, AsyncIterator, Coroutine
 from types import TracebackType
 
 from typing import TypeVar, cast, Any
@@ -38,6 +40,66 @@ def _assert_response(expect: type[T], resp: api_types.Response[U]) -> T:
         return cast(T, resp.parsed)
 
     raise errors.FlixError("expected response type {}, got: {!r}".format(expect, resp.content))
+
+
+_ET = TypeVar("_ET", bound=types.Event, covariant=True)
+
+
+class EventQueue(AsyncIterable[_ET]):
+    def __init__(self, ext: "Extension", *event_types: type[_ET]):
+        self._ext = ext
+        self._queue: asyncio.Queue[types.Event] | None = asyncio.Queue()
+        self._event_types = event_types
+
+        self._done = asyncio.Future[None]()
+        self._ext.register_queue(self)
+
+    def put(self, event: types.Event) -> None:
+        if self._queue is not None:
+            self._queue.put_nowait(event)
+
+    def close(self) -> None:
+        self._ext.unregister_queue(self)
+        self._done.cancel()
+        self._queue = None
+
+    async def __aenter__(self) -> "EventQueue[_ET]":
+        return self
+
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        self.close()
+
+    async def _until_cancelled(self, cor: Coroutine[Any, Any, T]) -> T:
+        """Waits for the given coroutine to complete and returns the result,
+        or raises a CancelledError if self._done is cancelled."""
+        task = asyncio.create_task(cor)
+
+        def _cancel(f: asyncio.Future[None]) -> None:
+            task.cancel()
+
+        self._done.add_done_callback(_cancel)
+        try:
+            return await task
+        finally:
+            self._done.remove_done_callback(_cancel)
+
+    async def __aiter__(self) -> AsyncIterator[_ET]:
+        while self._queue is not None:
+            try:
+                event = await self._until_cancelled(self._queue.get())
+            except asyncio.CancelledError:
+                break
+
+            if isinstance(event, self._event_types):
+                yield cast(_ET, event)
+
+            if self._queue is not None:
+                self._queue.task_done()
 
 
 class Extension:
@@ -80,21 +142,22 @@ class Extension:
         self._registered_client: extension_api.AuthenticatedClient | None = None
         self.sio = socketio.AsyncClient()
         self._register_events()
+        self._queues = weakref.WeakSet[EventQueue[types.Event]]()
 
-    def _register_events(self):
+    def _register_events(self) -> None:
         self.sio.on("message", self._on_message)
         self.sio.on("connect", self._on_connect)
         self.sio.on("disconnect", self._on_disconnect)
         self.sio.on("unauthorised", self._on_unauthorized)
 
     async def _on_connect(self) -> None:
-        from .extension_api.models import event_type, event_subscribe_data
-
         logger.info("connected to Flix Client, subscribing to events")
-        events = event_subscribe_data.EventSubscribeData(
+        events = models.SubscribeEvent(
             event_types=[
-                event_type.EventType.PROJECT,
-                event_type.EventType.OPEN,
+                models.EventType.PROJECT,
+                models.EventType.ACTION,
+                models.EventType.OPEN,
+                models.EventType.PUBLISH,
             ],
         )
         await self.sio.emit("subscribe", data=events.to_dict())
@@ -112,6 +175,20 @@ class Extension:
 
         event = types.ClientEvent.parse_event(ws_event.data.type, ws_event.data.data)
         logger.debug("got %s event: %s", type(event).__name__, event)
+        self._broadcast_event(event)
+
+    def _broadcast_event(self, event: types.Event) -> None:
+        for queue in self._queues:
+            queue.put(event)
+
+    def events(self, *event_types: type[_ET]) -> EventQueue[_ET]:
+        return EventQueue(self, *event_types)
+
+    def register_queue(self, queue: EventQueue[types.Event]) -> None:
+        self._queues.add(queue)
+
+    def unregister_queue(self, queue: EventQueue[types.Event]) -> None:
+        self._queues.discard(queue)
 
     async def _on_unauthorized(self) -> None:
         logger.warning("extension is unauthorised, attempting to re-register")
@@ -262,10 +339,16 @@ class Extension:
             ),
         )
 
+    async def _close(self) -> None:
+        # convert set to list to avoid modifying set while iterating over it
+        for queue in list(self._queues):
+            queue.close()
+        await self.sio.disconnect()
+
     async def close(self) -> None:
         """Closes the underlying HTTP clients."""
+        await self._close()
         await self._client.get_async_httpx_client().aclose()
-        await self.sio.disconnect()
         if self._registered_client is not None:
             await self._registered_client.get_async_httpx_client().aclose()
 
@@ -280,15 +363,22 @@ class Extension:
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
     ) -> None:
+        await self._close()
         await self._client.__aexit__(exc_type, exc_val, exc_tb)
-        await self.sio.disconnect()
         if self._registered_client is not None:
             await self._registered_client.__aexit__(exc_type, exc_val, exc_tb)
 
 
-async def main():
+async def main() -> None:
     async with Extension("My test extension", "fab1215c-0ac3-4044-8ef8-70996a4d7b52") as ext:
-        await asyncio.sleep(1000)
+        async with ext.events(types.ActionEvent) as events:
+            await ext.import_panels(["/home/arvid/Documents/Flix/assets/Numbered PNGs/7.png"])
+
+            async for ev in events:
+                print("Got event", ev)
+                if ev.state == models.ActionState.COMPLETED:
+                    print("Import completed")
+                    break
 
 
 if __name__ == "__main__":
