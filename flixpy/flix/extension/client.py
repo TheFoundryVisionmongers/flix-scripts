@@ -103,17 +103,15 @@ class Extension:
         logger.warning("disconnected from Flix Client")
         self.online = False
 
-    async def _on_message(self, data: dict[str, Any]) -> None:
-        from .extension_api.models import websocket_event, extension_open_file_data, event_type
-
+    async def _on_message(self, event_data: dict[str, Any]) -> None:
         # set online here rather than in _on_connect, since we still get a connect event if unauthorised
         self.online = True
 
-        event = websocket_event.WebsocketEvent.from_dict(data)
-        logger.debug("got event from Flix Client: %s", event)
-        if event.data.type == event_type.EventType.OPEN:
-            open_event = extension_open_file_data.ExtensionOpenFileData.from_dict(event.data.data.additional_properties)
-            logger.debug("got open event: %s", open_event)
+        ws_event = models.WebsocketEvent.from_dict(event_data)
+        logger.debug("got event from Flix Client: %s", ws_event)
+
+        event = types.ClientEvent.parse_event(ws_event.data.type, ws_event.data.data)
+        logger.debug("got %s event: %s", type(event).__name__, event)
 
     async def _on_unauthorized(self) -> None:
         logger.warning("extension is unauthorised, attempting to re-register")
