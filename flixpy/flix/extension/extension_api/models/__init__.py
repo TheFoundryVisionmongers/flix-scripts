@@ -3,8 +3,8 @@
 from .action_event import ActionEvent
 from .action_state import ActionState
 from .action_type import ActionType
+from .asset_type import AssetType
 from .download_request import DownloadRequest
-from .download_request_asset_type import DownloadRequestAssetType
 from .download_response import DownloadResponse
 from .episode_details_dto import EpisodeDetailsDto
 from .event_type import EventType
@@ -30,8 +30,8 @@ __all__ = (
     "ActionEvent",
     "ActionState",
     "ActionType",
+    "AssetType",
     "DownloadRequest",
-    "DownloadRequestAssetType",
     "DownloadResponse",
     "EpisodeDetailsDto",
     "EventType",

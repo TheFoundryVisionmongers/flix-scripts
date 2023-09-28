@@ -136,7 +136,7 @@ class Extension:
         self.client_uid = client_uid
         self.version = version
         self.base_url = base_url
-        self.online = False
+        self._online = False
 
         self._client = extension_api.Client(base_url=self.base_url)
         self._registered_client: extension_api.AuthenticatedClient | None = None
@@ -149,6 +149,16 @@ class Extension:
         self.sio.on("connect", self._on_connect)
         self.sio.on("disconnect", self._on_disconnect)
         self.sio.on("unauthorised", self._on_unauthorized)
+
+    @property
+    def online(self) -> bool:
+        return self._online
+
+    @online.setter
+    def online(self, value: bool) -> None:
+        if value != self._online:
+            self._online = value
+            self._broadcast_event(types.ConnectionEvent(self._online))
 
     async def _on_connect(self) -> None:
         logger.info("connected to Flix Client, subscribing to events")
@@ -319,7 +329,12 @@ class Extension:
                 )
             )
 
-    async def download(self, asset_id: int, asset_type: models.DownloadRequestAssetType, target_folder: str) -> None:
+    async def download(
+        self,
+        asset_id: int,
+        asset_type: types.AssetType,
+        target_folder: str,
+    ) -> types.DownloadResponse:
         """Instructs the Flix Client to download an asset to a local directory.
 
         :param asset_id: The ID of the asset to download
@@ -328,7 +343,8 @@ class Extension:
         """
         from .extension_api.api.media_object_download import download_controller_download_media_object
 
-        _assert_ok(
+        resp = _assert_response(
+            models.DownloadResponse,
             await download_controller_download_media_object.asyncio_detailed(
                 client=await self._get_registered_client(),
                 json_body=models.DownloadRequest(
@@ -338,6 +354,8 @@ class Extension:
                 ),
             ),
         )
+
+        return types.DownloadResponse.from_dict(resp)
 
     async def _close(self) -> None:
         # convert set to list to avoid modifying set while iterating over it
@@ -372,13 +390,16 @@ class Extension:
 async def main() -> None:
     async with Extension("My test extension", "fab1215c-0ac3-4044-8ef8-70996a4d7b52") as ext:
         async with ext.events(types.ActionEvent) as events:
-            await ext.import_panels(["/home/arvid/Documents/Flix/assets/Numbered PNGs/7.png"])
+            await ext.import_panels(["/Users/michael.sutherland/Desktop/Screenshot 2023-09-26 at 12.27.30.png"])
 
             async for ev in events:
                 print("Got event", ev)
                 if ev.state == models.ActionState.COMPLETED:
                     print("Import completed")
                     break
+
+        async for event in ext.events(types.ConnectionEvent):
+            print("ConnectionEvent", event)
 
 
 if __name__ == "__main__":

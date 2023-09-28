@@ -2,7 +2,7 @@ import dataclasses
 from typing import Any, Protocol
 
 from .extension_api import models
-from .extension_api.models import EventType as ClientEventType, ActionType, ActionState
+from .extension_api.models import EventType as ClientEventType, ActionType, ActionState, AssetType
 
 from ..lib import types as flix_types
 
@@ -22,6 +22,7 @@ __all__ = [
     "ClientEventType",
     "ActionState",
     "ActionType",
+    "AssetType",
 ]
 
 
@@ -227,4 +228,21 @@ class OpenEvent(ClientEvent):
             project=ProjectIds.from_dict(data.project),
             panels=[OpenPanelData.from_dict(panel) for panel in data.panels],
             additional_properties=data.additional_properties,
+        )
+
+
+@dataclasses.dataclass
+class DownloadResponse:
+    file_name: str
+    file_path: str
+    asset_id: int
+    media_object_id: int
+
+    @classmethod
+    def from_dict(cls, data: models.DownloadResponse) -> "DownloadResponse":
+        return cls(
+            file_name=data.file_name,
+            file_path=data.file_path,
+            asset_id=data.asset_id,
+            media_object_id=data.media_object_id,
         )

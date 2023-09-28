@@ -247,6 +247,27 @@ components:
           description: the index at which to insert the created panels
       required:
         - paths
+    AssetType:
+      type: string
+      enum:
+        - artwork
+        - thumbnail
+        - scaled
+        - fullres
+        - show-thumbnail
+        - source_media
+        - audio
+        - movie
+        - publish
+        - annotation
+        - master
+        - aaf
+        - xml
+        - dialogue
+        - source_file
+        - watermark
+        - logo
+        - contactsheet
     DownloadRequest:
       type: object
       properties:
@@ -255,33 +276,27 @@ components:
         targetFolder:
           type: string
         assetType:
-          type: string
-          enum:
-            - artwork
-            - thumbnail
-            - scaled
-            - fullres
-            - show-thumbnail
-            - source_media
-            - audio
-            - movie
-            - publish
-            - annotation
-            - master
-            - aaf
-            - xml
-            - dialogue
-            - source_file
-            - watermark
-            - logo
-            - contactsheet
+          $ref: '#/components/schemas/AssetType'
       required:
         - assetId
         - targetFolder
         - assetType
     DownloadResponse:
       type: object
-      properties: {}
+      properties:
+        fileName:
+          type: string
+        filePath:
+          type: string
+        assetId:
+          type: integer
+        mediaObjectId:
+          type: integer
+      required:
+        - fileName
+        - filePath
+        - assetId
+        - mediaObjectId
     ShowDetailsDto:
       type: object
       properties:

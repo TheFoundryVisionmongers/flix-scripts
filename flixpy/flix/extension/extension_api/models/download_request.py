@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Type, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-from ..models.download_request_asset_type import DownloadRequestAssetType
+from ..models.asset_type import AssetType
 
 T = TypeVar("T", bound="DownloadRequest")
 
@@ -14,12 +14,12 @@ class DownloadRequest:
     Attributes:
         asset_id (float):
         target_folder (str):
-        asset_type (DownloadRequestAssetType):
+        asset_type (AssetType):
     """
 
     asset_id: float
     target_folder: str
-    asset_type: DownloadRequestAssetType
+    asset_type: AssetType
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -46,7 +46,7 @@ class DownloadRequest:
 
         target_folder = d.pop("targetFolder")
 
-        asset_type = DownloadRequestAssetType(d.pop("assetType"))
+        asset_type = AssetType(d.pop("assetType"))
 
         download_request = cls(
             asset_id=asset_id,

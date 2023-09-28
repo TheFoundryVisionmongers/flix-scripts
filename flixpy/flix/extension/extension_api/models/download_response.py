@@ -8,21 +8,56 @@ T = TypeVar("T", bound="DownloadResponse")
 
 @_attrs_define
 class DownloadResponse:
-    """ """
+    """
+    Attributes:
+        file_name (str):
+        file_path (str):
+        asset_id (int):
+        media_object_id (int):
+    """
 
+    file_name: str
+    file_path: str
+    asset_id: int
+    media_object_id: int
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
+        file_name = self.file_name
+        file_path = self.file_path
+        asset_id = self.asset_id
+        media_object_id = self.media_object_id
+
         field_dict: Dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update(
+            {
+                "fileName": file_name,
+                "filePath": file_path,
+                "assetId": asset_id,
+                "mediaObjectId": media_object_id,
+            }
+        )
 
         return field_dict
 
     @classmethod
     def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
         d = src_dict.copy()
-        download_response = cls()
+        file_name = d.pop("fileName")
+
+        file_path = d.pop("filePath")
+
+        asset_id = d.pop("assetId")
+
+        media_object_id = d.pop("mediaObjectId")
+
+        download_response = cls(
+            file_name=file_name,
+            file_path=file_path,
+            asset_id=asset_id,
+            media_object_id=media_object_id,
+        )
 
         download_response.additional_properties = d
         return download_response
