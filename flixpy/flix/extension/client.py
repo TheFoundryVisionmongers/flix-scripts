@@ -425,24 +425,3 @@ class Extension:
         await self._client.__aexit__(exc_type, exc_val, exc_tb)
         if self._registered_client is not None:
             await self._registered_client.__aexit__(exc_type, exc_val, exc_tb)
-
-
-async def main() -> None:
-    async with Extension("My test extension", "fab1215c-0ac3-4044-8ef8-70996a4d7b52") as ext:
-        async with ext.events(types.ActionEvent) as events:
-            await ext.import_panels(["/Users/michael.sutherland/Desktop/Screenshot 2023-09-26 at 12.27.30.png"])
-
-            async for ev in events:
-                print("Got event", ev)
-                if ev.state == models.ActionState.COMPLETED:
-                    print("Import completed")
-                    break
-
-        async for event in ext.events(types.ConnectionEvent):
-            print("ConnectionEvent", event)
-
-
-if __name__ == "__main__":
-    logging.basicConfig()
-    logger.setLevel(logging.DEBUG)
-    asyncio.run(main())
