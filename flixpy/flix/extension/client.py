@@ -46,6 +46,20 @@ _ET = TypeVar("_ET", bound=types.Event, covariant=True)
 
 
 class EventQueue(AsyncIterable[_ET]):
+    """An EventQueue listens for events of one or more given types.
+
+    Events can be read from a queue by iterating over the object using async for.
+    If you need to ensure that the queue has started listening for events before performing some action,
+    you can use it as a context manager using the async with statement::
+
+        async with extension.events(ActionEvent) as events:
+            # now we are already listening for events, so we won't miss any action events from the import
+            await extension.import_panels(["/path/to/image.png"])
+
+            async for action_event in events:
+                print("Got event:", action_event)
+    """
+
     def __init__(self, ext: "Extension", *event_types: type[_ET]):
         self._ext = ext
         self._queue: asyncio.Queue[types.Event] | None = asyncio.Queue()
@@ -192,12 +206,19 @@ class Extension:
             queue.put(event)
 
     def events(self, *event_types: type[_ET]) -> EventQueue[_ET]:
+        """Returns an EventQueue that listens to events of the given type(s)."""
         return EventQueue(self, *event_types)
 
     def register_queue(self, queue: EventQueue[types.Event]) -> None:
+        """Instructs this Extension instance to forward events to the given queue.
+
+        This method should not generally be called manually."""
         self._queues.add(queue)
 
     def unregister_queue(self, queue: EventQueue[types.Event]) -> None:
+        """Instructs this Extension instance to stop forwarding events to the given queue.
+
+        This method should not generally be called manually."""
         self._queues.discard(queue)
 
     async def _on_unauthorized(self) -> None:
