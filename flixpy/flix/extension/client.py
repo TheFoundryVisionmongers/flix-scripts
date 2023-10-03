@@ -157,6 +157,7 @@ class Extension:
         self.sio = socketio.AsyncClient()
         self._register_events()
         self._queues = weakref.WeakSet[EventQueue[types.Event]]()
+        self._connection_task: asyncio.Task[None] | None = None
 
     def _register_events(self) -> None:
         self.sio.on("message", self._on_message)
@@ -223,10 +224,14 @@ class Extension:
 
     async def _on_unauthorized(self) -> None:
         logger.warning("extension is unauthorised, attempting to re-register")
+        self.online = False
         # connect in background
-        asyncio.create_task(self._try_connect())
+        self.register()
 
     async def _try_connect(self) -> None:
+        if self.online:
+            return
+
         await self.sio.disconnect()
         self._registered_client = None
         while True:
@@ -241,15 +246,29 @@ class Extension:
 
         await self.sio.connect(self.base_url, auth={"token": registered_client.token})
 
-    async def register(self) -> None:
-        """Registers the extension with the Flix Client.
+    def register(self) -> asyncio.Task[None]:
+        """Establishes a connection to the Flix Client.
 
-        This method does not need to be called manually, as the extension will be automatically registered
-        when attempting to use a method that requires authorisation, but it can be useful if you want to ensure
-        that the registration succeeded before continuing with further initialisation of your extension.
+        This method will register the extension with the Flix Client and start listening for websocket events.
+        When using the Extension instance as a context method (using the with statement),
+        this method does not need to be called explicitly.
+
+        If already connected to the Flix Client, this method is a no-op.
+
+        This method will return immediately and attempt to connect to the Flix Client in the background.
+        It returns a task object that completes when a successful connection has been established.
+        Awaiting this task can be useful if you want to ensure that the registration succeeded before
+        continuing with further initialisation of your extension.
         """
-        # TODO: do we really want to block until successfully connected here?
-        await self._try_connect()
+        if self._connection_task:
+            return self._connection_task
+
+        def _clear_task(task: asyncio.Task[None]) -> None:
+            self._connection_task = None
+
+        self._connection_task = asyncio.create_task(self._try_connect())
+        self._connection_task.add_done_callback(_clear_task)
+        return self._connection_task
 
     async def _get_registered_client(self) -> extension_api.AuthenticatedClient:
         if self._registered_client is not None:
@@ -385,7 +404,7 @@ class Extension:
         await self.sio.disconnect()
 
     async def close(self) -> None:
-        """Closes the underlying HTTP clients."""
+        """Closes the underlying HTTP and websocket clients."""
         await self._close()
         await self._client.get_async_httpx_client().aclose()
         if self._registered_client is not None:
