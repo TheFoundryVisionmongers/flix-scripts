@@ -3,39 +3,33 @@ from typing import Any, Dict, List, Type, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-T = TypeVar("T", bound="DownloadResponse")
+from ..models.event_type import EventType
+
+T = TypeVar("T", bound="SubscribeEvent")
 
 
 @_attrs_define
-class DownloadResponse:
+class SubscribeEvent:
     """
     Attributes:
-        file_name (str):
-        file_path (str):
-        asset_id (int):
-        media_object_id (int):
+        event_types (List[EventType]):
     """
 
-    file_name: str
-    file_path: str
-    asset_id: int
-    media_object_id: int
+    event_types: List[EventType]
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
-        file_name = self.file_name
-        file_path = self.file_path
-        asset_id = self.asset_id
-        media_object_id = self.media_object_id
+        event_types = []
+        for event_types_item_data in self.event_types:
+            event_types_item = event_types_item_data.value
+
+            event_types.append(event_types_item)
 
         field_dict: Dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
             {
-                "fileName": file_name,
-                "filePath": file_path,
-                "assetId": asset_id,
-                "mediaObjectId": media_object_id,
+                "eventTypes": event_types,
             }
         )
 
@@ -44,23 +38,19 @@ class DownloadResponse:
     @classmethod
     def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
         d = src_dict.copy()
-        file_name = d.pop("fileName")
+        event_types = []
+        _event_types = d.pop("eventTypes")
+        for event_types_item_data in _event_types:
+            event_types_item = EventType(event_types_item_data)
 
-        file_path = d.pop("filePath")
+            event_types.append(event_types_item)
 
-        asset_id = d.pop("assetId")
-
-        media_object_id = d.pop("mediaObjectId")
-
-        download_response = cls(
-            file_name=file_name,
-            file_path=file_path,
-            asset_id=asset_id,
-            media_object_id=media_object_id,
+        subscribe_event = cls(
+            event_types=event_types,
         )
 
-        download_response.additional_properties = d
-        return download_response
+        subscribe_event.additional_properties = d
+        return subscribe_event
 
     @property
     def additional_keys(self) -> List[str]:

@@ -3,59 +3,29 @@ from typing import Any, Dict, List, Type, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-from ..models.asset_type import AssetType
-
-T = TypeVar("T", bound="DownloadRequest")
+T = TypeVar("T", bound="UnknownEvent")
 
 
 @_attrs_define
-class DownloadRequest:
-    """
-    Attributes:
-        asset_id (float):
-        target_folder (str):
-        asset_type (AssetType):
-    """
+class UnknownEvent:
+    """ """
 
-    asset_id: float
-    target_folder: str
-    asset_type: AssetType
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
-        asset_id = self.asset_id
-        target_folder = self.target_folder
-        asset_type = self.asset_type.value
-
         field_dict: Dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update(
-            {
-                "assetId": asset_id,
-                "targetFolder": target_folder,
-                "assetType": asset_type,
-            }
-        )
+        field_dict.update({})
 
         return field_dict
 
     @classmethod
     def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
         d = src_dict.copy()
-        asset_id = d.pop("assetId")
+        unknown_event = cls()
 
-        target_folder = d.pop("targetFolder")
-
-        asset_type = AssetType(d.pop("assetType"))
-
-        download_request = cls(
-            asset_id=asset_id,
-            target_folder=target_folder,
-            asset_type=asset_type,
-        )
-
-        download_request.additional_properties = d
-        return download_request
+        unknown_event.additional_properties = d
+        return unknown_event
 
     @property
     def additional_keys(self) -> List[str]:

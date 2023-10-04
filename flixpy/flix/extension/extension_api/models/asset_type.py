@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class DownloadRequestAssetType(str, Enum):
+class AssetType(str, Enum):
     AAF = "aaf"
     ANNOTATION = "annotation"
     ARTWORK = "artwork"

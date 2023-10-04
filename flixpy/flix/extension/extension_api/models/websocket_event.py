@@ -1,39 +1,33 @@
-from typing import Any, Dict, List, Type, TypeVar
+from typing import TYPE_CHECKING, Any, Dict, List, Type, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-from ..models.asset_type import AssetType
+if TYPE_CHECKING:
+    from ..models.websocket_event_data import WebsocketEventData
 
-T = TypeVar("T", bound="DownloadRequest")
+
+T = TypeVar("T", bound="WebsocketEvent")
 
 
 @_attrs_define
-class DownloadRequest:
+class WebsocketEvent:
     """
     Attributes:
-        asset_id (float):
-        target_folder (str):
-        asset_type (AssetType):
+        data (WebsocketEventData):
     """
 
-    asset_id: float
-    target_folder: str
-    asset_type: AssetType
+    data: "WebsocketEventData"
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
-        asset_id = self.asset_id
-        target_folder = self.target_folder
-        asset_type = self.asset_type.value
+        data = self.data.to_dict()
 
         field_dict: Dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
             {
-                "assetId": asset_id,
-                "targetFolder": target_folder,
-                "assetType": asset_type,
+                "data": data,
             }
         )
 
@@ -41,21 +35,17 @@ class DownloadRequest:
 
     @classmethod
     def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
+        from ..models.websocket_event_data import WebsocketEventData
+
         d = src_dict.copy()
-        asset_id = d.pop("assetId")
+        data = WebsocketEventData.from_dict(d.pop("data"))
 
-        target_folder = d.pop("targetFolder")
-
-        asset_type = AssetType(d.pop("assetType"))
-
-        download_request = cls(
-            asset_id=asset_id,
-            target_folder=target_folder,
-            asset_type=asset_type,
+        websocket_event = cls(
+            data=data,
         )
 
-        download_request.additional_properties = d
-        return download_request
+        websocket_event.additional_properties = d
+        return websocket_event
 
     @property
     def additional_keys(self) -> List[str]:

@@ -247,6 +247,27 @@ components:
           description: the index at which to insert the created panels
       required:
         - paths
+    AssetType:
+      type: string
+      enum:
+        - artwork
+        - thumbnail
+        - scaled
+        - fullres
+        - show-thumbnail
+        - source_media
+        - audio
+        - movie
+        - publish
+        - annotation
+        - master
+        - aaf
+        - xml
+        - dialogue
+        - source_file
+        - watermark
+        - logo
+        - contactsheet
     DownloadRequest:
       type: object
       properties:
@@ -255,33 +276,27 @@ components:
         targetFolder:
           type: string
         assetType:
-          type: string
-          enum:
-            - artwork
-            - thumbnail
-            - scaled
-            - fullres
-            - show-thumbnail
-            - source_media
-            - audio
-            - movie
-            - publish
-            - annotation
-            - master
-            - aaf
-            - xml
-            - dialogue
-            - source_file
-            - watermark
-            - logo
-            - contactsheet
+          $ref: '#/components/schemas/AssetType'
       required:
         - assetId
         - targetFolder
         - assetType
     DownloadResponse:
       type: object
-      properties: {}
+      properties:
+        fileName:
+          type: string
+        filePath:
+          type: string
+        assetId:
+          type: integer
+        mediaObjectId:
+          type: integer
+      required:
+        - fileName
+        - filePath
+        - assetId
+        - mediaObjectId
     ShowDetailsDto:
       type: object
       properties:
@@ -387,3 +402,125 @@ components:
         - episode
         - sequence
         - sequenceRevision
+    EventType:
+      type: string
+      enum:
+        - PING
+        - ACTION
+        - PUBLISH
+        - OPEN
+        - PROJECT
+    WebsocketEvent:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            type:
+              $ref: "#/components/schemas/EventType"
+            data:
+              oneOf:
+                - $ref: "#/components/schemas/ActionEvent"
+                - $ref: "#/components/schemas/ProjectEvent"
+                - $ref: "#/components/schemas/OpenEvent"
+                - $ref: "#/components/schemas/PingEvent"
+                - $ref: "#/components/schemas/UnknownEvent"
+          required:
+            - type
+            - data
+      required:
+        - data
+    SubscribeEvent:
+      type: object
+      properties:
+        eventTypes:
+          type: array
+          items:
+            $ref: "#/components/schemas/EventType"
+      required:
+        - eventTypes
+    UnknownEvent:
+      type: object
+    PingEvent:
+      type: object
+      properties:
+        apiClientId:
+          type: integer
+      required:
+        - apiClientId
+    ProjectEvent:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/ProjectDetailsDto"
+    ActionEvent:
+      type: object
+      properties:
+        apiClientId:
+          type: integer
+          nullable: true
+        state:
+          $ref: "#/components/schemas/ActionState"
+        action:
+          $ref: "#/components/schemas/ActionType"
+        actionId:
+          type: integer
+      required:
+        - apiClientId
+        - state
+        - action
+        - actionId
+    ActionState:
+      type: string
+      enum:
+        - completed
+        - progress
+        - error
+        - started
+    ActionType:
+      type: string
+      enum:
+        - PANEL_CREATE
+        - PANEL_UPDATE
+    OpenEvent:
+      type: object
+      properties:
+        project:
+          $ref: "#/components/schemas/ProjectIds"
+        panels:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExtensionOpenFilePanelData"
+      required:
+        - project
+        - panels
+    ProjectIds:
+      type: object
+      properties:
+        showId:
+          type: integer
+        episodeId:
+          type: integer
+          nullable: true
+        sequenceId:
+          type: integer
+        sequenceRevisionId:
+          type: integer
+    ExtensionOpenFilePanelData:
+      type: object
+      properties:
+        id:
+          type: integer
+        assetId:
+          type: integer
+        isAnimated:
+          type: boolean
+        hasSourceFile:
+          type: boolean
+        annotationAssetId:
+          type: integer
+          nullable: true
+      required:
+        - id
+        - assetId
+        - isAnimated
+        - hasSourceFile
