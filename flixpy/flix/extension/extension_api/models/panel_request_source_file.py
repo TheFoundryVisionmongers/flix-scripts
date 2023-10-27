@@ -10,24 +10,32 @@ T = TypeVar("T", bound="PanelRequestSourceFile")
 class PanelRequestSourceFile:
     """
     Attributes:
-        id (str):
         path (str):
+        preview_mode (str):
+        source_file_type (str):
+        origin (str):
     """
 
-    id: str
     path: str
+    preview_mode: str
+    source_file_type: str
+    origin: str
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
-        id = self.id
         path = self.path
+        preview_mode = self.preview_mode
+        source_file_type = self.source_file_type
+        origin = self.origin
 
         field_dict: Dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
             {
-                "id": id,
                 "path": path,
+                "previewMode": preview_mode,
+                "sourceFileType": source_file_type,
+                "origin": origin,
             }
         )
 
@@ -36,13 +44,19 @@ class PanelRequestSourceFile:
     @classmethod
     def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
         d = src_dict.copy()
-        id = d.pop("id")
-
         path = d.pop("path")
 
+        preview_mode = d.pop("previewMode")
+
+        source_file_type = d.pop("sourceFileType")
+
+        origin = d.pop("origin")
+
         panel_request_source_file = cls(
-            id=id,
             path=path,
+            preview_mode=preview_mode,
+            source_file_type=source_file_type,
+            origin=origin,
         )
 
         panel_request_source_file.additional_properties = d

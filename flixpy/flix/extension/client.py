@@ -3,18 +3,15 @@ import logging
 import weakref
 from collections.abc import AsyncIterable, AsyncIterator, Coroutine
 from types import TracebackType
-
 from typing import TypeVar, cast, Any
 
 import httpx
 import socketio
 
-from ..lib import errors
-
 from . import extension_api
-from .extension_api import models, types as api_types
-
 from . import types
+from .extension_api import models, types as api_types
+from ..lib import errors
 
 logger = logging.getLogger(__name__)
 
@@ -348,8 +345,10 @@ class Extension:
         json_body = models.PanelRequest(
             paths=paths,
             source_file=models.PanelRequestSourceFile(
-                id=source_file.id,
                 path=source_file.path,
+                preview_mode=source_file.preview_mode,
+                source_file_type=source_file.source_file_type,
+                origin=source_file.origin,
             )
             if source_file is not None
             else api_types.UNSET,

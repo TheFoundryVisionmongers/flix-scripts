@@ -5,7 +5,7 @@ paths:
       operationId: HealthCheckController_healthCheck
       summary: ''
       description: Basic health check endpoint. Always returns a 200 response
-      parameters: []
+      parameters: [ ]
       responses:
         '200':
           description: ''
@@ -16,7 +16,7 @@ paths:
       operationId: RegistrationController_registerClient
       summary: ''
       description: Processes a registration request from a new API consumer
-      parameters: []
+      parameters: [ ]
       requestBody:
         required: true
         content:
@@ -48,7 +48,7 @@ paths:
 
         Details returned by the registration manager are mapped to a DTO to
         avoid exposing access tokens
-      parameters: []
+      parameters: [ ]
       responses:
         '200':
           description: Returns the list of registered API consumers
@@ -60,7 +60,7 @@ paths:
                   $ref: '#/components/schemas/RegistrationDetails'
       tags: *ref_0
       security:
-        - bearer: []
+        - bearer: [ ]
     delete:
       operationId: RegistrationController_unregisterClient
       summary: ''
@@ -76,11 +76,11 @@ paths:
           description: The API consumer has been unregistered from Flix
       tags: *ref_0
       security:
-        - bearer: []
+        - bearer: [ ]
   /panels:
     post:
       operationId: PanelController_create
-      parameters: []
+      parameters: [ ]
       requestBody:
         required: true
         content:
@@ -97,10 +97,10 @@ paths:
       tags: &ref_1
         - Panel Management
       security: &ref_2
-        - bearer: []
+        - bearer: [ ]
     patch:
       operationId: PanelController_update
-      parameters: []
+      parameters: [ ]
       requestBody:
         required: true
         content:
@@ -123,7 +123,7 @@ paths:
       description: >-
         Downloads a specific artwork type for a given asset, to a target folder
         on the local machine
-      parameters: []
+      parameters: [ ]
       requestBody:
         required: true
         content:
@@ -142,11 +142,11 @@ paths:
       tags:
         - Media Object Download
       security:
-        - bearer: []
+        - bearer: [ ]
   /project:
     get:
       operationId: ProjectController_get
-      parameters: []
+      parameters: [ ]
       responses:
         '200':
           description: Returns the current Flix project details
@@ -159,14 +159,14 @@ paths:
       tags:
         - Project Details
       security:
-        - bearer: []
+        - bearer: [ ]
 info:
   title: Flix General Remote Client API
   description: The general remote API for the Flix client
   version: '0.1'
-  contact: {}
-tags: []
-servers: []
+  contact: { }
+tags: [ ]
+servers: [ ]
 components:
   securitySchemes:
     bearer:
@@ -223,13 +223,19 @@ components:
     PanelRequestSourceFile:
       type: object
       properties:
-        id:
-          type: string
         path:
           type: string
+        previewMode:
+          type: string
+        sourceFileType:
+          type: string
+        origin:
+          type: string
       required:
-        - id
         - path
+        - previewMode
+        - sourceFileType
+        - origin
     PanelRequest:
       type: object
       properties:
