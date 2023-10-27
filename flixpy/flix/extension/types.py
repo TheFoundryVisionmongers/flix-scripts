@@ -3,9 +3,7 @@ from typing import Any, Protocol
 
 from .extension_api import models
 from .extension_api.models import EventType as ClientEventType, ActionType, ActionState, AssetType
-
 from ..lib import types as flix_types
-
 
 __all__ = [
     "SourceFile",
@@ -28,8 +26,10 @@ __all__ = [
 
 @dataclasses.dataclass
 class SourceFile:
-    id: str
     path: str
+    preview_mode: str
+    source_file_type: str
+    origin: str
 
 
 @dataclasses.dataclass
