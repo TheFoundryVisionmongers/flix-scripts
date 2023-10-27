@@ -202,7 +202,7 @@ class OpenPanelData:
     panel_id: int
     asset_id: int
     is_animated: bool
-    has_source_file: bool
+    source_file_asset_id: int | None
     annotation_asset_id: int | None
 
     @classmethod
@@ -211,7 +211,7 @@ class OpenPanelData:
             panel_id=data.id,
             asset_id=data.asset_id,
             is_animated=data.is_animated,
-            has_source_file=data.has_source_file,
+            source_file_asset_id=data.source_file.asset_id,
             annotation_asset_id=data.annotation_asset_id if data.annotation_asset_id else None,
         )
 

@@ -1,9 +1,13 @@
-from typing import Any, Dict, List, Type, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Type, TypeVar, Union
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
+
+if TYPE_CHECKING:
+    from ..models.extension_source_file_data import ExtensionSourceFileData
+
 
 T = TypeVar("T", bound="ExtensionOpenFilePanelData")
 
@@ -15,14 +19,14 @@ class ExtensionOpenFilePanelData:
         id (int):
         asset_id (int):
         is_animated (bool):
-        has_source_file (bool):
+        source_file (ExtensionSourceFileData):
         annotation_asset_id (Union[Unset, None, int]):
     """
 
     id: int
     asset_id: int
     is_animated: bool
-    has_source_file: bool
+    source_file: "ExtensionSourceFileData"
     annotation_asset_id: Union[Unset, None, int] = UNSET
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -30,7 +34,8 @@ class ExtensionOpenFilePanelData:
         id = self.id
         asset_id = self.asset_id
         is_animated = self.is_animated
-        has_source_file = self.has_source_file
+        source_file = self.source_file.to_dict()
+
         annotation_asset_id = self.annotation_asset_id
 
         field_dict: Dict[str, Any] = {}
@@ -40,7 +45,7 @@ class ExtensionOpenFilePanelData:
                 "id": id,
                 "assetId": asset_id,
                 "isAnimated": is_animated,
-                "hasSourceFile": has_source_file,
+                "sourceFile": source_file,
             }
         )
         if annotation_asset_id is not UNSET:
@@ -50,6 +55,8 @@ class ExtensionOpenFilePanelData:
 
     @classmethod
     def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
+        from ..models.extension_source_file_data import ExtensionSourceFileData
+
         d = src_dict.copy()
         id = d.pop("id")
 
@@ -57,7 +64,7 @@ class ExtensionOpenFilePanelData:
 
         is_animated = d.pop("isAnimated")
 
-        has_source_file = d.pop("hasSourceFile")
+        source_file = ExtensionSourceFileData.from_dict(d.pop("sourceFile"))
 
         annotation_asset_id = d.pop("annotationAssetId", UNSET)
 
@@ -65,7 +72,7 @@ class ExtensionOpenFilePanelData:
             id=id,
             asset_id=asset_id,
             is_animated=is_animated,
-            has_source_file=has_source_file,
+            source_file=source_file,
             annotation_asset_id=annotation_asset_id,
         )
 

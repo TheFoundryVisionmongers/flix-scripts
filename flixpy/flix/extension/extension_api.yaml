@@ -520,8 +520,8 @@ components:
           type: integer
         isAnimated:
           type: boolean
-        hasSourceFile:
-          type: boolean
+        sourceFile:
+          $ref: "#/components/schemas/ExtensionSourceFileData"
         annotationAssetId:
           type: integer
           nullable: true
@@ -529,4 +529,12 @@ components:
         - id
         - assetId
         - isAnimated
-        - hasSourceFile
+        - sourceFile
+    ExtensionSourceFileData:
+      type: object
+      properties:
+        assetId:
+          type: integer
+          nullable: true
+      required:
+        - assetId

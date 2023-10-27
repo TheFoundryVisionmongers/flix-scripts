@@ -9,6 +9,7 @@ from .download_response import DownloadResponse
 from .episode_details_dto import EpisodeDetailsDto
 from .event_type import EventType
 from .extension_open_file_panel_data import ExtensionOpenFilePanelData
+from .extension_source_file_data import ExtensionSourceFileData
 from .open_event import OpenEvent
 from .panel_request import PanelRequest
 from .panel_request_source_file import PanelRequestSourceFile
@@ -36,6 +37,7 @@ __all__ = (
     "EpisodeDetailsDto",
     "EventType",
     "ExtensionOpenFilePanelData",
+    "ExtensionSourceFileData",
     "OpenEvent",
     "PanelRequest",
     "PanelRequestSourceFile",
