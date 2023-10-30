@@ -8,6 +8,7 @@ from ..models.event_type import EventType
 if TYPE_CHECKING:
     from ..models.action_event import ActionEvent
     from ..models.open_event import OpenEvent
+    from ..models.open_source_file_event import OpenSourceFileEvent
     from ..models.ping_event import PingEvent
     from ..models.project_details_dto import ProjectDetailsDto
     from ..models.unknown_event import UnknownEvent
@@ -21,16 +22,18 @@ class WebsocketEventData:
     """
     Attributes:
         type (EventType):
-        data (Union['ActionEvent', 'OpenEvent', 'PingEvent', 'ProjectDetailsDto', 'UnknownEvent']):
+        data (Union['ActionEvent', 'OpenEvent', 'OpenSourceFileEvent', 'PingEvent', 'ProjectDetailsDto',
+            'UnknownEvent']):
     """
 
     type: EventType
-    data: Union["ActionEvent", "OpenEvent", "PingEvent", "ProjectDetailsDto", "UnknownEvent"]
+    data: Union["ActionEvent", "OpenEvent", "OpenSourceFileEvent", "PingEvent", "ProjectDetailsDto", "UnknownEvent"]
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
         from ..models.action_event import ActionEvent
         from ..models.open_event import OpenEvent
+        from ..models.open_source_file_event import OpenSourceFileEvent
         from ..models.ping_event import PingEvent
         from ..models.project_details_dto import ProjectDetailsDto
 
@@ -45,6 +48,9 @@ class WebsocketEventData:
             data = self.data.to_dict()
 
         elif isinstance(self.data, OpenEvent):
+            data = self.data.to_dict()
+
+        elif isinstance(self.data, OpenSourceFileEvent):
             data = self.data.to_dict()
 
         elif isinstance(self.data, PingEvent):
@@ -68,6 +74,7 @@ class WebsocketEventData:
     def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
         from ..models.action_event import ActionEvent
         from ..models.open_event import OpenEvent
+        from ..models.open_source_file_event import OpenSourceFileEvent
         from ..models.ping_event import PingEvent
         from ..models.project_details_dto import ProjectDetailsDto
         from ..models.unknown_event import UnknownEvent
@@ -77,7 +84,7 @@ class WebsocketEventData:
 
         def _parse_data(
             data: object,
-        ) -> Union["ActionEvent", "OpenEvent", "PingEvent", "ProjectDetailsDto", "UnknownEvent"]:
+        ) -> Union["ActionEvent", "OpenEvent", "OpenSourceFileEvent", "PingEvent", "ProjectDetailsDto", "UnknownEvent"]:
             try:
                 if not isinstance(data, dict):
                     raise TypeError()
@@ -105,16 +112,24 @@ class WebsocketEventData:
             try:
                 if not isinstance(data, dict):
                     raise TypeError()
-                data_type_3 = PingEvent.from_dict(data)
+                data_type_3 = OpenSourceFileEvent.from_dict(data)
 
                 return data_type_3
             except:  # noqa: E722
                 pass
+            try:
+                if not isinstance(data, dict):
+                    raise TypeError()
+                data_type_4 = PingEvent.from_dict(data)
+
+                return data_type_4
+            except:  # noqa: E722
+                pass
             if not isinstance(data, dict):
                 raise TypeError()
-            data_type_4 = UnknownEvent.from_dict(data)
+            data_type_5 = UnknownEvent.from_dict(data)
 
-            return data_type_4
+            return data_type_5
 
         data = _parse_data(d.pop("data"))
 

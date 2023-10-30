@@ -429,6 +429,7 @@ components:
                 - $ref: "#/components/schemas/ActionEvent"
                 - $ref: "#/components/schemas/ProjectEvent"
                 - $ref: "#/components/schemas/OpenEvent"
+                - $ref: "#/components/schemas/OpenSourceFileEvent"
                 - $ref: "#/components/schemas/PingEvent"
                 - $ref: "#/components/schemas/UnknownEvent"
           required:
@@ -499,6 +500,13 @@ components:
       required:
         - project
         - panels
+    OpenSourceFileEvent:
+      type: object
+      properties:
+        sourceFile:
+          $ref: "#/components/schemas/ExtensionSourceFileData"
+      required:
+        - sourceFile
     ProjectIds:
       type: object
       properties:

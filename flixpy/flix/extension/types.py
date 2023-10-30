@@ -21,6 +21,8 @@ __all__ = [
     "ActionState",
     "ActionType",
     "AssetType",
+    "OpenSourceFileEvent",
+    "DownloadResponse",
 ]
 
 
@@ -121,6 +123,8 @@ class ClientEvent(Event):
     def parse_event(cls, type: ClientEventType, data: _BaseEvent) -> "ClientEvent":
         if isinstance(data, models.OpenEvent):
             return OpenEvent.from_dict(type, data)
+        elif isinstance(data, models.OpenSourceFileEvent):
+            return OpenSourceFileEvent.from_dict(type, data)
         elif isinstance(data, models.ActionEvent):
             return ActionEvent.from_dict(type, data)
         elif isinstance(data, models.ProjectDetailsDto):
@@ -227,6 +231,19 @@ class OpenEvent(ClientEvent):
             type=type,
             project=ProjectIds.from_dict(data.project),
             panels=[OpenPanelData.from_dict(panel) for panel in data.panels],
+            additional_properties=data.additional_properties,
+        )
+
+
+@dataclasses.dataclass
+class OpenSourceFileEvent(ClientEvent):
+    asset_id: int
+
+    @classmethod
+    def from_dict(cls, type: ClientEventType, data: models.OpenSourceFileEvent) -> "OpenSourceFileEvent":
+        return cls(
+            type=type,
+            asset_id=data.source_file.asset_id or 0,
             additional_properties=data.additional_properties,
         )
 
