@@ -21,6 +21,7 @@ from .registration_response import RegistrationResponse
 from .sequence_details_dto import SequenceDetailsDto
 from .sequence_revision_details_dto import SequenceRevisionDetailsDto
 from .show_details_dto import ShowDetailsDto
+from .source_file import SourceFile
 from .subscribe_event import SubscribeEvent
 from .unknown_event import UnknownEvent
 from .websocket_event import WebsocketEvent
@@ -48,6 +49,7 @@ __all__ = (
     "SequenceDetailsDto",
     "SequenceRevisionDetailsDto",
     "ShowDetailsDto",
+    "SourceFile",
     "SubscribeEvent",
     "UnknownEvent",
     "WebsocketEvent",

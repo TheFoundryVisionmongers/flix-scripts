@@ -511,6 +511,12 @@ components:
           type: integer
         sequenceRevisionId:
           type: integer
+    SourceFile:
+      type: object
+      properties:
+        assetId:
+          type: integer
+      nullable: true
     ExtensionOpenFilePanelData:
       type: object
       properties:
@@ -520,8 +526,8 @@ components:
           type: integer
         isAnimated:
           type: boolean
-        hasSourceFile:
-          type: boolean
+        sourceFile:
+          $ref: "#/components/schemas/SourceFile"
         annotationAssetId:
           type: integer
           nullable: true
@@ -529,4 +535,3 @@ components:
         - id
         - assetId
         - isAnimated
-        - hasSourceFile
