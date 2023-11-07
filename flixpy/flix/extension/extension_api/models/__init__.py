@@ -10,6 +10,7 @@ from .episode_details_dto import EpisodeDetailsDto
 from .event_type import EventType
 from .extension_open_file_panel_data import ExtensionOpenFilePanelData
 from .open_event import OpenEvent
+from .open_source_file_data import OpenSourceFileData
 from .panel_request import PanelRequest
 from .panel_request_source_file import PanelRequestSourceFile
 from .ping_event import PingEvent
@@ -21,7 +22,6 @@ from .registration_response import RegistrationResponse
 from .sequence_details_dto import SequenceDetailsDto
 from .sequence_revision_details_dto import SequenceRevisionDetailsDto
 from .show_details_dto import ShowDetailsDto
-from .source_file import SourceFile
 from .subscribe_event import SubscribeEvent
 from .unknown_event import UnknownEvent
 from .websocket_event import WebsocketEvent
@@ -38,6 +38,7 @@ __all__ = (
     "EventType",
     "ExtensionOpenFilePanelData",
     "OpenEvent",
+    "OpenSourceFileData",
     "PanelRequest",
     "PanelRequestSourceFile",
     "PingEvent",
@@ -49,7 +50,6 @@ __all__ = (
     "SequenceDetailsDto",
     "SequenceRevisionDetailsDto",
     "ShowDetailsDto",
-    "SourceFile",
     "SubscribeEvent",
     "UnknownEvent",
     "WebsocketEvent",
