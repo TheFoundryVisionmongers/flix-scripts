@@ -10,7 +10,9 @@ if TYPE_CHECKING:
     from ..models.open_event import OpenEvent
     from ..models.ping_event import PingEvent
     from ..models.project_details_dto import ProjectDetailsDto
+    from ..models.status_event import StatusEvent
     from ..models.unknown_event import UnknownEvent
+    from ..models.version_event import VersionEvent
 
 
 T = TypeVar("T", bound="WebsocketEventData")
@@ -21,11 +23,14 @@ class WebsocketEventData:
     """
     Attributes:
         type (EventType):
-        data (Union['ActionEvent', 'OpenEvent', 'PingEvent', 'ProjectDetailsDto', 'UnknownEvent']):
+        data (Union['ActionEvent', 'OpenEvent', 'PingEvent', 'ProjectDetailsDto', 'StatusEvent', 'UnknownEvent',
+            'VersionEvent']):
     """
 
     type: EventType
-    data: Union["ActionEvent", "OpenEvent", "PingEvent", "ProjectDetailsDto", "UnknownEvent"]
+    data: Union[
+        "ActionEvent", "OpenEvent", "PingEvent", "ProjectDetailsDto", "StatusEvent", "UnknownEvent", "VersionEvent"
+    ]
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -33,6 +38,8 @@ class WebsocketEventData:
         from ..models.open_event import OpenEvent
         from ..models.ping_event import PingEvent
         from ..models.project_details_dto import ProjectDetailsDto
+        from ..models.status_event import StatusEvent
+        from ..models.version_event import VersionEvent
 
         type = self.type.value
 
@@ -44,7 +51,13 @@ class WebsocketEventData:
         elif isinstance(self.data, ProjectDetailsDto):
             data = self.data.to_dict()
 
+        elif isinstance(self.data, StatusEvent):
+            data = self.data.to_dict()
+
         elif isinstance(self.data, OpenEvent):
+            data = self.data.to_dict()
+
+        elif isinstance(self.data, VersionEvent):
             data = self.data.to_dict()
 
         elif isinstance(self.data, PingEvent):
@@ -70,14 +83,18 @@ class WebsocketEventData:
         from ..models.open_event import OpenEvent
         from ..models.ping_event import PingEvent
         from ..models.project_details_dto import ProjectDetailsDto
+        from ..models.status_event import StatusEvent
         from ..models.unknown_event import UnknownEvent
+        from ..models.version_event import VersionEvent
 
         d = src_dict.copy()
         type = EventType(d.pop("type"))
 
         def _parse_data(
             data: object,
-        ) -> Union["ActionEvent", "OpenEvent", "PingEvent", "ProjectDetailsDto", "UnknownEvent"]:
+        ) -> Union[
+            "ActionEvent", "OpenEvent", "PingEvent", "ProjectDetailsDto", "StatusEvent", "UnknownEvent", "VersionEvent"
+        ]:
             try:
                 if not isinstance(data, dict):
                     raise TypeError()
@@ -97,7 +114,7 @@ class WebsocketEventData:
             try:
                 if not isinstance(data, dict):
                     raise TypeError()
-                data_type_2 = OpenEvent.from_dict(data)
+                data_type_2 = StatusEvent.from_dict(data)
 
                 return data_type_2
             except:  # noqa: E722
@@ -105,16 +122,32 @@ class WebsocketEventData:
             try:
                 if not isinstance(data, dict):
                     raise TypeError()
-                data_type_3 = PingEvent.from_dict(data)
+                data_type_3 = OpenEvent.from_dict(data)
 
                 return data_type_3
             except:  # noqa: E722
                 pass
+            try:
+                if not isinstance(data, dict):
+                    raise TypeError()
+                data_type_4 = VersionEvent.from_dict(data)
+
+                return data_type_4
+            except:  # noqa: E722
+                pass
+            try:
+                if not isinstance(data, dict):
+                    raise TypeError()
+                data_type_5 = PingEvent.from_dict(data)
+
+                return data_type_5
+            except:  # noqa: E722
+                pass
             if not isinstance(data, dict):
                 raise TypeError()
-            data_type_4 = UnknownEvent.from_dict(data)
+            data_type_6 = UnknownEvent.from_dict(data)
 
-            return data_type_4
+            return data_type_6
 
         data = _parse_data(d.pop("data"))
 
