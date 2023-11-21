@@ -1,13 +1,9 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Type, TypeVar, Union
+from typing import Any, Dict, List, Type, TypeVar, Union
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
-
-if TYPE_CHECKING:
-    from ..models.open_source_file_data import OpenSourceFileData
-
 
 T = TypeVar("T", bound="ExtensionOpenFilePanelData")
 
@@ -19,14 +15,14 @@ class ExtensionOpenFilePanelData:
         id (int):
         asset_id (int):
         is_animated (bool):
-        source_file (Union[Unset, None, OpenSourceFileData]):
+        has_source_file (bool):
         annotation_asset_id (Union[Unset, None, int]):
     """
 
     id: int
     asset_id: int
     is_animated: bool
-    source_file: Union[Unset, None, "OpenSourceFileData"] = UNSET
+    has_source_file: bool
     annotation_asset_id: Union[Unset, None, int] = UNSET
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -34,10 +30,7 @@ class ExtensionOpenFilePanelData:
         id = self.id
         asset_id = self.asset_id
         is_animated = self.is_animated
-        source_file: Union[Unset, None, Dict[str, Any]] = UNSET
-        if not isinstance(self.source_file, Unset):
-            source_file = self.source_file.to_dict() if self.source_file else None
-
+        has_source_file = self.has_source_file
         annotation_asset_id = self.annotation_asset_id
 
         field_dict: Dict[str, Any] = {}
@@ -47,10 +40,9 @@ class ExtensionOpenFilePanelData:
                 "id": id,
                 "assetId": asset_id,
                 "isAnimated": is_animated,
+                "hasSourceFile": has_source_file,
             }
         )
-        if source_file is not UNSET:
-            field_dict["sourceFile"] = source_file
         if annotation_asset_id is not UNSET:
             field_dict["annotationAssetId"] = annotation_asset_id
 
@@ -58,8 +50,6 @@ class ExtensionOpenFilePanelData:
 
     @classmethod
     def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
-        from ..models.open_source_file_data import OpenSourceFileData
-
         d = src_dict.copy()
         id = d.pop("id")
 
@@ -67,14 +57,7 @@ class ExtensionOpenFilePanelData:
 
         is_animated = d.pop("isAnimated")
 
-        _source_file = d.pop("sourceFile", UNSET)
-        source_file: Union[Unset, None, OpenSourceFileData]
-        if _source_file is None:
-            source_file = None
-        elif isinstance(_source_file, Unset):
-            source_file = UNSET
-        else:
-            source_file = OpenSourceFileData.from_dict(_source_file)
+        has_source_file = d.pop("hasSourceFile")
 
         annotation_asset_id = d.pop("annotationAssetId", UNSET)
 
@@ -82,7 +65,7 @@ class ExtensionOpenFilePanelData:
             id=id,
             asset_id=asset_id,
             is_animated=is_animated,
-            source_file=source_file,
+            has_source_file=has_source_file,
             annotation_asset_id=annotation_asset_id,
         )
 

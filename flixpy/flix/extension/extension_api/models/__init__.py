@@ -10,7 +10,6 @@ from .episode_details_dto import EpisodeDetailsDto
 from .event_type import EventType
 from .extension_open_file_panel_data import ExtensionOpenFilePanelData
 from .open_event import OpenEvent
-from .open_source_file_data import OpenSourceFileData
 from .panel_request import PanelRequest
 from .panel_request_source_file import PanelRequestSourceFile
 from .ping_event import PingEvent
@@ -38,7 +37,6 @@ __all__ = (
     "EventType",
     "ExtensionOpenFilePanelData",
     "OpenEvent",
-    "OpenSourceFileData",
     "PanelRequest",
     "PanelRequestSourceFile",
     "PingEvent",
