@@ -26,7 +26,15 @@ from .show_details_dto import ShowDetailsDto
 from .subscribe_event import SubscribeEvent
 from .unknown_event import UnknownEvent
 from .websocket_event import WebsocketEvent
-from .websocket_event_data import WebsocketEventData
+from .websocket_event_data_type_0 import WebsocketEventDataType0
+from .websocket_event_data_type_0_type import WebsocketEventDataType0Type
+from .websocket_event_data_type_1 import WebsocketEventDataType1
+from .websocket_event_data_type_1_type import WebsocketEventDataType1Type
+from .websocket_event_data_type_2 import WebsocketEventDataType2
+from .websocket_event_data_type_2_type import WebsocketEventDataType2Type
+from .websocket_event_data_type_3 import WebsocketEventDataType3
+from .websocket_event_data_type_3_type import WebsocketEventDataType3Type
+from .websocket_event_data_type_4 import WebsocketEventDataType4
 
 __all__ = (
     "ActionEvent",
@@ -55,5 +63,13 @@ __all__ = (
     "SubscribeEvent",
     "UnknownEvent",
     "WebsocketEvent",
-    "WebsocketEventData",
+    "WebsocketEventDataType0",
+    "WebsocketEventDataType0Type",
+    "WebsocketEventDataType1",
+    "WebsocketEventDataType1Type",
+    "WebsocketEventDataType2",
+    "WebsocketEventDataType2Type",
+    "WebsocketEventDataType3",
+    "WebsocketEventDataType3Type",
+    "WebsocketEventDataType4",
 )

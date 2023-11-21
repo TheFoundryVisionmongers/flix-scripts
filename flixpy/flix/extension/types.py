@@ -116,11 +116,11 @@ class _BaseEvent(Protocol):
 
 @dataclasses.dataclass
 class ClientEvent(Event):
-    type: ClientEventType
+    type: str
     additional_properties: dict[str, Any]
 
     @classmethod
-    def parse_event(cls, type: ClientEventType, data: _BaseEvent) -> "ClientEvent":
+    def parse_event(cls, type: str, data: _BaseEvent) -> "ClientEvent":
         if isinstance(data, models.OpenEvent):
             return OpenEvent.from_dict(type, data)
         elif isinstance(data, models.OpenSourceFileEvent):
@@ -131,6 +131,7 @@ class ClientEvent(Event):
             return ProjectEvent.from_dict(type, data)
         elif isinstance(data, models.PingEvent):
             return ClientPingEvent.from_dict(type, data)
+
         return cls(
             type=type,
             additional_properties=data.to_dict(),
@@ -142,7 +143,7 @@ class ClientPingEvent(ClientEvent):
     api_client_id: int
 
     @classmethod
-    def from_dict(cls, type: ClientEventType, data: models.PingEvent) -> "ClientPingEvent":
+    def from_dict(cls, type: str, data: models.PingEvent) -> "ClientPingEvent":
         return cls(
             type=type,
             api_client_id=data.api_client_id,
@@ -158,7 +159,7 @@ class ActionEvent(ClientEvent):
     api_client_id: int | None
 
     @classmethod
-    def from_dict(cls, type: ClientEventType, data: models.ActionEvent) -> "ActionEvent":
+    def from_dict(cls, type: str, data: models.ActionEvent) -> "ActionEvent":
         return cls(
             type=type,
             state=data.state,
@@ -172,7 +173,7 @@ class ActionEvent(ClientEvent):
 @dataclasses.dataclass
 class ProjectEvent(ProjectDetails, ClientEvent):
     @classmethod
-    def from_dict(cls, type: ClientEventType, data: models.ProjectDetailsDto) -> "ProjectEvent":
+    def from_dict(cls, type: str, data: models.ProjectDetailsDto) -> "ProjectEvent":
         project_details = ProjectDetails.from_model(data)
         return cls(
             type=type,
@@ -226,7 +227,7 @@ class OpenEvent(ClientEvent):
     panels: list[OpenPanelData]
 
     @classmethod
-    def from_dict(cls, type: ClientEventType, data: models.OpenEvent) -> "OpenEvent":
+    def from_dict(cls, type: str, data: models.OpenEvent) -> "OpenEvent":
         return cls(
             type=type,
             project=ProjectIds.from_dict(data.project),
@@ -240,7 +241,7 @@ class OpenSourceFileEvent(ClientEvent):
     asset_id: int
 
     @classmethod
-    def from_dict(cls, type: ClientEventType, data: models.OpenSourceFileEvent) -> "OpenSourceFileEvent":
+    def from_dict(cls, type: str, data: models.OpenSourceFileEvent) -> "OpenSourceFileEvent":
         return cls(
             type=type,
             asset_id=data.source_file.asset_id or 0,
