@@ -22,6 +22,10 @@ __all__ = [
     "ActionState",
     "ActionType",
     "AssetType",
+    "VersionEvent",
+    "StatusEvent",
+    "RevisionStatus",
+    "ActionsInProgress"
 ]
 
 
@@ -126,6 +130,10 @@ class ClientEvent(Event):
             return ActionEvent.from_dict(type, data)
         elif isinstance(data, models.ProjectDetailsDto):
             return ProjectEvent.from_dict(type, data)
+        elif isinstance(data, models.VersionEvent):
+            return VersionEvent.from_dict(type, data)
+        elif isinstance(data, models.StatusEvent):
+            return StatusEvent.from_dict(type, data)
         elif isinstance(data, models.PingEvent):
             return ClientPingEvent.from_dict(type, data)
         return cls(
@@ -165,6 +173,64 @@ class ActionEvent(ClientEvent):
             additional_properties=data.additional_properties,
         )
 
+
+@dataclasses.dataclass
+class VersionEvent(ClientEvent):
+    latest_version: str
+
+    @classmethod
+    def from_dict(cls, type: ClientEventType, data: models.VersionEvent) -> "VersionEvent":
+        return cls(
+            type=type,
+            latest_version=data.latest_version,
+            additional_properties=data.additional_properties,
+        )
+    
+@dataclasses.dataclass
+class RevisionStatus:
+    can_save: bool
+    can_publish: bool
+    can_export: bool
+    selected_panels: list[float]
+
+    @classmethod
+    def from_dict(cls, data: models.RevisionStatus) -> "RevisionStatus":
+        return cls(
+            can_save=data.can_save,
+            can_publish=data.can_publish,
+            can_export=data.can_export,
+            selected_panels=data.selected_panels,
+        )
+
+@dataclasses.dataclass
+class ActionsInProgress:
+    is_saving: bool
+    is_publishing: bool
+    is_exporting: bool
+
+    @classmethod
+    def from_dict(cls, data: models.ActionsInProgress) -> "ActionsInProgress":
+        return cls(
+            is_saving=data.is_saving,
+            is_publishing=data.is_publishing,
+            is_exporting=data.is_exporting,
+        )
+
+@dataclasses.dataclass
+class StatusEvent(ClientEvent):
+    can_create: bool
+    revision_status: RevisionStatus
+    actions_in_progress: ActionsInProgress
+
+    @classmethod
+    def from_dict(cls, type: ClientEventType, data: models.StatusEvent) -> "StatusEvent":
+        return cls(
+            type=type,
+            can_create=data.can_create,
+            revision_status=RevisionStatus.from_dict(data.revision_status),
+            actions_in_progress=ActionsInProgress.from_dict(data.actions_in_progress),
+            additional_properties=data.additional_properties,
+        )
 
 @dataclasses.dataclass
 class ProjectEvent(ProjectDetails, ClientEvent):
