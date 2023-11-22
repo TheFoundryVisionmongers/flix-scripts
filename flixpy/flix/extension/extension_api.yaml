@@ -417,7 +417,6 @@ components:
         - OPEN
         - PROJECT
         - VERSION
-        - STATUS
     WebsocketEvent:
       type: object
       properties:
@@ -430,7 +429,6 @@ components:
               oneOf:
                 - $ref: "#/components/schemas/ActionEvent"
                 - $ref: "#/components/schemas/ProjectEvent"
-                - $ref: "#/components/schemas/StatusEvent"
                 - $ref: "#/components/schemas/OpenEvent"
                 - $ref: "#/components/schemas/VersionEvent"
                 - $ref: "#/components/schemas/PingEvent"
@@ -510,19 +508,6 @@ components:
           type: string
       required:
         - latestVersion
-    StatusEvent:
-      type: object
-      properties:
-        canCreate:
-          type: boolean
-        revisionStatus:
-          $ref: "#/components/schemas/RevisionStatus"
-        actionsInProgress:
-          $ref: "#/components/schemas/ActionsInProgress"
-      required:
-        - canCreate
-        - revisionStatus
-        - actionsInProgress
     ProjectIds:
       type: object
       properties:
@@ -561,34 +546,3 @@ components:
         - id
         - assetId
         - isAnimated
-    RevisionStatus:
-      type: object
-      properties:
-        canSave:
-          type: boolean
-        canPublish:
-          type: boolean
-        canExport:
-          type: boolean
-        selectedPanels:
-          type: array
-          items:
-            type: number
-      required:
-        - canSave
-        - canPublish
-        - canExport
-        - selectedPanels
-    ActionsInProgress:
-      type: object
-      properties:
-        isSaving:
-          type: boolean
-        isPublishing:
-          type: boolean
-        isExporting:
-          type: boolean
-      required:
-        - isSaving
-        - isPublishing
-        - isExporting
