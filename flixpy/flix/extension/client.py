@@ -192,8 +192,12 @@ class Extension:
         # set online here rather than in _on_connect, since we still get a connect event if unauthorised
         self.online = True
 
-        ws_event = models.WebsocketEvent.from_dict(event_data)
-        logger.debug("got event from Flix Client: %s", ws_event)
+        try:
+            ws_event = models.WebsocketEvent.from_dict(event_data)
+            logger.debug("got event from Flix Client: %s", ws_event)
+        except ValueError as e:
+            logger.warning("dropping unsupported event: %s (%s)", event_data, e)
+            return
 
         event = types.ClientEvent.parse_event(ws_event.data.type, ws_event.data.data)
         logger.debug("got %s event: %s", type(event).__name__, event)

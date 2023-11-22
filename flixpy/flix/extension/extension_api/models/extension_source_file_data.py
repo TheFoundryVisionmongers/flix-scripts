@@ -1,19 +1,19 @@
-from typing import Any, Dict, List, Type, TypeVar
+from typing import Any, Dict, List, Optional, Type, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-T = TypeVar("T", bound="OpenSourceFileData")
+T = TypeVar("T", bound="ExtensionSourceFileData")
 
 
 @_attrs_define
-class OpenSourceFileData:
+class ExtensionSourceFileData:
     """
     Attributes:
-        asset_id (int):
+        asset_id (Optional[int]):
     """
 
-    asset_id: int
+    asset_id: Optional[int]
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -34,12 +34,12 @@ class OpenSourceFileData:
         d = src_dict.copy()
         asset_id = d.pop("assetId")
 
-        open_source_file_data = cls(
+        extension_source_file_data = cls(
             asset_id=asset_id,
         )
 
-        open_source_file_data.additional_properties = d
-        return open_source_file_data
+        extension_source_file_data.additional_properties = d
+        return extension_source_file_data
 
     @property
     def additional_keys(self) -> List[str]:

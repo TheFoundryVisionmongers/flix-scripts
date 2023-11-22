@@ -7,6 +7,7 @@ class EventType(str, Enum):
     PING = "PING"
     PROJECT = "PROJECT"
     PUBLISH = "PUBLISH"
+    STATUS = "STATUS"
     VERSION = "VERSION"
 
     def __str__(self) -> str:
