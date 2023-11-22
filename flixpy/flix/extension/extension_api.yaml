@@ -416,24 +416,60 @@ components:
         - PUBLISH
         - OPEN
         - PROJECT
+        - STATUS
+        - VERSION
     WebsocketEvent:
       type: object
       properties:
         data:
           type: object
-          properties:
-            type:
-              $ref: "#/components/schemas/EventType"
-            data:
-              oneOf:
-                - $ref: "#/components/schemas/ActionEvent"
-                - $ref: "#/components/schemas/ProjectEvent"
-                - $ref: "#/components/schemas/OpenEvent"
-                - $ref: "#/components/schemas/PingEvent"
-                - $ref: "#/components/schemas/UnknownEvent"
-          required:
-            - type
-            - data
+          oneOf:
+            - properties:
+                type:
+                  type: string
+                  enum: [ACTION]
+                data:
+                  $ref: "#/components/schemas/ActionEvent"
+              required:
+                - type
+                - data
+            - properties:
+                type:
+                  type: string
+                  enum: [PROJECT]
+                data:
+                  $ref: "#/components/schemas/ProjectEvent"
+              required:
+                - type
+                - data
+            - properties:
+                type:
+                  type: string
+                  enum: [OPEN]
+                data:
+                  oneOf:
+                    - $ref: "#/components/schemas/OpenEvent"
+                    - $ref: "#/components/schemas/OpenSourceFileEvent"
+              required:
+                - type
+                - data
+            - properties:
+                type:
+                  type: string
+                  enum: [PING]
+                data:
+                  $ref: "#/components/schemas/PingEvent"
+              required:
+                - type
+                - data
+            - properties:
+                type:
+                  type: string
+                data:
+                  $ref: "#/components/schemas/UnknownEvent"
+              required:
+                - type
+                - data
       required:
         - data
     SubscribeEvent:
@@ -499,6 +535,13 @@ components:
       required:
         - project
         - panels
+    OpenSourceFileEvent:
+      type: object
+      properties:
+        sourceFile:
+          $ref: "#/components/schemas/ExtensionSourceFileData"
+      required:
+        - sourceFile
     ProjectIds:
       type: object
       properties:
@@ -511,14 +554,6 @@ components:
           type: integer
         sequenceRevisionId:
           type: integer
-    OpenSourceFileData:
-      type: object
-      nullable: true
-      properties:
-        assetId:
-          type: integer
-      required:
-        - assetId
     ExtensionOpenFilePanelData:
       type: object
       properties:
@@ -529,7 +564,7 @@ components:
         isAnimated:
           type: boolean
         sourceFile:
-          $ref: "#/components/schemas/OpenSourceFileData"
+          $ref: "#/components/schemas/ExtensionSourceFileData"
         annotationAssetId:
           type: integer
           nullable: true
@@ -537,3 +572,12 @@ components:
         - id
         - assetId
         - isAnimated
+        - sourceFile
+    ExtensionSourceFileData:
+      type: object
+      properties:
+        assetId:
+          type: integer
+          nullable: true
+      required:
+        - assetId
