@@ -465,6 +465,15 @@ components:
             - properties:
                 type:
                   type: string
+                  enum: [VERSION]
+                data:
+                  $ref: "#/components/schemas/VersionEvent"
+              required:
+                - type
+                - data
+            - properties:
+                type:
+                  type: string
                 data:
                   $ref: "#/components/schemas/UnknownEvent"
               required:
@@ -535,6 +544,13 @@ components:
       required:
         - project
         - panels
+    VersionEvent:
+      type: object
+      properties:
+        latestVersion:
+          type: string
+      required:
+        - latestVersion
     OpenSourceFileEvent:
       type: object
       properties:

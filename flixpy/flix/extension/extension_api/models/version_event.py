@@ -1,40 +1,29 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Type, TypeVar
+from typing import Any, Dict, List, Type, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-from ..models.websocket_event_data_type_4_type import WebsocketEventDataType4Type
-
-if TYPE_CHECKING:
-    from ..models.version_event import VersionEvent
-
-
-T = TypeVar("T", bound="WebsocketEventDataType4")
+T = TypeVar("T", bound="VersionEvent")
 
 
 @_attrs_define
-class WebsocketEventDataType4:
+class VersionEvent:
     """
     Attributes:
-        type (WebsocketEventDataType4Type):
-        data (VersionEvent):
+        latest_version (str):
     """
 
-    type: WebsocketEventDataType4Type
-    data: "VersionEvent"
+    latest_version: str
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
-        type = self.type.value
-
-        data = self.data.to_dict()
+        latest_version = self.latest_version
 
         field_dict: Dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
             {
-                "type": type,
-                "data": data,
+                "latestVersion": latest_version,
             }
         )
 
@@ -42,20 +31,15 @@ class WebsocketEventDataType4:
 
     @classmethod
     def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
-        from ..models.version_event import VersionEvent
-
         d = src_dict.copy()
-        type = WebsocketEventDataType4Type(d.pop("type"))
+        latest_version = d.pop("latestVersion")
 
-        data = VersionEvent.from_dict(d.pop("data"))
-
-        websocket_event_data_type_4 = cls(
-            type=type,
-            data=data,
+        version_event = cls(
+            latest_version=latest_version,
         )
 
-        websocket_event_data_type_4.additional_properties = d
-        return websocket_event_data_type_4
+        version_event.additional_properties = d
+        return version_event
 
     @property
     def additional_keys(self) -> List[str]:

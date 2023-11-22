@@ -9,6 +9,7 @@ if TYPE_CHECKING:
     from ..models.websocket_event_data_type_2 import WebsocketEventDataType2
     from ..models.websocket_event_data_type_3 import WebsocketEventDataType3
     from ..models.websocket_event_data_type_4 import WebsocketEventDataType4
+    from ..models.websocket_event_data_type_5 import WebsocketEventDataType5
 
 
 T = TypeVar("T", bound="WebsocketEvent")
@@ -19,7 +20,7 @@ class WebsocketEvent:
     """
     Attributes:
         data (Union['WebsocketEventDataType0', 'WebsocketEventDataType1', 'WebsocketEventDataType2',
-            'WebsocketEventDataType3', 'WebsocketEventDataType4']):
+            'WebsocketEventDataType3', 'WebsocketEventDataType4', 'WebsocketEventDataType5']):
     """
 
     data: Union[
@@ -28,6 +29,7 @@ class WebsocketEvent:
         "WebsocketEventDataType2",
         "WebsocketEventDataType3",
         "WebsocketEventDataType4",
+        "WebsocketEventDataType5",
     ]
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -36,6 +38,7 @@ class WebsocketEvent:
         from ..models.websocket_event_data_type_1 import WebsocketEventDataType1
         from ..models.websocket_event_data_type_2 import WebsocketEventDataType2
         from ..models.websocket_event_data_type_3 import WebsocketEventDataType3
+        from ..models.websocket_event_data_type_4 import WebsocketEventDataType4
 
         data: Dict[str, Any]
 
@@ -49,6 +52,9 @@ class WebsocketEvent:
             data = self.data.to_dict()
 
         elif isinstance(self.data, WebsocketEventDataType3):
+            data = self.data.to_dict()
+
+        elif isinstance(self.data, WebsocketEventDataType4):
             data = self.data.to_dict()
 
         else:
@@ -71,6 +77,7 @@ class WebsocketEvent:
         from ..models.websocket_event_data_type_2 import WebsocketEventDataType2
         from ..models.websocket_event_data_type_3 import WebsocketEventDataType3
         from ..models.websocket_event_data_type_4 import WebsocketEventDataType4
+        from ..models.websocket_event_data_type_5 import WebsocketEventDataType5
 
         d = src_dict.copy()
 
@@ -82,6 +89,7 @@ class WebsocketEvent:
             "WebsocketEventDataType2",
             "WebsocketEventDataType3",
             "WebsocketEventDataType4",
+            "WebsocketEventDataType5",
         ]:
             try:
                 if not isinstance(data, dict):
@@ -115,11 +123,19 @@ class WebsocketEvent:
                 return data_type_3
             except:  # noqa: E722
                 pass
+            try:
+                if not isinstance(data, dict):
+                    raise TypeError()
+                data_type_4 = WebsocketEventDataType4.from_dict(data)
+
+                return data_type_4
+            except:  # noqa: E722
+                pass
             if not isinstance(data, dict):
                 raise TypeError()
-            data_type_4 = WebsocketEventDataType4.from_dict(data)
+            data_type_5 = WebsocketEventDataType5.from_dict(data)
 
-            return data_type_4
+            return data_type_5
 
         data = _parse_data(d.pop("data"))
 

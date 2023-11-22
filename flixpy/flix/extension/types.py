@@ -21,6 +21,7 @@ __all__ = [
     "ActionState",
     "ActionType",
     "AssetType",
+    "VersionEvent",
     "OpenSourceFileEvent",
     "DownloadResponse",
 ]
@@ -129,6 +130,8 @@ class ClientEvent(Event):
             return ActionEvent.from_dict(type, data)
         elif isinstance(data, models.ProjectDetailsDto):
             return ProjectEvent.from_dict(type, data)
+        elif isinstance(data, models.VersionEvent):
+            return VersionEvent.from_dict(type, data)
         elif isinstance(data, models.PingEvent):
             return ClientPingEvent.from_dict(type, data)
 
@@ -169,6 +172,18 @@ class ActionEvent(ClientEvent):
             additional_properties=data.additional_properties,
         )
 
+
+@dataclasses.dataclass
+class VersionEvent(ClientEvent):
+    latest_version: str
+
+    @classmethod
+    def from_dict(cls, type: str, data: models.VersionEvent) -> "VersionEvent":
+        return cls(
+            type=type,
+            latest_version=data.latest_version,
+            additional_properties=data.additional_properties,
+        )
 
 @dataclasses.dataclass
 class ProjectEvent(ProjectDetails, ClientEvent):

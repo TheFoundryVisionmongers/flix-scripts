@@ -25,6 +25,7 @@ from .sequence_revision_details_dto import SequenceRevisionDetailsDto
 from .show_details_dto import ShowDetailsDto
 from .subscribe_event import SubscribeEvent
 from .unknown_event import UnknownEvent
+from .version_event import VersionEvent
 from .websocket_event import WebsocketEvent
 from .websocket_event_data_type_0 import WebsocketEventDataType0
 from .websocket_event_data_type_0_type import WebsocketEventDataType0Type
@@ -35,6 +36,8 @@ from .websocket_event_data_type_2_type import WebsocketEventDataType2Type
 from .websocket_event_data_type_3 import WebsocketEventDataType3
 from .websocket_event_data_type_3_type import WebsocketEventDataType3Type
 from .websocket_event_data_type_4 import WebsocketEventDataType4
+from .websocket_event_data_type_4_type import WebsocketEventDataType4Type
+from .websocket_event_data_type_5 import WebsocketEventDataType5
 
 __all__ = (
     "ActionEvent",
@@ -62,6 +65,7 @@ __all__ = (
     "ShowDetailsDto",
     "SubscribeEvent",
     "UnknownEvent",
+    "VersionEvent",
     "WebsocketEvent",
     "WebsocketEventDataType0",
     "WebsocketEventDataType0Type",
@@ -72,4 +76,6 @@ __all__ = (
     "WebsocketEventDataType3",
     "WebsocketEventDataType3Type",
     "WebsocketEventDataType4",
+    "WebsocketEventDataType4Type",
+    "WebsocketEventDataType5",
 )
