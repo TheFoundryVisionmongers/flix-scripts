@@ -3,30 +3,27 @@ from typing import TYPE_CHECKING, Any, Dict, List, Type, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-from ..models.websocket_event_data_type_4_type import WebsocketEventDataType4Type
-
 if TYPE_CHECKING:
-    from ..models.ping_event import PingEvent
+    from ..models.unknown_event import UnknownEvent
 
 
-T = TypeVar("T", bound="WebsocketEventDataType4")
+T = TypeVar("T", bound="WebsocketEventDataType6")
 
 
 @_attrs_define
-class WebsocketEventDataType4:
+class WebsocketEventDataType6:
     """
     Attributes:
-        type (WebsocketEventDataType4Type):
-        data (PingEvent):
+        type (str):
+        data (UnknownEvent):
     """
 
-    type: WebsocketEventDataType4Type
-    data: "PingEvent"
+    type: str
+    data: "UnknownEvent"
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
-        type = self.type.value
-
+        type = self.type
         data = self.data.to_dict()
 
         field_dict: Dict[str, Any] = {}
@@ -42,20 +39,20 @@ class WebsocketEventDataType4:
 
     @classmethod
     def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
-        from ..models.ping_event import PingEvent
+        from ..models.unknown_event import UnknownEvent
 
         d = src_dict.copy()
-        type = WebsocketEventDataType4Type(d.pop("type"))
+        type = d.pop("type")
 
-        data = PingEvent.from_dict(d.pop("data"))
+        data = UnknownEvent.from_dict(d.pop("data"))
 
-        websocket_event_data_type_4 = cls(
+        websocket_event_data_type_6 = cls(
             type=type,
             data=data,
         )
 
-        websocket_event_data_type_4.additional_properties = d
-        return websocket_event_data_type_4
+        websocket_event_data_type_6.additional_properties = d
+        return websocket_event_data_type_6
 
     @property
     def additional_keys(self) -> List[str]:

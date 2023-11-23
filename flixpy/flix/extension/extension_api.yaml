@@ -160,6 +160,23 @@ paths:
         - Project Details
       security:
         - bearer: [ ]
+  /status:
+    get:
+      operationId: StatusController_get
+      parameters: [ ]
+      responses:
+        '200':
+          description: Returns the current Flix Client status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+        '400':
+          description: The Flix Client is not logged in to a server
+      tags:
+        - Status
+      security:
+        - bearer: [ ]
 info:
   title: Flix General Remote Client API
   description: The general remote API for the Flix client
@@ -445,6 +462,15 @@ components:
             - properties:
                 type:
                   type: string
+                  enum: [STATUS]
+                data:
+                  $ref: "#/components/schemas/Status"
+              required:
+                - type
+                - data
+            - properties:
+                type:
+                  type: string
                   enum: [OPEN]
                 data:
                   oneOf:
@@ -503,6 +529,50 @@ components:
       type: object
       allOf:
         - $ref: "#/components/schemas/ProjectDetailsDto"
+    Status:
+      type: object
+      properties:
+        canCreate:
+          type: boolean
+        revisionStatus:
+          $ref: "#/components/schemas/RevisionStatus"
+        actionsInProgress:
+          $ref: "#/components/schemas/ActionsInProgress"
+      required:
+        - canCreate
+        - revisionStatus
+        - actionsInProgress
+    RevisionStatus:
+      type: object
+      properties:
+        canSave:
+          type: boolean
+        canPublish:
+          type: boolean
+        canExport:
+          type: boolean
+        selectedPanels:
+          type: array
+          items:
+            type: integer
+      required:
+        - canSave
+        - canPublish
+        - canExport
+        - selectedPanels
+    ActionsInProgress:
+      type: object
+      properties:
+        isSaving:
+          type: boolean
+        isPublishing:
+          type: boolean
+        isExporting:
+          type: boolean
+      required:
+        - isSaving
+        - isPublishing
+        - isExporting
     ActionEvent:
       type: object
       properties:
