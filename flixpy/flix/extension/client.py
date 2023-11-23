@@ -329,6 +329,20 @@ class Extension:
 
         return types.ProjectDetails.from_model(resp)
 
+    async def get_status(self) -> types.PanelBrowserStatus:
+        """Returns details about the current status of the Flix Client.
+
+        :return: An object containing information about the current Flix Client status.
+        """
+        from .extension_api.api.status import status_controller_get
+
+        resp = _assert_response(
+            models.Status,
+            await status_controller_get.asyncio_detailed(client=await self._get_registered_client()),
+        )
+
+        return types.PanelBrowserStatus.from_model(resp)
+
     async def import_panels(
         self,
         paths: list[str],
