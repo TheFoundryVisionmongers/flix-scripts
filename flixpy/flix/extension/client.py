@@ -147,6 +147,8 @@ class Extension:
         self.client_uid = client_uid
         self.version = version
         self.base_url = base_url
+        self.panel_browser_status = types.PanelBrowserStatus()
+        self.project = types.ProjectDetails()
         self._online = False
 
         self._client = extension_api.Client(base_url=self.base_url)
@@ -155,6 +157,18 @@ class Extension:
         self._register_events()
         self._queues = weakref.WeakSet[EventQueue[types.Event]]()
         self._connection_task: asyncio.Task[None] | None = None
+
+    def _reset_status(self) -> None:
+        self.online = False
+        self.panel_browser_status = types.PanelBrowserStatus()
+        self.project = types.ProjectDetails()
+
+    async def _update_status(self) -> None:
+        try:
+            self.panel_browser_status = await self.get_status()
+            self.project = await self.get_project_details()
+        except (errors.FlixError, httpx.HTTPError) as e:
+            logger.warning("couldn't update Flix Client status on connect: %s", e)
 
     def _register_events(self) -> None:
         self.sio.on("message", self._on_message)
@@ -172,25 +186,54 @@ class Extension:
             self._online = value
             self._broadcast_event(types.ConnectionEvent(self._online))
 
+    @property
+    def status(self) -> types.Status:
+        status = types.Status(0)
+
+        if self.online:
+            status |= types.Status.ONLINE
+        if self.project.sequence_revision is None:
+            status |= types.Status.NO_REVISION
+        if not self.panel_browser_status.can_create:
+            status |= types.Status.NO_PERMISSION
+        if len(self.panel_browser_status.revision_status.selected_panels) > 1:
+            status |= types.Status.MULTIPLE_PANELS_SELECTED
+
+        ready = types.Status.ONLINE
+        not_ready = types.Status.NO_PERMISSION | types.Status.NO_REVISION
+        if (status & ready) > 0 and (status & not_ready) == 0:
+            status |= types.Status.READY_TO_SEND
+
+        return status
+
     async def _on_connect(self) -> None:
         logger.info("connected to Flix Client, subscribing to events")
         events = models.SubscribeEvent(
             event_types=[
-                models.EventType.PROJECT,
-                models.EventType.ACTION,
-                models.EventType.OPEN,
-                models.EventType.PUBLISH,
+                types.ClientEventType.STATUS,
+                types.ClientEventType.PROJECT,
+                types.ClientEventType.ACTION,
+                types.ClientEventType.OPEN,
+                types.ClientEventType.PUBLISH,
             ],
         )
         await self.sio.emit("subscribe", data=events.to_dict())
 
     async def _on_disconnect(self) -> None:
         logger.warning("disconnected from Flix Client")
-        self.online = False
+        self._reset_status()
+
+    async def _on_unauthorized(self) -> None:
+        logger.warning("extension is unauthorised, attempting to re-register")
+        self._reset_status()
+        # connect in background
+        self.register()
 
     async def _on_message(self, event_data: dict[str, Any]) -> None:
-        # set online here rather than in _on_connect, since we still get a connect event if unauthorised
-        self.online = True
+        if not self.online:
+            # set online here rather than in _on_connect, since we still get a connect event if unauthorised
+            self.online = True
+            await self._update_status()
 
         try:
             ws_event = models.WebsocketEvent.from_dict(event_data)
@@ -201,6 +244,12 @@ class Extension:
 
         event = types.ClientEvent.parse_event(ws_event.data.type, ws_event.data.data)
         logger.debug("got %s event: %s", type(event).__name__, event)
+
+        if isinstance(event, types.StatusEvent):
+            self.panel_browser_status = event
+        elif isinstance(event, types.ProjectEvent):
+            self.project = event
+
         self._broadcast_event(event)
 
     def _broadcast_event(self, event: types.Event) -> None:
@@ -223,12 +272,6 @@ class Extension:
         This method should not generally be called manually."""
         self._queues.discard(queue)
 
-    async def _on_unauthorized(self) -> None:
-        logger.warning("extension is unauthorised, attempting to re-register")
-        self.online = False
-        # connect in background
-        self.register()
-
     async def _try_connect(self) -> None:
         if self.online:
             return
@@ -245,6 +288,7 @@ class Extension:
 
             break
 
+        await self._update_status()
         await self.sio.connect(self.base_url, auth={"token": registered_client.token})
 
     def register(self) -> asyncio.Task[None]:
