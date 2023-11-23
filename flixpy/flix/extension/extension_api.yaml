@@ -661,6 +661,7 @@ components:
         - sourceFile
     ExtensionSourceFileData:
       type: object
+      nullable: true
       properties:
         assetId:
           type: integer

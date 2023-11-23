@@ -301,7 +301,7 @@ class OpenPanelData:
             panel_id=data.id,
             asset_id=data.asset_id,
             is_animated=data.is_animated,
-            source_file_asset_id=data.source_file.asset_id,
+            source_file_asset_id=data.source_file.asset_id if data.source_file else None,
             annotation_asset_id=data.annotation_asset_id if data.annotation_asset_id else None,
         )
 
@@ -329,7 +329,7 @@ class OpenSourceFileEvent(ClientEvent):
     def from_dict(cls, type: str, data: models.OpenSourceFileEvent) -> "OpenSourceFileEvent":
         return cls(
             type=type,
-            asset_id=data.source_file.asset_id or 0,
+            asset_id=data.source_file.asset_id if data.source_file and data.source_file.asset_id else 0,
             additional_properties=data.additional_properties,
         )
 

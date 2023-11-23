@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Type, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, TypeVar, Union
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -19,14 +19,14 @@ class ExtensionOpenFilePanelData:
         id (int):
         asset_id (int):
         is_animated (bool):
-        source_file (ExtensionSourceFileData):
+        source_file (Optional[ExtensionSourceFileData]):
         annotation_asset_id (Union[Unset, None, int]):
     """
 
     id: int
     asset_id: int
     is_animated: bool
-    source_file: "ExtensionSourceFileData"
+    source_file: Optional["ExtensionSourceFileData"]
     annotation_asset_id: Union[Unset, None, int] = UNSET
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -34,7 +34,7 @@ class ExtensionOpenFilePanelData:
         id = self.id
         asset_id = self.asset_id
         is_animated = self.is_animated
-        source_file = self.source_file.to_dict()
+        source_file = self.source_file.to_dict() if self.source_file else None
 
         annotation_asset_id = self.annotation_asset_id
 
@@ -64,7 +64,12 @@ class ExtensionOpenFilePanelData:
 
         is_animated = d.pop("isAnimated")
 
-        source_file = ExtensionSourceFileData.from_dict(d.pop("sourceFile"))
+        _source_file = d.pop("sourceFile")
+        source_file: Optional[ExtensionSourceFileData]
+        if _source_file is None:
+            source_file = None
+        else:
+            source_file = ExtensionSourceFileData.from_dict(_source_file)
 
         annotation_asset_id = d.pop("annotationAssetId", UNSET)
 
