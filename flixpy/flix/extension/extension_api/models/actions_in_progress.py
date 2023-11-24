@@ -1,40 +1,37 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Type, TypeVar
+from typing import Any, Dict, List, Type, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-from ..models.websocket_event_data_type_4_type import WebsocketEventDataType4Type
-
-if TYPE_CHECKING:
-    from ..models.ping_event import PingEvent
-
-
-T = TypeVar("T", bound="WebsocketEventDataType4")
+T = TypeVar("T", bound="ActionsInProgress")
 
 
 @_attrs_define
-class WebsocketEventDataType4:
+class ActionsInProgress:
     """
     Attributes:
-        type (WebsocketEventDataType4Type):
-        data (PingEvent):
+        is_saving (bool):
+        is_publishing (bool):
+        is_exporting (bool):
     """
 
-    type: WebsocketEventDataType4Type
-    data: "PingEvent"
+    is_saving: bool
+    is_publishing: bool
+    is_exporting: bool
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
-        type = self.type.value
-
-        data = self.data.to_dict()
+        is_saving = self.is_saving
+        is_publishing = self.is_publishing
+        is_exporting = self.is_exporting
 
         field_dict: Dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
             {
-                "type": type,
-                "data": data,
+                "isSaving": is_saving,
+                "isPublishing": is_publishing,
+                "isExporting": is_exporting,
             }
         )
 
@@ -42,20 +39,21 @@ class WebsocketEventDataType4:
 
     @classmethod
     def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
-        from ..models.ping_event import PingEvent
-
         d = src_dict.copy()
-        type = WebsocketEventDataType4Type(d.pop("type"))
+        is_saving = d.pop("isSaving")
 
-        data = PingEvent.from_dict(d.pop("data"))
+        is_publishing = d.pop("isPublishing")
 
-        websocket_event_data_type_4 = cls(
-            type=type,
-            data=data,
+        is_exporting = d.pop("isExporting")
+
+        actions_in_progress = cls(
+            is_saving=is_saving,
+            is_publishing=is_publishing,
+            is_exporting=is_exporting,
         )
 
-        websocket_event_data_type_4.additional_properties = d
-        return websocket_event_data_type_4
+        actions_in_progress.additional_properties = d
+        return actions_in_progress
 
     @property
     def additional_keys(self) -> List[str]:

@@ -3,8 +3,10 @@ from typing import TYPE_CHECKING, Any, Dict, List, Type, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..models.websocket_event_data_type_5_type import WebsocketEventDataType5Type
+
 if TYPE_CHECKING:
-    from ..models.unknown_event import UnknownEvent
+    from ..models.version_event import VersionEvent
 
 
 T = TypeVar("T", bound="WebsocketEventDataType5")
@@ -14,16 +16,17 @@ T = TypeVar("T", bound="WebsocketEventDataType5")
 class WebsocketEventDataType5:
     """
     Attributes:
-        type (str):
-        data (UnknownEvent):
+        type (WebsocketEventDataType5Type):
+        data (VersionEvent):
     """
 
-    type: str
-    data: "UnknownEvent"
+    type: WebsocketEventDataType5Type
+    data: "VersionEvent"
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
-        type = self.type
+        type = self.type.value
+
         data = self.data.to_dict()
 
         field_dict: Dict[str, Any] = {}
@@ -39,12 +42,12 @@ class WebsocketEventDataType5:
 
     @classmethod
     def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
-        from ..models.unknown_event import UnknownEvent
+        from ..models.version_event import VersionEvent
 
         d = src_dict.copy()
-        type = d.pop("type")
+        type = WebsocketEventDataType5Type(d.pop("type"))
 
-        data = UnknownEvent.from_dict(d.pop("data"))
+        data = VersionEvent.from_dict(d.pop("data"))
 
         websocket_event_data_type_5 = cls(
             type=type,

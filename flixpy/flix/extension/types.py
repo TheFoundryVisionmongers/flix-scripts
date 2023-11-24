@@ -1,4 +1,5 @@
 import dataclasses
+import enum
 from typing import Any, Protocol
 
 from .extension_api import models
@@ -24,6 +25,11 @@ __all__ = [
     "VersionEvent",
     "OpenSourceFileEvent",
     "DownloadResponse",
+    "ActionsInProgress",
+    "PanelBrowserStatus",
+    "StatusEvent",
+    "RevisionStatus",
+    "Status",
 ]
 
 
@@ -35,12 +41,20 @@ class SourceFile:
     origin: str
 
 
+class Status(enum.IntFlag):
+    ONLINE = enum.auto()
+    READY_TO_SEND = enum.auto()
+    NO_REVISION = enum.auto()
+    NO_PERMISSION = enum.auto()
+    MULTIPLE_PANELS_SELECTED = enum.auto()
+
+
 @dataclasses.dataclass
 class ProjectDetails:
-    show: flix_types.Show | None
-    episode: flix_types.Episode | None
-    sequence: flix_types.Sequence | None
-    sequence_revision: flix_types.SequenceRevision | None
+    show: flix_types.Show | None = None
+    episode: flix_types.Episode | None = None
+    sequence: flix_types.Sequence | None = None
+    sequence_revision: flix_types.SequenceRevision | None = None
 
     @classmethod
     def from_model(cls, data: models.ProjectDetailsDto) -> "ProjectDetails":
@@ -81,13 +95,13 @@ class ProjectDetails:
                     _client=None,
                 )
 
-                if data.sequence_revision is not None:
+                if (rev := data.sequence_revision) is not None:
                     sequence_revision = flix_types.SequenceRevision(
-                        revision_number=int(data.sequence_revision.id),
-                        published=data.sequence_revision.published,
-                        comment=data.sequence_revision.comment or "",
-                        created_date=data.sequence_revision.created_date,
-                        owner=flix_types.User(data.sequence_revision.owner or "", _client=None),
+                        revision_number=int(rev.id),
+                        published=rev.published,
+                        comment=rev.comment or "",
+                        created_date=rev.created_date,
+                        owner=flix_types.User(rev.owner, _client=None) if rev.owner else None,
                         _sequence=sequence,
                         _client=None,
                     )
@@ -132,6 +146,8 @@ class ClientEvent(Event):
             return ProjectEvent.from_dict(type, data)
         elif isinstance(data, models.VersionEvent):
             return VersionEvent.from_dict(type, data)
+        elif isinstance(data, models.Status):
+            return StatusEvent.from_dict(type, data)
         elif isinstance(data, models.PingEvent):
             return ClientPingEvent.from_dict(type, data)
 
@@ -185,6 +201,7 @@ class VersionEvent(ClientEvent):
             additional_properties=data.additional_properties,
         )
 
+
 @dataclasses.dataclass
 class ProjectEvent(ProjectDetails, ClientEvent):
     @classmethod
@@ -218,6 +235,59 @@ class ProjectIds:
 
 
 @dataclasses.dataclass
+class RevisionStatus:
+    can_save: bool = False
+    can_publish: bool = False
+    can_export: bool = False
+    selected_panels: list[int] = dataclasses.field(default_factory=list)
+
+
+@dataclasses.dataclass
+class ActionsInProgress:
+    is_saving: bool = False
+    is_publishing: bool = False
+    is_exporting: bool = False
+
+
+@dataclasses.dataclass
+class PanelBrowserStatus:
+    can_create: bool = False
+    revision_status: RevisionStatus = dataclasses.field(default_factory=RevisionStatus)
+    actions_in_progress: ActionsInProgress = dataclasses.field(default_factory=ActionsInProgress)
+
+    @classmethod
+    def from_model(cls, data: models.Status) -> "PanelBrowserStatus":
+        return cls(
+            can_create=data.can_create,
+            revision_status=RevisionStatus(
+                can_save=data.revision_status.can_save,
+                can_publish=data.revision_status.can_publish,
+                can_export=data.revision_status.can_export,
+                selected_panels=data.revision_status.selected_panels,
+            ),
+            actions_in_progress=ActionsInProgress(
+                is_saving=data.actions_in_progress.is_saving,
+                is_publishing=data.actions_in_progress.is_publishing,
+                is_exporting=data.actions_in_progress.is_exporting,
+            ),
+        )
+
+
+@dataclasses.dataclass
+class StatusEvent(PanelBrowserStatus, ClientEvent):
+    @classmethod
+    def from_dict(cls, type: str, data: models.Status) -> "StatusEvent":
+        status = PanelBrowserStatus.from_model(data)
+        return cls(
+            type=type,
+            can_create=status.can_create,
+            revision_status=status.revision_status,
+            actions_in_progress=status.actions_in_progress,
+            additional_properties=data.additional_properties,
+        )
+
+
+@dataclasses.dataclass
 class OpenPanelData:
     panel_id: int
     asset_id: int
@@ -231,7 +301,7 @@ class OpenPanelData:
             panel_id=data.id,
             asset_id=data.asset_id,
             is_animated=data.is_animated,
-            source_file_asset_id=data.source_file.asset_id,
+            source_file_asset_id=data.source_file.asset_id if data.source_file else None,
             annotation_asset_id=data.annotation_asset_id if data.annotation_asset_id else None,
         )
 
@@ -259,7 +329,7 @@ class OpenSourceFileEvent(ClientEvent):
     def from_dict(cls, type: str, data: models.OpenSourceFileEvent) -> "OpenSourceFileEvent":
         return cls(
             type=type,
-            asset_id=data.source_file.asset_id or 0,
+            asset_id=data.source_file.asset_id if data.source_file and data.source_file.asset_id else 0,
             additional_properties=data.additional_properties,
         )
 
