@@ -95,13 +95,13 @@ class ProjectDetails:
                     _client=None,
                 )
 
-                if data.sequence_revision is not None:
+                if (rev := data.sequence_revision) is not None:
                     sequence_revision = flix_types.SequenceRevision(
-                        revision_number=int(data.sequence_revision.id),
-                        published=data.sequence_revision.published,
-                        comment=data.sequence_revision.comment or "",
-                        created_date=data.sequence_revision.created_date,
-                        owner=flix_types.User(data.sequence_revision.owner or "", _client=None),
+                        revision_number=int(rev.id),
+                        published=rev.published,
+                        comment=rev.comment or "",
+                        created_date=rev.created_date,
+                        owner=flix_types.User(rev.owner, _client=None) if rev.owner else None,
                         _sequence=sequence,
                         _client=None,
                     )

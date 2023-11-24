@@ -390,7 +390,6 @@ components:
           nullable: true
         owner:
           type: string
-          nullable: true
         published:
           type: boolean
         comment:

@@ -13,36 +13,35 @@ class SequenceRevisionDetailsDto:
     """
     Attributes:
         id (float):
+        owner (str):
         published (bool):
         comment (str):
         created_date (Optional[datetime.datetime]):
-        owner (Optional[str]):
     """
 
     id: float
+    owner: str
     published: bool
     comment: str
     created_date: Optional[datetime.datetime]
-    owner: Optional[str]
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
         id = self.id
+        owner = self.owner
         published = self.published
         comment = self.comment
         created_date = self.created_date.isoformat() if self.created_date else None
-
-        owner = self.owner
 
         field_dict: Dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
             {
                 "id": id,
+                "owner": owner,
                 "published": published,
                 "comment": comment,
                 "createdDate": created_date,
-                "owner": owner,
             }
         )
 
@@ -52,6 +51,8 @@ class SequenceRevisionDetailsDto:
     def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
         d = src_dict.copy()
         id = d.pop("id")
+
+        owner = d.pop("owner")
 
         published = d.pop("published")
 
@@ -64,14 +65,12 @@ class SequenceRevisionDetailsDto:
         else:
             created_date = isoparse(_created_date)
 
-        owner = d.pop("owner")
-
         sequence_revision_details_dto = cls(
             id=id,
+            owner=owner,
             published=published,
             comment=comment,
             created_date=created_date,
-            owner=owner,
         )
 
         sequence_revision_details_dto.additional_properties = d
