@@ -17,11 +17,13 @@ class PanelRequest:
     """
     Attributes:
         paths (List[str]): The file paths to upload
+        origin (str):
         source_file (Union[Unset, PanelRequestSourceFile]):
         start_index (Union[Unset, float]): the index at which to insert the created panels
     """
 
     paths: List[str]
+    origin: str
     source_file: Union[Unset, "PanelRequestSourceFile"] = UNSET
     start_index: Union[Unset, float] = UNSET
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
@@ -29,6 +31,7 @@ class PanelRequest:
     def to_dict(self) -> Dict[str, Any]:
         paths = self.paths
 
+        origin = self.origin
         source_file: Union[Unset, Dict[str, Any]] = UNSET
         if not isinstance(self.source_file, Unset):
             source_file = self.source_file.to_dict()
@@ -40,6 +43,7 @@ class PanelRequest:
         field_dict.update(
             {
                 "paths": paths,
+                "origin": origin,
             }
         )
         if source_file is not UNSET:
@@ -56,6 +60,8 @@ class PanelRequest:
         d = src_dict.copy()
         paths = cast(List[str], d.pop("paths"))
 
+        origin = d.pop("origin")
+
         _source_file = d.pop("sourceFile", UNSET)
         source_file: Union[Unset, PanelRequestSourceFile]
         if isinstance(_source_file, Unset):
@@ -67,6 +73,7 @@ class PanelRequest:
 
         panel_request = cls(
             paths=paths,
+            origin=origin,
             source_file=source_file,
             start_index=start_index,
         )

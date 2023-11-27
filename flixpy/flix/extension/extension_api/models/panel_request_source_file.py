@@ -13,20 +13,17 @@ class PanelRequestSourceFile:
         path (str):
         preview_mode (str):
         source_file_type (str):
-        origin (str):
     """
 
     path: str
     preview_mode: str
     source_file_type: str
-    origin: str
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
         path = self.path
         preview_mode = self.preview_mode
         source_file_type = self.source_file_type
-        origin = self.origin
 
         field_dict: Dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -35,7 +32,6 @@ class PanelRequestSourceFile:
                 "path": path,
                 "previewMode": preview_mode,
                 "sourceFileType": source_file_type,
-                "origin": origin,
             }
         )
 
@@ -50,13 +46,10 @@ class PanelRequestSourceFile:
 
         source_file_type = d.pop("sourceFileType")
 
-        origin = d.pop("origin")
-
         panel_request_source_file = cls(
             path=path,
             preview_mode=preview_mode,
             source_file_type=source_file_type,
-            origin=origin,
         )
 
         panel_request_source_file.additional_properties = d
