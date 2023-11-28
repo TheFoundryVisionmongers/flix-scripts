@@ -390,6 +390,7 @@ class Extension:
     async def import_panels(
         self,
         paths: list[str],
+        origin: str,
         source_file: types.SourceFile | None = None,
         start_index: int | None = None,
         replace_panels: bool = False,
@@ -406,11 +407,11 @@ class Extension:
 
         json_body = models.PanelRequest(
             paths=paths,
+            origin=origin,
             source_file=models.PanelRequestSourceFile(
                 path=source_file.path,
                 preview_mode=source_file.preview_mode,
                 source_file_type=source_file.source_file_type,
-                origin=source_file.origin,
             )
             if source_file is not None
             else api_types.UNSET,

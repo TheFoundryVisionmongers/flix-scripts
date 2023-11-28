@@ -246,13 +246,10 @@ components:
           type: string
         sourceFileType:
           type: string
-        origin:
-          type: string
       required:
         - path
         - previewMode
         - sourceFileType
-        - origin
     PanelRequest:
       type: object
       properties:
@@ -268,8 +265,11 @@ components:
         startIndex:
           type: number
           description: the index at which to insert the created panels
+        origin:
+          type: string
       required:
         - paths
+        - origin
     AssetType:
       type: string
       enum:

@@ -38,7 +38,6 @@ class SourceFile:
     path: str
     preview_mode: str
     source_file_type: str
-    origin: str
 
 
 class Status(enum.IntFlag):
