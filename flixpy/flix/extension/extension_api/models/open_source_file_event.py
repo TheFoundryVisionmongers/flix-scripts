@@ -1,10 +1,10 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, TypeVar
+from typing import TYPE_CHECKING, Any, Dict, List, Type, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 if TYPE_CHECKING:
-    from ..models.extension_source_file_data import ExtensionSourceFileData
+    from ..models.open_source_file_data import OpenSourceFileData
 
 
 T = TypeVar("T", bound="OpenSourceFileEvent")
@@ -14,14 +14,14 @@ T = TypeVar("T", bound="OpenSourceFileEvent")
 class OpenSourceFileEvent:
     """
     Attributes:
-        source_file (Optional[ExtensionSourceFileData]):
+        source_file (OpenSourceFileData):
     """
 
-    source_file: Optional["ExtensionSourceFileData"]
+    source_file: "OpenSourceFileData"
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
-        source_file = self.source_file.to_dict() if self.source_file else None
+        source_file = self.source_file.to_dict()
 
         field_dict: Dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -35,15 +35,10 @@ class OpenSourceFileEvent:
 
     @classmethod
     def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
-        from ..models.extension_source_file_data import ExtensionSourceFileData
+        from ..models.open_source_file_data import OpenSourceFileData
 
         d = src_dict.copy()
-        _source_file = d.pop("sourceFile")
-        source_file: Optional[ExtensionSourceFileData]
-        if _source_file is None:
-            source_file = None
-        else:
-            source_file = ExtensionSourceFileData.from_dict(_source_file)
+        source_file = OpenSourceFileData.from_dict(d.pop("sourceFile"))
 
         open_source_file_event = cls(
             source_file=source_file,

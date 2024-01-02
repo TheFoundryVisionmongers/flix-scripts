@@ -6,7 +6,7 @@ from attrs import field as _attrs_field
 from ..models.websocket_event_data_type_2_type import WebsocketEventDataType2Type
 
 if TYPE_CHECKING:
-    from ..models.status import Status
+    from ..models.project_details_dto import ProjectDetailsDto
 
 
 T = TypeVar("T", bound="WebsocketEventDataType2")
@@ -17,11 +17,11 @@ class WebsocketEventDataType2:
     """
     Attributes:
         type (WebsocketEventDataType2Type):
-        data (Status):
+        data (ProjectDetailsDto):
     """
 
     type: WebsocketEventDataType2Type
-    data: "Status"
+    data: "ProjectDetailsDto"
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -42,12 +42,12 @@ class WebsocketEventDataType2:
 
     @classmethod
     def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
-        from ..models.status import Status
+        from ..models.project_details_dto import ProjectDetailsDto
 
         d = src_dict.copy()
         type = WebsocketEventDataType2Type(d.pop("type"))
 
-        data = Status.from_dict(d.pop("data"))
+        data = ProjectDetailsDto.from_dict(d.pop("data"))
 
         websocket_event_data_type_2 = cls(
             type=type,

@@ -12,31 +12,31 @@ T = TypeVar("T", bound="RegistrationDetails")
 class RegistrationDetails:
     """
     Attributes:
+        flix_id (int): The Flix-maintained identifier for this API client
         name (str): The name for this API client
         client_uid (str): The API client-specified identifier for this API client
-        flix_id (float): The Flix-maintained identifier for this API client
         version (Union[Unset, str]): The version of this API client (Optional)
     """
 
+    flix_id: int
     name: str
     client_uid: str
-    flix_id: float
     version: Union[Unset, str] = UNSET
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
+        flix_id = self.flix_id
         name = self.name
         client_uid = self.client_uid
-        flix_id = self.flix_id
         version = self.version
 
         field_dict: Dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
             {
+                "flixId": flix_id,
                 "name": name,
                 "clientUid": client_uid,
-                "flixId": flix_id,
             }
         )
         if version is not UNSET:
@@ -47,18 +47,18 @@ class RegistrationDetails:
     @classmethod
     def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
         d = src_dict.copy()
+        flix_id = d.pop("flixId")
+
         name = d.pop("name")
 
         client_uid = d.pop("clientUid")
 
-        flix_id = d.pop("flixId")
-
         version = d.pop("version", UNSET)
 
         registration_details = cls(
+            flix_id=flix_id,
             name=name,
             client_uid=client_uid,
-            flix_id=flix_id,
             version=version,
         )
 

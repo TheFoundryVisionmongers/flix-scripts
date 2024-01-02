@@ -3,39 +3,35 @@ from typing import Any, Dict, List, Type, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-T = TypeVar("T", bound="DownloadResponse")
+T = TypeVar("T", bound="PsConfiguration")
 
 
 @_attrs_define
-class DownloadResponse:
+class PsConfiguration:
     """
     Attributes:
-        asset_id (int):
-        media_object_id (int):
-        file_name (str):
-        file_path (str):
+        always_open_source_file (bool):
+        open_behaviour (str):
+        send_annotation_as_layer (bool):
     """
 
-    asset_id: int
-    media_object_id: int
-    file_name: str
-    file_path: str
+    always_open_source_file: bool
+    open_behaviour: str
+    send_annotation_as_layer: bool
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
-        asset_id = self.asset_id
-        media_object_id = self.media_object_id
-        file_name = self.file_name
-        file_path = self.file_path
+        always_open_source_file = self.always_open_source_file
+        open_behaviour = self.open_behaviour
+        send_annotation_as_layer = self.send_annotation_as_layer
 
         field_dict: Dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
             {
-                "assetId": asset_id,
-                "mediaObjectId": media_object_id,
-                "fileName": file_name,
-                "filePath": file_path,
+                "alwaysOpenSourceFile": always_open_source_file,
+                "openBehaviour": open_behaviour,
+                "sendAnnotationAsLayer": send_annotation_as_layer,
             }
         )
 
@@ -44,23 +40,20 @@ class DownloadResponse:
     @classmethod
     def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
         d = src_dict.copy()
-        asset_id = d.pop("assetId")
+        always_open_source_file = d.pop("alwaysOpenSourceFile")
 
-        media_object_id = d.pop("mediaObjectId")
+        open_behaviour = d.pop("openBehaviour")
 
-        file_name = d.pop("fileName")
+        send_annotation_as_layer = d.pop("sendAnnotationAsLayer")
 
-        file_path = d.pop("filePath")
-
-        download_response = cls(
-            asset_id=asset_id,
-            media_object_id=media_object_id,
-            file_name=file_name,
-            file_path=file_path,
+        ps_configuration = cls(
+            always_open_source_file=always_open_source_file,
+            open_behaviour=open_behaviour,
+            send_annotation_as_layer=send_annotation_as_layer,
         )
 
-        download_response.additional_properties = d
-        return download_response
+        ps_configuration.additional_properties = d
+        return ps_configuration
 
     @property
     def additional_keys(self) -> List[str]:

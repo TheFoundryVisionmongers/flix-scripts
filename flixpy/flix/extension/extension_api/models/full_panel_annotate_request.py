@@ -4,40 +4,43 @@ from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 if TYPE_CHECKING:
-    from ..models.extension_open_file_panel_data import ExtensionOpenFilePanelData
-    from ..models.project_ids import ProjectIds
+    from ..models.panel_request_item import PanelRequestItem
 
 
-T = TypeVar("T", bound="OpenEvent")
+T = TypeVar("T", bound="FullPanelAnnotateRequest")
 
 
 @_attrs_define
-class OpenEvent:
+class FullPanelAnnotateRequest:
     """
     Attributes:
-        project (ProjectIds):
-        panels (List['ExtensionOpenFilePanelData']):
+        start_index (int): the index at which to insert the created panels
+        panels (List['PanelRequestItem']): The file paths to upload and the panel IDs they should link to
+        origin (str):
     """
 
-    project: "ProjectIds"
-    panels: List["ExtensionOpenFilePanelData"]
+    start_index: int
+    panels: List["PanelRequestItem"]
+    origin: str
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
-        project = self.project.to_dict()
-
+        start_index = self.start_index
         panels = []
         for panels_item_data in self.panels:
             panels_item = panels_item_data.to_dict()
 
             panels.append(panels_item)
 
+        origin = self.origin
+
         field_dict: Dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
             {
-                "project": project,
+                "startIndex": start_index,
                 "panels": panels,
+                "origin": origin,
             }
         )
 
@@ -45,26 +48,28 @@ class OpenEvent:
 
     @classmethod
     def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
-        from ..models.extension_open_file_panel_data import ExtensionOpenFilePanelData
-        from ..models.project_ids import ProjectIds
+        from ..models.panel_request_item import PanelRequestItem
 
         d = src_dict.copy()
-        project = ProjectIds.from_dict(d.pop("project"))
+        start_index = d.pop("startIndex")
 
         panels = []
         _panels = d.pop("panels")
         for panels_item_data in _panels:
-            panels_item = ExtensionOpenFilePanelData.from_dict(panels_item_data)
+            panels_item = PanelRequestItem.from_dict(panels_item_data)
 
             panels.append(panels_item)
 
-        open_event = cls(
-            project=project,
+        origin = d.pop("origin")
+
+        full_panel_annotate_request = cls(
+            start_index=start_index,
             panels=panels,
+            origin=origin,
         )
 
-        open_event.additional_properties = d
-        return open_event
+        full_panel_annotate_request.additional_properties = d
+        return full_panel_annotate_request
 
     @property
     def additional_keys(self) -> List[str]:

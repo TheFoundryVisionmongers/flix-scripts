@@ -1,58 +1,55 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Type, TypeVar
+from typing import Any, Dict, List, Type, TypeVar, Union
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-if TYPE_CHECKING:
-    from ..models.unknown_event import UnknownEvent
+from ..types import UNSET, Unset
 
-
-T = TypeVar("T", bound="WebsocketEventDataType6")
+T = TypeVar("T", bound="PanelRequestItem")
 
 
 @_attrs_define
-class WebsocketEventDataType6:
+class PanelRequestItem:
     """
     Attributes:
-        type (str):
-        data (UnknownEvent):
+        path (str): The file path to upload
+        panel_id (Union[Unset, int]): The panel IDs it should link to
     """
 
-    type: str
-    data: "UnknownEvent"
+    path: str
+    panel_id: Union[Unset, int] = UNSET
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
-        type = self.type
-        data = self.data.to_dict()
+        path = self.path
+        panel_id = self.panel_id
 
         field_dict: Dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
             {
-                "type": type,
-                "data": data,
+                "path": path,
             }
         )
+        if panel_id is not UNSET:
+            field_dict["panelId"] = panel_id
 
         return field_dict
 
     @classmethod
     def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
-        from ..models.unknown_event import UnknownEvent
-
         d = src_dict.copy()
-        type = d.pop("type")
+        path = d.pop("path")
 
-        data = UnknownEvent.from_dict(d.pop("data"))
+        panel_id = d.pop("panelId", UNSET)
 
-        websocket_event_data_type_6 = cls(
-            type=type,
-            data=data,
+        panel_request_item = cls(
+            path=path,
+            panel_id=panel_id,
         )
 
-        websocket_event_data_type_6.additional_properties = d
-        return websocket_event_data_type_6
+        panel_request_item.additional_properties = d
+        return panel_request_item
 
     @property
     def additional_keys(self) -> List[str]:

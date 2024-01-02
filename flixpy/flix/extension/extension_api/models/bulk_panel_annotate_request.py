@@ -1,29 +1,38 @@
-from typing import Any, Dict, List, Optional, Type, TypeVar
+from typing import Any, Dict, List, Type, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-T = TypeVar("T", bound="ExtensionSourceFileData")
+T = TypeVar("T", bound="BulkPanelAnnotateRequest")
 
 
 @_attrs_define
-class ExtensionSourceFileData:
+class BulkPanelAnnotateRequest:
     """
     Attributes:
-        asset_id (Optional[int]):
+        start_index (int): the index at which to insert the created panels
+        paths (List[str]): The file paths to upload
+        origin (str):
     """
 
-    asset_id: Optional[int]
+    start_index: int
+    paths: List[str]
+    origin: str
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
-        asset_id = self.asset_id
+        start_index = self.start_index
+        paths = self.paths
+
+        origin = self.origin
 
         field_dict: Dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
             {
-                "assetId": asset_id,
+                "startIndex": start_index,
+                "paths": paths,
+                "origin": origin,
             }
         )
 
@@ -32,14 +41,20 @@ class ExtensionSourceFileData:
     @classmethod
     def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
         d = src_dict.copy()
-        asset_id = d.pop("assetId")
+        start_index = d.pop("startIndex")
 
-        extension_source_file_data = cls(
-            asset_id=asset_id,
+        paths = cast(List[str], d.pop("paths"))
+
+        origin = d.pop("origin")
+
+        bulk_panel_annotate_request = cls(
+            start_index=start_index,
+            paths=paths,
+            origin=origin,
         )
 
-        extension_source_file_data.additional_properties = d
-        return extension_source_file_data
+        bulk_panel_annotate_request.additional_properties = d
+        return bulk_panel_annotate_request
 
     @property
     def additional_keys(self) -> List[str]:

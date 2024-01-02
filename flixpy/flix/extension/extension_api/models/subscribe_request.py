@@ -3,19 +3,19 @@ from typing import Any, Dict, List, Type, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-from ..models.event_type import EventType
+from ..models.client_event_type import ClientEventType
 
-T = TypeVar("T", bound="SubscribeEvent")
+T = TypeVar("T", bound="SubscribeRequest")
 
 
 @_attrs_define
-class SubscribeEvent:
+class SubscribeRequest:
     """
     Attributes:
-        event_types (List[EventType]):
+        event_types (List[ClientEventType]):
     """
 
-    event_types: List[EventType]
+    event_types: List[ClientEventType]
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -41,16 +41,16 @@ class SubscribeEvent:
         event_types = []
         _event_types = d.pop("eventTypes")
         for event_types_item_data in _event_types:
-            event_types_item = EventType(event_types_item_data)
+            event_types_item = ClientEventType(event_types_item_data)
 
             event_types.append(event_types_item)
 
-        subscribe_event = cls(
+        subscribe_request = cls(
             event_types=event_types,
         )
 
-        subscribe_event.additional_properties = d
-        return subscribe_event
+        subscribe_request.additional_properties = d
+        return subscribe_request
 
     @property
     def additional_keys(self) -> List[str]:

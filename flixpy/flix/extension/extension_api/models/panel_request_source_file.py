@@ -3,6 +3,9 @@ from typing import Any, Dict, List, Type, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..models.source_file_preview_mode import SourceFilePreviewMode
+from ..models.source_file_type import SourceFileType
+
 T = TypeVar("T", bound="PanelRequestSourceFile")
 
 
@@ -10,20 +13,21 @@ T = TypeVar("T", bound="PanelRequestSourceFile")
 class PanelRequestSourceFile:
     """
     Attributes:
-        path (str):
-        preview_mode (str):
-        source_file_type (str):
+        path (str): The path to the source file Example: /path/to/source/file.psd.
+        preview_mode (SourceFilePreviewMode): The mode to use to generate the source file preview Example: source_file.
+        source_file_type (SourceFileType): The extension type that the source file is coming from Example: Sketch.
     """
 
     path: str
-    preview_mode: str
-    source_file_type: str
+    preview_mode: SourceFilePreviewMode
+    source_file_type: SourceFileType
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
         path = self.path
-        preview_mode = self.preview_mode
-        source_file_type = self.source_file_type
+        preview_mode = self.preview_mode.value
+
+        source_file_type = self.source_file_type.value
 
         field_dict: Dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -42,9 +46,9 @@ class PanelRequestSourceFile:
         d = src_dict.copy()
         path = d.pop("path")
 
-        preview_mode = d.pop("previewMode")
+        preview_mode = SourceFilePreviewMode(d.pop("previewMode"))
 
-        source_file_type = d.pop("sourceFileType")
+        source_file_type = SourceFileType(d.pop("sourceFileType"))
 
         panel_request_source_file = cls(
             path=path,

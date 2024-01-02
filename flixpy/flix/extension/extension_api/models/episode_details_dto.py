@@ -12,14 +12,14 @@ T = TypeVar("T", bound="EpisodeDetailsDto")
 class EpisodeDetailsDto:
     """
     Attributes:
-        id (float):
+        id (int):
         tracking_code (str):
         created_date (datetime.datetime):
         owner (str):
         title (Optional[str]):
     """
 
-    id: float
+    id: int
     tracking_code: str
     created_date: datetime.datetime
     owner: str

@@ -5,21 +5,21 @@ from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
 
-T = TypeVar("T", bound="ProjectIds")
+T = TypeVar("T", bound="ProjectIdsDto")
 
 
 @_attrs_define
-class ProjectIds:
+class ProjectIdsDto:
     """
     Attributes:
         show_id (Union[Unset, int]):
-        episode_id (Union[Unset, None, int]):
+        episode_id (Union[Unset, int]):
         sequence_id (Union[Unset, int]):
         sequence_revision_id (Union[Unset, int]):
     """
 
     show_id: Union[Unset, int] = UNSET
-    episode_id: Union[Unset, None, int] = UNSET
+    episode_id: Union[Unset, int] = UNSET
     sequence_id: Union[Unset, int] = UNSET
     sequence_revision_id: Union[Unset, int] = UNSET
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
@@ -55,15 +55,15 @@ class ProjectIds:
 
         sequence_revision_id = d.pop("sequenceRevisionId", UNSET)
 
-        project_ids = cls(
+        project_ids_dto = cls(
             show_id=show_id,
             episode_id=episode_id,
             sequence_id=sequence_id,
             sequence_revision_id=sequence_revision_id,
         )
 
-        project_ids.additional_properties = d
-        return project_ids
+        project_ids_dto.additional_properties = d
+        return project_ids_dto
 
     @property
     def additional_keys(self) -> List[str]:

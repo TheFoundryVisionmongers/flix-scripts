@@ -5,21 +5,28 @@ import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
-from ...models.bulk_panel_request import BulkPanelRequest
+from ...models.bulk_panel_annotate_request import BulkPanelAnnotateRequest
+from ...models.full_panel_annotate_request import FullPanelAnnotateRequest
 from ...types import Response
 
 
 def _get_kwargs(
     *,
-    json_body: BulkPanelRequest,
+    json_body: Union["BulkPanelAnnotateRequest", "FullPanelAnnotateRequest"],
 ) -> Dict[str, Any]:
     pass
 
-    json_json_body = json_body.to_dict()
+    json_json_body: Dict[str, Any]
+
+    if isinstance(json_body, BulkPanelAnnotateRequest):
+        json_json_body = json_body.to_dict()
+
+    else:
+        json_json_body = json_body.to_dict()
 
     return {
-        "method": "post",
-        "url": "/panels",
+        "method": "patch",
+        "url": "/panels/annotate",
         "json": json_json_body,
     }
 
@@ -47,11 +54,11 @@ def _build_response(*, client: Union[AuthenticatedClient, Client], response: htt
 def sync_detailed(
     *,
     client: AuthenticatedClient,
-    json_body: BulkPanelRequest,
+    json_body: Union["BulkPanelAnnotateRequest", "FullPanelAnnotateRequest"],
 ) -> Response[Any]:
     """
     Args:
-        json_body (BulkPanelRequest):
+        json_body (Union['BulkPanelAnnotateRequest', 'FullPanelAnnotateRequest']):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -75,11 +82,11 @@ def sync_detailed(
 async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
-    json_body: BulkPanelRequest,
+    json_body: Union["BulkPanelAnnotateRequest", "FullPanelAnnotateRequest"],
 ) -> Response[Any]:
     """
     Args:
-        json_body (BulkPanelRequest):
+        json_body (Union['BulkPanelAnnotateRequest', 'FullPanelAnnotateRequest']):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

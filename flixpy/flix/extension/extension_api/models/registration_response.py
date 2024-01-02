@@ -10,11 +10,11 @@ T = TypeVar("T", bound="RegistrationResponse")
 class RegistrationResponse:
     """
     Attributes:
-        flix_id (float): The Flix-maintained identifier for this API client
+        flix_id (int): The Flix-maintained identifier for this API client
         token (str): The generated access token for the API client
     """
 
-    flix_id: float
+    flix_id: int
     token: str
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
