@@ -7,6 +7,8 @@ PROTO := flix/lib/proto/transfer.proto
 EXTENSION_DIR := flix/extension/
 EXTENSION_API_OPENAPI := extension_api.yaml
 EXTENSION_API_CONFIG := extension_api_config.yaml
+EXTENSION_API_TEMPLATE_DIR := extension_api_templates
+EXTENSION_API_TEMPLATES := $(wildcard $(EXTENSION_DIR)$(EXTENSION_API_TEMPLATE_DIR)/*.py.jinja)
 EXTENSION_API_OUT := $(addprefix $(EXTENSION_DIR),extension_api)
 
 all:build
@@ -18,10 +20,14 @@ all:build
 $(GRPC_OUT): $(PROTO) .download
 	poetry run python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. --mypy_out=. --mypy_grpc_out=. $<
 
-$(EXTENSION_API_OUT): .download $(addprefix $(EXTENSION_DIR),$(EXTENSION_API_OPENAPI) $(EXTENSION_API_CONFIG))
+$(EXTENSION_API_OUT): .download $(addprefix $(EXTENSION_DIR),$(EXTENSION_API_OPENAPI) $(EXTENSION_API_CONFIG)) $(EXTENSION_API_TEMPLATES)
 	rm -rf $@ && mkdir -p $@
 	cd flix/extension && \
-		poetry run openapi-python-client update --path $(EXTENSION_API_OPENAPI) --meta none --config $(EXTENSION_API_CONFIG)
+		poetry run openapi-python-client update \
+			--path $(EXTENSION_API_OPENAPI) \
+			 --meta none \
+			 --config $(EXTENSION_API_CONFIG) \
+			 --custom-template-path extension_api_templates
 
 .PHONY: typecheck
 typecheck: .download
