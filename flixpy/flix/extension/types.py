@@ -3,11 +3,20 @@ import enum
 from typing import Any, Protocol
 
 from .extension_api import models
-from .extension_api.models import EventType as ClientEventType, ActionType, ActionState, AssetType
+from .extension_api.models import (
+    ActionType,
+    ActionState,
+    AssetType,
+    ClientEventType,
+    SourceFileType,
+    SourceFilePreviewMode,
+)
 from ..lib import types as flix_types
 
 __all__ = [
     "SourceFile",
+    "SourceFileType",
+    "SourceFilePreviewMode",
     "ProjectDetails",
     "Event",
     "ClientEvent",
@@ -36,8 +45,8 @@ __all__ = [
 @dataclasses.dataclass
 class SourceFile:
     path: str
-    preview_mode: str
-    source_file_type: str
+    preview_mode: SourceFilePreviewMode
+    source_file_type: SourceFileType
 
 
 class Status(enum.IntFlag):
@@ -64,7 +73,7 @@ class ProjectDetails:
 
         if data.show is not None:
             show = flix_types.Show(
-                show_id=int(data.show.id),
+                show_id=data.show.id,
                 tracking_code=data.show.tracking_code,
                 aspect_ratio=data.show.aspect_ratio,
                 title=data.show.title or "",
@@ -73,7 +82,7 @@ class ProjectDetails:
 
             if data.episode is not None:
                 episode = flix_types.Episode(
-                    episode_id=int(data.episode.id),
+                    episode_id=data.episode.id,
                     tracking_code=data.episode.tracking_code,
                     created_date=data.episode.created_date,
                     title=data.episode.title or "",
@@ -84,7 +93,7 @@ class ProjectDetails:
 
             if data.sequence is not None:
                 sequence = flix_types.Sequence(
-                    sequence_id=int(data.sequence.id),
+                    sequence_id=data.sequence.id,
                     tracking_code=data.sequence.tracking_code,
                     created_date=data.sequence.created_date,
                     description=data.sequence.title or "",
@@ -96,7 +105,7 @@ class ProjectDetails:
 
                 if (rev := data.sequence_revision) is not None:
                     sequence_revision = flix_types.SequenceRevision(
-                        revision_number=int(rev.id),
+                        revision_number=rev.id,
                         published=rev.published,
                         comment=rev.comment or "",
                         created_date=rev.created_date,
@@ -134,8 +143,17 @@ class ClientEvent(Event):
     additional_properties: dict[str, Any]
 
     @classmethod
-    def parse_event(cls, type: str, data: _BaseEvent) -> "ClientEvent":
-        if isinstance(data, models.OpenEvent):
+    def parse_event(cls, event_data: dict[str, Any]) -> "ClientEvent":
+        try:
+            ws_event = models.WebsocketEvent.from_dict(event_data)
+        except (ValueError, LookupError, TypeError) as e:
+            if (data := event_data.get("data")) and isinstance(data, dict) and "type" in data:
+                return cls(type=str(data.pop("type")), additional_properties=data)
+            else:
+                raise ValueError("unexpected event format") from e
+
+        data, type = ws_event.data.data, ws_event.data.type
+        if isinstance(data, models.OpenFileEvent):
             return OpenEvent.from_dict(type, data)
         elif isinstance(data, models.OpenSourceFileEvent):
             return OpenSourceFileEvent.from_dict(type, data)
@@ -145,7 +163,7 @@ class ClientEvent(Event):
             return ProjectEvent.from_dict(type, data)
         elif isinstance(data, models.VersionEvent):
             return VersionEvent.from_dict(type, data)
-        elif isinstance(data, models.Status):
+        elif isinstance(data, models.StatusResponse):
             return StatusEvent.from_dict(type, data)
         elif isinstance(data, models.PingEvent):
             return ClientPingEvent.from_dict(type, data)
@@ -224,7 +242,7 @@ class ProjectIds:
     sequence_revision_number: int | None
 
     @classmethod
-    def from_dict(cls, data: models.ProjectIds) -> "ProjectIds":
+    def from_dict(cls, data: models.ProjectIdsDto) -> "ProjectIds":
         return cls(
             show_id=data.show_id if data.show_id else None,
             episode_id=data.episode_id if data.episode_id else None,
@@ -255,7 +273,7 @@ class PanelBrowserStatus:
     actions_in_progress: ActionsInProgress = dataclasses.field(default_factory=ActionsInProgress)
 
     @classmethod
-    def from_model(cls, data: models.Status) -> "PanelBrowserStatus":
+    def from_model(cls, data: models.StatusResponse) -> "PanelBrowserStatus":
         return cls(
             can_create=data.can_create,
             revision_status=RevisionStatus(
@@ -275,7 +293,7 @@ class PanelBrowserStatus:
 @dataclasses.dataclass
 class StatusEvent(PanelBrowserStatus, ClientEvent):
     @classmethod
-    def from_dict(cls, type: str, data: models.Status) -> "StatusEvent":
+    def from_dict(cls, type: str, data: models.StatusResponse) -> "StatusEvent":
         status = PanelBrowserStatus.from_model(data)
         return cls(
             type=type,
@@ -295,7 +313,7 @@ class OpenPanelData:
     annotation_asset_id: int | None
 
     @classmethod
-    def from_dict(cls, data: models.ExtensionOpenFilePanelData) -> "OpenPanelData":
+    def from_dict(cls, data: models.OpenFilePanelData) -> "OpenPanelData":
         return cls(
             panel_id=data.id,
             asset_id=data.asset_id,
@@ -311,7 +329,7 @@ class OpenEvent(ClientEvent):
     panels: list[OpenPanelData]
 
     @classmethod
-    def from_dict(cls, type: str, data: models.OpenEvent) -> "OpenEvent":
+    def from_dict(cls, type: str, data: models.OpenFileEvent) -> "OpenEvent":
         return cls(
             type=type,
             project=ProjectIds.from_dict(data.project),
