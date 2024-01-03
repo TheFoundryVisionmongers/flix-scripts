@@ -5,17 +5,24 @@ import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
-from ...models.panel_request import PanelRequest
+from ...models.bulk_panel_request import BulkPanelRequest
+from ...models.full_panel_request import FullPanelRequest
 from ...types import Response
 
 
 def _get_kwargs(
     *,
-    json_body: PanelRequest,
+    json_body: Union["BulkPanelRequest", "FullPanelRequest"],
 ) -> Dict[str, Any]:
     pass
 
-    json_json_body = json_body.to_dict()
+    json_json_body: Dict[str, Any]
+
+    if isinstance(json_body, BulkPanelRequest):
+        json_json_body = json_body.to_dict()
+
+    else:
+        json_json_body = json_body.to_dict()
 
     return {
         "method": "patch",
@@ -47,11 +54,11 @@ def _build_response(*, client: Union[AuthenticatedClient, Client], response: htt
 def sync_detailed(
     *,
     client: AuthenticatedClient,
-    json_body: PanelRequest,
+    json_body: Union["BulkPanelRequest", "FullPanelRequest"],
 ) -> Response[Any]:
     """
     Args:
-        json_body (PanelRequest):
+        json_body (Union['BulkPanelRequest', 'FullPanelRequest']):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -75,11 +82,11 @@ def sync_detailed(
 async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
-    json_body: PanelRequest,
+    json_body: Union["BulkPanelRequest", "FullPanelRequest"],
 ) -> Response[Any]:
     """
     Args:
-        json_body (PanelRequest):
+        json_body (Union['BulkPanelRequest', 'FullPanelRequest']):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

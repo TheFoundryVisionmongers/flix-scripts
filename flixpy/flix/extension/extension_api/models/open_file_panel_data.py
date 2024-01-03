@@ -6,37 +6,36 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.extension_source_file_data import ExtensionSourceFileData
+    from ..models.open_source_file_data import OpenSourceFileData
 
 
-T = TypeVar("T", bound="ExtensionOpenFilePanelData")
+T = TypeVar("T", bound="OpenFilePanelData")
 
 
 @_attrs_define
-class ExtensionOpenFilePanelData:
+class OpenFilePanelData:
     """
     Attributes:
         id (int):
         asset_id (int):
         is_animated (bool):
-        source_file (Optional[ExtensionSourceFileData]):
-        annotation_asset_id (Union[Unset, None, int]):
+        annotation_asset_id (Union[Unset, int]):
+        source_file (Optional[OpenSourceFileData]):
     """
 
     id: int
     asset_id: int
     is_animated: bool
-    source_file: Optional["ExtensionSourceFileData"]
-    annotation_asset_id: Union[Unset, None, int] = UNSET
+    source_file: Optional["OpenSourceFileData"]
+    annotation_asset_id: Union[Unset, int] = UNSET
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
         id = self.id
         asset_id = self.asset_id
         is_animated = self.is_animated
-        source_file = self.source_file.to_dict() if self.source_file else None
-
         annotation_asset_id = self.annotation_asset_id
+        source_file = self.source_file.to_dict() if self.source_file else None
 
         field_dict: Dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -55,7 +54,7 @@ class ExtensionOpenFilePanelData:
 
     @classmethod
     def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
-        from ..models.extension_source_file_data import ExtensionSourceFileData
+        from ..models.open_source_file_data import OpenSourceFileData
 
         d = src_dict.copy()
         id = d.pop("id")
@@ -64,25 +63,25 @@ class ExtensionOpenFilePanelData:
 
         is_animated = d.pop("isAnimated")
 
+        annotation_asset_id = d.pop("annotationAssetId", UNSET)
+
         _source_file = d.pop("sourceFile")
-        source_file: Optional[ExtensionSourceFileData]
+        source_file: Optional[OpenSourceFileData]
         if _source_file is None:
             source_file = None
         else:
-            source_file = ExtensionSourceFileData.from_dict(_source_file)
+            source_file = OpenSourceFileData.from_dict(_source_file)
 
-        annotation_asset_id = d.pop("annotationAssetId", UNSET)
-
-        extension_open_file_panel_data = cls(
+        open_file_panel_data = cls(
             id=id,
             asset_id=asset_id,
             is_animated=is_animated,
-            source_file=source_file,
             annotation_asset_id=annotation_asset_id,
+            source_file=source_file,
         )
 
-        extension_open_file_panel_data.additional_properties = d
-        return extension_open_file_panel_data
+        open_file_panel_data.additional_properties = d
+        return open_file_panel_data
 
     @property
     def additional_keys(self) -> List[str]:

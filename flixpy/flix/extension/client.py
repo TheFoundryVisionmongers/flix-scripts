@@ -208,13 +208,12 @@ class Extension:
 
     async def _on_connect(self) -> None:
         logger.info("connected to Flix Client, subscribing to events")
-        events = models.SubscribeEvent(
+        events = models.SubscribeRequest(
             event_types=[
                 types.ClientEventType.STATUS,
                 types.ClientEventType.PROJECT,
                 types.ClientEventType.ACTION,
                 types.ClientEventType.OPEN,
-                types.ClientEventType.PUBLISH,
             ],
         )
         await self.sio.emit("subscribe", data=events.to_dict())
@@ -236,13 +235,11 @@ class Extension:
             await self._update_status()
 
         try:
-            ws_event = models.WebsocketEvent.from_dict(event_data)
-            logger.debug("got event from Flix Client: %s", ws_event)
+            event = types.ClientEvent.parse_event(event_data)
         except ValueError as e:
             logger.warning("dropping unsupported event: %s (%s)", event_data, e)
             return
 
-        event = types.ClientEvent.parse_event(ws_event.data.type, ws_event.data.data)
         logger.debug("got %s event: %s", type(event).__name__, event)
 
         if isinstance(event, types.StatusEvent):
@@ -381,7 +378,7 @@ class Extension:
         from .extension_api.api.status import status_controller_get
 
         resp = _assert_response(
-            models.Status,
+            models.StatusResponse,
             await status_controller_get.asyncio_detailed(client=await self._get_registered_client()),
         )
 
@@ -405,7 +402,7 @@ class Extension:
         """
         from .extension_api.api.panel_management import panel_controller_create, panel_controller_update
 
-        json_body = models.PanelRequest(
+        json_body = models.BulkPanelRequest(
             paths=paths,
             origin=origin,
             source_file=models.PanelRequestSourceFile(

@@ -10,13 +10,13 @@ T = TypeVar("T", bound="ShowDetailsDto")
 class ShowDetailsDto:
     """
     Attributes:
-        id (float):
+        id (int):
         tracking_code (str):
         aspect_ratio (float):
         title (Optional[str]):
     """
 
-    id: float
+    id: int
     tracking_code: str
     aspect_ratio: float
     title: Optional[str]

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Type, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Type, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -6,8 +6,7 @@ from attrs import field as _attrs_field
 from ..models.websocket_event_data_type_3_type import WebsocketEventDataType3Type
 
 if TYPE_CHECKING:
-    from ..models.open_event import OpenEvent
-    from ..models.open_source_file_event import OpenSourceFileEvent
+    from ..models.action_event import ActionEvent
 
 
 T = TypeVar("T", bound="WebsocketEventDataType3")
@@ -18,25 +17,17 @@ class WebsocketEventDataType3:
     """
     Attributes:
         type (WebsocketEventDataType3Type):
-        data (Union['OpenEvent', 'OpenSourceFileEvent']):
+        data (ActionEvent):
     """
 
     type: WebsocketEventDataType3Type
-    data: Union["OpenEvent", "OpenSourceFileEvent"]
+    data: "ActionEvent"
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
-        from ..models.open_event import OpenEvent
-
         type = self.type.value
 
-        data: Dict[str, Any]
-
-        if isinstance(self.data, OpenEvent):
-            data = self.data.to_dict()
-
-        else:
-            data = self.data.to_dict()
+        data = self.data.to_dict()
 
         field_dict: Dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -51,28 +42,12 @@ class WebsocketEventDataType3:
 
     @classmethod
     def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
-        from ..models.open_event import OpenEvent
-        from ..models.open_source_file_event import OpenSourceFileEvent
+        from ..models.action_event import ActionEvent
 
         d = src_dict.copy()
         type = WebsocketEventDataType3Type(d.pop("type"))
 
-        def _parse_data(data: object) -> Union["OpenEvent", "OpenSourceFileEvent"]:
-            try:
-                if not isinstance(data, dict):
-                    raise TypeError()
-                data_type_0 = OpenEvent.from_dict(data)
-
-                return data_type_0
-            except:  # noqa: E722
-                pass
-            if not isinstance(data, dict):
-                raise TypeError()
-            data_type_1 = OpenSourceFileEvent.from_dict(data)
-
-            return data_type_1
-
-        data = _parse_data(d.pop("data"))
+        data = ActionEvent.from_dict(d.pop("data"))
 
         websocket_event_data_type_3 = cls(
             type=type,

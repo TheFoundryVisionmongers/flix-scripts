@@ -12,12 +12,12 @@ T = TypeVar("T", bound="DownloadRequest")
 class DownloadRequest:
     """
     Attributes:
-        asset_id (float):
+        asset_id (int):
         target_folder (str):
         asset_type (AssetType):
     """
 
-    asset_id: float
+    asset_id: int
     target_folder: str
     asset_type: AssetType
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)

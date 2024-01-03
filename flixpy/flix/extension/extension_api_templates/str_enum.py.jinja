@@ -1,0 +1,13 @@
+from enum import Enum
+
+{% set numbers = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"] %}
+
+class {{ enum.class_info.name }}(str, Enum):
+    {% for _, value in enum.values|dictsort(true) %}
+    {# ensure '3D' is translated into a valid python symbol ('THREE_D') #}
+    {% set key = numbers[value[0] | int] + "_" + value[1:] if "0" <= value[0] <= "9" else value %}
+    {{ key | snakecase | upper }} = "{{ value }}"
+    {% endfor %}
+
+    def __str__(self) -> str:
+        return str(self.value)

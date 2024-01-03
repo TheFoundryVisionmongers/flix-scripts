@@ -12,14 +12,14 @@ T = TypeVar("T", bound="SequenceRevisionDetailsDto")
 class SequenceRevisionDetailsDto:
     """
     Attributes:
-        id (float):
+        id (int):
         owner (str):
         published (bool):
         comment (str):
         created_date (Optional[datetime.datetime]):
     """
 
-    id: float
+    id: int
     owner: str
     published: bool
     comment: str

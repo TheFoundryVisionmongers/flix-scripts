@@ -3,39 +3,40 @@ from typing import Any, Dict, List, Type, TypeVar, cast
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-T = TypeVar("T", bound="RevisionStatus")
+T = TypeVar("T", bound="RevisionStatusResponse")
 
 
 @_attrs_define
-class RevisionStatus:
+class RevisionStatusResponse:
     """
     Attributes:
+        selected_panels (List[int]):
         can_save (bool):
         can_publish (bool):
         can_export (bool):
-        selected_panels (List[int]):
     """
 
+    selected_panels: List[int]
     can_save: bool
     can_publish: bool
     can_export: bool
-    selected_panels: List[int]
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
+        selected_panels = self.selected_panels
+
         can_save = self.can_save
         can_publish = self.can_publish
         can_export = self.can_export
-        selected_panels = self.selected_panels
 
         field_dict: Dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
             {
+                "selectedPanels": selected_panels,
                 "canSave": can_save,
                 "canPublish": can_publish,
                 "canExport": can_export,
-                "selectedPanels": selected_panels,
             }
         )
 
@@ -44,23 +45,23 @@ class RevisionStatus:
     @classmethod
     def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
         d = src_dict.copy()
+        selected_panels = cast(List[int], d.pop("selectedPanels"))
+
         can_save = d.pop("canSave")
 
         can_publish = d.pop("canPublish")
 
         can_export = d.pop("canExport")
 
-        selected_panels = cast(List[int], d.pop("selectedPanels"))
-
-        revision_status = cls(
+        revision_status_response = cls(
+            selected_panels=selected_panels,
             can_save=can_save,
             can_publish=can_publish,
             can_export=can_export,
-            selected_panels=selected_panels,
         )
 
-        revision_status.additional_properties = d
-        return revision_status
+        revision_status_response.additional_properties = d
+        return revision_status_response
 
     @property
     def additional_keys(self) -> List[str]:

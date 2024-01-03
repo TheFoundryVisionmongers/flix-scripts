@@ -13,33 +13,33 @@ T = TypeVar("T", bound="ActionEvent")
 class ActionEvent:
     """
     Attributes:
+        action_id (int):
         state (ActionState):
         action (ActionType):
-        action_id (int):
         api_client_id (Optional[int]):
     """
 
+    action_id: int
     state: ActionState
     action: ActionType
-    action_id: int
     api_client_id: Optional[int]
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
+        action_id = self.action_id
         state = self.state.value
 
         action = self.action.value
 
-        action_id = self.action_id
         api_client_id = self.api_client_id
 
         field_dict: Dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
             {
+                "actionId": action_id,
                 "state": state,
                 "action": action,
-                "actionId": action_id,
                 "apiClientId": api_client_id,
             }
         )
@@ -49,18 +49,18 @@ class ActionEvent:
     @classmethod
     def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
         d = src_dict.copy()
+        action_id = d.pop("actionId")
+
         state = ActionState(d.pop("state"))
 
         action = ActionType(d.pop("action"))
 
-        action_id = d.pop("actionId")
-
         api_client_id = d.pop("apiClientId")
 
         action_event = cls(
+            action_id=action_id,
             state=state,
             action=action,
-            action_id=action_id,
             api_client_id=api_client_id,
         )
 

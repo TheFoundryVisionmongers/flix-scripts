@@ -3,29 +3,57 @@ from typing import Any, Dict, List, Type, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-T = TypeVar("T", bound="UnknownEvent")
+T = TypeVar("T", bound="ActionsInProgressResponse")
 
 
 @_attrs_define
-class UnknownEvent:
-    """ """
+class ActionsInProgressResponse:
+    """
+    Attributes:
+        is_saving (bool):
+        is_publishing (bool):
+        is_exporting (bool):
+    """
 
+    is_saving: bool
+    is_publishing: bool
+    is_exporting: bool
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
+        is_saving = self.is_saving
+        is_publishing = self.is_publishing
+        is_exporting = self.is_exporting
+
         field_dict: Dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update(
+            {
+                "isSaving": is_saving,
+                "isPublishing": is_publishing,
+                "isExporting": is_exporting,
+            }
+        )
 
         return field_dict
 
     @classmethod
     def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
         d = src_dict.copy()
-        unknown_event = cls()
+        is_saving = d.pop("isSaving")
 
-        unknown_event.additional_properties = d
-        return unknown_event
+        is_publishing = d.pop("isPublishing")
+
+        is_exporting = d.pop("isExporting")
+
+        actions_in_progress_response = cls(
+            is_saving=is_saving,
+            is_publishing=is_publishing,
+            is_exporting=is_exporting,
+        )
+
+        actions_in_progress_response.additional_properties = d
+        return actions_in_progress_response
 
     @property
     def additional_keys(self) -> List[str]:

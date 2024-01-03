@@ -1,1 +1,14 @@
 package_name_override: extension_api
+class_overrides:
+  ActionEventAction:
+    class_name: ActionType
+  ActionEventState:
+    class_name: ActionState
+  DownloadRequestAssetType:
+    class_name: AssetType
+  SubscribeRequestEventTypesItem:
+    class_name: ClientEventType
+  PanelRequestSourceFileSourceFileType:
+    class_name: SourceFileType
+  PanelRequestSourceFilePreviewMode:
+    class_name: SourceFilePreviewMode
