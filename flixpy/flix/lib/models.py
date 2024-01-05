@@ -61,7 +61,6 @@ class MediaObject(TypedDict, total=False):
     status: int
     owner: User
     asset_type: str
-    show_id: int
 
 
 class Asset(TypedDict, total=False):

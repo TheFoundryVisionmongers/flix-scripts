@@ -473,7 +473,6 @@ class MediaObject(FlixType):
         status: MediaObjectStatus = MediaObjectStatus.INITIALIZED,
         owner: User | None = None,
         asset_type: str = "",
-        show_id: int = 0,
         *,
         _client: "client.Client | None",
     ):
@@ -488,7 +487,6 @@ class MediaObject(FlixType):
         self.status = status
         self.owner = owner
         self.asset_type = asset_type
-        self.show_id = show_id
 
     @classmethod
     def from_dict(
@@ -506,7 +504,6 @@ class MediaObject(FlixType):
         into.status = MediaObjectStatus(data["status"]) if data.get("status") else MediaObjectStatus.INITIALIZED
         into.owner = User.from_dict(data["owner"], _client=_client) if data.get("owner") else None
         into.asset_type = data.get("asset_type", "")
-        into.show_id = data.get("show_id", 0)
         into._client = _client
         return into
 
