@@ -54,13 +54,9 @@ def download_streamer() -> Streamer:
     return streamer
 
 
-def upload_streamer(f: BinaryIO) -> Streamer:
+def upload_streamer(f: BinaryIO, *, name: str, size: int) -> Streamer:
     async def streamer(metadata: bytes) -> AsyncIterator[transfer_pb2.TransferReq]:
-        suffix = pathlib.Path(f.name).suffix
-        f.seek(0, os.SEEK_END)
-        size = f.tell()
-        f.seek(0, os.SEEK_SET)
-
+        suffix = pathlib.Path(name).suffix
         transfer_id = str(uuid.uuid4())
         yield transfer_pb2.TransferReq(
             StartMsg=transfer_pb2.TransferReq.StartMessage(
@@ -195,8 +191,25 @@ async def upload(
     f: BinaryIO,
     asset_id: int,
     media_object_id: int,
+    *,
+    name: str | None = None,
+    size: int | None = None,
 ) -> None:
-    async for _ in transfer(flix_client, asset_id, media_object_id, upload_streamer(f), filepath=f.name):
+    if name is None:
+        name = f.name
+    if size is None:
+        f.seek(0, os.SEEK_END)
+        size = f.tell()
+        f.seek(0, os.SEEK_SET)
+
+    stream = transfer(
+        flix_client,
+        asset_id,
+        media_object_id,
+        streamer=upload_streamer(f, name=name, size=size),
+        filepath=name,
+    )
+    async for _ in stream:
         pass
 
 
@@ -205,7 +218,12 @@ async def download(
     asset_id: int,
     media_object_id: int,
 ) -> AsyncIterable[bytes]:
-    stream = transfer(flix_client, asset_id, media_object_id, download_streamer())
+    stream = transfer(
+        flix_client,
+        asset_id,
+        media_object_id,
+        streamer=download_streamer(),
+    )
     # read initial message
     _ = await anext(stream)
     async for resp in stream:
