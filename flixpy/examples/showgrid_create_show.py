@@ -7,6 +7,8 @@ based on what fields are available for your project and sequence entities.
 
 Additionally, the code provides examples of more advanced, optional features,
 such as type hinting and streaming uploads to Flix.
+
+Note that this example does not take shots into account.
 """
 
 import asyncio
