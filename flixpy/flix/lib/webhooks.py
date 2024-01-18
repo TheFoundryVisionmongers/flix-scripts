@@ -1,11 +1,16 @@
+import asyncio
+import contextlib
 import enum
 import json
 import logging
+import ssl
+from collections.abc import AsyncIterator
 from typing import Callable, Any, Coroutine, TypeVar, cast
 
 import aiohttp.web
+import aiohttp.typedefs
 import dateutil.parser
-from typing_extensions import TypeAlias
+from typing_extensions import Required, TypeAlias, TypedDict, Unpack
 
 import flix
 from flix.lib import client as _client, errors, models, types
@@ -25,6 +30,7 @@ __all__ = [
     "webhook",
     "WebhookHandlerType",
     "EventFactory",
+    "run_webhook_server",
 ]
 
 logger = logging.getLogger(__name__)
@@ -246,8 +252,10 @@ class WebhookHandler:
     def __init__(
         self,
         handler: WebhookHandlerType[WebhookEvent],
+        path: str = "/",
         secret: str | None = None,
     ):
+        self.path = path
         self.secret = secret
         self.handler = handler
         self._sub_handlers: dict[
@@ -300,6 +308,21 @@ class WebhookHandler:
             return cast(list[WebhookHandlerType[WebhookEventType]], handlers)
         return []
 
+    def make_route(self, client: _client.Client | None) -> aiohttp.web.RouteDef:
+        """Create an aiohttp route definition for this handler.
+
+        Args:
+            client: The client instance to use for server requests in webhook handlers.
+
+        Returns:
+            A route that can be added to an [Application][aiohttp.web.Application].
+        """
+
+        async def _handle(request: aiohttp.web.BaseRequest) -> aiohttp.web.Response:
+            return await self(request, client=client)
+
+        return aiohttp.web.post(self.path, _handle)
+
     async def __call__(
         self, request: aiohttp.web.BaseRequest, *, client: _client.Client | None = None
     ) -> aiohttp.web.Response:
@@ -331,32 +354,126 @@ class WebhookHandler:
         return aiohttp.web.Response()
 
 
-def webhook(secret: str | None = None) -> Callable[[WebhookHandlerType[WebhookEvent]], WebhookHandler]:
+def webhook(
+    secret: str | None = None,
+    path: str = "/",
+) -> Callable[[WebhookHandlerType[WebhookEvent]], WebhookHandler]:
     """
     Decorator for webhook handlers.
 
     :param secret: The secret used to authenticate webhook events
+    :param path: The endpoint path of the webhook, e.g. ``"/events"``.
     :return: A decorator transforming a function into a WebhookHandler
     """
 
     def decorator(f: WebhookHandlerType[WebhookEvent]) -> WebhookHandler:
-        return WebhookHandler(f, secret=secret)
+        return WebhookHandler(f, path=path, secret=secret)
 
     return decorator
 
 
-_EVENT_TYPES: dict[EventType, Type[WebhookEvent]] = {
-    EventType.ERROR: ErrorEvent,
-    EventType.PUBLISH_EDITORIAL: PublishEditorialEvent,
-    EventType.PUBLISH_FLIX: PublishFlixEvent,
-    EventType.EXPORT_SBP: ExportSBPEvent,
-    EventType.NEW_SEQUENCE_REVISION: NewSequenceRevisionEvent,
-    EventType.NEW_PANEL_REVISION: NewPanelRevisionEvent,
-    EventType.NEW_CONTACT_SHEET: NewContactSheetEvent,
-    EventType.PING: PingEvent,
-}
+class ClientOptions(TypedDict, total=False):
+    """Options to pass to [Client][flix.Client]."""
+
+    hostname: Required[str]
+    port: Required[int]
+    ssl: bool
+    disable_ssl_validation: bool
+    username: str
+    password: str
+    auto_extend_session: bool
+    access_key: _client.AccessKey
 
 
-def _parse_event(event_name: str | None, data: models.Event) -> WebhookEvent:
-    event_type = _EVENT_TYPES[EventType(event_name)]
-    return event_type(data)
+class ServerOptions(TypedDict, total=False):
+    """Options to pass to [TCPSite][aiohttp.web.TCPSite]."""
+
+    shutdown_timeout: float
+    backlog: int
+    reuse_address: bool
+    reuse_port: bool
+
+
+async def run_webhook_server(
+    *handlers: WebhookHandler,
+    host: str | None = None,
+    port: int | None = None,
+    ssl_context: ssl.SSLContext | None = None,
+    client_options: ClientOptions | None = None,
+    **kwargs: Unpack[ServerOptions],
+) -> None:
+    """Run a server that listens for webhook events.
+
+    This function will run indefinitely until cancelled.
+
+    Examples:
+        ```python
+        # define handlers
+        @flix.webhook(path="/events", secret="...")
+        def on_event(event: flix.WebhookEvent) -> None:
+            ...
+
+        @on_event.handle(flix.PublishEditorialEvent)
+        def on_publish(event: flix.PublishEditorialEvent) -> None:
+            ...
+
+        # start webhook server
+        asyncio.run(
+            flix.run_webhook_server(
+                on_event,
+                port=8888,
+                # allow Flix Server requests from handlers
+                client_options={
+                    "hostname": "localhost",
+                    "port": 8080,
+                    "username": "admin",
+                    "password": "admin",
+                },
+            ),
+        )
+        ```
+
+    Args:
+        *handlers: One or more webhook handlers.
+        host: The hostname to bind to. Defaults to ``"0.0.0.0"``.
+        port: The port to listen to. Defaults to ``8080``, or ``8443`` if
+            ``ssl_context`` is provided.
+        ssl_context: If provided, the server will run with SSL/TLS encryption.
+        client_options: [Client][flix.Client] options. If passed, a client
+            will be attached to any incoming events, allowing event handlers
+            to call methods that request data from the Flix Server.
+        **kwargs: Additional options to pass to [TCPSite][aiohttp.web.TCPSite].
+    """
+    async with _webhook_client(client_options) as client:
+        app = aiohttp.web.Application()
+        app.add_routes([handler.make_route(client) for handler in handlers])
+
+        async with _webhook_runner(app) as runner:
+            await aiohttp.web.TCPSite(
+                runner, host=host, port=port, ssl_context=ssl_context, **kwargs
+            ).start()
+            await asyncio.Future[None]()
+
+
+@contextlib.asynccontextmanager
+async def _webhook_client(
+    client_options: ClientOptions | None,
+) -> AsyncIterator[_client.Client | None]:
+    if client_options is not None:
+        async with _client.Client(**client_options) as client:
+            yield client
+    else:
+        yield None
+
+
+@contextlib.asynccontextmanager
+async def _webhook_runner(
+    app: aiohttp.web.Application,
+) -> AsyncIterator[aiohttp.web.AppRunner]:
+    runner = aiohttp.web.AppRunner(app)
+    await runner.setup()
+
+    try:
+        yield runner
+    finally:
+        await runner.cleanup()
