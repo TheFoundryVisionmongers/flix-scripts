@@ -536,9 +536,27 @@ class MediaObject(FlixType):
             pass
 
     async def download(self) -> bytes:
+        """Get the file contents of this media object.
+
+        This function should not be used to download large files
+        that may not fit in memory.
+
+        Returns:
+            A byte string containing the entire file contents of this media object.
+        """
         return b"".join([chunk async for chunk in transfers.download(self.client, self.asset_id, self.media_object_id)])
 
-    async def download_to(self, directory: str | os.PathLike[str], filename: str | None = None) -> None:
+    async def download_to(self, directory: str | os.PathLike[str], filename: str | None = None) -> pathlib.Path:
+        """Save this media object's file contents to disk.
+
+        Args:
+            directory: The directory to download the file to.
+            filename: The name of the file inside the directory.
+                If not specified, a unique filename for this media object will be picked.
+
+        Returns:
+            The path to the saved file.
+        """
         dirpath = pathlib.Path(directory)
         dirpath.mkdir(parents=True, exist_ok=True)
         if filename is None:
@@ -549,6 +567,8 @@ class MediaObject(FlixType):
         with path.open("wb") as f:
             async for chunk in transfers.download(self.client, self.asset_id, self.media_object_id):
                 f.write(chunk)
+
+        return path
 
 
 class Episode(FlixType):
