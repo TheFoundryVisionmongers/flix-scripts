@@ -58,7 +58,7 @@ class FlixType:
     @property
     def client(self) -> "client.Client":
         if self._client is None:
-            raise RuntimeError("client is not set")
+            raise errors.FlixError("client is not set")
         return self._client
 
 
@@ -251,7 +251,7 @@ class Metadata(FlixType, MutableMapping[str, Any]):
 
     def path_prefix(self) -> str:
         if self._parent is None:
-            raise RuntimeError("metadata parent is not set")
+            raise errors.FlixError("metadata parent is not set")
         return f"{self._parent.path_prefix()}/metadata"
 
     class _MetadataModel(TypedDict):
@@ -1188,7 +1188,7 @@ class Show(FlixType):
         description: str = "",
     ) -> Episode:
         if not self.episodic:
-            raise RuntimeError("cannot create an episode in a non-episodic show")
+            raise errors.FlixError("cannot create an episode in a non-episodic show")
         return Episode(
             episode_number=episode_number,
             tracking_code=tracking_code,
@@ -1481,7 +1481,7 @@ class Panel(FlixType):
 
     def path_prefix(self) -> str:
         if self._sequence is None:
-            raise RuntimeError("sequence is not set")
+            raise errors.FlixError("sequence is not set")
         return f"{self._sequence.path_prefix(False)}/panel/{self.panel_id}"
 
 
@@ -1608,7 +1608,7 @@ class PanelRevision(FlixType):
 
     def path_prefix(self, include_episode: bool = False) -> str:
         if self._sequence is None:
-            raise RuntimeError("sequence is not set")
+            raise errors.FlixError("sequence is not set")
         return f"{self._sequence.path_prefix(include_episode)}/panel/{self.panel_id}/revision/{self.revision_number}"
 
     def new_sequence_panel(
@@ -1652,7 +1652,7 @@ class PanelRevision(FlixType):
 
     async def save(self, force_create_new_panel: bool = False) -> None:
         if self._sequence is None:
-            raise RuntimeError("sequence is not set")
+            raise errors.FlixError("sequence is not set")
 
         if self.panel_id is None or force_create_new_panel:
             path = f"{self._sequence.path_prefix()}/panel"
@@ -1781,7 +1781,7 @@ class SequenceRevision(FlixType):
 
     def path_prefix(self, include_episode: bool = True) -> str:
         if self._sequence is None:
-            raise RuntimeError("sequence is not set")
+            raise errors.FlixError("sequence is not set")
         return f"{self._sequence.path_prefix(include_episode)}/revision/{self.revision_number}"
 
     def add_panel(
@@ -1858,7 +1858,7 @@ class SequenceRevision(FlixType):
 
     async def save(self, force_create_new: bool = False) -> None:
         if self._sequence is None:
-            raise RuntimeError("sequence is not set")
+            raise errors.FlixError("sequence is not set")
 
         if self.revision_number is None or force_create_new:
             path = f"{self._sequence.path_prefix()}/revision"

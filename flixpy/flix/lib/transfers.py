@@ -21,7 +21,7 @@ import grpc.aio
 from cryptography import x509
 from grpc.aio import ClientCallDetails, StreamStreamCall
 
-from . import client, types, signing
+from . import client, errors, types, signing
 from .proto import transfer_pb2_grpc, transfer_pb2
 
 
@@ -160,7 +160,7 @@ async def transfer(
 ) -> AsyncIterator[transfer_pb2.TransferResp]:
     access_key = flix_client.access_key
     if access_key is None:
-        raise RuntimeError("must authenticate before transferring files")
+        raise errors.FlixError("must authenticate before transferring files")
 
     servers = await flix_client.servers()
     server: "types.Server" = random.choice(servers)

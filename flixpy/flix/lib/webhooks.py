@@ -7,7 +7,7 @@ import aiohttp.web
 import dateutil.parser
 
 import flix
-from flix.lib import models, types
+from flix.lib import errors, models, types
 
 __all__ = [
     "EventType",
@@ -191,7 +191,7 @@ class WebhookHandler:
 
     async def __call__(self, request: aiohttp.web.Request) -> aiohttp.web.Response:
         if self.secret is None:
-            raise RuntimeError("no secret set for webhook handler")
+            raise errors.FlixError("no secret set for webhook handler")
 
         data = await request.read()
         sig = flix.signature(data, self.secret, as_hex=True)
