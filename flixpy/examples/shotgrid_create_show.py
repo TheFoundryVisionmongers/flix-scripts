@@ -1,4 +1,4 @@
-"""Demonstrate creating a show in Flix from an existing ShotGrid project.
+"""Demonstrates creating a show in Flix from an existing ShotGrid project.
 
 This example fetches project and sequence data from ShotGrid
 and creates a Flix show containing sequences with matching descriptions.
