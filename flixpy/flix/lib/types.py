@@ -512,8 +512,22 @@ class MediaObject(FlixType):
         result = cast(models.MediaObject, await self.client.get(path))
         self.from_dict(result, into=self, _client=self.client)
 
-    async def upload(self, f: BinaryIO) -> None:
-        await transfers.upload(self.client, f, self.asset_id, self.media_object_id)
+    async def upload(
+        self, f: BinaryIO, *, name: str | None = None, size: int | None = None
+    ) -> None:
+        """Populate this media object with a file.
+
+        Args:
+            f: The file to upload.
+            name: The name of the file. If not provided, the name will be fetched from the file handle.
+                Useful when uploading a file handle that doesn't correspond to a physical file on disk.
+            size: The total size of the file. If not provided, the size will be automatically detected
+                from the file handle. Useful when streaming data.
+        """
+        await transfers.upload(
+            self.client, f, self.asset_id, self.media_object_id, name=name, size=size
+        )
+
         try:
             await self.update()
         except errors.FlixHTTPError:
@@ -1143,10 +1157,27 @@ class Show(FlixType):
         task_ids = cast(tasks_model, await self.client.post(path, body))
         return task_ids["task_ids"]
 
-    async def upload_file(self, f: BinaryIO, ref: str) -> Asset:
+    async def upload_file(
+        self, f: BinaryIO, ref: str, *, name: str | None = None, size: int | None = None
+    ) -> Asset:
+        """Upload a new file to this show.
+
+        This will create a new asset and a new media object with the given ref type.
+
+        Args:
+            f: The file to upload.
+            ref: The ref type of the media object to create, e.g. ``"artwork"`` or ``"show-thumbnail"``.
+            name: The name of the file. If not provided, the name will be fetched from the file handle.
+                Useful when uploading a file handle that doesn't correspond to a physical file on disk.
+            size: The total size of the file. If not provided, the size will be automatically detected
+                from the file handle. Useful when streaming data.
+
+        Returns:
+            The new asset populated with the new media object.
+        """
         asset = (await self.create_assets(1))[0]
         mo = await asset.create_media_object(ref)
-        await mo.upload(f)
+        await mo.upload(f, name=name, size=size)
         return asset
 
     def new_episode(

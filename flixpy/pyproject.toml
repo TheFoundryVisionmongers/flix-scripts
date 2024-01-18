@@ -36,6 +36,11 @@ mypy-protobuf = "^3.5.0"
 mypy = "^1.5.1"
 openapi-python-client = "^0.15.1"
 
+
+[tool.poetry.group.examples.dependencies]
+shotgun-api3 = {git = "https://github.com/shotgunsoftware/python-api.git"}
+
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
