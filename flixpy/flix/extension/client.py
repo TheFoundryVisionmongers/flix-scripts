@@ -107,7 +107,7 @@ class EventQueue(AsyncIterable[_ET]):
                 break
 
             if isinstance(event, self._event_types):
-                yield cast(_ET, event)
+                yield event
 
             if self._queue is not None:
                 self._queue.task_done()

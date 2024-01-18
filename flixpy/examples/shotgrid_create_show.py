@@ -19,7 +19,7 @@ from typing import TypedDict, cast
 
 import aiohttp
 import flix
-import shotgun_api3  # type: ignore[import]
+import shotgun_api3  # type: ignore[import-untyped]
 
 # ShotGrid credentials and project ID to fetch the project data from
 SHOTGRID_BASE_URL = "https://yourstudio.shotgunstudio.com/"
