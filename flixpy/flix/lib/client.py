@@ -285,9 +285,14 @@ class BaseClient:
         self._access_key = AccessKey(await response.json())
         return self._access_key
 
-    async def close(self) -> None:
+    async def aclose(self) -> None:
         """Closes the underlying HTTP session. Does not need to be called when using the client as a context manager."""
         await self._session.close()
+
+    async def close(self) -> None:
+        """Deprecated. Use ``aclose()``."""
+        warnings.warn("Use Client.aclose()", DeprecationWarning)
+        await self.aclose()
 
     async def __aenter__(self: ClientSelf) -> ClientSelf:
         return self
@@ -295,7 +300,7 @@ class BaseClient:
     async def __aexit__(
         self, exc_type: Type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
     ) -> None:
-        await self.close()
+        await self.aclose()
 
 
 class Client(BaseClient):

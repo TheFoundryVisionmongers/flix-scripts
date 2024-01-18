@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import warnings
 import weakref
 from collections.abc import AsyncIterable, AsyncIterator, Coroutine
 from types import TracebackType
@@ -456,18 +457,23 @@ class Extension:
 
         return types.DownloadResponse.from_dict(resp)
 
-    async def _close(self) -> None:
+    async def _aclose(self) -> None:
         # convert set to list to avoid modifying set while iterating over it
         for queue in list(self._queues):
             queue.close()
         await self.sio.disconnect()
 
-    async def close(self) -> None:
+    async def aclose(self) -> None:
         """Closes the underlying HTTP and websocket clients."""
-        await self._close()
+        await self._aclose()
         await self._client.get_async_httpx_client().aclose()
         if self._registered_client is not None:
             await self._registered_client.get_async_httpx_client().aclose()
+
+    async def close(self) -> None:
+        """Deprecated. Use ``aclose()``."""
+        warnings.warn("Use Extension.aclose()", DeprecationWarning)
+        await self.aclose()
 
     async def __aenter__(self) -> "Extension":
         await self._client.__aenter__()
@@ -480,7 +486,7 @@ class Extension:
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
     ) -> None:
-        await self._close()
+        await self._aclose()
         await self._client.__aexit__(exc_type, exc_val, exc_tb)
         if self._registered_client is not None:
             await self._registered_client.__aexit__(exc_type, exc_val, exc_tb)
