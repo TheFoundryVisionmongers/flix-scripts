@@ -178,11 +178,13 @@ async def upload_thumbnail(show: flix.Show, image_url: str) -> flix.Asset:
     Returns:
         The newly created asset for the show thumbnail.
     """
+    # request the image from ShotGrid
     async with aiohttp.ClientSession() as session, session.get(image_url) as response:
         if response.content_length is None:
             # we can't stream an upload to Flix if we don't know the size in advance
             raise ValueError("Content length not set")
 
+        # stream the image to Flix
         return await show.upload_stream(
             # stream image in 8 MiB chunks
             response.content.iter_chunked(1024*1024*8),
