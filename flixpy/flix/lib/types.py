@@ -1,12 +1,13 @@
 import base64
 import collections.abc
+import contextlib
 import dataclasses
 import datetime
 import enum
 import os
 import pathlib
-from collections.abc import Mapping, Iterable, MutableMapping
-from typing import Any, Type, cast, TypedDict, BinaryIO, Callable, Iterator, Protocol
+from collections.abc import AsyncIterable, Callable, Iterable, Iterator, Mapping, MutableMapping
+from typing import Any, BinaryIO, Protocol, Type, TypedDict, cast
 
 import dateutil.parser
 
@@ -519,21 +520,52 @@ class MediaObject(FlixType):
 
         Args:
             f: The file to upload.
-            name: The name of the file. If not provided, the name will be fetched from the file handle.
-                Useful when uploading a file handle that doesn't correspond to a physical file on disk.
-            size: The total size of the file. If not provided, the size will be automatically detected
-                from the file handle. Useful when streaming data.
+            name: The name of the file. If not provided, the name will be fetched
+                from the file handle. Useful when uploading a file handle that
+                doesn't correspond to a physical file on disk.
+            size: The total size of the file. If not provided, the size will be
+                automatically detected from the file handle.
         """
+        if name is None:
+            name = f.name
+        if size is None:
+            f.seek(0, os.SEEK_END)
+            size = f.tell()
+            f.seek(0, os.SEEK_SET)
+
         await transfers.upload(
-            self.client, f, self.asset_id, self.media_object_id, name=name, size=size
+            self.client,
+            transfers.chunk_file(f),
+            self.asset_id,
+            self.media_object_id,
+            name=name,
+            size=size,
         )
 
-        try:
+        # fetching the media object info requires download permissions,
+        # so if we only have upload permissions, skip updating the local mo info
+        with contextlib.suppress(errors.FlixHTTPError):
             await self.update()
-        except errors.FlixHTTPError:
-            # fetching the media object info requires download permissions,
-            # so if we only have upload permissions, skip updating the local mo info
-            pass
+
+    async def upload_stream(self, stream: AsyncIterable[bytes], *, name: str, size: int) -> None:
+        """Populate this media object with data from a stream.
+
+        Args:
+            stream: The data stream to upload.
+            name: The name of the file.
+            size: The total size of the file.
+        """
+        await transfers.upload(
+            self.client,
+            stream,
+            self.asset_id,
+            self.media_object_id,
+            name=name,
+            size=size,
+        )
+
+        with contextlib.suppress(errors.FlixHTTPError):
+            await self.update()
 
     async def download(self) -> bytes:
         """Get the file contents of this media object.
@@ -1182,23 +1214,57 @@ class Show(FlixType):
     ) -> Asset:
         """Upload a new file to this show.
 
-        This will create a new asset and a new media object with the given ref type.
+        This will create a new asset and a new media object with the given asset type.
+
+        Examples:
+            ```python
+            with open("artwork.psd", "rb") as f:
+                await show.upload_file(f, "artwork")
+            ```
 
         Args:
             f: The file to upload.
-            ref: The ref type of the media object to create, e.g. ``"artwork"`` or ``"show-thumbnail"``.
-            name: The name of the file. If not provided, the name will be fetched from the file handle.
-                Useful when uploading a file handle that doesn't correspond to a physical file on disk.
-            size: The total size of the file. If not provided, the size will be automatically detected
-                from the file handle. Useful when streaming data.
+            ref: The [asset type][flix.MediaObject.asset_type] of the media object to create,
+                e.g. ``"artwork"`` or ``"show-thumbnail"``.
+            name: The name of the file. If not provided, the name will be fetched
+                from the file handle. Useful when uploading a file handle that
+                doesn't correspond to a physical file on disk.
+            size: The total size of the file. If not provided, the size will be
+                automatically detected from the file handle.
 
         Returns:
             The new asset populated with the new media object.
         """
-        asset = (await self.create_assets(1))[0]
-        mo = await asset.create_media_object(ref)
+        asset, mo = await self._create_singleton_asset(ref)
         await mo.upload(f, name=name, size=size)
         return asset
+
+    async def upload_stream(
+        self, stream: AsyncIterable[bytes], ref: str, *, name: str, size: int
+    ) -> Asset:
+        """Upload a data stream as a new file to this show.
+
+        This will create a new asset and a new media object with the given asset type.
+
+        Args:
+            stream: The data stream to upload.
+            ref: The [asset type][flix.MediaObject.asset_type] of the media object to create,
+                e.g. ``"artwork"`` or ``"show-thumbnail"``.
+            name: The name of the file.
+            size: The total size of the file.
+
+        Returns:
+            The new asset populated with the new media object.
+        """
+        asset, mo = await self._create_singleton_asset(ref)
+        await mo.upload_stream(stream, name=name, size=size)
+        return asset
+
+    async def _create_singleton_asset(self, ref: str) -> tuple[Asset, MediaObject]:
+        """Create a new asset with a single media object."""
+        asset = (await self.create_assets(1))[0]
+        mo = await asset.create_media_object(ref)
+        return asset, mo
 
     def new_episode(
         self,
