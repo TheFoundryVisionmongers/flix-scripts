@@ -1,18 +1,24 @@
+import asyncio
 import base64
-import urllib.parse
-
-from collections.abc import Mapping
+import contextlib
 import dataclasses
+import datetime
 import json
+import logging
+import urllib.parse
+import warnings
+from collections.abc import AsyncIterator, Mapping
 from types import TracebackType
-from typing import Any, cast, Type, TypedDict, TypeVar
+from typing import Any, Type, TypedDict, TypeVar, cast
 
 import aiohttp
 import dateutil.parser
 
-from . import signing, errors, forms, types, models, utils, websocket
+from . import errors, forms, models, signing, types, utils, websocket
 
 __all__ = ["Client", "AccessKey"]
+
+logger = logging.getLogger(__name__)
 
 
 @dataclasses.dataclass
@@ -28,6 +34,12 @@ class AccessKey:
         self.secret_access_key: str = access_key["secret_access_key"]
         self.created_date = dateutil.parser.parse(access_key["created_date"])
         self.expiry_date = dateutil.parser.parse(access_key["expiry_date"])
+
+    @property
+    def has_expired(self) -> bool:
+        """Whether this access key has expired."""
+        now = datetime.datetime.now(datetime.timezone.utc)
+        return self.expiry_date < now
 
     def to_json(self) -> dict[str, Any]:
         """Returns a JSON-serialisable representation of this access key.
@@ -54,6 +66,9 @@ class BaseClient:
         ssl: bool = False,
         disable_ssl_validation: bool = False,
         *,
+        username: str | None = None,
+        password: str | None = None,
+        auto_extend_session: bool = True,
         access_key: AccessKey | None = None,
     ):
         """
@@ -62,14 +77,24 @@ class BaseClient:
         :param port: The port the server is running on
         :param ssl: Whether to use HTTPS to communicate with the server
         :param disable_ssl_validation: Whether to disable validation of SSL certificates; enables MITM attacks
+        :param username: The user to authenticate as. If provided, the client will automatically
+            authenticate whenever we don't have a valid session.
+        :param password: The password for the user to authenticate as. Must be provided if ``username`` is provided.
+        :param auto_extend_session: Automatically keep the session alive by periodically extending
+            the access key validity time following a successful authentication.
         :param access_key: The access key of an already authenticated user.
         """
         self._hostname = hostname
         self._port = port
         self._ssl = ssl
-        self._access_key = access_key
-        self._session = aiohttp.ClientSession()
         self._disable_ssl_validation = disable_ssl_validation
+        self._username = username
+        self._password = password
+        self._auto_extend_session = auto_extend_session
+        self._access_key = access_key
+
+        self._session = aiohttp.ClientSession()
+        self._refresh_token_task: asyncio.Task[None] | None = None
 
     @property
     def access_key(self) -> AccessKey | None:
@@ -160,7 +185,15 @@ class BaseClient:
         :raises errors.FlixError: If the server returned an error
         :return: The HTTP response
         """
-        return await self._request(method, path, body, **kwargs)
+        # authenticate if auto auth is enabled and we don't have a valid access key
+        await self._ensure_authenticated()
+        try:
+            return await self._request(method, path, body, **kwargs)
+        except errors.FlixNotVerifiedError:
+            # if our access key was rejected it will be cleared by _request, so try again
+            if not await self._ensure_authenticated():
+                raise
+            return await self._request(method, path, body, **kwargs)
 
     async def request_json(self, method: str, path: str, body: Any | None = None, **kwargs: Any) -> dict[str, Any]:
         """
@@ -280,14 +313,75 @@ class BaseClient:
         :raises errors.FlixError: If the server returned an error
         """
         self._access_key = None
-        # call _request directly to avoid recursion during interactive sessions
+        # call _request directly to avoid recursion when automatically authenticating
         response = await self._request("POST", "/authenticate", auth=aiohttp.BasicAuth(user, password))
         self._access_key = AccessKey(await response.json())
+
+        if self._refresh_token_task is None and self._auto_extend_session:
+            self._refresh_token_task = asyncio.create_task(self._periodically_refresh_token())
+
         return self._access_key
 
-    async def close(self) -> None:
+    async def _ensure_authenticated(self) -> bool:
+        """Authenticate with the Flix Server if we have no valid access key.
+
+        Returns:
+            ``True`` if a successful authentication attempt was performed;
+                ``False`` if no attempt was made because the access key is still valid
+                or automatic authentication is disabled.
+        """
+        if (
+            (
+                self._access_key is None
+                or self._access_key.has_expired
+            )
+            and self._username is not None
+            and self._password is not None
+        ):
+            await self.authenticate(self._username, self._password)
+            return True
+        return False
+
+    async def extend_session(self) -> None:
+        """Extend the current login session to 24 hours from now.
+
+        If the current access key is not valid, this method does nothing.
+        """
+        if self._access_key is None:
+            return
+
+        try:
+            self._access_key = AccessKey(await self.post("/authenticate/extend"))
+        except errors.FlixNotVerifiedError:
+            # the access key has expired; we'll reauthenticate before the next request
+            pass
+
+    async def _periodically_refresh_token(self) -> None:
+        """Try to extend the session once an hour."""
+        refresh_frequency_seconds = 60 * 60
+        while True:
+            await asyncio.sleep(refresh_frequency_seconds)
+
+            if self._access_key is not None:
+                try:
+                    await self.extend_session()
+                except Exception:
+                    logger.exception(
+                        "error while trying to extend the current session, will try again in %s seconds",
+                        refresh_frequency_seconds,
+                    )
+
+    async def aclose(self) -> None:
         """Closes the underlying HTTP session. Does not need to be called when using the client as a context manager."""
+        if self._refresh_token_task is not None:
+            self._refresh_token_task.cancel()
+
         await self._session.close()
+
+    async def close(self) -> None:
+        """Deprecated. Use ``aclose()``."""
+        warnings.warn("Use Client.aclose()", DeprecationWarning)
+        await self.aclose()
 
     async def __aenter__(self: ClientSelf) -> ClientSelf:
         return self
@@ -295,33 +389,17 @@ class BaseClient:
     async def __aexit__(
         self, exc_type: Type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
     ) -> None:
-        await self.close()
+        await self.aclose()
 
 
 class Client(BaseClient):
     """An extension of BaseClient, providing helper functions for interacting with the Flix API."""
 
-    def __init__(
-        self,
-        hostname: str,
-        port: int,
-        ssl: bool = False,
-        disable_ssl_validation: bool = False,
-        *,
-        access_key: AccessKey | None = None,
-    ):
-        """
-        Instantiate a new Flix client.
-        :param hostname: The hostname of the Flix server
-        :param port: The port the server is running on
-        :param ssl: Whether to use HTTPS to communicate with the server
-        :param disable_ssl_validation: Whether to disable validation of SSL certificates; enables MITM attacks
-        :param access_key: The access key of an already authenticated user.
-        """
-        super().__init__(hostname, port, ssl, disable_ssl_validation=disable_ssl_validation, access_key=access_key)
-
-    def websocket(self) -> websocket.Websocket:
-        return websocket.Websocket(self._session, self)
+    @contextlib.asynccontextmanager
+    async def websocket(self) -> AsyncIterator[websocket.Websocket]:
+        await self._ensure_authenticated()
+        async with websocket.Websocket(self._session, self) as ws:
+            yield ws
 
     async def get_all_shows(self, include_hidden: bool = False) -> list[types.Show]:
         params = {"display_hidden": "true" if include_hidden else "falsae"}

@@ -4,13 +4,13 @@ import dataclasses
 __all__ = ["FlixError", "FlixHTTPError", "FlixNotVerifiedError"]
 
 
-class FlixError(OSError):
-    pass
+class FlixError(Exception):
+    """A generic Flix error."""
 
 
 @dataclasses.dataclass
 class FlixHTTPError(FlixError):
-    """A generic Flix error."""
+    """An error resulting from a failed HTTP request."""
 
     status_code: int
     error_message: str

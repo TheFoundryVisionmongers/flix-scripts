@@ -1,9 +1,9 @@
-import aiohttp.web
+import asyncio
 
 import flix
 
 
-@flix.webhook(secret="572399cf-065a-4413-a2ec-6b288d3b6928")
+@flix.webhook(path="/events", secret="572399cf-065a-4413-a2ec-6b288d3b6928")
 async def on_event(event: flix.WebhookEvent) -> None:
     print("Got event:", event)
 
@@ -21,6 +21,4 @@ async def on_publish_flix(event: flix.PublishFlixEvent) -> None:
 if __name__ == "__main__":
     # you can also set the secret separately:
     # on_event.set_secret("572399cf-065a-4413-a2ec-6b288d3b6928")
-    app = aiohttp.web.Application()
-    app.add_routes([aiohttp.web.post("/events", on_event)])
-    aiohttp.web.run_app(app, port=8888)
+    asyncio.run(flix.run_webhook_server(on_event, port=8888))

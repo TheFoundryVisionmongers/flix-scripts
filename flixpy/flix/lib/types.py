@@ -1,12 +1,13 @@
 import base64
 import collections.abc
+import contextlib
 import dataclasses
 import datetime
 import enum
 import os
 import pathlib
-from collections.abc import Mapping, Iterable, MutableMapping
-from typing import Any, Type, cast, TypedDict, BinaryIO, Callable, Iterator, Protocol
+from collections.abc import AsyncIterable, Callable, Iterable, Iterator, Mapping, MutableMapping
+from typing import Any, BinaryIO, Protocol, Type, TypedDict, cast
 
 import dateutil.parser
 
@@ -58,7 +59,7 @@ class FlixType:
     @property
     def client(self) -> "client.Client":
         if self._client is None:
-            raise RuntimeError("client is not set")
+            raise errors.FlixError("client is not set")
         return self._client
 
 
@@ -251,7 +252,7 @@ class Metadata(FlixType, MutableMapping[str, Any]):
 
     def path_prefix(self) -> str:
         if self._parent is None:
-            raise RuntimeError("metadata parent is not set")
+            raise errors.FlixError("metadata parent is not set")
         return f"{self._parent.path_prefix()}/metadata"
 
     class _MetadataModel(TypedDict):
@@ -519,26 +520,75 @@ class MediaObject(FlixType):
 
         Args:
             f: The file to upload.
-            name: The name of the file. If not provided, the name will be fetched from the file handle.
-                Useful when uploading a file handle that doesn't correspond to a physical file on disk.
-            size: The total size of the file. If not provided, the size will be automatically detected
-                from the file handle. Useful when streaming data.
+            name: The name of the file. If not provided, the name will be fetched
+                from the file handle. Useful when uploading a file handle that
+                doesn't correspond to a physical file on disk.
+            size: The total size of the file. If not provided, the size will be
+                automatically detected from the file handle.
         """
+        if name is None:
+            name = f.name
+        if size is None:
+            f.seek(0, os.SEEK_END)
+            size = f.tell()
+            f.seek(0, os.SEEK_SET)
+
         await transfers.upload(
-            self.client, f, self.asset_id, self.media_object_id, name=name, size=size
+            self.client,
+            transfers.chunk_file(f),
+            self.asset_id,
+            self.media_object_id,
+            name=name,
+            size=size,
         )
 
-        try:
+        # fetching the media object info requires download permissions,
+        # so if we only have upload permissions, skip updating the local mo info
+        with contextlib.suppress(errors.FlixHTTPError):
             await self.update()
-        except errors.FlixHTTPError:
-            # fetching the media object info requires download permissions,
-            # so if we only have upload permissions, skip updating the local mo info
-            pass
+
+    async def upload_stream(self, stream: AsyncIterable[bytes], *, name: str, size: int) -> None:
+        """Populate this media object with data from a stream.
+
+        Args:
+            stream: The data stream to upload.
+            name: The name of the file.
+            size: The total size of the file.
+        """
+        await transfers.upload(
+            self.client,
+            stream,
+            self.asset_id,
+            self.media_object_id,
+            name=name,
+            size=size,
+        )
+
+        with contextlib.suppress(errors.FlixHTTPError):
+            await self.update()
 
     async def download(self) -> bytes:
+        """Get the file contents of this media object.
+
+        This function should not be used to download large files
+        that may not fit in memory.
+
+        Returns:
+            A byte string containing the entire file contents of this media object.
+        """
         return b"".join([chunk async for chunk in transfers.download(self.client, self.asset_id, self.media_object_id)])
 
-    async def download_to(self, directory: str | os.PathLike[str], filename: str | None = None) -> None:
+    async def download_to(self, directory: str | os.PathLike[str], filename: str | None = None) -> pathlib.Path:
+        """Save this media object's file contents to disk.
+
+        Args:
+            directory: The directory to download the file to.
+            filename: The name of the file inside the directory.
+                If not specified, a unique filename for this media object will be picked.
+
+        Returns:
+            The path to the saved file.
+        """
         dirpath = pathlib.Path(directory)
         dirpath.mkdir(parents=True, exist_ok=True)
         if filename is None:
@@ -549,6 +599,8 @@ class MediaObject(FlixType):
         with path.open("wb") as f:
             async for chunk in transfers.download(self.client, self.asset_id, self.media_object_id):
                 f.write(chunk)
+
+        return path
 
 
 class Episode(FlixType):
@@ -1162,23 +1214,57 @@ class Show(FlixType):
     ) -> Asset:
         """Upload a new file to this show.
 
-        This will create a new asset and a new media object with the given ref type.
+        This will create a new asset and a new media object with the given asset type.
+
+        Examples:
+            ```python
+            with open("artwork.psd", "rb") as f:
+                await show.upload_file(f, "artwork")
+            ```
 
         Args:
             f: The file to upload.
-            ref: The ref type of the media object to create, e.g. ``"artwork"`` or ``"show-thumbnail"``.
-            name: The name of the file. If not provided, the name will be fetched from the file handle.
-                Useful when uploading a file handle that doesn't correspond to a physical file on disk.
-            size: The total size of the file. If not provided, the size will be automatically detected
-                from the file handle. Useful when streaming data.
+            ref: The [asset type][flix.MediaObject.asset_type] of the media object to create,
+                e.g. ``"artwork"`` or ``"show-thumbnail"``.
+            name: The name of the file. If not provided, the name will be fetched
+                from the file handle. Useful when uploading a file handle that
+                doesn't correspond to a physical file on disk.
+            size: The total size of the file. If not provided, the size will be
+                automatically detected from the file handle.
 
         Returns:
             The new asset populated with the new media object.
         """
-        asset = (await self.create_assets(1))[0]
-        mo = await asset.create_media_object(ref)
+        asset, mo = await self._create_singleton_asset(ref)
         await mo.upload(f, name=name, size=size)
         return asset
+
+    async def upload_stream(
+        self, stream: AsyncIterable[bytes], ref: str, *, name: str, size: int
+    ) -> Asset:
+        """Upload a data stream as a new file to this show.
+
+        This will create a new asset and a new media object with the given asset type.
+
+        Args:
+            stream: The data stream to upload.
+            ref: The [asset type][flix.MediaObject.asset_type] of the media object to create,
+                e.g. ``"artwork"`` or ``"show-thumbnail"``.
+            name: The name of the file.
+            size: The total size of the file.
+
+        Returns:
+            The new asset populated with the new media object.
+        """
+        asset, mo = await self._create_singleton_asset(ref)
+        await mo.upload_stream(stream, name=name, size=size)
+        return asset
+
+    async def _create_singleton_asset(self, ref: str) -> tuple[Asset, MediaObject]:
+        """Create a new asset with a single media object."""
+        asset = (await self.create_assets(1))[0]
+        mo = await asset.create_media_object(ref)
+        return asset, mo
 
     def new_episode(
         self,
@@ -1188,7 +1274,7 @@ class Show(FlixType):
         description: str = "",
     ) -> Episode:
         if not self.episodic:
-            raise RuntimeError("cannot create an episode in a non-episodic show")
+            raise errors.FlixError("cannot create an episode in a non-episodic show")
         return Episode(
             episode_number=episode_number,
             tracking_code=tracking_code,
@@ -1481,7 +1567,7 @@ class Panel(FlixType):
 
     def path_prefix(self) -> str:
         if self._sequence is None:
-            raise RuntimeError("sequence is not set")
+            raise errors.FlixError("sequence is not set")
         return f"{self._sequence.path_prefix(False)}/panel/{self.panel_id}"
 
 
@@ -1608,7 +1694,7 @@ class PanelRevision(FlixType):
 
     def path_prefix(self, include_episode: bool = False) -> str:
         if self._sequence is None:
-            raise RuntimeError("sequence is not set")
+            raise errors.FlixError("sequence is not set")
         return f"{self._sequence.path_prefix(include_episode)}/panel/{self.panel_id}/revision/{self.revision_number}"
 
     def new_sequence_panel(
@@ -1652,7 +1738,7 @@ class PanelRevision(FlixType):
 
     async def save(self, force_create_new_panel: bool = False) -> None:
         if self._sequence is None:
-            raise RuntimeError("sequence is not set")
+            raise errors.FlixError("sequence is not set")
 
         if self.panel_id is None or force_create_new_panel:
             path = f"{self._sequence.path_prefix()}/panel"
@@ -1781,7 +1867,7 @@ class SequenceRevision(FlixType):
 
     def path_prefix(self, include_episode: bool = True) -> str:
         if self._sequence is None:
-            raise RuntimeError("sequence is not set")
+            raise errors.FlixError("sequence is not set")
         return f"{self._sequence.path_prefix(include_episode)}/revision/{self.revision_number}"
 
     def add_panel(
@@ -1858,7 +1944,7 @@ class SequenceRevision(FlixType):
 
     async def save(self, force_create_new: bool = False) -> None:
         if self._sequence is None:
-            raise RuntimeError("sequence is not set")
+            raise errors.FlixError("sequence is not set")
 
         if self.revision_number is None or force_create_new:
             path = f"{self._sequence.path_prefix()}/revision"

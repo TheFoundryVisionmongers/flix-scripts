@@ -1,4 +1,4 @@
-"""Demonstrate creating a show in Flix from an existing ShotGrid project.
+"""Demonstrates creating a show in Flix from an existing ShotGrid project.
 
 This example fetches project and sequence data from ShotGrid
 and creates a Flix show containing sequences with matching descriptions.
@@ -13,13 +13,12 @@ Note that this example does not take shots into account.
 
 import asyncio
 import logging
-import os
 import re
 from typing import TypedDict, cast
 
 import aiohttp
 import flix
-import shotgun_api3  # type: ignore[import]
+import shotgun_api3  # type: ignore[import-untyped]
 
 # ShotGrid credentials and project ID to fetch the project data from
 SHOTGRID_BASE_URL = "https://yourstudio.shotgunstudio.com/"
@@ -133,7 +132,7 @@ def get_show_tracking_code(sg_project: ShotgridProject) -> str:
         # can't guess a tracking code if we have no name
         return ""
 
-    # try to use
+    # try to use the first letter of each capitalised word in the title
     initials = "".join(word[0] for word in name.split() if len(word) > 0 and word[0].isupper())
     if len(sanitized_initials := sanitize_tracking_code(initials)) >= 3:
         return sanitized_initials
@@ -172,9 +171,6 @@ async def upload_thumbnail(show: flix.Show, image_url: str) -> flix.Asset:
     This function uploads the file without saving the file to disk,
     passing the data directly to Flix as it's downloaded.
 
-    Demonstrates how you can build more complex data flows
-    with asynchronous functions without using threads.
-
     Args:
         show: The show to upload the thumbnail to.
         image_url: The URL to download the thumbnail from.
@@ -182,49 +178,20 @@ async def upload_thumbnail(show: flix.Show, image_url: str) -> flix.Asset:
     Returns:
         The newly created asset for the show thumbnail.
     """
-    async with aiohttp.ClientSession() as session, session.get(image_url) as resp:
-        # create a file pipe to connect the downloader to the uploader
-        r, w = os.pipe()
-        # run download and upload in parallel
-        # so the downloader can feed the data to the uploader
-        downloader = asyncio.create_task(_download_file(resp, w))
-        uploader = asyncio.create_task(_upload_file(show, resp, r))
+    # request the image from ShotGrid
+    async with aiohttp.ClientSession() as session, session.get(image_url) as response:
+        if response.content_length is None:
+            # we can't stream an upload to Flix if we don't know the size in advance
+            raise ValueError("Content length not set")
 
-        try:
-            # wait for download and upload to complete
-            _, pending = await asyncio.wait(
-                [downloader, uploader], return_when=asyncio.FIRST_EXCEPTION
-            )
-        finally:
-            # if either task failed, make sure we cancel the other
-            for task in pending:
-                task.cancel()
-
-        # get the asset returned by upload_file()
-        return uploader.result()
-
-
-async def _upload_file(show: flix.Show, response: aiohttp.ClientResponse, r: int) -> flix.Asset:
-    """Read data from a pipe and upload to Flix as a show thumbnail."""
-    # pass the read end of the pipe to upload_file()
-    # to upload the data written by the downloader
-    with os.fdopen(r, "rb") as reader:
-        return await show.upload_file(
-            reader,
+        # stream the image to Flix
+        return await show.upload_stream(
+            # stream image in 8 MiB chunks
+            response.content.iter_chunked(1024*1024*8),
             flix.AssetType.SHOW_THUMBNAIL,
             name=response.url.name,
             size=response.content_length,
         )
-
-
-async def _download_file(response: aiohttp.ClientResponse, w: int) -> None:
-    """Download data from ShotGrid and write to a pipe."""
-    # read the response from ShotGrid and pass the data to the uploader using the pipe
-    # note: important to close the writer to signal the end of the file
-    # (this is automatically handled by the 'with' statement)
-    with os.fdopen(w, "wb") as writer:
-        async for chunk in response.content.iter_chunked(1024 * 1024 * 10):
-            writer.write(chunk)
 
 
 if __name__ == "__main__":

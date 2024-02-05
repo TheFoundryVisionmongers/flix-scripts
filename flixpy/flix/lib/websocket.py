@@ -6,7 +6,7 @@ import urllib.parse
 import uuid
 from collections.abc import Iterable, AsyncIterator, Generator
 from types import TracebackType
-from typing import TypeVar, AsyncIterable, TypedDict, cast, Type, Generic, Any
+from typing import TypeVar, TypedDict, cast, Type, Generic, Any
 
 import aiohttp
 import yarl
@@ -299,7 +299,7 @@ class ChainWaiter(Generic[WebsocketMessageType]):
     @property
     def result(self) -> WebsocketMessageType:
         if self._result is None:
-            raise RuntimeError("attempted to access result before completion")
+            raise errors.FlixError("attempted to access result before completion")
         return self._result
 
     async def __aiter__(self) -> AsyncIterator[WebsocketMessage]:
@@ -337,7 +337,7 @@ class Websocket:
         self._client = _client
         access_key = _client.access_key
         if access_key is None:
-            raise RuntimeError("must be authenticated to open websocket")
+            raise errors.FlixError("must be authenticated to open websocket")
         self._access_key = access_key
         self.client_id = str(uuid.uuid4())
         self._ws: aiohttp.ClientWebSocketResponse | None = None
@@ -374,7 +374,7 @@ class Websocket:
 
     async def __aiter__(self) -> AsyncIterator[WebsocketMessage]:
         if self._ws is None:
-            raise RuntimeError("must open websocket before iterating")
+            raise errors.FlixError("must open websocket before iterating")
 
         msg: aiohttp.WSMessage
         async for msg in self._ws:

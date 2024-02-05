@@ -1,32 +1,24 @@
 import json
-import os
 import pathlib
 import random
 import ssl
 import uuid
-from collections.abc import Iterable
+from collections.abc import AsyncIterable, AsyncIterator, Callable, Iterable
 from typing import (
+    TYPE_CHECKING,
     BinaryIO,
-    Callable,
     Union,
-    AsyncIterable,
-    AsyncIterator,
     Type,
     TypeVar,
     cast,
-    TYPE_CHECKING,
 )
 
 import grpc.aio
 from cryptography import x509
 from grpc.aio import ClientCallDetails, StreamStreamCall
 
-from . import client, types, signing
+from . import client, errors, signing, types
 from .proto import transfer_pb2_grpc, transfer_pb2
-
-
-_CHUNK_SIZE = 8 * 1024
-
 
 Streamer = Callable[[bytes], AsyncIterator[transfer_pb2.TransferReq]]
 RequestType = TypeVar("RequestType")
@@ -54,7 +46,12 @@ def download_streamer() -> Streamer:
     return streamer
 
 
-def upload_streamer(f: BinaryIO, *, name: str, size: int) -> Streamer:
+async def chunk_file(f: BinaryIO, chunk_size: int = 8 * 1024) -> AsyncIterator[bytes]:
+    while data := f.read(chunk_size):
+        yield data
+
+
+def upload_streamer(f: AsyncIterable[bytes], *, name: str, size: int) -> Streamer:
     async def streamer(metadata: bytes) -> AsyncIterator[transfer_pb2.TransferReq]:
         suffix = pathlib.Path(name).suffix
         transfer_id = str(uuid.uuid4())
@@ -70,7 +67,7 @@ def upload_streamer(f: BinaryIO, *, name: str, size: int) -> Streamer:
             UUID=transfer_id,
         )
 
-        while data := f.read(_CHUNK_SIZE):
+        async for data in f:
             yield transfer_pb2.TransferReq(
                 DataMsg=transfer_pb2.TransferReq.DataMessage(
                     Action=transfer_pb2.TransferReq.DataMessage.DATA,
@@ -160,7 +157,7 @@ async def transfer(
 ) -> AsyncIterator[transfer_pb2.TransferResp]:
     access_key = flix_client.access_key
     if access_key is None:
-        raise RuntimeError("must authenticate before transferring files")
+        raise errors.FlixError("must authenticate before transferring files")
 
     servers = await flix_client.servers()
     server: "types.Server" = random.choice(servers)
@@ -188,20 +185,13 @@ async def transfer(
 
 async def upload(
     flix_client: "client.Client",
-    f: BinaryIO,
+    f: AsyncIterable[bytes],
     asset_id: int,
     media_object_id: int,
     *,
-    name: str | None = None,
-    size: int | None = None,
+    name: str,
+    size: int,
 ) -> None:
-    if name is None:
-        name = f.name
-    if size is None:
-        f.seek(0, os.SEEK_END)
-        size = f.tell()
-        f.seek(0, os.SEEK_SET)
-
     stream = transfer(
         flix_client,
         asset_id,
