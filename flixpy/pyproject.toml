@@ -35,6 +35,7 @@ types-protobuf = "^4.24.0.1"
 mypy-protobuf = "^3.5.0"
 mypy = "^1.8.0"
 openapi-python-client = "^0.15.1"
+pyright = "^1.1.350"
 ruff = "^0.2.1"
 
 
@@ -50,6 +51,13 @@ build-backend = "poetry.core.masonry.api"
 strict = true
 python_version = "3.10"
 files = ["flix", "examples", "stubs"]
+
+[tool.pyright]
+typeCheckingMode = "strict"
+pythonVersion = "3.10"
+include = ["flix", "examples", "stubs"]
+ignore = ["**/*_pb2*", "**/extension/extension_api/**"]
+stubPath = "./stubs"
 
 [tool.ruff]
 include = ["pyproject.toml", "flix/**/*.py", "examples/**/*.py"]
