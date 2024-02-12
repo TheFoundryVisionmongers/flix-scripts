@@ -1,3 +1,5 @@
+"""A client that supports interactive authentication."""
+
 from __future__ import annotations
 
 import contextlib

@@ -1,3 +1,9 @@
+"""Utilities for signing messages to the Flix Server.
+
+These allow an authenticated user to generate the authorization signature
+required to access protected endpoints.
+"""
+
 from __future__ import annotations
 
 import base64
@@ -26,13 +32,16 @@ def sign_request(
 ) -> dict[str, str]:
     """Sign an HTTP request to the Flix server.
 
-    :param access_key_id: The ID of the access key
-    :param secret: The secret part of the access key
-    :param method: The HTTP method for the request, e.g. GET or POST
-    :param path: The path to request not including the, e.g. /info
-    :param body: The body of the request
-    :param content_type: The content type of the request
-    :return: A dictionary containing headers to send with the request to the Flix server
+    Args:
+        access_key_id: The ID of the access key.
+        secret: The secret part of the access key.
+        method: The HTTP method for the request, e.g. GET or POST.
+        path: The path to request not including the hostname, e.g. /info.
+        body: The body of the request.
+        content_type: The content type of the request.
+
+    Returns:
+        A dictionary containing headers to send with the request to the Flix server.
     """
     date = get_time_rfc3999()
 
@@ -57,10 +66,13 @@ def sign_request(
 def signature(msg: bytes, secret: str, as_hex: bool = False) -> str:
     """Generate a signature for a message using HMAC with SHA256.
 
-    :param msg: The message to sign
-    :param secret: The secret to sign the message using
-    :param as_hex: Whether to return the signature hex-encoded instead of Base64-encoded
-    :return: The signature, encoded with Base64 by default
+    Args:
+        msg: The message to sign.
+        secret: The secret to sign the message using.
+        as_hex: Whether to return the signature hex-encoded instead of Base64-encoded.
+
+    Returns:
+        The signature, encoded with Base64 by default.
     """
     sig = hmac.digest(secret.encode(), msg, "sha256")
     if as_hex:

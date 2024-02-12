@@ -1,3 +1,5 @@
+"""Models of the raw JSON types used by the Flix Server."""
+
 from __future__ import annotations
 
 from typing import Any, TypedDict

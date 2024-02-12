@@ -1,3 +1,5 @@
+"""The implementations of the commands available from the ``flix`` command-line utility."""
+
 from __future__ import annotations
 
 import asyncio

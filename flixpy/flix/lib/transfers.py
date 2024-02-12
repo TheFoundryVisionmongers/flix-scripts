@@ -1,3 +1,10 @@
+"""Utilities for uploading and downloading asset files to and from the Flix Server.
+
+The functions provided here should generally not be used directly.
+Prefer to use the upload and download functions defined on e.g. [Show][flix.Show]
+and [MediaObject][flix.MediaObject].
+"""
+
 from __future__ import annotations
 
 import json

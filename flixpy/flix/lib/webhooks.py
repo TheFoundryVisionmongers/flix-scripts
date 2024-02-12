@@ -1,3 +1,10 @@
+"""Utilities for easily listening to webhook events sent by the Flix Server.
+
+Webhook events are sent from the Flix Server to a registered webhook
+when certain predefined actions are performed, such as publishing to editorial
+or creating a new revision of a sequence.
+"""
+
 from __future__ import annotations
 
 import asyncio
@@ -248,8 +255,8 @@ class WebhookHandler:
     """This class handles authentication and parsing of incoming Flix events.
 
     An instance of this class can be added as a route to an aiohttp.web.Application.
-
-    A function accepting a Flix event can be transformed into a WebhookHandler using the webhook decorator.
+    A function accepting a Flix event can be transformed into a WebhookHandler using
+    the webhook decorator.
     """
 
     def __init__(
@@ -266,10 +273,10 @@ class WebhookHandler:
         ] = {}
 
     def set_secret(self, secret: str) -> None:
-        """
-        Sets the secret to use for this handler.
+        """Sets the secret to use for this handler.
 
-        :param secret: The secret to use to authenticate incoming events
+        Args:
+            secret: The secret to use to authenticate incoming events.
         """
         self.secret = secret
 
@@ -278,8 +285,11 @@ class WebhookHandler:
     ) -> Callable[[WebhookHandlerType[WebhookEventType]], WebhookHandlerType[WebhookEventType]]:
         """A decorator for specialised webhook handlers that handle a specific type of event.
 
-        :param event_type: The type of event to handle
-        :return: A decorator which registers the decorated function as a webhook handler
+        Args:
+            event_type: The type of event to handle.
+
+        Returns:
+            A decorator which registers the decorated function as a webhook handler.
         """
 
         def decorator(
@@ -358,9 +368,12 @@ def webhook(
 ) -> Callable[[WebhookHandlerType[WebhookEvent]], WebhookHandler]:
     """Decorator for webhook handlers.
 
-    :param secret: The secret used to authenticate webhook events
-    :param path: The endpoint path of the webhook, e.g. ``"/events"``.
-    :return: A decorator transforming a function into a WebhookHandler
+    Args:
+        secret: The secret used to authenticate webhook events.
+        path: The endpoint path of the webhook, e.g. ``"/events"``.
+
+    Returns:
+        A decorator transforming a function into a WebhookHandler.
     """
 
     def decorator(f: WebhookHandlerType[WebhookEvent]) -> WebhookHandler:
@@ -403,16 +416,22 @@ async def run_webhook_server(
 
     This function will run indefinitely until cancelled.
 
-    Examples:
+    Example:
         ```python
         # define handlers
         @flix.webhook(path="/events", secret="...")
-        def on_event(event: flix.WebhookEvent) -> None:
+        def on_event(
+            event: flix.WebhookEvent,
+        ) -> None:
             ...
 
+
         @on_event.handle(flix.PublishEditorialEvent)
-        def on_publish(event: flix.PublishEditorialEvent) -> None:
+        def on_publish(
+            event: flix.PublishEditorialEvent,
+        ) -> None:
             ...
+
 
         # start webhook server
         asyncio.run(

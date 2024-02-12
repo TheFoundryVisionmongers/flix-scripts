@@ -1,3 +1,5 @@
+"""Pythonic abstractions of the types use by the General Remote Client API."""
+
 from __future__ import annotations
 
 import dataclasses

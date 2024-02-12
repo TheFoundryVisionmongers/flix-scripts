@@ -1,3 +1,9 @@
+"""Utilities for listening to streaming websocket events.
+
+Websocket events provide updates about running jobs and require
+an active connection to the Flix Server.
+"""
+
 from __future__ import annotations
 
 import asyncio

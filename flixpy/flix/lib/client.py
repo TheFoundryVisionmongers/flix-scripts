@@ -1,3 +1,5 @@
+"""Utilities for connecting to and authenticating with the Flix Server."""
+
 from __future__ import annotations
 
 import asyncio
@@ -33,12 +35,17 @@ class AccessKey:
     def __init__(self, access_key: dict[str, Any]) -> None:
         """Constructs a new AccessKey object.
 
-        :param access_key: The deserialised response from authenticating with a Flix server
+        Args:
+            access_key: The deserialised response from authenticating with a Flix server.
         """
         self.id: str = access_key["id"]
+        """The ID used to identify the access key."""
         self.secret_access_key: str = access_key["secret_access_key"]
+        """The secret used to sign requests."""
         self.created_date = dateutil.parser.parse(access_key["created_date"])
+        """When the access key was created."""
         self.expiry_date = dateutil.parser.parse(access_key["expiry_date"])
+        """When the access key expires."""
 
     @property
     def has_expired(self) -> bool:
@@ -48,7 +55,10 @@ class AccessKey:
 
     def to_json(self) -> dict[str, Any]:
         """Returns a JSON-serialisable representation of this access key.
-        The output of this can be passed to the constructor to construct an AccessKey object from JSON."""
+
+        The output of this can be passed to the constructor to construct
+        an AccessKey object from JSON.
+        """
         return {
             "id": self.id,
             "secret_access_key": self.secret_access_key,
@@ -61,8 +71,11 @@ ClientSelf = TypeVar("ClientSelf", bound="BaseClient")
 
 
 class BaseClient:
-    """A thin wrapper around aiohttp.ClientSession, providing automatic signing of requests
-    and a helper function for authenticating."""
+    """Base class for [flix.Client][].
+
+    A thin wrapper around aiohttp.ClientSession that provides
+    automatic signing of Flix requests and a helper function for authenticating..
+    """
 
     def __init__(
         self,
@@ -78,16 +91,19 @@ class BaseClient:
     ) -> None:
         """Instantiate a new Flix client.
 
-        :param hostname: The hostname of the Flix server
-        :param port: The port the server is running on
-        :param ssl: Whether to use HTTPS to communicate with the server
-        :param disable_ssl_validation: Whether to disable validation of SSL certificates; enables MITM attacks
-        :param username: The user to authenticate as. If provided, the client will automatically
-            authenticate whenever we don't have a valid session.
-        :param password: The password for the user to authenticate as. Must be provided if ``username`` is provided.
-        :param auto_extend_session: Automatically keep the session alive by periodically extending
-            the access key validity time following a successful authentication.
-        :param access_key: The access key of an already authenticated user.
+        Args:
+            hostname: The hostname of the Flix server.
+            port: The port the server is running on.
+            ssl: Whether to use HTTPS to communicate with the server.
+            disable_ssl_validation: Whether to disable validation of SSL certificates.
+                Enables MITM attacks.
+            username: The user to authenticate as. If provided, the client will automatically
+                authenticate whenever we don't have a valid session.
+            password: The password for the user to authenticate as. Must be provided
+                if ``username`` is provided.
+            auto_extend_session: Automatically keep the session alive by periodically extending
+                the access key validity time following a successful authentication.
+            access_key: The access key of an already authenticated user.
         """
         self._hostname = hostname
         self._port = port
@@ -103,19 +119,22 @@ class BaseClient:
 
     @property
     def access_key(self) -> AccessKey | None:
-        """The access key if authenticated; None otherwise."""
+        """The access key if authenticated; ``None`` otherwise."""
         return self._access_key
 
     @property
     def hostname(self) -> str:
+        """The Flix Server hostname."""
         return self._hostname
 
     @property
     def port(self) -> int:
+        """The Flix Server port."""
         return self._port
 
     @property
     def ssl(self) -> bool:
+        """Whether to use HTTPS for requests."""
         return self._ssl
 
     async def _request(
@@ -181,15 +200,21 @@ class BaseClient:
         """Perform an HTTP request against the Flix server.
 
         This method may be safely overridden in a subclass to modify the request behaviour.
-        Do not call functions such as get or post from an implementation of request to avoid infinite recursion.
+        Do not call functions such as get or post from an implementation of request
+        to avoid infinite recursion.
 
-        :param method: The HTTP method
-        :param path: The path to request; should not include the server hostname
-        :param body: A JSON-serialisable object to be used as the payload
-        :param kwargs: Additional arguments passed to aiohttp.ClientSession.request
-        :raises errors.FlixNotVerifiedError: If the client failed to authenticate
-        :raises errors.FlixError: If the server returned an error
-        :return: The HTTP response
+        Args:
+            method: The HTTP method.
+            path: The path to request; should not include the server hostname.
+            body: A JSON-serialisable object to be used as the payload.
+            kwargs: Additional arguments passed to aiohttp.ClientSession.request.
+
+        Raises:
+            errors.FlixNotVerifiedError: If the client failed to authenticate.
+            errors.FlixError: If the server returned an error.
+
+        Returns:
+            The HTTP response.
         """
         # authenticate if auto auth is enabled and we don't have a valid access key
         await self._ensure_authenticated()
@@ -206,13 +231,18 @@ class BaseClient:
     ) -> dict[str, Any]:
         """Perform an HTTP request against the Flix server and parse the result as JSON.
 
-        :param method: The HTTP method
-        :param path: The path to request; should not include the server hostname
-        :param body: A JSON-serialisable object to be used as the payload
-        :param kwargs: Additional arguments passed to aiohttp.ClientSession.request
-        :raises errors.FlixNotVerifiedError: If the client failed to authenticate
-        :raises errors.FlixError: If the server returned an error
-        :return: The response parsed as JSON
+        Args:
+            method: The HTTP method
+            path: The path to request; should not include the server hostname.
+            body: A JSON-serialisable object to be used as the payload.
+            kwargs: Additional arguments passed to aiohttp.ClientSession.request.
+
+        Raises:
+            errors.FlixNotVerifiedError: If the client failed to authenticate.
+            errors.FlixError: If the server returned an error.
+
+        Returns:
+            The response parsed as JSON.
         """
         response = await self.request(method, path, body, **kwargs)
         return cast(dict[str, Any], await response.json())
@@ -220,48 +250,68 @@ class BaseClient:
     async def get(self, path: str, body: Any | None = None, **kwargs: Any) -> dict[str, Any]:
         """Perform a GET request against the Flix server.
 
-        :param path: The path to request; should not include the server hostname
-        :param body: A JSON-serialisable object to be used as the payload
-        :param kwargs: Additional arguments passed to aiohttp.ClientSession.request
-        :raises errors.FlixNotVerifiedError: If the client failed to authenticate
-        :raises errors.FlixError: If the server returned an error
-        :return: The response parsed as JSON
+        Args:
+            path: The path to request; should not include the server hostname.
+            body: A JSON-serialisable object to be used as the payload.
+            kwargs: Additional arguments passed to aiohttp.ClientSession.request.
+
+        Raises:
+            errors.FlixNotVerifiedError: If the client failed to authenticate.
+            errors.FlixError: If the server returned an error.
+
+        Returns:
+            The response parsed as JSON.
         """
         return await self.request_json("GET", path, body, **kwargs)
 
     async def post(self, path: str, body: Any | None = None, **kwargs: Any) -> dict[str, Any]:
         """Perform a POST request against the Flix server.
 
-        :param path: The path to request; should not include the server hostname
-        :param body: A JSON-serialisable object to be used as the payload
-        :param kwargs: Additional arguments passed to aiohttp.ClientSession.request
-        :raises errors.FlixNotVerifiedError: If the client failed to authenticate
-        :raises errors.FlixError: If the server returned an error
-        :return: The response parsed as JSON
+        Args:
+            path: The path to request; should not include the server hostname.
+            body: A JSON-serialisable object to be used as the payload.
+            kwargs: Additional arguments passed to aiohttp.ClientSession.request.
+
+        Raises:
+            errors.FlixNotVerifiedError: If the client failed to authenticate.
+            errors.FlixError: If the server returned an error.
+
+        Returns:
+            The response parsed as JSON.
         """
         return await self.request_json("POST", path, body, **kwargs)
 
     async def patch(self, path: str, body: Any | None = None, **kwargs: Any) -> dict[str, Any]:
         """Perform a PATCH request against the Flix server.
 
-        :param path: The path to request; should not include the server hostname
-        :param body: A JSON-serialisable object to be used as the payload
-        :param kwargs: Additional arguments passed to aiohttp.ClientSession.request
-        :raises errors.FlixNotVerifiedError: If the client failed to authenticate
-        :raises errors.FlixError: If the server returned an error
-        :return: The response parsed as JSON
+        Args:
+            path: The path to request; should not include the server hostname.
+            body: A JSON-serialisable object to be used as the payload.
+            kwargs: Additional arguments passed to aiohttp.ClientSession.request.
+
+        Raises:
+            errors.FlixNotVerifiedError: If the client failed to authenticate.
+            errors.FlixError: If the server returned an error.
+
+        Returns:
+            The response parsed as JSON.
         """
         return await self.request_json("PATCH", path, body, **kwargs)
 
     async def put(self, path: str, body: Any | None = None, **kwargs: Any) -> dict[str, Any]:
         """Perform a PUT request against the Flix server.
 
-        :param path: The path to request; should not include the server hostname
-        :param body: A JSON-serialisable object to be used as the payload
-        :param kwargs: Additional arguments passed to aiohttp.ClientSession.request
-        :raises errors.FlixNotVerifiedError: If the client failed to authenticate
-        :raises errors.FlixError: If the server returned an error
-        :return: The response parsed as JSON
+        Args:
+            path: The path to request; should not include the server hostname.
+            body: A JSON-serialisable object to be used as the payload.
+            kwargs: Additional arguments passed to aiohttp.ClientSession.request.
+
+        Raises:
+            errors.FlixNotVerifiedError: If the client failed to authenticate.
+            errors.FlixError: If the server returned an error.
+
+        Returns:
+            The response parsed as JSON.
         """
         return await self.request_json("PUT", path, body, **kwargs)
 
@@ -270,24 +320,34 @@ class BaseClient:
     ) -> aiohttp.ClientResponse:
         """Perform a DELETE request against the Flix server.
 
-        :param path: The path to request; should not include the server hostname
-        :param body: A JSON-serialisable object to be used as the payload
-        :param kwargs: Additional arguments passed to aiohttp.ClientSession.request
-        :raises errors.FlixNotVerifiedError: If the client failed to authenticate
-        :raises errors.FlixError: If the server returned an error
-        :return: The HTTP response
+        Args:
+            path: The path to request; should not include the server hostname.
+            body: A JSON-serialisable object to be used as the payload.
+            kwargs: Additional arguments passed to aiohttp.ClientSession.request.
+
+        Raises:
+            errors.FlixNotVerifiedError: If the client failed to authenticate.
+            errors.FlixError: If the server returned an error.
+
+        Returns:
+            The HTTP response.
         """
         return await self.request("DELETE", path, body, **kwargs)
 
     async def text(self, path: str, *, method: str = "GET", **kwargs: Any) -> str:
         """Perform a request against the Flix server and parse the result as text.
 
-        :param path: The path to request; should not include the server hostname
-        :param method: The HTTP method
-        :param kwargs: Additional arguments passed to aiohttp.ClientSession.request
-        :raises errors.FlixNotVerifiedError: If the client failed to authenticate
-        :raises errors.FlixError: If the server returned an error
-        :return: The response payload as text
+        Args:
+            path: The path to request; should not include the server hostname.
+            method: The HTTP method.
+            kwargs: Additional arguments passed to aiohttp.ClientSession.request.
+
+        Raises:
+            errors.FlixNotVerifiedError: If the client failed to authenticate.
+            errors.FlixError: If the server returned an error.
+
+        Returns:
+            The response payload as text.
         """
         response = await self.request(method, path, **kwargs)
         return await response.text()
@@ -295,10 +355,15 @@ class BaseClient:
     async def form(self, path: str) -> forms.Form:
         """Fetch the appropriate creation form for the given path.
 
-        :param path: The path to return the creation form for; should not include /form
-        :raises errors.FlixNotVerifiedError: If the client failed to authenticate
-        :raises errors.FlixError: If the server returned an error
-        :return: A object representing the creation form for the path
+        Args:
+            path: The path to return the creation form for; should not include /form.
+
+        Raises:
+            errors.FlixNotVerifiedError: If the client failed to authenticate.
+            errors.FlixError: If the server returned an error.
+
+        Returns:
+            A object representing the creation form for the path.
         """
         resp = await self.get(f"{path}/form")
         return forms.Form(cast(forms.FormSectionModel, resp))
@@ -308,10 +373,16 @@ class BaseClient:
 
         On a successful authentication, this will set access_key.
 
-        :param user: The username of the user to authenticate as
-        :param password: The password of the user to authenticate as
-        :raises errors.FlixNotVerifiedError: If the client failed to authenticate
-        :raises errors.FlixError: If the server returned an error
+        Args:
+            user: The username of the user to authenticate as.
+            password: The password of the user to authenticate as.
+
+        Raises:
+            errors.FlixNotVerifiedError: If the client failed to authenticate.
+            errors.FlixError: If the server returned an error.
+
+        Returns:
+            A new access key for the user.
         """
         self._access_key = None
         # call _request directly to avoid recursion when automatically authenticating
@@ -400,29 +471,120 @@ class BaseClient:
 
 
 class Client(BaseClient):
-    """An extension of BaseClient, providing helper functions for interacting with the Flix API."""
+    """An HTTP client for communicating with the Flix Server.
+
+    Provides various helper functions for interacting with Flix's
+    HTTP API and translating the responses to more Pythonic types.
+
+    Example:
+        ```python
+        async with Client("localhost", 8080) as client:
+            await client.authenticate("admin", "admin")
+
+            # print the tracking code of all shows
+            shows = await client.get_all_shows()
+            for show in shows:
+                print(show.tracking_code)
+        ```
+    """
+
+    def __init__(
+        self,
+        hostname: str,
+        port: int,
+        ssl: bool = False,
+        disable_ssl_validation: bool = False,
+        *,
+        username: str | None = None,
+        password: str | None = None,
+        auto_extend_session: bool = True,
+        access_key: AccessKey | None = None,
+    ) -> None:
+        """Instantiate a new Flix client.
+
+        Args:
+            hostname: The hostname of the Flix server.
+            port: The port the server is running on.
+            ssl: Whether to use HTTPS to communicate with the server.
+            disable_ssl_validation: Whether to disable validation of SSL certificates.
+                Enables MITM attacks.
+            username: The user to authenticate as. If provided, the client will automatically
+                authenticate whenever we don't have a valid session.
+            password: The password for the user to authenticate as. Must be provided
+                if ``username`` is provided.
+            auto_extend_session: Automatically keep the session alive by periodically extending
+                the access key validity time following a successful authentication.
+            access_key: The access key of an already authenticated user.
+        """
+        super().__init__(
+            hostname=hostname,
+            port=port,
+            ssl=ssl,
+            disable_ssl_validation=disable_ssl_validation,
+            username=username,
+            password=password,
+            auto_extend_session=auto_extend_session,
+            access_key=access_key,
+        )
 
     @contextlib.asynccontextmanager
     async def websocket(self) -> AsyncIterator[websocket.Websocket]:
+        """Open a new websocket connection to listen for server events.
+
+        Returns:
+            A websocket object from which you can asynchronously read events.
+        """
         await self._ensure_authenticated()
         async with websocket.Websocket(self._session, self) as ws:
             yield ws
 
     async def get_all_shows(self, include_hidden: bool = False) -> list[types.Show]:
+        """Get all shows visible to the user.
+
+        Args:
+            include_hidden: Include shows marked as hidden.
+
+        Returns:
+            A list of shows.
+        """
         params = {"display_hidden": "true" if include_hidden else "falsae"}
         all_shows_model = TypedDict("all_shows_model", {"shows": list[models.Show]})
         shows = cast(all_shows_model, await self.get("/shows", params=params))
         return [types.Show.from_dict(show, _client=self) for show in shows["shows"]]
 
     async def get_show(self, show_id: int) -> types.Show:
+        """Get a show by ID.
+
+        Args:
+            show_id: The ID of the show to fetch.
+
+        Returns:
+            The show matching the given ID.
+        """
         show = cast(models.Show, await self.get(f"/show/{show_id}"))
         return types.Show.from_dict(show, _client=self)
 
     async def get_asset(self, asset_id: int) -> types.Asset:
+        """Get an asset by ID.
+
+        Args:
+            asset_id: The ID of the asset to fetch.
+
+        Returns:
+            The asset matching the given ID.
+        """
         asset = cast(models.Asset, await self.get(f"/asset/{asset_id}"))
         return types.Asset.from_dict(asset, _client=self)
 
     async def get_media_object(self, media_object_id: int) -> types.MediaObject:
+        """Get a media object by ID.
+
+        Args:
+            media_object_id: The ID of the media object to fetch.
+
+        Returns:
+            The media object with the given ID.
+        """
         media_object = cast(models.MediaObject, await self.get(f"/file/{media_object_id}"))
         return types.MediaObject.from_dict(media_object, _client=self)
 
@@ -435,6 +597,21 @@ class Client(BaseClient):
         description: str = "",
         episodic: bool = False,
     ) -> types.Show:
+        """Create a new show.
+
+        This method will not automatically save the new show.
+
+        Args:
+            tracking_code: The tracking code of the show.
+            aspect_ratio: The aspect ratio of the show.
+            frame_rate: The frame rate of the show.
+            title: The title of the show.
+            description: A description.
+            episodic: Whether the show is episodic.
+
+        Returns:
+            A new, unsaved [Show][flix.Show] object.
+        """
         return types.Show(
             tracking_code=tracking_code,
             aspect_ratio=aspect_ratio,
@@ -446,6 +623,11 @@ class Client(BaseClient):
         )
 
     async def get_all_users(self) -> list[types.User]:
+        """Get all users visible to the authenticated user.
+
+        Returns:
+            A list of users.
+        """
         all_users_model = TypedDict("all_users_model", {"users": list[models.User]})
         users = cast(all_users_model, await self.get("/users"))
         return [types.User.from_dict(user, _client=self) for user in users["users"]]

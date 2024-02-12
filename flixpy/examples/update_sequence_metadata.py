@@ -1,3 +1,12 @@
+"""Demonstrates manipulating metadata on a Flix model.
+
+This code provides examples of using various functions for manipulating metadata.
+
+While this example only shows how to do this for sequence revisions,
+the same methods are available for all models that support metadata,
+including panels, panel revisions and sequence revisions.
+"""
+
 from __future__ import annotations
 
 import asyncio
@@ -15,6 +24,7 @@ SEQUENCE_ID = 415
 
 
 async def main() -> None:
+    """Updates metadata for an existing sequence."""
     async with flix.Client(HOSTNAME, PORT) as client:
         # authenticate with the Flix server
         await client.authenticate(USERNAME, PASSWORD)

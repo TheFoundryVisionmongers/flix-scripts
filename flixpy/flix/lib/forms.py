@@ -1,3 +1,5 @@
+"""Helper classes for validating and generating data using a Flix creation form."""
+
 from __future__ import annotations
 
 import collections
@@ -311,12 +313,16 @@ def prompt_enum(
 ) -> T:
     """Prompt the user to select a single item from a list.
 
-    :param options: The options the user should choose from
-    :param label: A label to display at the top of the list
-    :param default: The default value if no choice is given
-    :param prompt: The text to show for the prompt line
-    :param kwargs: Additional options to pass to click.prompt
-    :return: The value corresponding to the user's choice, or default if not None and no input was given
+    Args:
+        options: The options the user should choose from.
+        label: A label to display at the top of the list.
+        default: The default value if no choice is given.
+        prompt: The text to show for the prompt line.
+        kwargs: Additional options to pass to click.prompt.
+
+    Returns:
+        The value corresponding to the user's choice,
+            or default if not None and no input was given.
     """
     if label is not None:
         click.echo(f"{label}:", err=True)
@@ -407,8 +413,12 @@ TDict = TypeVar("TDict", bound=Mapping[str, Any])
 
 
 class Form:
-    """This class can be used to validate data against a Flix creation form,
-    or to prompt a user for input to construct or modify an object adhering to a creation form."""
+    """Provides validation and construction of data adhering to a Flix creation form.
+
+    Given a creation form specified by the Flix Server, this class allows you
+    to validate arbitrary data against the form, as well as prompting
+    the user for input to construct data that adheres to the form.
+    """
 
     _TYPES: ClassVar[dict[str, Callable[[FormSectionModel], type[Field]]]] = {
         "string": lambda _: StringField,
@@ -423,7 +433,8 @@ class Form:
     def __init__(self, spec: FormSectionModel) -> None:
         """Constructs a new Form.
 
-        :param spec: A creation form as returned by a /form Flix endpoint
+        Args:
+            spec: A creation form as returned by a /form Flix endpoint.
         """
         self.fields: collections.OrderedDict[str, Field] = collections.OrderedDict()
         self._read_fields(spec["elements"])
@@ -439,9 +450,12 @@ class Form:
     def verify(self, parameters: dict[str, Any], ignore_required: bool = False) -> None:
         """Validates the given object against the creation form.
 
-        :param parameters: The object to validate
-        :param ignore_required: If true, no error will be raised for missing required parameters
-        :raises ValueError: If the object does not adhere to the creation form
+        Args:
+            parameters: The object to validate.
+            ignore_required: If true, no error will be raised for missing required parameters.
+
+        Raises:
+            ValueError: If the object does not adhere to the creation form.
         """
         for field in self.fields.values():
             field.verify(parameters, ignore_required=ignore_required)
@@ -449,9 +463,14 @@ class Form:
     def prompt(self, parameters: dict[str, Any] | None = None) -> dict[str, Any]:
         """Prompt the user for input required to construct an object adhering to this creation form.
 
-        :param parameters: An optional partial object; only parameters not already set will be queried
-        :raises ValueError: If a partial object was passed, and the set fields are not valid
-        :return: A new instance of the object type described by this creation form
+        Args:
+            parameters: An optional partial object.
+
+        Raises:
+            ValueError: If a partial object was passed, and the set fields are not valid.
+
+        Returns:
+            A new instance of the object type described by this creation form.
         """
         parameters = parameters or {}
         self.verify(parameters, ignore_required=True)
@@ -464,8 +483,12 @@ class Form:
     def prompt_edit(self, parameters: TDict) -> TDict:
         """Prompt the user for input to modify an existing object adhering to this creation form.
 
-        :param parameters: A fully-constructed instance of the object type described by this creation form
-        :return: The given object, modified according to user input
+        Args:
+            parameters: A fully-constructed instance of the object type described
+                by this creation form.
+
+        Returns:
+            The given object, modified according to user input.
         """
         # a bit ugly, but needed to work around typing limitations
         # the creation form specification guarantees type correctness
@@ -496,8 +519,9 @@ class Form:
     def print(self, parameters: TDict, *, err: bool = False) -> None:
         """Pretty-print an instance of the object type defined by this form.
 
-        :param parameters: The object to print
-        :param err: Whether to print to standard error
+        Args:
+            parameters: The object to print.
+            err: Whether to print to standard error.
         """
         for name, field in self.fields.items():
             if name in parameters and field.requirements_hold(parameters):

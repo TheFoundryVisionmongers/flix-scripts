@@ -1,8 +1,7 @@
-"""
-This example shows how to create a new revision of a panel, using a new file for the new panel revision.
+"""Demonstrates importing an image as a new revision of an existing panel.
 
-The new panel revision will then be available within Flix. We are not creating a new sequence revision with this
-example.
+The new panel revision will be available within Flix.
+We are not creating a new sequence revision with this example.
 """
 from __future__ import annotations
 

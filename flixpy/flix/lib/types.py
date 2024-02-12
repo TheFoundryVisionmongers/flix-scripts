@@ -1,3 +1,5 @@
+"""Pythonic abstractions of the models used by the Flix Server REST API."""
+
 from __future__ import annotations
 
 import base64
@@ -447,16 +449,31 @@ class User(FlixType):
 
 
 class MediaObjectStatus(enum.Enum):
+    """Describes the status of a media object."""
+
     INITIALIZED = 0
+    """The media object has been created, but no file data has been uploaded."""
     UPLOADED = 1
+    """File data has been successfully uploaded for the media object."""
     ERRORED = 2
+    """The media object is in a failed state."""
 
 
 @dataclasses.dataclass
 class MediaObjectHash:
+    """A hash of the contents of the file described by a media object.
+
+    This may be a simple MD5 hash of the file,
+    but it could also be something like a perceptual hash allowing for
+    measuring the visual similarity of two images.
+    """
+
     value: str
+    """The hash string used to find other possibly identical files."""
     source_type: str
+    """The type of this hash."""
     data: bytes | None
+    """Optional binary data allowing for more fine-grained comparison of files."""
 
     @classmethod
     def from_dict(cls, data: models.Hash) -> MediaObjectHash:
@@ -477,6 +494,8 @@ class MediaObjectHash:
 
 
 class MediaObject(FlixType):
+    """Represents a single physical file within an asset."""
+
     def __init__(
         self,
         media_object_id: int = 0,
@@ -492,6 +511,23 @@ class MediaObject(FlixType):
         *,
         _client: client.Client | None,
     ) -> None:
+        """Initialise a MediaObject.
+
+        Args:
+            media_object_id: The unique ID of the media object.
+            asset_id: The ID of the asset this media object belongs to.
+            filename: The name of the file described by this media object.
+            content_type: The content type of the file described by this media object.
+            content_length: The size of the file described by this media object.
+            content_hashes: Hashes for comparing the contents of the file
+                described by this media object.
+            created_date: The date this media object was created.
+            status: The status of this media object.
+            owner: The user that created this media object.
+            asset_type: A string describing the purpose of this media object,
+                e.g. `"artwork"` or `"thumbnail"`
+            _client: A [Client][flix.Client] instance.
+        """
         super().__init__(_client)
         self.media_object_id: int = media_object_id
         self.asset_id: int = asset_id
@@ -943,6 +979,16 @@ class Sequence(FlixType):
 
 
 class Asset(FlixType):
+    """A collection of files.
+
+    An asset generally contains one or more [media objects][flix.MediaObject],
+    grouped by [asset type][flix.MediaObject.asset_type].
+    For instance, an asset belonging to an animated panel might contain a single
+    `artwork` media object for the original artwork created by the artist,
+    a `source_media` media object containing a prerendered QuickTime of the panel,
+    and a number of `thumbnail` media objects, one per frame.
+    """
+
     def __init__(
         self,
         *,
@@ -953,6 +999,16 @@ class Asset(FlixType):
         media_objects: dict[str, list[MediaObject]] | None = None,
         _client: client.Client | None,
     ) -> None:
+        """Initialise an Asset.
+
+        Args:
+            asset_id: The unique ID of the asset.
+            show_id: The ID of the show this asset belongs to.
+            created_date: The time this asset was created.
+            owner: The user that created this asset.
+            media_objects: The media objects belonging to this asset.
+            _client: A [Client][flix.Client] instance.
+        """
         super().__init__(_client)
         self.asset_id: int = asset_id
         self.show_id: int | None = show_id
@@ -1292,10 +1348,15 @@ class Show(FlixType):
         return media_objects
 
     async def transcode_assets(self, assets: list[Asset]) -> list[str]:
-        """
-        Transcodes an asset with an 'artwork' media object into thumbnail, scaled and fullres images
-        :param assets: The list of assets which need to be transcoded
-        :return: The list of task IDs which have been created to perform the transcode jobs.
+        """Transcodes an asset with an 'artwork' media object.
+
+        This will create thumbnail, scaled and fullres images for the asset.
+
+        Args:
+            assets: The list of assets which need to be transcoded.
+
+        Returns:
+            The list of task IDs which have been created to perform the transcode jobs.
         """
         path = f"{self.path_prefix()}/asset/transcode"
         body = {"asset_ids": [a.asset_id for a in assets]}
@@ -1310,7 +1371,7 @@ class Show(FlixType):
 
         This will create a new asset and a new media object with the given asset type.
 
-        Examples:
+        Example:
             ```python
             with open("artwork.psd", "rb") as f:
                 await show.upload_file(f, "artwork")

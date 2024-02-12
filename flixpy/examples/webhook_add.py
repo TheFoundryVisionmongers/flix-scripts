@@ -1,3 +1,9 @@
+"""Demonstrates how to register a new webhook with the Flix Server.
+
+This example registers a new webhook called "My webhook"
+which listens for editorial publishes and exports to Storyboard Pro.
+"""
+
 from __future__ import annotations
 
 import asyncio
@@ -6,6 +12,7 @@ import flix
 
 
 async def main() -> None:
+    """Register a webhook with Flix."""
     async with flix.Client("localhost", 8080) as client:
         await client.authenticate("admin", "admin")
         webhook = await client.post(
@@ -21,6 +28,7 @@ async def main() -> None:
                     },
                 ],
                 "protocol": "TCP",
+                # URL where our webhook server is running
                 "url": "https://flix.company.com:8888/events",
                 "retry_count": 3,
             },

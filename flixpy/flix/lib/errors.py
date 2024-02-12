@@ -1,3 +1,5 @@
+"""Error classes used by the Flix SDK."""
+
 from __future__ import annotations
 
 import dataclasses
@@ -17,6 +19,7 @@ class FlixHTTPError(FlixError):
     error_message: str
 
     def __str__(self) -> str:
+        """Get a human-readable representation of the error."""
         return f"Error {self.status_code}: {self.error_message}"
 
 
