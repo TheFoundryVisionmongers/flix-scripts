@@ -14,18 +14,20 @@ The example assumes that you have registered a TCP webhook with the URL
 ``http://<hostname>:8888/events/shotgrid`` with the ``Publish to editorial``
 event enabled.
 """
+from __future__ import annotations
 
 import asyncio
 import contextlib
 import logging
-import pathlib
 import tempfile
-from typing import Literal, TypedDict, cast
+from typing import TYPE_CHECKING, Literal, TypedDict, cast
 
+import flix
 import shotgun_api3  # type: ignore[import-untyped]
 from typing_extensions import NotRequired
 
-import flix
+if TYPE_CHECKING:
+    import pathlib
 
 logger = logging.getLogger(__name__)
 
@@ -42,29 +44,31 @@ FLIX_PASSWORD = "admin"
 
 # create long-lived ShotGrid client so we don't need
 # to create a new one for each event
-SG = shotgun_api3.Shotgun(
-    SHOTGRID_BASE_URL, login=SHOTGRID_USERNAME, password=SHOTGRID_PASSWORD
-)
+SG = shotgun_api3.Shotgun(SHOTGRID_BASE_URL, login=SHOTGRID_USERNAME, password=SHOTGRID_PASSWORD)
 
 
 # optional: typed schemas for our ShotGrid entities for use with Mypy/Pyright
 class BaseSchema(TypedDict):
     """Common base schema for entities with IDs."""
+
     id: int
 
 
 class ShotgridProject(BaseSchema):
     """Typed schema for existing ShotGrid projects."""
+
     type: Literal["Project"]
 
 
 class ShotgridSequence(BaseSchema):
     """Typed schema for existing ShotGrid sequences."""
+
     type: Literal["Sequence"]
 
 
 class ShotgridVersion(TypedDict):
     """Typed schema for new ShotGrid versions."""
+
     project: ShotgridProject
     entity: NotRequired[ShotgridSequence]
     code: str
@@ -73,6 +77,7 @@ class ShotgridVersion(TypedDict):
 
 class ShotgridVersionWithID(BaseSchema, ShotgridVersion):
     """Typed schema for existing ShotGrid versions."""
+
     type: Literal["Project"]
 
 
@@ -112,9 +117,7 @@ async def on_publish(event: flix.PublishEditorialEvent) -> None:
         )
 
 
-def _upload_to_shotgrid(
-    event: flix.PublishEditorialEvent, quicktime_path: pathlib.Path
-) -> None:
+def _upload_to_shotgrid(event: flix.PublishEditorialEvent, quicktime_path: pathlib.Path) -> None:
     """Create a new ShotGrid version from a Flix sequence revision and attach a QuickTime."""
     logger.info("Creating new ShotGrid version...")
     version = cast(ShotgridVersionWithID, SG.create("Version", _version_from_publish(event)))

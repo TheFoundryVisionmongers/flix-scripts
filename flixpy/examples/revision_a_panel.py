@@ -4,6 +4,8 @@ This example shows how to create a new revision of a panel, using a new file for
 The new panel revision will then be available within Flix. We are not creating a new sequence revision with this
 example.
 """
+from __future__ import annotations
+
 import asyncio
 
 import flix

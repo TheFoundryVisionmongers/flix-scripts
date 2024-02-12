@@ -1,18 +1,21 @@
+from __future__ import annotations
+
 import asyncio
 import enum
 import json
 import time
 import urllib.parse
 import uuid
-from collections.abc import Iterable, AsyncIterator, Generator
-from types import TracebackType
-from typing import TypeVar, TypedDict, cast, Type, Generic, Any
+from typing import TYPE_CHECKING, Any, Generic, TypedDict, TypeVar, cast
 
 import aiohttp
 import yarl
 
-from . import client, signing, errors, types
+from . import client, errors, signing, types
 
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator, Generator, Iterable
+    from types import TracebackType
 
 __all__ = [
     "MessageType",
@@ -62,19 +65,19 @@ class MessageType(enum.Enum):
 
 
 class WebsocketMessage:
-    def __init__(self, flix_client: "client.Client", raw_data: bytes):
+    def __init__(self, flix_client: client.Client, raw_data: bytes) -> None:
         self.client = flix_client
         self.data = json.loads(raw_data) if raw_data else None
 
 
 class KnownWebsocketMessage(WebsocketMessage):
-    def __init__(self, flix_client: "client.Client", msg_type: MessageType, raw_data: bytes):
+    def __init__(self, flix_client: client.Client, msg_type: MessageType, raw_data: bytes) -> None:
         super().__init__(flix_client, raw_data)
         self.msg_type = msg_type
 
 
 class UnknownWebsocketMessage(WebsocketMessage):
-    def __init__(self, flix_client: "client.Client", msg_type: int, raw_data: bytes):
+    def __init__(self, flix_client: client.Client, msg_type: int, raw_data: bytes) -> None:
         super().__init__(flix_client, raw_data)
         self.msg_type = msg_type
 
@@ -88,7 +91,7 @@ class MessageAssetUpdated(KnownWebsocketMessage):
         assetID: int
         status: str
 
-    def __init__(self, flix_client: "client.Client", msg_type: MessageType, raw_data: bytes):
+    def __init__(self, flix_client: client.Client, msg_type: MessageType, raw_data: bytes) -> None:
         super().__init__(flix_client, msg_type, raw_data)
         data = cast(MessageAssetUpdated.Model, self.data)
         self.asset_id = data["assetID"]
@@ -103,12 +106,12 @@ class AssetCreatedMessage(KnownWebsocketMessage):
     class Model(TypedDict):
         assetID: int
 
-    def __init__(self, flix_client: "client.Client", msg_type: MessageType, raw_data: bytes):
+    def __init__(self, flix_client: client.Client, msg_type: MessageType, raw_data: bytes) -> None:
         super().__init__(flix_client, msg_type, raw_data)
         data = cast(AssetCreatedMessage.Model, self.data)
         self.asset_id = data["assetID"]
 
-    async def get_asset(self) -> "types.Asset":
+    async def get_asset(self) -> types.Asset:
         return await self.client.get_asset(self.asset_id)
 
 
@@ -123,7 +126,7 @@ class MessageJobError(KnownWebsocketMessage):
         status: str
         error: str
 
-    def __init__(self, flix_client: "client.Client", msg_type: MessageType, raw_data: bytes):
+    def __init__(self, flix_client: client.Client, msg_type: MessageType, raw_data: bytes) -> None:
         super().__init__(flix_client, msg_type, raw_data)
         data = cast(MessageJobError.Model, self.data)
         self.task_id = data["taskId"]
@@ -136,7 +139,7 @@ class MessageLicenseValid(KnownWebsocketMessage):
     class Model(TypedDict):
         licensed: bool
 
-    def __init__(self, flix_client: "client.Client", msg_type: MessageType, raw_data: bytes):
+    def __init__(self, flix_client: client.Client, msg_type: MessageType, raw_data: bytes) -> None:
         super().__init__(flix_client, msg_type, raw_data)
         data = cast(MessageLicenseValid.Model, self.data)
         self.licensed = data["licensed"]
@@ -152,7 +155,7 @@ class MessageJobChainStatus(KnownWebsocketMessage):
         percentage: int
         status: str
 
-    def __init__(self, flix_client: "client.Client", msg_type: MessageType, raw_data: bytes):
+    def __init__(self, flix_client: client.Client, msg_type: MessageType, raw_data: bytes) -> None:
         super().__init__(flix_client, msg_type, raw_data)
         data = cast(MessageJobChainStatus.Model, self.data)
         self.task_id = data["taskId"]
@@ -176,7 +179,7 @@ class MessageEditorialImportStatus(KnownWebsocketMessage):
         UNSUPPORTED = "unsupported"
         ERRORED = "errored"
 
-    def __init__(self, flix_client: "client.Client", msg_type: MessageType, raw_data: bytes):
+    def __init__(self, flix_client: client.Client, msg_type: MessageType, raw_data: bytes) -> None:
         super().__init__(flix_client, msg_type, raw_data)
         data = cast(MessageEditorialImportStatus.Model, self.data)
         self.position = data["position"]
@@ -191,12 +194,12 @@ class MessageEditorialImportComplete(KnownWebsocketMessage):
     class Model(TypedDict):
         sequence_revision: int
 
-    def __init__(self, flix_client: "client.Client", msg_type: MessageType, raw_data: bytes):
+    def __init__(self, flix_client: client.Client, msg_type: MessageType, raw_data: bytes) -> None:
         super().__init__(flix_client, msg_type, raw_data)
         data = cast(MessageEditorialImportComplete.Model, self.data)
         self.sequence_revision = data["sequence_revision"]
 
-    async def get_sequence_revision(self, sequence: "types.Sequence") -> "types.SequenceRevision":
+    async def get_sequence_revision(self, sequence: types.Sequence) -> types.SequenceRevision:
         return await sequence.get_sequence_revision(self.sequence_revision)
 
 
@@ -208,9 +211,9 @@ class MessageStoryboardProImportComplete(KnownWebsocketMessage):
 
     class Model(TypedDict):
         sequence_revision: int
-        missing_assets: dict[str, "MessageStoryboardProImportComplete.MissingAssetModel"]
+        missing_assets: dict[str, MessageStoryboardProImportComplete.MissingAssetModel]
 
-    def __init__(self, flix_client: "client.Client", msg_type: MessageType, raw_data: bytes):
+    def __init__(self, flix_client: client.Client, msg_type: MessageType, raw_data: bytes) -> None:
         super().__init__(flix_client, msg_type, raw_data)
         data = cast(MessageStoryboardProImportComplete.Model, self.data)
         self.sequence_revision = data["sequence_revision"]
@@ -225,7 +228,7 @@ class MessageDialogueComplete(AssetCreatedMessage):
         taskId: str
         assetID: int
 
-    def __init__(self, flix_client: "client.Client", msg_type: MessageType, raw_data: bytes):
+    def __init__(self, flix_client: client.Client, msg_type: MessageType, raw_data: bytes) -> None:
         super().__init__(flix_client, msg_type, raw_data)
         data = cast(MessageDialogueComplete.Model, self.data)
         # asset ID is set in AssetCreatedMessage
@@ -237,7 +240,7 @@ class MessageAssetStatus(KnownWebsocketMessage):
         assetID: int
         status: str
 
-    def __init__(self, flix_client: "client.Client", msg_type: MessageType, raw_data: bytes):
+    def __init__(self, flix_client: client.Client, msg_type: MessageType, raw_data: bytes) -> None:
         super().__init__(flix_client, msg_type, raw_data)
         data = cast(MessageAssetStatus.Model, self.data)
         self.asset_id = data["assetID"]
@@ -256,7 +259,7 @@ class MessageStateYAMLCreated(AssetCreatedMessage):
     pass
 
 
-_MESSAGE_TYPES: dict[MessageType, Type[KnownWebsocketMessage]] = {
+_MESSAGE_TYPES: dict[MessageType, type[KnownWebsocketMessage]] = {
     MessageType.PING: MessagePing,
     MessageType.ASSET_UPDATED: MessageAssetUpdated,
     MessageType.PUBLISH_COMPLETED: MessagePublishCompleted,
@@ -276,7 +279,6 @@ _MESSAGE_TYPES: dict[MessageType, Type[KnownWebsocketMessage]] = {
     MessageType.STATE_YAML_CREATED: MessageStateYAMLCreated,
 }
 
-
 WebsocketSelf = TypeVar("WebsocketSelf", bound="Websocket")
 WebsocketMessageType = TypeVar("WebsocketMessageType", bound="WebsocketMessage")
 AssetCreatedMessageType = TypeVar("AssetCreatedMessageType", bound="AssetCreatedMessage")
@@ -285,14 +287,14 @@ AssetCreatedMessageType = TypeVar("AssetCreatedMessageType", bound="AssetCreated
 class ChainWaiter(Generic[WebsocketMessageType]):
     def __init__(
         self,
-        ws: "Websocket",
-        complete_message_type: Type[WebsocketMessageType],
-        message_filter: Iterable[Type[WebsocketMessage]] = (),
+        ws: Websocket,
+        complete_message_type: type[WebsocketMessageType],
+        message_filter: Iterable[type[WebsocketMessage]] = (),
         timeout: float | None = None,
-    ):
+    ) -> None:
         self._ws = ws
         self._complete_message_type = complete_message_type
-        self._filter: tuple[Type[WebsocketMessage], ...] = (MessageJobChainStatus, *message_filter)
+        self._filter: tuple[type[WebsocketMessage], ...] = (MessageJobChainStatus, *message_filter)
         self.timeout = timeout
         self._result: WebsocketMessageType | None = None
 
@@ -332,7 +334,7 @@ class ChainWaiter(Generic[WebsocketMessageType]):
 
 
 class Websocket:
-    def __init__(self, session: aiohttp.ClientSession, _client: "client.Client"):
+    def __init__(self, session: aiohttp.ClientSession, _client: client.Client) -> None:
         self._session = session
         self._client = _client
         access_key = _client.access_key
@@ -346,16 +348,25 @@ class Websocket:
     def signed_path(self) -> yarl.URL:
         time = signing.get_time_rfc3999()
         # yarl does not escape : while the server does, so manually build the url for signing
-        path_to_sign = f"{self.endpoint}?keyid={self._access_key.id}&expiretime={urllib.parse.quote(time)}"
+        path_to_sign = (
+            f"{self.endpoint}?keyid={self._access_key.id}&expiretime={urllib.parse.quote(time)}"
+        )
         signature = signing.signature(path_to_sign.encode(), self._access_key.secret_access_key)
         return self.endpoint.with_query(
-            {"keyid": self._access_key.id, "expiretime": time, "signature": signature, "id": self.client_id}
+            {
+                "keyid": self._access_key.id,
+                "expiretime": time,
+                "signature": signature,
+                "id": self.client_id,
+            }
         )
 
     @property
     def endpoint(self) -> yarl.URL:
         protocol = "wss" if self._client.ssl else "ws"
-        return yarl.URL(f"{protocol}://{self._client.hostname}:{self._client.port}/ws", encoded=True)
+        return yarl.URL(
+            f"{protocol}://{self._client.hostname}:{self._client.port}/ws", encoded=True
+        )
 
     async def open(self) -> None:
         self._ws = await self._session.ws_connect(self.signed_path)
@@ -366,11 +377,13 @@ class Websocket:
 
     def wait_on_chain(
         self,
-        complete_message_type: Type[WebsocketMessageType],
-        message_filter: Iterable[Type[WebsocketMessage]] = (),
+        complete_message_type: type[WebsocketMessageType],
+        message_filter: Iterable[type[WebsocketMessage]] = (),
         timeout: float | None = None,
     ) -> ChainWaiter[WebsocketMessageType]:
-        return ChainWaiter(self, complete_message_type, message_filter=message_filter, timeout=timeout)
+        return ChainWaiter(
+            self, complete_message_type, message_filter=message_filter, timeout=timeout
+        )
 
     async def __aiter__(self) -> AsyncIterator[WebsocketMessage]:
         if self._ws is None:
@@ -399,6 +412,9 @@ class Websocket:
         return self
 
     async def __aexit__(
-        self, exc_type: Type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ) -> None:
         await self.close()

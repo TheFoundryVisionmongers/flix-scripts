@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 
 import flix
@@ -8,7 +10,7 @@ async def main() -> None:
         await client.authenticate("admin", "admin")
         webhook = await client.post(
             "/webhook",
-            {
+            body={
                 "name": "My webhook",
                 "events": [
                     {

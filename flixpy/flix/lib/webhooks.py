@@ -1,19 +1,24 @@
+from __future__ import annotations
+
 import asyncio
 import contextlib
 import enum
 import json
 import logging
-import ssl
-from collections.abc import AsyncIterator
-from typing import Callable, Any, Coroutine, TypeVar, cast
+from collections.abc import AsyncIterator, Callable, Coroutine
+from typing import TYPE_CHECKING, Any, TypeAlias, TypeVar, cast
 
-import aiohttp.web
 import aiohttp.typedefs
+import aiohttp.web
 import dateutil.parser
-from typing_extensions import Required, TypeAlias, TypedDict, Unpack
+from typing_extensions import Required, TypedDict, Unpack
 
 import flix
-from flix.lib import client as _client, errors, models, types
+from flix.lib import client as _client
+from flix.lib import errors, models, types
+
+if TYPE_CHECKING:
+    import ssl
 
 __all__ = [
     "EventType",
@@ -50,7 +55,7 @@ class EventType(enum.Enum):
 class WebhookEvent:
     """A general Flix event."""
 
-    def __init__(self, event_data: models.Event):
+    def __init__(self, event_data: models.Event) -> None:
         self.event_type = EventType(event_data["event_type"])
         self.event_payload = event_data
 
@@ -58,9 +63,7 @@ class WebhookEvent:
 EventModelType = TypeVar("EventModelType", bound=models.Event)
 WebhookEventType = TypeVar("WebhookEventType", bound=WebhookEvent)
 WebhookHandlerType = Callable[[WebhookEventType], Coroutine[Any, Any, None]]
-EventFactory: TypeAlias = Callable[
-    [models.Event, _client.Client | None], WebhookEventType
-]
+EventFactory: TypeAlias = Callable[[models.Event, _client.Client | None], WebhookEventType]
 
 _EVENT_TYPES: dict[EventType, EventFactory[WebhookEvent]] = {}
 
@@ -83,7 +86,7 @@ def _event(
 class ErrorEvent(WebhookEvent):
     """An event sent when an error is logged by the Flix server."""
 
-    def __init__(self, data: models.Event, _: _client.Client | None):
+    def __init__(self, data: models.Event, _: _client.Client | None) -> None:
         super().__init__(data)
         event_data = cast(models.ErrorEvent, data)
         self.message = event_data["message"]
@@ -98,7 +101,7 @@ class PublishEditorialEvent(WebhookEvent):
         self,
         data: models.Event,
         client: _client.Client | None,
-    ):
+    ) -> None:
         super().__init__(data)
         event_data = cast(models.PublishToEditorialEvent, data)
         self.target_app = event_data["target_app"]
@@ -122,7 +125,7 @@ class PublishEditorialEvent(WebhookEvent):
 class PublishFlixEvent(WebhookEvent):
     """An event sent when publishing from editorial to Flix."""
 
-    def __init__(self, data: models.Event, client: _client.Client | None):
+    def __init__(self, data: models.Event, client: _client.Client | None) -> None:
         super().__init__(data)
         event_data = cast(models.PublishToFlixEvent, data)
         self.source_app = event_data["source_app"]
@@ -160,7 +163,7 @@ def _sparse_sequence(data: _SparseIDs, client: _client.Client | None) -> types.S
 class ExportSBPEvent(WebhookEvent):
     """An event sent when exporting a sequence revision to Storyboard Pro."""
 
-    def __init__(self, data: models.Event, client: _client.Client | None):
+    def __init__(self, data: models.Event, client: _client.Client | None) -> None:
         super().__init__(data)
         event_data = cast(models.ExportToSBPEvent, data)
         self.sequence_revision = types.SequenceRevision.from_dict(
@@ -178,7 +181,7 @@ class NewSequenceRevisionEvent(WebhookEvent):
         self,
         data: models.Event,
         client: _client.Client | None,
-    ):
+    ) -> None:
         super().__init__(data)
         event_data = cast(models.SequenceRevisionCreatedEvent, data)
         self.sequence_revision = types.SequenceRevision.from_dict(
@@ -196,7 +199,7 @@ class NewPanelRevisionEvent(WebhookEvent):
         self,
         data: models.Event,
         client: _client.Client | None,
-    ):
+    ) -> None:
         super().__init__(data)
         event_data = cast(models.PanelRevisionCreatedEvent, data)
         self.panel_revision = types.PanelRevision.from_dict(
@@ -214,7 +217,7 @@ class NewContactSheetEvent(WebhookEvent):
         self,
         data: models.Event,
         client: _client.Client | None,
-    ):
+    ) -> None:
         super().__init__(data)
         event_data = cast(models.ContactSheetCreatedEvent, data)
         self.asset = types.Asset.from_dict(event_data["asset"], _client=client)
@@ -234,7 +237,7 @@ class NewContactSheetEvent(WebhookEvent):
 class PingEvent(WebhookEvent):
     """An event sent when the server is asked to ping a webhook."""
 
-    def __init__(self, data: models.Event, client: _client.Client | None):
+    def __init__(self, data: models.Event, client: _client.Client | None) -> None:
         super().__init__(data)
         event_data = cast(models.PingEvent, data)
         self.event_time = dateutil.parser.parse(event_data["event_time"])
@@ -242,8 +245,8 @@ class PingEvent(WebhookEvent):
 
 
 class WebhookHandler:
-    """
-    This class handles authentication and parsing of incoming Flix events.
+    """This class handles authentication and parsing of incoming Flix events.
+
     An instance of this class can be added as a route to an aiohttp.web.Application.
 
     A function accepting a Flix event can be transformed into a WebhookHandler using the webhook decorator.
@@ -254,7 +257,7 @@ class WebhookHandler:
         handler: WebhookHandlerType[WebhookEvent],
         path: str = "/",
         secret: str | None = None,
-    ):
+    ) -> None:
         self.path = path
         self.secret = secret
         self.handler = handler
@@ -272,11 +275,8 @@ class WebhookHandler:
 
     def handle(
         self, event_type: EventFactory[WebhookEventType]
-    ) -> Callable[
-        [WebhookHandlerType[WebhookEventType]], WebhookHandlerType[WebhookEventType]
-    ]:
-        """
-        A decorator for specialised webhook handlers that handle a specific type of event.
+    ) -> Callable[[WebhookHandlerType[WebhookEventType]], WebhookHandlerType[WebhookEventType]]:
+        """A decorator for specialised webhook handlers that handle a specific type of event.
 
         :param event_type: The type of event to handle
         :return: A decorator which registers the decorated function as a webhook handler
@@ -297,9 +297,7 @@ class WebhookHandler:
     ) -> None:
         if event_type not in self._sub_handlers:
             self._sub_handlers[event_type] = []
-        self._sub_handlers[event_type].append(
-            cast(WebhookHandlerType[WebhookEvent], handler)
-        )
+        self._sub_handlers[event_type].append(cast(WebhookHandlerType[WebhookEvent], handler))
 
     def _get_handlers(
         self, event_type: EventFactory[WebhookEventType]
@@ -358,8 +356,7 @@ def webhook(
     secret: str | None = None,
     path: str = "/",
 ) -> Callable[[WebhookHandlerType[WebhookEvent]], WebhookHandler]:
-    """
-    Decorator for webhook handlers.
+    """Decorator for webhook handlers.
 
     :param secret: The secret used to authenticate webhook events
     :param path: The endpoint path of the webhook, e.g. ``"/events"``.

@@ -1,12 +1,14 @@
+from __future__ import annotations
+
 import collections
 import dataclasses
 import math
 import re
 import urllib.parse
-from typing import Any, Generic, TypeVar, TypedDict, Callable, Type, cast, Mapping
+from collections.abc import Callable, Mapping
+from typing import Any, ClassVar, Generic, TypedDict, TypeVar, cast
 
 import asyncclick as click
-
 
 __all__ = [
     "Form",
@@ -41,7 +43,7 @@ RequirementModel = TypedDict(
 
 class FormSectionModel(TypedDict, total=False):
     type: str
-    elements: list["FormSectionModel"]
+    elements: list[FormSectionModel]
     heading: str
     label: str
     id: str
@@ -57,7 +59,7 @@ class FormSectionModel(TypedDict, total=False):
 
 
 class Requirement:
-    def __init__(self, spec: RequirementModel):
+    def __init__(self, spec: RequirementModel) -> None:
         self.required_id = spec.get("required_id")
         self.required_value = spec.get("required_value")
         self.and_requirements = [Requirement(req) for req in spec.get("and") or []]
@@ -75,7 +77,7 @@ class Requirement:
 class Field:
     """A generic form field."""
 
-    def __init__(self, spec: FormSectionModel):
+    def __init__(self, spec: FormSectionModel) -> None:
         self.label = spec["label"]
         self.id = spec["id"]
         self.type = spec["type"]
@@ -113,7 +115,7 @@ class Field:
 class StringField(Field):
     """A string field."""
 
-    def __init__(self, spec: FormSectionModel):
+    def __init__(self, spec: FormSectionModel) -> None:
         super().__init__(spec)
 
         self.minimum = spec.get("minimum", -math.inf)
@@ -164,7 +166,7 @@ class StringField(Field):
 class IntField(Field):
     """An integer field."""
 
-    def __init__(self, spec: FormSectionModel):
+    def __init__(self, spec: FormSectionModel) -> None:
         super().__init__(spec)
 
         self.minimum = spec.get("minimum", -math.inf)
@@ -192,7 +194,7 @@ class IntField(Field):
 class FloatField(Field):
     """A floating point field."""
 
-    def __init__(self, spec: FormSectionModel):
+    def __init__(self, spec: FormSectionModel) -> None:
         super().__init__(spec)
 
         self.minimum = spec.get("minimum", -math.inf)
@@ -214,13 +216,15 @@ class FloatField(Field):
             max=self.maximum if self.maximum < math.inf else None,
             min=self.minimum if self.minimum > -math.inf else None,
         )
-        return cast(float, click.prompt(self.label, default=self.default, type=field_type, err=True))
+        return cast(
+            float, click.prompt(self.label, default=self.default, type=field_type, err=True)
+        )
 
 
 class BoolField(Field):
     """A boolean field."""
 
-    def __init__(self, spec: FormSectionModel):
+    def __init__(self, spec: FormSectionModel) -> None:
         super().__init__(spec)
         # force boolean default
         self.default = self.default or False
@@ -239,7 +243,7 @@ class BoolField(Field):
 class EnumField(Field):
     """An enum field, allowing you to pick a single option from a list."""
 
-    def __init__(self, spec: FormSectionModel):
+    def __init__(self, spec: FormSectionModel) -> None:
         super().__init__(spec)
 
         self.options: list[FormOptionModel] = spec.get("options", [])
@@ -262,7 +266,7 @@ class EnumField(Field):
 class MultichoiceField(Field):
     """A multi-choice field, allowing you to pick one or more options from a list."""
 
-    def __init__(self, spec: FormSectionModel):
+    def __init__(self, spec: FormSectionModel) -> None:
         super().__init__(spec)
 
         self.options: list[FormOptionModel] = spec.get("options", [])
@@ -305,8 +309,7 @@ def prompt_enum(
     prompt: str = "Specify an option",
     **kwargs: Any,
 ) -> T:
-    """
-    Prompt the user to select a single item from a list.
+    """Prompt the user to select a single item from a list.
 
     :param options: The options the user should choose from
     :param label: A label to display at the top of the list
@@ -322,7 +325,9 @@ def prompt_enum(
 
     default_index = None
     if default is not None:
-        default_index = next((i for i, choice in enumerate(options, 1) if choice.value == default), 0)
+        default_index = next(
+            (i for i, choice in enumerate(options, 1) if choice.value == default), 0
+        )
 
     selection: int = click.prompt(
         prompt,
@@ -405,17 +410,18 @@ class Form:
     """This class can be used to validate data against a Flix creation form,
     or to prompt a user for input to construct or modify an object adhering to a creation form."""
 
-    _TYPES: dict[str, Callable[[FormSectionModel], Type[Field]]] = {
+    _TYPES: ClassVar[dict[str, Callable[[FormSectionModel], type[Field]]]] = {
         "string": lambda _: StringField,
         "int": lambda _: IntField,
         "float": lambda _: FloatField,
         "bool": lambda _: BoolField,
-        "multichoice": lambda field: (MultichoiceField if field.get("multi_select_allowed") else EnumField),
+        "multichoice": lambda field: (
+            MultichoiceField if field.get("multi_select_allowed") else EnumField
+        ),
     }
 
-    def __init__(self, spec: FormSectionModel):
-        """
-        Constructs a new Form.
+    def __init__(self, spec: FormSectionModel) -> None:
+        """Constructs a new Form.
 
         :param spec: A creation form as returned by a /form Flix endpoint
         """
@@ -431,8 +437,7 @@ class Form:
                 self.fields[field["id"]] = field_type(field)
 
     def verify(self, parameters: dict[str, Any], ignore_required: bool = False) -> None:
-        """
-        Validates the given object against the creation form.
+        """Validates the given object against the creation form.
 
         :param parameters: The object to validate
         :param ignore_required: If true, no error will be raised for missing required parameters
@@ -442,8 +447,7 @@ class Form:
             field.verify(parameters, ignore_required=ignore_required)
 
     def prompt(self, parameters: dict[str, Any] | None = None) -> dict[str, Any]:
-        """
-        Prompt the user for input required to construct an object adhering to this creation form.
+        """Prompt the user for input required to construct an object adhering to this creation form.
 
         :param parameters: An optional partial object; only parameters not already set will be queried
         :raises ValueError: If a partial object was passed, and the set fields are not valid
@@ -458,8 +462,7 @@ class Form:
         return parameters
 
     def prompt_edit(self, parameters: TDict) -> TDict:
-        """
-        Prompt the user for input to modify an existing object adhering to this creation form.
+        """Prompt the user for input to modify an existing object adhering to this creation form.
 
         :param parameters: A fully-constructed instance of the object type described by this creation form
         :return: The given object, modified according to user input
@@ -468,7 +471,8 @@ class Form:
         # the creation form specification guarantees type correctness
         params = cast(dict[str, Any], parameters)
         while True:
-            # query for any unset fields, or fields that became enabled after a change to another field
+            # query for any unset fields, or fields that became enabled
+            # after a change to another field
             params = self.prompt(params)
 
             option: str = prompt_enum(
@@ -490,8 +494,7 @@ class Form:
         return cast(TDict, params)
 
     def print(self, parameters: TDict, *, err: bool = False) -> None:
-        """
-        Pretty-print an instance of the object type defined by this form.
+        """Pretty-print an instance of the object type defined by this form.
 
         :param parameters: The object to print
         :param err: Whether to print to standard error

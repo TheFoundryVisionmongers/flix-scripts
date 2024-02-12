@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import base64
 import contextlib
@@ -8,13 +10,16 @@ import logging
 import urllib.parse
 import warnings
 from collections.abc import AsyncIterator, Mapping
-from types import TracebackType
-from typing import Any, Type, TypedDict, TypeVar, cast
+from http import HTTPStatus
+from typing import TYPE_CHECKING, Any, TypedDict, TypeVar, cast
 
 import aiohttp
 import dateutil.parser
 
 from . import errors, forms, models, signing, types, utils, websocket
+
+if TYPE_CHECKING:
+    from types import TracebackType
 
 __all__ = ["Client", "AccessKey"]
 
@@ -25,9 +30,9 @@ logger = logging.getLogger(__name__)
 class AccessKey:
     """Holds information about a user session."""
 
-    def __init__(self, access_key: dict[str, Any]):
-        """
-        Constructs a new AccessKey object.
+    def __init__(self, access_key: dict[str, Any]) -> None:
+        """Constructs a new AccessKey object.
+
         :param access_key: The deserialised response from authenticating with a Flix server
         """
         self.id: str = access_key["id"]
@@ -70,9 +75,9 @@ class BaseClient:
         password: str | None = None,
         auto_extend_session: bool = True,
         access_key: AccessKey | None = None,
-    ):
-        """
-        Instantiate a new Flix client.
+    ) -> None:
+        """Instantiate a new Flix client.
+
         :param hostname: The hostname of the Flix server
         :param port: The port the server is running on
         :param ssl: Whether to use HTTPS to communicate with the server
@@ -170,9 +175,10 @@ class BaseClient:
 
         return response
 
-    async def request(self, method: str, path: str, body: Any | None = None, **kwargs: Any) -> aiohttp.ClientResponse:
-        """
-        Perform an HTTP request against the Flix server.
+    async def request(
+        self, method: str, path: str, body: Any | None = None, **kwargs: Any
+    ) -> aiohttp.ClientResponse:
+        """Perform an HTTP request against the Flix server.
 
         This method may be safely overridden in a subclass to modify the request behaviour.
         Do not call functions such as get or post from an implementation of request to avoid infinite recursion.
@@ -195,9 +201,10 @@ class BaseClient:
                 raise
             return await self._request(method, path, body, **kwargs)
 
-    async def request_json(self, method: str, path: str, body: Any | None = None, **kwargs: Any) -> dict[str, Any]:
-        """
-        Perform an HTTP request against the Flix server and parse the result as JSON.
+    async def request_json(
+        self, method: str, path: str, body: Any | None = None, **kwargs: Any
+    ) -> dict[str, Any]:
+        """Perform an HTTP request against the Flix server and parse the result as JSON.
 
         :param method: The HTTP method
         :param path: The path to request; should not include the server hostname
@@ -211,8 +218,7 @@ class BaseClient:
         return cast(dict[str, Any], await response.json())
 
     async def get(self, path: str, body: Any | None = None, **kwargs: Any) -> dict[str, Any]:
-        """
-        Perform a GET request against the Flix server.
+        """Perform a GET request against the Flix server.
 
         :param path: The path to request; should not include the server hostname
         :param body: A JSON-serialisable object to be used as the payload
@@ -224,8 +230,7 @@ class BaseClient:
         return await self.request_json("GET", path, body, **kwargs)
 
     async def post(self, path: str, body: Any | None = None, **kwargs: Any) -> dict[str, Any]:
-        """
-        Perform a POST request against the Flix server.
+        """Perform a POST request against the Flix server.
 
         :param path: The path to request; should not include the server hostname
         :param body: A JSON-serialisable object to be used as the payload
@@ -237,8 +242,7 @@ class BaseClient:
         return await self.request_json("POST", path, body, **kwargs)
 
     async def patch(self, path: str, body: Any | None = None, **kwargs: Any) -> dict[str, Any]:
-        """
-        Perform a PATCH request against the Flix server.
+        """Perform a PATCH request against the Flix server.
 
         :param path: The path to request; should not include the server hostname
         :param body: A JSON-serialisable object to be used as the payload
@@ -250,8 +254,7 @@ class BaseClient:
         return await self.request_json("PATCH", path, body, **kwargs)
 
     async def put(self, path: str, body: Any | None = None, **kwargs: Any) -> dict[str, Any]:
-        """
-        Perform a PUT request against the Flix server.
+        """Perform a PUT request against the Flix server.
 
         :param path: The path to request; should not include the server hostname
         :param body: A JSON-serialisable object to be used as the payload
@@ -262,9 +265,10 @@ class BaseClient:
         """
         return await self.request_json("PUT", path, body, **kwargs)
 
-    async def delete(self, path: str, body: Any | None = None, **kwargs: Any) -> aiohttp.ClientResponse:
-        """
-        Perform a DELETE request against the Flix server.
+    async def delete(
+        self, path: str, body: Any | None = None, **kwargs: Any
+    ) -> aiohttp.ClientResponse:
+        """Perform a DELETE request against the Flix server.
 
         :param path: The path to request; should not include the server hostname
         :param body: A JSON-serialisable object to be used as the payload
@@ -276,8 +280,7 @@ class BaseClient:
         return await self.request("DELETE", path, body, **kwargs)
 
     async def text(self, path: str, *, method: str = "GET", **kwargs: Any) -> str:
-        """
-        Perform a request against the Flix server and parse the result as text.
+        """Perform a request against the Flix server and parse the result as text.
 
         :param path: The path to request; should not include the server hostname
         :param method: The HTTP method
@@ -290,8 +293,7 @@ class BaseClient:
         return await response.text()
 
     async def form(self, path: str) -> forms.Form:
-        """
-        Fetch the appropriate creation form for the given path.
+        """Fetch the appropriate creation form for the given path.
 
         :param path: The path to return the creation form for; should not include /form
         :raises errors.FlixNotVerifiedError: If the client failed to authenticate
@@ -302,8 +304,7 @@ class BaseClient:
         return forms.Form(cast(forms.FormSectionModel, resp))
 
     async def authenticate(self, user: str, password: str) -> AccessKey:
-        """
-        Authenticate as a Flix user.
+        """Authenticate as a Flix user.
 
         On a successful authentication, this will set access_key.
 
@@ -314,7 +315,9 @@ class BaseClient:
         """
         self._access_key = None
         # call _request directly to avoid recursion when automatically authenticating
-        response = await self._request("POST", "/authenticate", auth=aiohttp.BasicAuth(user, password))
+        response = await self._request(
+            "POST", "/authenticate", auth=aiohttp.BasicAuth(user, password)
+        )
         self._access_key = AccessKey(await response.json())
 
         if self._refresh_token_task is None and self._auto_extend_session:
@@ -331,10 +334,7 @@ class BaseClient:
                 or automatic authentication is disabled.
         """
         if (
-            (
-                self._access_key is None
-                or self._access_key.has_expired
-            )
+            (self._access_key is None or self._access_key.has_expired)
             and self._username is not None
             and self._password is not None
         ):
@@ -367,12 +367,16 @@ class BaseClient:
                     await self.extend_session()
                 except Exception:
                     logger.exception(
-                        "error while trying to extend the current session, will try again in %s seconds",
+                        "error while trying to extend the current session, "
+                        "will try again in %s seconds",
                         refresh_frequency_seconds,
                     )
 
     async def aclose(self) -> None:
-        """Closes the underlying HTTP session. Does not need to be called when using the client as a context manager."""
+        """Close the underlying HTTP session.
+
+        Does not need to be called when using the client as a context manager.
+        """
         if self._refresh_token_task is not None:
             self._refresh_token_task.cancel()
 
@@ -387,7 +391,10 @@ class BaseClient:
         return self
 
     async def __aexit__(
-        self, exc_type: Type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ) -> None:
         await self.aclose()
 
@@ -460,7 +467,9 @@ class Client(BaseClient):
             _client=self,
         )
 
-    async def get_all_groups(self, with_permission: types.Permission | None = None) -> list[types.Group]:
+    async def get_all_groups(
+        self, with_permission: types.Permission | None = None
+    ) -> list[types.Group]:
         params = None
         if with_permission is not None:
             perm = json.dumps(with_permission.to_dict())

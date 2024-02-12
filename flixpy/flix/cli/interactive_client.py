@@ -1,17 +1,20 @@
-from typing import Any
+from __future__ import annotations
 
-import aiohttp
+import contextlib
+from typing import TYPE_CHECKING, Any
+
 import asyncclick as click
 
 from ..lib import client, errors
 
+if TYPE_CHECKING:
+    import aiohttp
 
 __all__ = ["InteractiveClient"]
 
 
 class InteractiveClient(client.Client):
-    """
-    An interactive Flix client that will automatically handle authentication.
+    """An interactive Flix client that will automatically handle authentication.
 
     The user will be prompted for authentication details if not specified elsewhere.
     The access key will be read from the configuration if available on initialisation,
@@ -26,7 +29,7 @@ class InteractiveClient(client.Client):
         config: dict[str, Any],
         username: str | None = None,
         password: str | None = None,
-    ):
+    ) -> None:
         try:
             access_key = client.AccessKey(config["access_key"])
         except KeyError:

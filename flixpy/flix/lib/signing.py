@@ -1,8 +1,9 @@
+from __future__ import annotations
+
 import base64
 import datetime
 import hashlib
 import hmac
-
 
 __all__ = ["sign_request", "signature"]
 
@@ -23,8 +24,7 @@ def sign_request(
     body: str | None = None,
     content_type: str | None = None,
 ) -> dict[str, str]:
-    """
-    Sign an HTTP request to the Flix server.
+    """Sign an HTTP request to the Flix server.
 
     :param access_key_id: The ID of the access key
     :param secret: The secret part of the access key
@@ -55,8 +55,7 @@ def sign_request(
 
 
 def signature(msg: bytes, secret: str, as_hex: bool = False) -> str:
-    """
-    Generate a signature for a message using HMAC with SHA256.
+    """Generate a signature for a message using HMAC with SHA256.
 
     :param msg: The message to sign
     :param secret: The secret to sign the message using

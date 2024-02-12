@@ -1,5 +1,6 @@
-import dataclasses
+from __future__ import annotations
 
+import dataclasses
 
 __all__ = ["FlixError", "FlixHTTPError", "FlixNotVerifiedError"]
 
@@ -23,6 +24,5 @@ class FlixNotVerifiedError(FlixHTTPError):
     """Raised when a request failed due to not being authenticated.
 
     This can happen if no access key was set, the access key was expired or invalid,
-    or the wrong username or password was provided when attempting to authenticate."""
-
-    pass
+    or the wrong username or password was provided when attempting to authenticate.
+    """

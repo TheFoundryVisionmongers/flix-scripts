@@ -1,18 +1,24 @@
+from __future__ import annotations
+
 import asyncio
 import logging
 import warnings
 import weakref
 from collections.abc import AsyncIterable, AsyncIterator, Coroutine
-from types import TracebackType
-from typing import TypeVar, cast, Any
+from http import HTTPStatus
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 import httpx
 import socketio
+from typing_extensions import Self
 
-from . import extension_api
-from . import types
-from .extension_api import models, types as api_types
 from ..lib import errors
+from . import extension_api, types
+from .extension_api import models
+from .extension_api import types as api_types
+
+if TYPE_CHECKING:
+    from types import TracebackType
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +64,7 @@ class EventQueue(AsyncIterable[_ET]):
                 print("Got event:", action_event)
     """
 
-    def __init__(self, ext: "Extension", *event_types: type[_ET]):
+    def __init__(self, ext: "Extension", *event_types: type[_ET]) -> None:
         self._ext = ext
         self._queue: asyncio.Queue[types.Event] | None = asyncio.Queue()
         self._event_types = event_types
@@ -91,7 +97,7 @@ class EventQueue(AsyncIterable[_ET]):
         or raises a CancelledError if self._done is cancelled."""
         task = asyncio.create_task(cor)
 
-        def _cancel(f: asyncio.Future[None]) -> None:
+        def _cancel(_: asyncio.Future[None]) -> None:
             task.cancel()
 
         self._done.add_done_callback(_cancel)
@@ -231,7 +237,8 @@ class Extension:
 
     async def _on_message(self, event_data: dict[str, Any]) -> None:
         if not self.online:
-            # set online here rather than in _on_connect, since we still get a connect event if unauthorised
+            # set online here rather than in _on_connect,
+            # since we still get a connect event if unauthorised
             self.online = True
             await self._update_status()
 
@@ -280,7 +287,9 @@ class Extension:
             try:
                 registered_client = await self._get_registered_client()
             except (errors.FlixError, httpx.HTTPError):
-                logger.exception("could not connect to client, waiting 10 seconds before retrying...")
+                logger.exception(
+                    "could not connect to client, waiting 10 seconds before retrying..."
+                )
                 await asyncio.sleep(10)
                 continue
 
@@ -354,7 +363,9 @@ class Extension:
 
         return _assert_response(
             list[models.RegistrationDetails],
-            await registration_controller_get_all.asyncio_detailed(client=await self._get_registered_client()),
+            await registration_controller_get_all.asyncio_detailed(
+                client=await self._get_registered_client()
+            ),
         )
 
     async def get_project_details(self) -> types.ProjectDetails:
@@ -366,7 +377,9 @@ class Extension:
 
         resp = _assert_response(
             models.ProjectDetailsDto,
-            await project_controller_get.asyncio_detailed(client=await self._get_registered_client()),
+            await project_controller_get.asyncio_detailed(
+                client=await self._get_registered_client()
+            ),
         )
 
         return types.ProjectDetails.from_model(resp)
@@ -380,7 +393,9 @@ class Extension:
 
         resp = _assert_response(
             models.StatusResponse,
-            await status_controller_get.asyncio_detailed(client=await self._get_registered_client()),
+            await status_controller_get.asyncio_detailed(
+                client=await self._get_registered_client()
+            ),
         )
 
         return types.PanelBrowserStatus.from_model(resp)
@@ -401,7 +416,10 @@ class Extension:
             instead of the currently selected panel index
         :param replace_panels: If True, version up existing panels instead of inserting new ones
         """
-        from .extension_api.api.panel_management import panel_controller_create, panel_controller_update
+        from .extension_api.api.panel_management import (
+            panel_controller_create,
+            panel_controller_update,
+        )
 
         json_body = models.BulkPanelRequest(
             paths=paths,
@@ -441,7 +459,9 @@ class Extension:
         :param asset_type: The type of asset (media object) to download
         :param target_folder: The directory to download the asset to
         """
-        from .extension_api.api.media_object_download import download_controller_download_media_object
+        from .extension_api.api.media_object_download import (
+            download_controller_download_media_object,
+        )
 
         resp = _assert_response(
             models.DownloadResponse,
