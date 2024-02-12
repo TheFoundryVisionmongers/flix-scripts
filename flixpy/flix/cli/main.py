@@ -73,9 +73,8 @@ async def flix_cli(
 
 @flix_cli.result_callback()
 @click.pass_context
-def save_config(ctx: click.Context, *args: Any, **kwargs: Any) -> None:
+def save_config(ctx: click.Context, /, *_args: Any, **_kwargs: Any) -> None:
     write_config(ctx.obj["config"])
-    pass
 
 
 @flix_cli.command("config", help="Set default configuration values.")
@@ -113,10 +112,8 @@ def config(
 @flix_cli.command("logout", help="Log out the user from Flix by removing any active access key.")
 @click.pass_context
 def logout(ctx: click.Context) -> None:
-    try:
+    with contextlib.suppress(KeyError):
         del ctx.obj["config"]["access_key"]
-    except KeyError:
-        pass
 
 
 @flix_cli.command(help="Perform cURL-like requests to a Flix server.")
@@ -166,7 +163,7 @@ async def webhook_add(ctx: click.Context) -> None:
         data = webhook_form.prompt()
         click.echo(err=True)
         webhook_form.print(data, err=True)
-        if click.confirm("Save webhook?", True, err=True):
+        if click.confirm("Save webhook?", default=True, err=True):
             wh = await flix_client.post("/webhook", data)
             click.echo(f"New webhook secret: {wh['secret']}", err=True)
             click.echo(
@@ -190,7 +187,8 @@ async def webhook_list(ctx: click.Context) -> None:
                 click.echo()
 
 
-_WebhookResponse = TypedDict("_WebhookResponse", {"webhooks": list[models.Webhook]})
+class _WebhookResponse(TypedDict):
+    webhooks: list[models.Webhook]
 
 
 @webhook.command("delete", help="Delete a webhook.")
@@ -210,7 +208,7 @@ async def webhook_delete(ctx: click.Context) -> None:
         wh = webhooks["webhooks"][j]
         webhook_form.print(wh, err=True)
 
-        if click.confirm("Delete this webhook?", False, err=True):
+        if click.confirm("Delete this webhook?", default=False, err=True):
             await flix_client.delete("/webhook/{}".format(webhooks["webhooks"][j]["id"]))
             click.echo(
                 "Deleted successfully. It may take a few seconds for your changes to be reflected.",
@@ -255,7 +253,7 @@ async def webhook_ping(ctx: click.Context) -> None:
             prompt_suffix=" ",
         )
         wh = webhooks["webhooks"][j]
-        print(await flix_client.post(f"/webhook/{wh['id']}", wh))
+        click.echo(await flix_client.post(f"/webhook/{wh['id']}", wh))
 
 
 @webhook.command("server")
@@ -346,7 +344,7 @@ async def contactsheet_edit_loop(
             pdf_response = await flix_client.request(
                 "GET", "/contactsheet/preview", params={"data": b64, "format": "pdf"}
             )
-            with open(preview_file, "wb") as f:
+            with pathlib.Path(preview_file).open("wb") as f:  # noqa: ASYNC101
                 f.write(await pdf_response.read())
         elif action == "save":
             return data
@@ -363,12 +361,13 @@ async def contactsheet_add(ctx: click.Context) -> None:
 
         data = await contactsheet_edit_loop(flix_client, contactsheet_form, data)
 
-        if click.confirm("Save contact sheet template?", True, err=True):
+        if click.confirm("Save contact sheet template?", default=True, err=True):
             await flix_client.post("/contactsheet", data)
-            click.echo(f"Contact sheet template saved successfully.", err=True)
+            click.echo("Contact sheet template saved successfully.", err=True)
 
 
-_ContactSheetResponse = TypedDict("_ContactSheetResponse", {"contact_sheets": list[models.ContactSheet]})
+class _ContactSheetResponse(TypedDict):
+    contact_sheets: list[models.ContactSheet]
 
 
 @contactsheet.command("list", help="List all contact sheet templates.")
@@ -432,11 +431,9 @@ async def contactsheet_edit(ctx: click.Context) -> None:
             prompt_suffix=" ",
         )
         cs = contactsheets["contact_sheets"][j]
-        try:
+        with contextlib.suppress(KeyError):
             # don't update shows
             del cs["shows"]
-        except KeyError:
-            pass
 
         cs = contactsheet_form.prompt_edit(cs)
 
@@ -449,7 +446,8 @@ async def contactsheet_edit(ctx: click.Context) -> None:
         )
 
 
-_ShowResponse = TypedDict("_ShowResponse", {"shows": list[models.Show]})
+class _ShowResponse(TypedDict):
+    shows: list[models.Show]
 
 
 @contactsheet.command("assign", help="Assign a contact sheet template to shows.")
@@ -495,7 +493,7 @@ async def contactsheet_assign(ctx: click.Context) -> None:
                 break
 
             if len(shows) == 0:
-                click.echo("Error: No shows to {}".format(action), err=True)
+                click.echo(f"Error: No shows to {action}", err=True)
                 continue
 
             selected_shows = forms.prompt_multichoice(
@@ -503,7 +501,7 @@ async def contactsheet_assign(ctx: click.Context) -> None:
                     forms.Choice(i, "{} [{}]".format(show["title"], show["tracking_code"]))
                     for i, show in enumerate(shows)
                 ],
-                prompt="Specify a comma-separated list of shows to {}".format(action),
+                prompt=f"Specify a comma-separated list of shows to {action}",
             )
 
             if action == "assign":

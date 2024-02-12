@@ -48,7 +48,7 @@ def sign_request(
     parts = [method]
     if body:
         parts += [
-            hashlib.md5(body.encode("utf-8")).hexdigest(),
+            hashlib.md5(body.encode("utf-8")).hexdigest(),  # noqa: S324
             content_type or "",
         ]
     else:

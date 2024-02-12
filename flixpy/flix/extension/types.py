@@ -153,24 +153,24 @@ class ClientEvent(Event):
             else:
                 raise ValueError("unexpected event format") from e
 
-        data, type = ws_event.data.data, ws_event.data.type
+        data, event_type = ws_event.data.data, ws_event.data.type
         if isinstance(data, models.OpenFileEvent):
-            return OpenEvent.from_dict(type, data)
+            return OpenEvent.from_dict(event_type, data)
         elif isinstance(data, models.OpenSourceFileEvent):
-            return OpenSourceFileEvent.from_dict(type, data)
+            return OpenSourceFileEvent.from_dict(event_type, data)
         elif isinstance(data, models.ActionEvent):
-            return ActionEvent.from_dict(type, data)
+            return ActionEvent.from_dict(event_type, data)
         elif isinstance(data, models.ProjectDetailsDto):
-            return ProjectEvent.from_dict(type, data)
+            return ProjectEvent.from_dict(event_type, data)
         elif isinstance(data, models.VersionEvent):
-            return VersionEvent.from_dict(type, data)
+            return VersionEvent.from_dict(event_type, data)
         elif isinstance(data, models.StatusResponse):
-            return StatusEvent.from_dict(type, data)
+            return StatusEvent.from_dict(event_type, data)
         elif isinstance(data, models.PingEvent):
-            return ClientPingEvent.from_dict(type, data)
+            return ClientPingEvent.from_dict(event_type, data)
 
         return cls(
-            type=type,
+            type=event_type,
             additional_properties=data.to_dict(),
         )
 
@@ -180,9 +180,9 @@ class ClientPingEvent(ClientEvent):
     api_client_id: int
 
     @classmethod
-    def from_dict(cls, type: str, data: models.PingEvent) -> Self:
+    def from_dict(cls, event_type: str, data: models.PingEvent) -> Self:
         return cls(
-            type=type,
+            type=event_type,
             api_client_id=data.api_client_id,
             additional_properties=data.additional_properties,
         )
@@ -196,9 +196,9 @@ class ActionEvent(ClientEvent):
     api_client_id: int | None
 
     @classmethod
-    def from_dict(cls, type: str, data: models.ActionEvent) -> Self:
+    def from_dict(cls, event_type: str, data: models.ActionEvent) -> Self:
         return cls(
-            type=type,
+            type=event_type,
             state=data.state,
             action=data.action,
             action_id=data.action_id,
@@ -212,9 +212,9 @@ class VersionEvent(ClientEvent):
     latest_version: str
 
     @classmethod
-    def from_dict(cls, type: str, data: models.VersionEvent) -> Self:
+    def from_dict(cls, event_type: str, data: models.VersionEvent) -> Self:
         return cls(
-            type=type,
+            type=event_type,
             latest_version=data.latest_version,
             additional_properties=data.additional_properties,
         )
@@ -223,10 +223,10 @@ class VersionEvent(ClientEvent):
 @dataclasses.dataclass
 class ProjectEvent(ProjectDetails, ClientEvent):
     @classmethod
-    def from_dict(cls, type: str, data: models.ProjectDetailsDto) -> Self:
+    def from_dict(cls, event_type: str, data: models.ProjectDetailsDto) -> Self:
         project_details = ProjectDetails.from_model(data)
         return cls(
-            type=type,
+            type=event_type,
             show=project_details.show,
             episode=project_details.episode,
             sequence=project_details.sequence,
@@ -296,10 +296,10 @@ class PanelBrowserStatus:
 @dataclasses.dataclass
 class StatusEvent(PanelBrowserStatus, ClientEvent):
     @classmethod
-    def from_dict(cls, type: str, data: models.StatusResponse) -> Self:
+    def from_dict(cls, event_type: str, data: models.StatusResponse) -> Self:
         status = PanelBrowserStatus.from_model(data)
         return cls(
-            type=type,
+            type=event_type,
             can_create=status.can_create,
             revision_status=status.revision_status,
             actions_in_progress=status.actions_in_progress,
@@ -332,9 +332,9 @@ class OpenEvent(ClientEvent):
     panels: list[OpenPanelData]
 
     @classmethod
-    def from_dict(cls, type: str, data: models.OpenFileEvent) -> Self:
+    def from_dict(cls, event_type: str, data: models.OpenFileEvent) -> Self:
         return cls(
-            type=type,
+            type=event_type,
             project=ProjectIds.from_dict(data.project),
             panels=[OpenPanelData.from_dict(panel) for panel in data.panels],
             additional_properties=data.additional_properties,
@@ -346,9 +346,9 @@ class OpenSourceFileEvent(ClientEvent):
     asset_id: int
 
     @classmethod
-    def from_dict(cls, type: str, data: models.OpenSourceFileEvent) -> Self:
+    def from_dict(cls, event_type: str, data: models.OpenSourceFileEvent) -> Self:
         return cls(
-            type=type,
+            type=event_type,
             asset_id=data.source_file.asset_id
             if data.source_file and data.source_file.asset_id
             else 0,

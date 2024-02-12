@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING, Any, TypedDict, TypeVar, cast
 import aiohttp
 import dateutil.parser
 
-from . import errors, forms, models, signing, types, utils, websocket
+from . import _utils, errors, forms, models, signing, types, websocket
 
 if TYPE_CHECKING:
     from types import TracebackType
@@ -163,7 +163,7 @@ class BaseClient:
         url = urllib.parse.urlunsplit(
             (
                 "https" if self._ssl else "http",
-                "{}:{}".format(self._hostname, self._port),
+                f"{self._hostname}:{self._port}",
                 split.path,
                 split.query,
                 split.fragment,
@@ -177,7 +177,7 @@ class BaseClient:
             ssl=False if self._disable_ssl_validation else None,
             **kwargs,
         )
-        if response.status >= 400:
+        if response.status >= HTTPStatus.BAD_REQUEST:
             if response.content_type == "application/json":
                 error = await response.json()
                 if isinstance(error, Mapping) and "message" in error:
@@ -186,7 +186,7 @@ class BaseClient:
                     error_message = str(error)
             else:
                 error_message = await response.text()
-            if response.status == 401:
+            if response.status == HTTPStatus.UNAUTHORIZED:
                 self._access_key = None
                 raise errors.FlixNotVerifiedError(response.status, error_message)
             else:
@@ -421,11 +421,10 @@ class BaseClient:
         if self._access_key is None:
             return
 
-        try:
+        # a FlixNotVerifiedError means the access key has expired,
+        # in which case we'll reauthenticate before the next request
+        with contextlib.suppress(errors.FlixNotVerifiedError):
             self._access_key = AccessKey(await self.post("/authenticate/extend"))
-        except errors.FlixNotVerifiedError:
-            # the access key has expired; we'll reauthenticate before the next request
-            pass
 
     async def _periodically_refresh_token(self) -> None:
         """Try to extend the session once an hour."""
@@ -454,8 +453,8 @@ class BaseClient:
         await self._session.close()
 
     async def close(self) -> None:
-        """Deprecated. Use ``aclose()``."""
-        warnings.warn("Use Client.aclose()", DeprecationWarning)
+        """Deprecated. Use [aclose][flix.Client.aclose]."""
+        warnings.warn("Use Client.aclose()", DeprecationWarning, stacklevel=1)
         await self.aclose()
 
     async def __aenter__(self: ClientSelf) -> ClientSelf:
@@ -547,9 +546,12 @@ class Client(BaseClient):
         Returns:
             A list of shows.
         """
+
+        class _AllShows(TypedDict):
+            shows: list[models.Show]
+
         params = {"display_hidden": "true" if include_hidden else "falsae"}
-        all_shows_model = TypedDict("all_shows_model", {"shows": list[models.Show]})
-        shows = cast(all_shows_model, await self.get("/shows", params=params))
+        shows = cast(_AllShows, await self.get("/shows", params=params))
         return [types.Show.from_dict(show, _client=self) for show in shows["shows"]]
 
     async def get_show(self, show_id: int) -> types.Show:
@@ -628,11 +630,14 @@ class Client(BaseClient):
         Returns:
             A list of users.
         """
-        all_users_model = TypedDict("all_users_model", {"users": list[models.User]})
-        users = cast(all_users_model, await self.get("/users"))
+
+        class _AllUsers(TypedDict):
+            users: list[models.User]
+
+        users = cast(_AllUsers, await self.get("/users"))
         return [types.User.from_dict(user, _client=self) for user in users["users"]]
 
-    async def new_user(
+    def new_user(
         self,
         username: str,
         password: str,
@@ -652,17 +657,21 @@ class Client(BaseClient):
     async def get_all_groups(
         self, with_permission: types.Permission | None = None
     ) -> list[types.Group]:
+        class _AllGroups(TypedDict):
+            groups: list[models.Group]
+
         params = None
         if with_permission is not None:
             perm = json.dumps(with_permission.to_dict())
             params = {"permissions": base64.b64encode(perm.encode()).decode()}
-        all_groups_model = TypedDict("all_groups_model", {"groups": list[models.Group]})
-        groups = cast(all_groups_model, await self.get("/groups", params=params))
+        groups = cast(_AllGroups, await self.get("/groups", params=params))
         return [types.Group.from_dict(group) for group in groups["groups"]]
 
-    @utils.cache(30)
+    @_utils.cache(30)
     async def servers(self) -> list[types.Server]:
+        class _Servers(TypedDict):
+            servers: list[models.Server]
+
         path = "/servers"
-        servers_model = TypedDict("servers_model", {"servers": list[models.Server]})
-        servers = cast(servers_model, await self.get(path))
+        servers = cast(_Servers, await self.get(path))
         return [types.Server.from_dict(server) for server in servers["servers"]]

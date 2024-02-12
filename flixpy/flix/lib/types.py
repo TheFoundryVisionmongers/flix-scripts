@@ -126,7 +126,7 @@ class MetadataField:
         return self._value_type
 
     @staticmethod
-    def get_value_type(value: Any) -> str:
+    def get_value_type(value: Any) -> str:  # noqa: PLR0911
         match value:
             case bool():
                 return "bool"
@@ -191,6 +191,10 @@ class MetadataField:
         return "MetadataField(value={}, value_type={}, created_date={}, modified_date={})".format(
             self.value, self.value_type, self.created_date, self.modified_date
         )
+
+
+class _MetadataModel(TypedDict):
+    metadata: list[models.MetadataField]
 
 
 class Metadata(FlixType, MutableMapping[str, Any]):
@@ -259,11 +263,8 @@ class Metadata(FlixType, MutableMapping[str, Any]):
             raise errors.FlixError("metadata parent is not set")
         return f"{self._parent.path_prefix()}/metadata"
 
-    class _MetadataModel(TypedDict):
-        metadata: list[models.MetadataField]
-
     async def fetch_metadata(self) -> Metadata:
-        result = cast(Metadata._MetadataModel, await self.client.get(self.path_prefix()))
+        result = cast(_MetadataModel, await self.client.get(self.path_prefix()))
         Metadata.from_dict(result["metadata"], into=self, parent=self._parent, _client=self.client)
         return self
 
@@ -294,7 +295,7 @@ class Metadata(FlixType, MutableMapping[str, Any]):
     async def save(self, clear_missing: bool = False) -> None:
         method = "PUT" if clear_missing else "PATCH"
         await self.client.request(
-            method, self.path_prefix(), body=Metadata._MetadataModel(metadata=self.to_dict())
+            method, self.path_prefix(), body=_MetadataModel(metadata=self.to_dict())
         )
 
     def __getitem__(self, key: str) -> Any:
@@ -568,7 +569,7 @@ class MediaObject(FlixType):
         )
         into.owner = User.from_dict(data["owner"], _client=_client) if data.get("owner") else None
         into.asset_type = data.get("asset_type", "")
-        into._client = _client
+        into._client = _client  # noqa: SLF001
         return into
 
     async def update(self) -> None:
@@ -740,14 +741,16 @@ class Episode(FlixType):
     async def get_all_sequences(
         self, include_hidden: bool = False, page: int | None = None, per_page: int | None = None
     ) -> list[Sequence]:
+        class _AllSequences(TypedDict):
+            sequences: list[models.Sequence]
+
         path = f"{self.path_prefix()}/sequences"
         params = _params(
             display_hidden="true" if include_hidden else None,
             page=page,
             per_page=per_page,
         )
-        all_sequences_model = TypedDict("all_sequences_model", {"sequences": list[models.Sequence]})
-        all_sequences = cast(all_sequences_model, await self.client.get(path, params=params))
+        all_sequences = cast(_AllSequences, await self.client.get(path, params=params))
         return [
             Sequence.from_dict(sequence, _show=self._show, _episode=self, _client=self.client)
             for sequence in all_sequences["sequences"]
@@ -867,10 +870,13 @@ class Sequence(FlixType):
         )
 
     async def save_panels(self, panels: list[PanelRevision]) -> None:
-        path = f"{self.path_prefix(False)}/panels"
-        panels_model = TypedDict("panels_model", {"panels": list[models.PanelRevision]})
+        class _Panels(TypedDict):
+            panels: list[models.PanelRevision]
+
+        prefix = self.path_prefix(include_episode=False)
+        path = f"{prefix}/panels"
         result = cast(
-            panels_model, await self.client.post(path, body=[panel.to_dict() for panel in panels])
+            _Panels, await self.client.post(path, body=[panel.to_dict() for panel in panels])
         )
         for i, result_panel in enumerate(result["panels"]):
             PanelRevision.from_dict(
@@ -883,11 +889,11 @@ class Sequence(FlixType):
         return SequenceRevision.from_dict(revision, _sequence=self, _client=self.client)
 
     async def get_all_sequence_revisions(self) -> list[SequenceRevision]:
+        class _AllRevisions(TypedDict):
+            sequence_revisions: list[models.SequenceRevision]
+
         path = f"{self.path_prefix()}/revisions"
-        all_revisions_model = TypedDict(
-            "all_revisions_model", {"sequence_revisions": list[models.SequenceRevision]}
-        )
-        all_revisions = cast(all_revisions_model, await self.client.get(path))
+        all_revisions = cast(_AllRevisions, await self.client.get(path))
         return [
             SequenceRevision.from_dict(revision, _sequence=self, _client=self.client)
             for revision in all_revisions["sequence_revisions"]
@@ -905,14 +911,16 @@ class Sequence(FlixType):
         page: int | None = None,
         per_page: int | None = None,
     ) -> list[PanelRevision]:
-        path = f"{self.path_prefix(False)}/panels"
+        class _AllPanels(TypedDict):
+            panels: list[models.PanelRevision]
+
+        path = f"{self.path_prefix(include_episode=False)}/panels"
         params = _params(
             showAll="true" if not latest_revision_only else None,
             page=page,
             per_page=per_page,
         )
-        all_panels_model = TypedDict("all_panels_model", {"panels": list[models.PanelRevision]})
-        all_panels = cast(all_panels_model, await self.client.get(path, params=params))
+        all_panels = cast(_AllPanels, await self.client.get(path, params=params))
         return [
             PanelRevision.from_dict(panel, _sequence=self, _client=self.client)
             for panel in all_panels["panels"]
@@ -1041,10 +1049,12 @@ class Asset(FlixType):
         return asset
 
     async def create_media_object(self, ref: str) -> MediaObject:
+        class _MediaObjects(TypedDict):
+            media_objects: list[models.MediaObject]
+
         path = f"/show/{self.show_id}/media_object/{ref}"
         body = {"asset_ids": [self.asset_id]}
-        mos_model = TypedDict("mos_model", {"media_objects": list[models.MediaObject]})
-        mos = cast(mos_model, await self.client.post(path, body=body))
+        mos = cast(_MediaObjects, await self.client.post(path, body=body))
         media_object = MediaObject.from_dict(mos["media_objects"][0], _client=self.client)
         self.media_objects.setdefault(ref, []).append(media_object)
         return media_object
@@ -1286,14 +1296,16 @@ class Show(FlixType):
     async def get_all_sequences(
         self, include_hidden: bool = False, page: int | None = None, per_page: int | None = None
     ) -> list[Sequence]:
+        class _AllSequences(TypedDict):
+            sequences: list[models.Sequence]
+
         path = f"{self.path_prefix()}/sequences"
         params = _params(
             display_hidden="true" if include_hidden else None,
             page=page,
             per_page=per_page,
         )
-        all_sequences_model = TypedDict("all_sequences_model", {"sequences": list[models.Sequence]})
-        all_sequences = cast(all_sequences_model, await self.client.get(path, params=params))
+        all_sequences = cast(_AllSequences, await self.client.get(path, params=params))
         return [
             Sequence.from_dict(sequence, _show=self, _episode=None, _client=self.client)
             for sequence in all_sequences["sequences"]
@@ -1305,37 +1317,43 @@ class Show(FlixType):
         return Episode.from_dict(episode, _show=self, _client=self.client)
 
     async def get_all_episodes(self) -> list[Episode]:
+        class _AllEpisodes(TypedDict):
+            episodes: list[models.Episode]
+
         path = f"{self.path_prefix()}/episodes"
-        all_episodes_model = TypedDict("all_episodes_model", {"episodes": list[models.Episode]})
-        all_episodes = cast(all_episodes_model, await self.client.get(path))
+        all_episodes = cast(_AllEpisodes, await self.client.get(path))
         return [
             Episode.from_dict(episode, _show=self, _client=self.client)
             for episode in all_episodes["episodes"]
         ]
 
     async def get_assigned_contactsheets(self) -> list[ContactSheet]:
+        class _AllContactSheets(TypedDict):
+            contact_sheets: list[models.ContactSheet]
+
         path = f"{self.path_prefix()}/contactsheets"
-        all_contactsheets_model = TypedDict(
-            "all_contactsheets_model", {"contact_sheets": list[models.ContactSheet]}
-        )
-        all_contactsheets = cast(all_contactsheets_model, await self.client.get(path))
+        all_contactsheets = cast(_AllContactSheets, await self.client.get(path))
         return [
             ContactSheet.from_dict(cs, _client=self.client)
             for cs in all_contactsheets["contact_sheets"]
         ]
 
     async def create_assets(self, num_assets: int) -> list[Asset]:
+        class _Assets(TypedDict):
+            assets: list[models.Asset]
+
         path = f"{self.path_prefix()}/asset"
         body = {"asset_count": num_assets}
-        assets_model = TypedDict("assets_model", {"assets": list[models.Asset]})
-        assets = cast(assets_model, await self.client.post(path, body=body))
+        assets = cast(_Assets, await self.client.post(path, body=body))
         return [Asset.from_dict(asset, _client=self.client) for asset in assets["assets"]]
 
     async def create_media_objects(self, assets: list[Asset], ref: str) -> list[MediaObject]:
+        class _MediaObjects(TypedDict):
+            media_objects: list[models.MediaObject]
+
         path = f"{self.path_prefix()}/media_object/{ref}"
         body = {"asset_ids": [asset.asset_id for asset in assets]}
-        mos_model = TypedDict("mos_model", {"media_objects": list[models.MediaObject]})
-        mos = cast(mos_model, await self.client.post(path, body=body))
+        mos = cast(_MediaObjects, await self.client.post(path, body=body))
         media_objects = [
             MediaObject.from_dict(mo, _client=self.client) for mo in mos["media_objects"]
         ]
@@ -1358,10 +1376,13 @@ class Show(FlixType):
         Returns:
             The list of task IDs which have been created to perform the transcode jobs.
         """
+
+        class _Tasks(TypedDict):
+            task_ids: list[str]
+
         path = f"{self.path_prefix()}/asset/transcode"
         body = {"asset_ids": [a.asset_id for a in assets]}
-        tasks_model = TypedDict("tasks_model", {"task_ids": list[str]})
-        task_ids = cast(tasks_model, await self.client.post(path, body))
+        task_ids = cast(_Tasks, await self.client.post(path, body))
         return task_ids["task_ids"]
 
     async def upload_file(
@@ -1730,7 +1751,7 @@ class Panel(FlixType):
     def path_prefix(self) -> str:
         if self._sequence is None:
             raise errors.FlixError("sequence is not set")
-        return f"{self._sequence.path_prefix(False)}/panel/{self.panel_id}"
+        return f"{self._sequence.path_prefix(include_episode=False)}/panel/{self.panel_id}"
 
 
 class PanelRevision(FlixType):
@@ -2077,9 +2098,11 @@ class SequenceRevision(FlixType):
         self.panels.append(sequence_panel)
 
     async def get_all_panel_revisions(self) -> list[SequencePanel]:
+        class _AllPanels(TypedDict):
+            panels: list[models.SequencePanel]
+
         path = f"{self.path_prefix()}/panels"
-        all_panels_model = TypedDict("all_panels_model", {"panels": list[models.SequencePanel]})
-        all_panels = cast(all_panels_model, await self.client.get(path))
+        all_panels = cast(_AllPanels, await self.client.get(path))
         return [
             SequencePanel.from_dict(panel, _sequence=self._sequence, _client=self.client)
             for panel in all_panels["panels"]

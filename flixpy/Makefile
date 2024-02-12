@@ -31,7 +31,7 @@ $(EXTENSION_API_OUT): .download $(addprefix $(EXTENSION_DIR),$(EXTENSION_API_OPE
 
 .PHONY: typecheck
 typecheck: .download
-	poetry run mypy .
+	poetry run mypy
 
 .PHONY: build
 build:$(GRPC_OUT) $(EXTENSION_API_OUT) typecheck

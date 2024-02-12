@@ -93,13 +93,13 @@ class Field:
 
         if self.id not in parameters:
             if self.required and self.default is None and not ignore_required:
-                raise ValueError("missing required field {}".format(self.id))
+                raise ValueError(f"missing required field {self.id}")
             return
 
         try:
             self.verify_value(parameters[self.id])
         except ValueError as e:
-            raise ValueError("{}: {}".format(self.id, str(e))) from e
+            raise ValueError(f"{self.id}: {e!s}") from e
 
     def verify_value(self, value: Any) -> None:
         raise NotImplementedError
@@ -129,25 +129,21 @@ class StringField(Field):
 
     def verify_value(self, value: Any) -> None:
         if not isinstance(value, str):
-            raise ValueError("not a string: {}".format(value))
+            raise TypeError(f"not a string: {value}")
 
         if len(value) < self.minimum:
-            raise ValueError("string must be at least {} characters: {}".format(self.minimum, value))
+            raise ValueError(f"string must be at least {self.minimum} characters: {value}")
         elif len(value) > self.maximum:
-            raise ValueError("string can be at most {} characters: {}".format(self.maximum, value))
+            raise ValueError(f"string can be at most {self.maximum} characters: {value}")
         elif self.format_type == "regex":
             if not re.match(self.format_pattern, value):
-                raise ValueError("does not match expected format: {}".format(value))
+                raise ValueError(f"does not match expected format: {value}")
         elif self.format_type == "url":
-            try:
-                url = urllib.parse.urlparse(value)
-                if url.scheme == "" or url.hostname == "":
-                    raise ValueError("not a valid URL: {}".format(value))
-            except ValueError:
-                raise ValueError("not a valid URL: {}".format(value))
-        elif self.format_type == "email":
-            if "@" not in value:
-                raise ValueError("not an email address: {}".format(value))
+            url = urllib.parse.urlparse(value)
+            if url.scheme == "" or url.hostname == "":
+                raise ValueError(f"not a valid URL: {value}")
+        elif self.format_type == "email" and "@" not in value:
+            raise ValueError(f"not an email address: {value}")
 
     def prompt(self) -> str:
         while True:
@@ -162,7 +158,7 @@ class StringField(Field):
                 self.verify_value(value)
                 return cast(str, value)
             except ValueError as e:
-                click.echo(f"Error: {str(e)}", err=True)
+                click.echo(f"Error: {e!s}", err=True)
 
 
 class IntField(Field):
@@ -178,12 +174,12 @@ class IntField(Field):
 
     def verify_value(self, value: Any) -> None:
         if not isinstance(value, int):
-            raise ValueError("not an integer: {}".format(value))
+            raise TypeError(f"not an integer: {value}")
 
         if value < self.minimum:
-            raise ValueError("value below minimum allowed value ({}): {}".format(self.minimum, value))
+            raise ValueError(f"value below minimum allowed value ({self.minimum}): {value}")
         elif value > self.maximum:
-            raise ValueError("value above maximum allowed value ({}): {}".format(self.maximum, value))
+            raise ValueError(f"value above maximum allowed value ({self.maximum}): {value}")
 
     def prompt(self) -> int:
         field_type = click.IntRange(
@@ -206,12 +202,12 @@ class FloatField(Field):
 
     def verify_value(self, value: Any) -> None:
         if not isinstance(value, float):
-            raise ValueError("not a float: {}".format(value))
+            raise TypeError(f"not a float: {value}")
 
         if value < self.minimum:
-            raise ValueError("value below minimum allowed value ({}): {}".format(self.minimum, value))
+            raise ValueError(f"value below minimum allowed value ({self.minimum}): {value}")
         elif value > self.maximum:
-            raise ValueError("value above maximum allowed value ({}): {}".format(self.maximum, value))
+            raise ValueError(f"value above maximum allowed value ({self.maximum}): {value}")
 
     def prompt(self) -> float:
         field_type = click.FloatRange(
@@ -233,7 +229,7 @@ class BoolField(Field):
 
     def verify_value(self, value: Any) -> None:
         if not isinstance(value, bool):
-            raise ValueError("not a boolean: {}".format(value))
+            raise TypeError(f"not a boolean: {value}")
 
     def prompt(self) -> bool:
         return click.confirm(self.label, default=self.default, err=True)
@@ -252,7 +248,7 @@ class EnumField(Field):
 
     def verify_value(self, value: Any) -> None:
         if not any(value == choice["value"] for choice in self.options):
-            raise ValueError("not a valid option: {}".format(value))
+            raise ValueError(f"not a valid option: {value}")
 
     def prompt(self) -> Any:
         choices = [Choice(choice["value"], choice["display_value"]) for choice in self.options]
@@ -275,11 +271,11 @@ class MultichoiceField(Field):
 
     def verify_value(self, value: Any) -> None:
         if not isinstance(value, list):
-            raise ValueError("must be a list: {}".format(value))
+            raise TypeError(f"must be a list: {value}")
 
         for val in value:
             if not any(val == choice["value"] for choice in self.options):
-                raise ValueError("not a valid option: {}".format(val))
+                raise ValueError(f"not a valid option: {val}")
 
     def prompt(self) -> list[Any]:
         choices = [Choice(choice["value"], choice["display_value"]) for choice in self.options]
@@ -327,7 +323,7 @@ def prompt_enum(
     if label is not None:
         click.echo(f"{label}:", err=True)
     for i, choice in enumerate(options, 1):
-        click.echo("  {}) {}".format(i, choice.display_value), err=True)
+        click.echo(f"  {i}) {choice.display_value}", err=True)
 
     default_index = None
     if default is not None:
@@ -358,7 +354,7 @@ def prompt_multichoice(
     if label is not None:
         click.echo(f"{label}:", err=True)
     for i, choice in enumerate(options, 1):
-        click.echo("  {}) {}".format(i, choice.display_value), err=True)
+        click.echo(f"  {i}) {choice.display_value}", err=True)
 
     default_range = (
         _set_to_range({i + 1 for i, choice in enumerate(options) if choice.value == default})
@@ -525,4 +521,4 @@ class Form:
         """
         for name, field in self.fields.items():
             if name in parameters and field.requirements_hold(parameters):
-                click.echo("{}: {}".format(field.label, field.format(parameters[name])), err=err)
+                click.echo(f"{field.label}: {field.format(parameters[name])}", err=err)

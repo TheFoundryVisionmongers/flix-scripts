@@ -6,6 +6,7 @@ We are not creating a new sequence revision with this example.
 from __future__ import annotations
 
 import asyncio
+from pathlib import Path
 
 import flix
 
@@ -23,7 +24,7 @@ PANEL_ID = 1
 PANEL_REVISION = 1
 
 # New file to be used to create the new panel revision
-FILEPATH = "./new_file.psd"
+FILEPATH = Path("./new_file.psd")
 
 
 async def main() -> None:
@@ -33,7 +34,7 @@ async def main() -> None:
         # Get the show from the server
         show = await client.get_show(SHOW_ID)
         # Create an 'artwork' media object with the file and transcode it to create a thumbnail
-        with open(FILEPATH, "rb") as f:
+        with FILEPATH.open("rb") as f:
             asset = await show.upload_file(f, "artwork")
         job_ids = await show.transcode_assets([asset])
 

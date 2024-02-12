@@ -51,10 +51,8 @@ class InteractiveClient(client.Client):
     async def _sign_in(self) -> None:
         click.echo("Not signed in, attempting to authenticate...", err=True)
 
-        try:
+        with contextlib.suppress(KeyError):
             del self._config["access_key"]
-        except KeyError:
-            pass
 
         username = self._username or click.prompt("Username", type=str, err=True)
         password = self._password or click.prompt("Password", type=str, hide_input=True, err=True)

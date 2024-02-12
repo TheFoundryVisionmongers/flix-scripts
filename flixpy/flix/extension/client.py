@@ -35,7 +35,7 @@ U = TypeVar("U")
 
 
 def _assert_ok(resp: api_types.Response[U]) -> None:
-    if resp.status_code < 200 or resp.status_code >= 300:
+    if resp.status_code < HTTPStatus.OK or resp.status_code >= HTTPStatus.MULTIPLE_CHOICES:
         raise errors.FlixHTTPError(resp.status_code, resp.content.decode())
 
 
@@ -45,13 +45,13 @@ def _assert_response(expect: type[T], resp: api_types.Response[U]) -> T:
     if resp.parsed is not None:
         return cast(T, resp.parsed)
 
-    raise errors.FlixError("expected response type {}, got: {!r}".format(expect, resp.content))
+    raise errors.FlixError(f"expected response type {expect}, got: {resp.content!r}")
 
 
-_ET = TypeVar("_ET", bound=types.Event, covariant=True)
+_ET_co = TypeVar("_ET_co", bound=types.Event, covariant=True)
 
 
-class EventQueue(AsyncIterable[_ET]):
+class EventQueue(AsyncIterable[_ET_co]):
     """An EventQueue listens for events of one or more given types.
 
     Events can be read from a queue by iterating over the object using async for.
@@ -71,7 +71,7 @@ class EventQueue(AsyncIterable[_ET]):
                 print("Got event:", action_event)
     """
 
-    def __init__(self, ext: "Extension", *event_types: type[_ET]) -> None:
+    def __init__(self, ext: Extension, *event_types: type[_ET_co]) -> None:
         self._ext = ext
         self._queue: asyncio.Queue[types.Event] | None = asyncio.Queue()
         self._event_types = event_types
@@ -88,7 +88,7 @@ class EventQueue(AsyncIterable[_ET]):
         self._done.cancel()
         self._queue = None
 
-    async def __aenter__(self) -> "EventQueue[_ET]":
+    async def __aenter__(self) -> EventQueue[_ET_co]:
         return self
 
     async def __aexit__(
@@ -112,7 +112,7 @@ class EventQueue(AsyncIterable[_ET]):
         finally:
             self._done.remove_done_callback(_cancel)
 
-    async def __aiter__(self) -> AsyncIterator[_ET]:
+    async def __aiter__(self) -> AsyncIterator[_ET_co]:
         while self._queue is not None:
             try:
                 event = await self._until_cancelled(self._queue.get())
@@ -283,8 +283,8 @@ class Extension:
         for queue in self._queues:
             queue.put(event)
 
-    def events(self, *event_types: type[_ET]) -> EventQueue[_ET]:
-        """Returns an EventQueue that listens to events of the given type(s)."""
+    def events(self, *event_types: type[_ET_co]) -> EventQueue[_ET_co]:
+        """Create an EventQueue that listens to events of the given type(s)."""
         return EventQueue(self, *event_types)
 
     def register_queue(self, queue: EventQueue[types.Event]) -> None:
@@ -342,7 +342,7 @@ class Extension:
         if self._connection_task:
             return self._connection_task
 
-        def _clear_task(task: asyncio.Task[None]) -> None:
+        def _clear_task(_: asyncio.Task[None]) -> None:
             self._connection_task = None
 
         self._connection_task = asyncio.create_task(self._try_connect())
@@ -380,7 +380,7 @@ class Extension:
 
         try:
             resp = await health_check_controller_health_check.asyncio_detailed(client=self._client)
-            if resp.status_code != 200:
+            if resp.status_code != HTTPStatus.OK:
                 raise errors.FlixHTTPError(resp.status_code, resp.content.decode())
         except httpx.HTTPError as e:
             raise errors.FlixError("error when attempting to connect to the Flix Client") from e
@@ -527,11 +527,11 @@ class Extension:
             await self._registered_client.get_async_httpx_client().aclose()
 
     async def close(self) -> None:
-        """Deprecated. Use ``aclose()``."""
-        warnings.warn("Use Extension.aclose()", DeprecationWarning)
+        """Deprecated. Use [aclose][flix.Extension.aclose]."""
+        warnings.warn("Use Extension.aclose()", DeprecationWarning, stacklevel=1)
         await self.aclose()
 
-    async def __aenter__(self) -> "Extension":
+    async def __aenter__(self) -> Self:
         await self._client.__aenter__()
         await self.register()
         return self

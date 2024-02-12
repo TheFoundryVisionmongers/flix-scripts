@@ -33,8 +33,9 @@ grpcio-tools = "^1.57.0"
 grpc-stubs = {git = "https://github.com/shabbyrobe/grpc-stubs.git"}
 types-protobuf = "^4.24.0.1"
 mypy-protobuf = "^3.5.0"
-mypy = "^1.5.1"
+mypy = "^1.8.0"
 openapi-python-client = "^0.15.1"
+ruff = "^0.2.1"
 
 
 [tool.poetry.group.examples.dependencies]
@@ -48,6 +49,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.mypy]
 strict = true
 python_version = "3.10"
+files = ["flix", "examples", "stubs"]
 
 [tool.ruff]
 include = ["pyproject.toml", "flix/**/*.py", "examples/**/*.py"]
@@ -58,6 +60,28 @@ line-length = 100
 [tool.ruff.format]
 docstring-code-format = true
 docstring-code-line-length = 50
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    # conflict with ruff format
+    "ISC001", "COM812",
+    # type hinting self/cls is superfluous
+    "ANN101", "ANN102",
+    # lots of arguments is ok as long as they're keyword arguments
+    "PLR0913",
+    # very silly rule, why would you want less informative exceptions
+    "TRY003",
+    # these exception rules are bad
+    "EM",
+    # relative imports are fine and good actually
+    "TID252",
+    # removing else would change the semantics if the return was removed
+    "RET505", "RET506", "RET507", "RET508",
+    # TODO re-enable these ASAP
+    "FBT001", "FBT002", "ANN401",
+    "D101", "D102", "D103", "D105", "D106", "D107",
+]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"

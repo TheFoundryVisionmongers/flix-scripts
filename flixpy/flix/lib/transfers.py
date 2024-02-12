@@ -150,13 +150,12 @@ class MessageSigner(BaseInterceptor):
 def get_channel(hostname: str, port: int, access_key: client.AccessKey) -> grpc.aio.Channel:
     target = f"{hostname}:{port}"
     certificate, names = get_certificate(hostname, port)
-    channel = grpc.aio.secure_channel(
+    return grpc.aio.secure_channel(
         target,
         grpc.ssl_channel_credentials(certificate),
         [("grpc.ssl_target_name_override", name) for name in names],
         interceptors=[cast(grpc.aio.ClientInterceptor, MessageSigner(access_key))],
     )
-    return channel
 
 
 async def transfer(
@@ -171,7 +170,7 @@ async def transfer(
         raise errors.FlixError("must authenticate before transferring files")
 
     servers = await flix_client.servers()
-    server: types.Server = random.choice(servers)
+    server: types.Server = random.choice(servers)  # noqa: S311
     async with get_channel(server.hostname, server.transfer_port, access_key) as channel:
         metadata = json.dumps(
             {

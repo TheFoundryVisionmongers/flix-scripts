@@ -23,7 +23,7 @@ SHOW_ID = 478
 SEQUENCE_ID = 415
 
 
-async def main() -> None:
+async def update_sequence_metadata() -> None:
     """Updates metadata for an existing sequence."""
     async with flix.Client(HOSTNAME, PORT) as client:
         # authenticate with the Flix server
@@ -37,7 +37,7 @@ async def main() -> None:
         print("Current metadata:", sequence.metadata)
 
         # set a single metadata field without persisting to the database
-        sequence.metadata["processed_time"] = datetime.datetime.utcnow()
+        sequence.metadata["processed_time"] = datetime.datetime.now(tz=datetime.timezone.utc)
 
         # set multiple metadata fields
         sequence.metadata.update(
@@ -86,4 +86,4 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(update_sequence_metadata())

@@ -11,7 +11,7 @@ import asyncio
 import flix
 
 
-async def main() -> None:
+async def register_webhook() -> None:
     """Register a webhook with Flix."""
     async with flix.Client("localhost", 8080) as client:
         await client.authenticate("admin", "admin")
@@ -37,4 +37,4 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(register_webhook())
