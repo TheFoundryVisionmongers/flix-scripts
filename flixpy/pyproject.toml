@@ -38,6 +38,7 @@ mypy = "^1.8.0"
 openapi-python-client = "^0.15.1"
 pyright = "^1.1.350"
 ruff = "^0.2.1"
+pre-commit = "^3.6.1"
 
 
 [tool.poetry.group.examples.dependencies]
