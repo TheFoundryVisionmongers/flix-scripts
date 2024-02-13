@@ -51,7 +51,8 @@ build-backend = "poetry.core.masonry.api"
 [tool.mypy]
 strict = true
 python_version = "3.10"
-files = ["flix", "examples", "stubs"]
+packages = ["flix", "examples"]
+mypy_path = "$MYPY_CONFIG_FILE_DIR/stubs"
 
 [tool.pyright]
 typeCheckingMode = "strict"
@@ -61,7 +62,7 @@ ignore = ["**/*_pb2*", "**/extension/extension_api/**"]
 stubPath = "./stubs"
 
 [tool.ruff]
-include = ["pyproject.toml", "flix/**/*.py", "examples/**/*.py"]
+include = ["pyproject.toml", "flix/**/*.py", "examples/**/*.py", "stubs/**/*.pyi"]
 extend-exclude = ["*_pb2*", "flix/extension/extension_api/**"]
 target-version = "py310"
 line-length = 100

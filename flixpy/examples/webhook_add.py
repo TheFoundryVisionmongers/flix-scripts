@@ -21,10 +21,10 @@ async def register_webhook() -> None:
                 "name": "My webhook",
                 "events": [
                     {
-                        "id": 2,  # publish to editorial
+                        "name": "Publish to editorial",  # publish to editorial
                     },
                     {
-                        "id": 3,  # export to sbp
+                        "name": "Sequence revision sent to SBP",  # export to sbp
                     },
                 ],
                 "protocol": "TCP",
