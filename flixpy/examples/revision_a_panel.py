@@ -1,10 +1,12 @@
-"""
-This example shows how to create a new revision of a panel, using a new file for the new panel revision.
+"""Demonstrates importing an image as a new revision of an existing panel.
 
-The new panel revision will then be available within Flix. We are not creating a new sequence revision with this
-example.
+The new panel revision will be available within Flix.
+We are not creating a new sequence revision with this example.
 """
+from __future__ import annotations
+
 import asyncio
+from pathlib import Path
 
 import flix
 
@@ -17,12 +19,11 @@ PASSWORD = "admin"
 # Flix IDs
 SHOW_ID = 1
 SEQUENCE_ID = 1
-SEQUENCE_REVISION = 1
 PANEL_ID = 1
 PANEL_REVISION = 1
 
 # New file to be used to create the new panel revision
-FILEPATH = "./new_file.psd"
+FILEPATH = Path("./new_file.psd")
 
 
 async def main() -> None:
@@ -32,7 +33,7 @@ async def main() -> None:
         # Get the show from the server
         show = await client.get_show(SHOW_ID)
         # Create an 'artwork' media object with the file and transcode it to create a thumbnail
-        with open(FILEPATH, "rb") as f:
+        with FILEPATH.open("rb") as f:
             asset = await show.upload_file(f, "artwork")
         job_ids = await show.transcode_assets([asset])
 

@@ -1,0 +1,29 @@
+files: ^flixpy/
+repos:
+- repo: local
+  hooks:
+    - id: poetry-check
+      name: poetry check
+      entry: poetry -C flixpy check
+      language: python
+      pass_filenames: false
+      files: '^(.*/)?(pyproject.toml|poetry.toml)$'
+
+    - id: ruff-check
+      name: ruff check
+      entry: poetry -C flixpy run ruff check --force-exclude
+      language: python
+      types_or: [python, pyi]
+
+    - id: ruff-format
+      name: ruff format
+      entry: poetry -C flixpy run ruff format --force-exclude
+      language: python
+      types_or: [python, pyi]
+
+    - id: mypy
+      name: mypy
+      entry: poetry -C flixpy run mypy --config-file flixpy/pyproject.toml
+      language: python
+      types_or: [python, pyi]
+      exclude: '.*pb2\w*\.py$'

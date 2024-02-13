@@ -1,0 +1,21 @@
+name: Setup
+
+inputs:
+  python_version:
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install Poetry
+      run: pipx install poetry
+      shell: bash
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python_version }}
+        cache: 'poetry'
+    - name: Install Dependencies
+      run: poetry install
+      shell: bash
+      working-directory: ./flixpy

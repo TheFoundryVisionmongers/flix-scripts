@@ -1,5 +1,5 @@
-from collections.abc import Coroutine
-from typing import Any, Callable, overload, ParamSpec, TypeVar
+from collections.abc import Callable, Coroutine
+from typing import Any, ParamSpec, TypeVar, overload
 
 _P = ParamSpec("_P")
 _R = TypeVar("_R")
@@ -29,4 +29,6 @@ class AsyncClient(Client):
     @overload
     def on(self, event: str, handler: Callable[_P, _R], namespace: str | None = None) -> None: ...
     @overload
-    def on(self, event: str, namespace: str | None = None) -> Callable[[Callable[_P, _R]], Callable[_P, _R]]: ...
+    def on(
+        self, event: str, namespace: str | None = None
+    ) -> Callable[[Callable[_P, _R]], Callable[_P, _R]]: ...

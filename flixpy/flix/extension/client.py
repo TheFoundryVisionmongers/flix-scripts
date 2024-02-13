@@ -1,18 +1,26 @@
+"""The implementation of a General Remote Client API client."""
+
+from __future__ import annotations
+
 import asyncio
 import logging
 import warnings
 import weakref
 from collections.abc import AsyncIterable, AsyncIterator, Coroutine
-from types import TracebackType
-from typing import TypeVar, cast, Any
+from http import HTTPStatus
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 import httpx
 import socketio
+from typing_extensions import Self
 
-from . import extension_api
-from . import types
-from .extension_api import models, types as api_types
 from ..lib import errors
+from . import extension_api, types
+from .extension_api import models
+from .extension_api import types as api_types
+
+if TYPE_CHECKING:
+    from types import TracebackType
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +35,7 @@ U = TypeVar("U")
 
 
 def _assert_ok(resp: api_types.Response[U]) -> None:
-    if resp.status_code < 200 or resp.status_code >= 300:
+    if resp.status_code < HTTPStatus.OK or resp.status_code >= HTTPStatus.MULTIPLE_CHOICES:
         raise errors.FlixHTTPError(resp.status_code, resp.content.decode())
 
 
@@ -37,28 +45,33 @@ def _assert_response(expect: type[T], resp: api_types.Response[U]) -> T:
     if resp.parsed is not None:
         return cast(T, resp.parsed)
 
-    raise errors.FlixError("expected response type {}, got: {!r}".format(expect, resp.content))
+    raise errors.FlixError(f"expected response type {expect}, got: {resp.content!r}")
 
 
-_ET = TypeVar("_ET", bound=types.Event, covariant=True)
+_ET_co = TypeVar("_ET_co", bound=types.Event, covariant=True)
 
 
-class EventQueue(AsyncIterable[_ET]):
+class EventQueue(AsyncIterable[_ET_co]):
     """An EventQueue listens for events of one or more given types.
 
     Events can be read from a queue by iterating over the object using async for.
-    If you need to ensure that the queue has started listening for events before performing some action,
-    you can use it as a context manager using the async with statement::
+    If you need to ensure that the queue has started listening for events before
+    performing some action, you can use it as a context manager using the async with statement::
 
-        async with extension.events(ActionEvent) as events:
-            # now we are already listening for events, so we won't miss any action events from the import
-            await extension.import_panels(["/path/to/image.png"])
+        async with extension.events(
+            ActionEvent
+        ) as events:
+            # now we are already listening for events,
+            # so we won't miss any action events from the import
+            await extension.import_panels(
+                ["/path/to/image.png"]
+            )
 
             async for action_event in events:
                 print("Got event:", action_event)
     """
 
-    def __init__(self, ext: "Extension", *event_types: type[_ET]):
+    def __init__(self, ext: Extension, *event_types: type[_ET_co]) -> None:
         self._ext = ext
         self._queue: asyncio.Queue[types.Event] | None = asyncio.Queue()
         self._event_types = event_types
@@ -75,7 +88,7 @@ class EventQueue(AsyncIterable[_ET]):
         self._done.cancel()
         self._queue = None
 
-    async def __aenter__(self) -> "EventQueue[_ET]":
+    async def __aenter__(self) -> EventQueue[_ET_co]:
         return self
 
     async def __aexit__(
@@ -87,11 +100,10 @@ class EventQueue(AsyncIterable[_ET]):
         self.close()
 
     async def _until_cancelled(self, cor: Coroutine[Any, Any, T]) -> T:
-        """Waits for the given coroutine to complete and returns the result,
-        or raises a CancelledError if self._done is cancelled."""
+        """Cancel a coroutine if this EventQueue is closed."""
         task = asyncio.create_task(cor)
 
-        def _cancel(f: asyncio.Future[None]) -> None:
+        def _cancel(_: asyncio.Future[None]) -> None:
             task.cancel()
 
         self._done.add_done_callback(_cancel)
@@ -100,7 +112,7 @@ class EventQueue(AsyncIterable[_ET]):
         finally:
             self._done.remove_done_callback(_cancel)
 
-    async def __aiter__(self) -> AsyncIterator[_ET]:
+    async def __aiter__(self) -> AsyncIterator[_ET_co]:
         while self._queue is not None:
             try:
                 event = await self._until_cancelled(self._queue.get())
@@ -115,26 +127,33 @@ class EventQueue(AsyncIterable[_ET]):
 
 
 class Extension:
-    """This class provides functions for interacting with the Flix Client, useful for implementing extensions that
-    communicate with Flix.
+    """Provides functions for communicating with the Flix Client from remote extensions.
 
-    The class is best used as a context manager in a with statement::
+    The class is best used as a context manager in a with statement:
 
-        with Extension("My Extension", client_uid="97c8fd5d-c1f8-4561-9268-8701b5fa48d4") as extension:
-            await extension.import_panels(["/path/to/image.png"])
+    ```py
+    with Extension(
+        name="My Extension",
+        client_uid="97c8fd5d-c1f8-4561-9268-8701b5fa48d4",
+    ) as extension:
+        await extension.import_panels(
+            ["/path/to/image.png"]
+        )
+    ```
 
-    If you need a long-lived object, however, you can use the object as-is, as long as you remember to
-    call close when you're done::
+    If you need a long-lived object, however, you can use the object as-is,
+    as long as you remember to call close when you're done:
 
-        extension = Extension("My Extension", client_uid="97c8fd5d-c1f8-4561-9268-8701b5fa48d4")
-        await extension.import_panels(["/path/to/image.png"])
-        await extension.close()
-
-    :param name: The name of the extension
-    :param client_uid: A unique ID for the extension; should remain unchanged for a given extension
-    :param version: An optional version string for the extension
-    :param base_url: The URL to use to connect to the Flix Client, if something other than
-        the standard Flix Client port on localhost
+    ```python
+    extension = Extension(
+        name="My Extension",
+        client_uid="97c8fd5d-c1f8-4561-9268-8701b5fa48d4",
+    )
+    await extension.import_panels(
+        ["/path/to/image.png"]
+    )
+    await extension.close()
+    ```
     """
 
     def __init__(
@@ -144,6 +163,15 @@ class Extension:
         version: str | None = None,
         base_url: str = BASE_URL,
     ) -> None:
+        """Initialise an Extension.
+
+        Args:
+            name: The name of the extension
+            client_uid: A unique ID for the extension; should remain unchanged for a given extension
+            version: An optional version string for the extension
+            base_url: The URL to use to connect to the Flix Client, if something other than
+                the standard Flix Client port on localhost
+        """
         self.name = name
         self.client_uid = client_uid
         self.version = version
@@ -231,7 +259,8 @@ class Extension:
 
     async def _on_message(self, event_data: dict[str, Any]) -> None:
         if not self.online:
-            # set online here rather than in _on_connect, since we still get a connect event if unauthorised
+            # set online here rather than in _on_connect,
+            # since we still get a connect event if unauthorised
             self.online = True
             await self._update_status()
 
@@ -254,20 +283,22 @@ class Extension:
         for queue in self._queues:
             queue.put(event)
 
-    def events(self, *event_types: type[_ET]) -> EventQueue[_ET]:
-        """Returns an EventQueue that listens to events of the given type(s)."""
+    def events(self, *event_types: type[_ET_co]) -> EventQueue[_ET_co]:
+        """Create an EventQueue that listens to events of the given type(s)."""
         return EventQueue(self, *event_types)
 
     def register_queue(self, queue: EventQueue[types.Event]) -> None:
-        """Instructs this Extension instance to forward events to the given queue.
+        """Instruct this Extension instance to forward events to the given queue.
 
-        This method should not generally be called manually."""
+        This method should not generally be called manually.
+        """
         self._queues.add(queue)
 
     def unregister_queue(self, queue: EventQueue[types.Event]) -> None:
-        """Instructs this Extension instance to stop forwarding events to the given queue.
+        """Instruct this Extension instance to stop forwarding events to the given queue.
 
-        This method should not generally be called manually."""
+        This method should not generally be called manually.
+        """
         self._queues.discard(queue)
 
     async def _try_connect(self) -> None:
@@ -280,7 +311,9 @@ class Extension:
             try:
                 registered_client = await self._get_registered_client()
             except (errors.FlixError, httpx.HTTPError):
-                logger.exception("could not connect to client, waiting 10 seconds before retrying...")
+                logger.exception(
+                    "could not connect to client, waiting 10 seconds before retrying..."
+                )
                 await asyncio.sleep(10)
                 continue
 
@@ -290,23 +323,26 @@ class Extension:
         await self.sio.connect(self.base_url, auth={"token": registered_client.token})
 
     def register(self) -> asyncio.Task[None]:
-        """Establishes a connection to the Flix Client.
+        """Establish a connection to the Flix Client.
 
-        This method will register the extension with the Flix Client and start listening for websocket events.
-        When using the Extension instance as a context method (using the with statement),
-        this method does not need to be called explicitly.
+        This method will register the extension with the Flix Client and start listening
+        for websocket events. When using the Extension instance as a context method
+        (using the with statement), this method does not need to be called explicitly.
 
         If already connected to the Flix Client, this method is a no-op.
 
-        This method will return immediately and attempt to connect to the Flix Client in the background.
-        It returns a task object that completes when a successful connection has been established.
-        Awaiting this task can be useful if you want to ensure that the registration succeeded before
-        continuing with further initialisation of your extension.
+        This method will return immediately and attempt to connect to the Flix Client
+        in the background.
+
+        Returns:
+            A [Task][asyncio.Task] object that completes when a successful connection
+                has been established. It can be awaited to ensure that the registration
+                succeeded before proceeding.
         """
         if self._connection_task:
             return self._connection_task
 
-        def _clear_task(task: asyncio.Task[None]) -> None:
+        def _clear_task(_: asyncio.Task[None]) -> None:
             self._connection_task = None
 
         self._connection_task = asyncio.create_task(self._try_connect())
@@ -335,52 +371,61 @@ class Extension:
         return self._registered_client
 
     async def health_check(self) -> None:
-        """Checks if the Flix Client is currently running and accepting remote API requests.
+        """Check if the Flix Client is currently running and accepting remote API requests.
 
-        :raises errors.FlixError: If the client is not running
+        Raises:
+            errors.FlixError: If the client is not running
         """
         from .extension_api.api.health_check import health_check_controller_health_check
 
         try:
             resp = await health_check_controller_health_check.asyncio_detailed(client=self._client)
-            if resp.status_code != 200:
+            if resp.status_code != HTTPStatus.OK:
                 raise errors.FlixHTTPError(resp.status_code, resp.content.decode())
         except httpx.HTTPError as e:
             raise errors.FlixError("error when attempting to connect to the Flix Client") from e
 
     async def get_registered_extensions(self) -> list[models.RegistrationDetails]:
-        """Returns a list of extensions currently registered with the Flix Client."""
+        """Get a list of extensions currently registered with the Flix Client."""
         from .extension_api.api.api_registration import registration_controller_get_all
 
         return _assert_response(
             list[models.RegistrationDetails],
-            await registration_controller_get_all.asyncio_detailed(client=await self._get_registered_client()),
+            await registration_controller_get_all.asyncio_detailed(
+                client=await self._get_registered_client()
+            ),
         )
 
     async def get_project_details(self) -> types.ProjectDetails:
-        """Returns details about the currently open show, episode, sequence and/or sequence revision.
+        """Get details about the currently open show, episode, sequence and/or sequence revision.
 
-        :return: An object containing information about the currently open project.
+        Returns:
+            An object containing information about the currently open project.
         """
         from .extension_api.api.project_details import project_controller_get
 
         resp = _assert_response(
             models.ProjectDetailsDto,
-            await project_controller_get.asyncio_detailed(client=await self._get_registered_client()),
+            await project_controller_get.asyncio_detailed(
+                client=await self._get_registered_client()
+            ),
         )
 
         return types.ProjectDetails.from_model(resp)
 
     async def get_status(self) -> types.PanelBrowserStatus:
-        """Returns details about the current status of the Flix Client.
+        """Get details about the current status of the Flix Client.
 
-        :return: An object containing information about the current Flix Client status.
+        Returns:
+            An object containing information about the current Flix Client status.
         """
         from .extension_api.api.status import status_controller_get
 
         resp = _assert_response(
             models.StatusResponse,
-            await status_controller_get.asyncio_detailed(client=await self._get_registered_client()),
+            await status_controller_get.asyncio_detailed(
+                client=await self._get_registered_client()
+            ),
         )
 
         return types.PanelBrowserStatus.from_model(resp)
@@ -395,13 +440,18 @@ class Extension:
     ) -> None:
         """Instructs the Flix Client to import the given files as panel revisions.
 
-        :param paths: A list of absolute paths to files to import
-        :param source_file: The file to use as the source file for the imported panels
-        :param start_index: If specified, panels will be inserted at the given index
-            instead of the currently selected panel index
-        :param replace_panels: If True, version up existing panels instead of inserting new ones
+        Args:
+            paths: A list of absolute paths to files to import.
+            origin: The name of the application that the panels originate from.
+            source_file: The file to use as the source file for the imported panels.
+            start_index: If specified, panels will be inserted at the given index.
+                instead of the currently selected panel index.
+            replace_panels: If True, version up existing panels instead of inserting new ones.
         """
-        from .extension_api.api.panel_management import panel_controller_create, panel_controller_update
+        from .extension_api.api.panel_management import (
+            panel_controller_create,
+            panel_controller_update,
+        )
 
         json_body = models.BulkPanelRequest(
             paths=paths,
@@ -435,13 +485,19 @@ class Extension:
         asset_type: types.AssetType,
         target_folder: str,
     ) -> types.DownloadResponse:
-        """Instructs the Flix Client to download an asset to a local directory.
+        """Instruct the Flix Client to download an asset to a local directory.
 
-        :param asset_id: The ID of the asset to download
-        :param asset_type: The type of asset (media object) to download
-        :param target_folder: The directory to download the asset to
+        Args:
+            asset_id: The ID of the asset to download.
+            asset_type: The type of asset (media object) to download.
+            target_folder: The directory to download the asset to.
+
+        Returns:
+            Information about the downloaded file.
         """
-        from .extension_api.api.media_object_download import download_controller_download_media_object
+        from .extension_api.api.media_object_download import (
+            download_controller_download_media_object,
+        )
 
         resp = _assert_response(
             models.DownloadResponse,
@@ -471,11 +527,11 @@ class Extension:
             await self._registered_client.get_async_httpx_client().aclose()
 
     async def close(self) -> None:
-        """Deprecated. Use ``aclose()``."""
-        warnings.warn("Use Extension.aclose()", DeprecationWarning)
+        """Deprecated. Use [aclose][flix.Extension.aclose]."""
+        warnings.warn("Use Extension.aclose()", DeprecationWarning, stacklevel=1)
         await self.aclose()
 
-    async def __aenter__(self) -> "Extension":
+    async def __aenter__(self) -> Self:
         await self._client.__aenter__()
         await self.register()
         return self

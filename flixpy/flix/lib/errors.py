@@ -1,5 +1,8 @@
-import dataclasses
+"""Error classes used by the Flix SDK."""
 
+from __future__ import annotations
+
+import dataclasses
 
 __all__ = ["FlixError", "FlixHTTPError", "FlixNotVerifiedError"]
 
@@ -16,6 +19,7 @@ class FlixHTTPError(FlixError):
     error_message: str
 
     def __str__(self) -> str:
+        """Get a human-readable representation of the error."""
         return f"Error {self.status_code}: {self.error_message}"
 
 
@@ -23,6 +27,5 @@ class FlixNotVerifiedError(FlixHTTPError):
     """Raised when a request failed due to not being authenticated.
 
     This can happen if no access key was set, the access key was expired or invalid,
-    or the wrong username or password was provided when attempting to authenticate."""
-
-    pass
+    or the wrong username or password was provided when attempting to authenticate.
+    """

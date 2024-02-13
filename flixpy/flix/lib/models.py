@@ -1,4 +1,8 @@
-from typing import TypedDict, Any
+"""Models of the raw JSON types used by the Flix Server."""
+
+from __future__ import annotations
+
+from typing import Any, TypedDict
 
 
 class MetadataField(TypedDict, total=False):
@@ -231,7 +235,7 @@ class PanelRevision(TypedDict, total=False):
     keyframes: list[Keyframe]
     layer_transform: bool
     duplicate: DuplicateRef
-    related_panels: list["PanelRevision"]
+    related_panels: list[PanelRevision]
     panel: Panel
 
 

@@ -1,18 +1,22 @@
-import base64
+"""The implementations of the commands available from the ``flix`` command-line utility."""
+
+from __future__ import annotations
 
 import asyncio
+import base64
+import contextlib
 import json
 import pathlib
 import ssl
 import urllib.parse
-from typing import Any, cast, TypedDict
+from typing import Any, TypedDict, cast
 
 import aiohttp.web
 import appdirs
 import asyncclick as click
 
+from ..lib import client, errors, forms, models, types, webhooks
 from . import interactive_client
-from ..lib import client, errors, forms, webhooks, models, types
 
 _CONFIG_DIR = pathlib.Path(appdirs.user_config_dir("flix-sdk", "foundry"))
 _CONFIG_FILE = _CONFIG_DIR / "config.json"
@@ -56,7 +60,9 @@ async def get_client(ctx: click.Context, server: str | None = None) -> client.Cl
 @click.option("-u", "--username", type=str, help="The username to authenticate with.")
 @click.option("-p", "--password", type=str, help="The password to authenticate with.")
 @click.pass_context
-async def flix_cli(ctx: click.Context, server: str | None, username: str | None, password: str | None) -> None:
+async def flix_cli(
+    ctx: click.Context, server: str | None, username: str | None, password: str | None
+) -> None:
     cfg = read_config()
     ctx.ensure_object(dict)
     ctx.obj["config"] = cfg
@@ -67,9 +73,8 @@ async def flix_cli(ctx: click.Context, server: str | None, username: str | None,
 
 @flix_cli.result_callback()
 @click.pass_context
-def save_config(ctx: click.Context, *args: Any, **kwargs: Any) -> None:
+def save_config(ctx: click.Context, /, *_args: Any, **_kwargs: Any) -> None:
     write_config(ctx.obj["config"])
-    pass
 
 
 @flix_cli.command("config", help="Set default configuration values.")
@@ -107,10 +112,8 @@ def config(
 @flix_cli.command("logout", help="Log out the user from Flix by removing any active access key.")
 @click.pass_context
 def logout(ctx: click.Context) -> None:
-    try:
+    with contextlib.suppress(KeyError):
         del ctx.obj["config"]["access_key"]
-    except KeyError:
-        pass
 
 
 @flix_cli.command(help="Perform cURL-like requests to a Flix server.")
@@ -125,7 +128,10 @@ def logout(ctx: click.Context) -> None:
     "-X",
     "--request",
     type=click.Choice(["GET", "POST", "PATCH", "PUT", "DELETE"]),
-    help="The HTTP method. By default GET for requests with no payload, and POST for requests with a payload.",
+    help=(
+        "The HTTP method. By default GET for requests with no payload, "
+        "and POST for requests with a payload."
+    ),
 )
 @click.pass_context
 async def curl(ctx: click.Context, url: str, data: Any | None, request: str | None) -> None:
@@ -157,11 +163,13 @@ async def webhook_add(ctx: click.Context) -> None:
         data = webhook_form.prompt()
         click.echo(err=True)
         webhook_form.print(data, err=True)
-        if click.confirm("Save webhook?", True, err=True):
+        if click.confirm("Save webhook?", default=True, err=True):
             wh = await flix_client.post("/webhook", data)
             click.echo(f"New webhook secret: {wh['secret']}", err=True)
             click.echo(
-                "Ensure that you have noted down the secret, as you will not be able to view it again.", err=True
+                "Ensure that you have noted down the secret, "
+                "as you will not be able to view it again.",
+                err=True,
             )
 
 
@@ -179,7 +187,8 @@ async def webhook_list(ctx: click.Context) -> None:
                 click.echo()
 
 
-_WebhookResponse = TypedDict("_WebhookResponse", {"webhooks": list[models.Webhook]})
+class _WebhookResponse(TypedDict):
+    webhooks: list[models.Webhook]
 
 
 @webhook.command("delete", help="Delete a webhook.")
@@ -199,9 +208,12 @@ async def webhook_delete(ctx: click.Context) -> None:
         wh = webhooks["webhooks"][j]
         webhook_form.print(wh, err=True)
 
-        if click.confirm("Delete this webhook?", False, err=True):
+        if click.confirm("Delete this webhook?", default=False, err=True):
             await flix_client.delete("/webhook/{}".format(webhooks["webhooks"][j]["id"]))
-            click.echo("Deleted successfully. It may take a few seconds for your changes to be reflected.", err=True)
+            click.echo(
+                "Deleted successfully. It may take a few seconds for your changes to be reflected.",
+                err=True,
+            )
 
 
 @webhook.command("edit", help="Edit a webhook.")
@@ -221,7 +233,10 @@ async def webhook_edit(ctx: click.Context) -> None:
         wh = webhooks["webhooks"][j]
         wh = webhook_form.prompt_edit(wh)
         await flix_client.put(f"/webhook/{wh['id']}", wh)
-        click.echo("Saved successfully. It may take a few seconds for your changes to be reflected.", err=True)
+        click.echo(
+            "Saved successfully. It may take a few seconds for your changes to be reflected.",
+            err=True,
+        )
 
 
 @webhook.command("ping", help="Ping a webhook.")
@@ -238,27 +253,43 @@ async def webhook_ping(ctx: click.Context) -> None:
             prompt_suffix=" ",
         )
         wh = webhooks["webhooks"][j]
-        print(await flix_client.post(f"/webhook/{wh['id']}", wh))
+        click.echo(await flix_client.post(f"/webhook/{wh['id']}", wh))
 
 
 @webhook.command("server")
 @click.argument("path", type=str)
-@click.option("-p", "--port", type=int, default=8080, help="The port on which to listen for events.", show_default=True)
-@click.option("--address", type=str, default="0.0.0.0", help="The address to listen on.", show_default=True)
+@click.option(
+    "-p",
+    "--port",
+    type=int,
+    default=8080,
+    help="The port on which to listen for events.",
+    show_default=True,
+)
+@click.option(
+    "--address",
+    type=str,
+    default="0.0.0.0",  # noqa: S104
+    help="The address to listen on.",
+    show_default=True,
+)
 @click.option(
     "--secret",
     type=str,
     required=True,
     help="The secret given when registering the webhook, used to authenticate events.",
 )
-@click.option("--certfile", type=str, help="Path to a signed certificate. Providing this will enable HTTPS.")
+@click.option(
+    "--certfile", type=str, help="Path to a signed certificate. Providing this will enable HTTPS."
+)
 @click.option("--keyfile", type=str, help="Path to the private key used to sign the certificate.")
 async def webhook_server(
     path: str, port: int, address: str, secret: str, certfile: str | None, keyfile: str | None
 ) -> None:
     """Run a test server that prints events to standard out.
 
-    PATH should be the path of the endpoint that events will be posted to, not including the hostname, e.g. /events.
+    PATH should be the path of the endpoint that events will be posted to,
+    not including the hostname, e.g. /events.
     """
 
     @webhooks.webhook(secret=secret)
@@ -294,7 +325,11 @@ async def contactsheet_edit_loop(
     preview_file = "preview.pdf"
     while True:
         action = forms.prompt_enum(
-            [forms.Choice("edit", "Edit"), forms.Choice("preview", "Preview"), forms.Choice("save", "Save")],
+            [
+                forms.Choice("edit", "Edit"),
+                forms.Choice("preview", "Preview"),
+                forms.Choice("save", "Save"),
+            ],
             prompt="What would you like to do?",
             prompt_suffix=" ",
         )
@@ -309,7 +344,7 @@ async def contactsheet_edit_loop(
             pdf_response = await flix_client.request(
                 "GET", "/contactsheet/preview", params={"data": b64, "format": "pdf"}
             )
-            with open(preview_file, "wb") as f:
+            with pathlib.Path(preview_file).open("wb") as f:  # noqa: ASYNC101
                 f.write(await pdf_response.read())
         elif action == "save":
             return data
@@ -326,12 +361,13 @@ async def contactsheet_add(ctx: click.Context) -> None:
 
         data = await contactsheet_edit_loop(flix_client, contactsheet_form, data)
 
-        if click.confirm("Save contact sheet template?", True, err=True):
+        if click.confirm("Save contact sheet template?", default=True, err=True):
             await flix_client.post("/contactsheet", data)
-            click.echo(f"Contact sheet template saved successfully.", err=True)
+            click.echo("Contact sheet template saved successfully.", err=True)
 
 
-_ContactSheetResponse = TypedDict("_ContactSheetResponse", {"contact_sheets": list[models.ContactSheet]})
+class _ContactSheetResponse(TypedDict):
+    contact_sheets: list[models.ContactSheet]
 
 
 @contactsheet.command("list", help="List all contact sheet templates.")
@@ -345,7 +381,8 @@ async def contactsheet_list(ctx: click.Context) -> None:
             click.echo("ID: {}".format(cs["id"]))
             contactsheet_form.print(cs)
             show_list = ", ".join(
-                "{} [{}]".format(show["title"], show["tracking_code"]) for show in cs.get("shows") or []
+                "{} [{}]".format(show["title"], show["tracking_code"])
+                for show in cs.get("shows") or []
             )
             click.echo("Assigned shows: {}".format(show_list or "None"))
             if i < len(contactsheets["contact_sheets"]) - 1:
@@ -369,9 +406,14 @@ async def contactsheet_delete(ctx: click.Context) -> None:
         cs = contactsheets["contact_sheets"][j]
         contactsheet_form.print(cs, err=True)
 
-        if click.confirm("Delete this contact sheet template?", False, err=True):
-            await flix_client.delete("/contactsheet/{}".format(contactsheets["contact_sheets"][j]["id"]))
-            click.echo("Deleted successfully. It may take a few seconds for your changes to be reflected.", err=True)
+        if click.confirm("Delete this contact sheet template?", default=False, err=True):
+            await flix_client.delete(
+                "/contactsheet/{}".format(contactsheets["contact_sheets"][j]["id"])
+            )
+            click.echo(
+                "Deleted successfully. It may take a few seconds for your changes to be reflected.",
+                err=True,
+            )
 
 
 @contactsheet.command("edit", help="Edit a contact sheet template.")
@@ -389,21 +431,23 @@ async def contactsheet_edit(ctx: click.Context) -> None:
             prompt_suffix=" ",
         )
         cs = contactsheets["contact_sheets"][j]
-        try:
+        with contextlib.suppress(KeyError):
             # don't update shows
             del cs["shows"]
-        except KeyError:
-            pass
 
         cs = contactsheet_form.prompt_edit(cs)
 
         cs = await contactsheet_edit_loop(flix_client, contactsheet_form, cs)
 
         await flix_client.patch(f"/contactsheet/{cs['id']}", cs)
-        click.echo("Saved successfully. It may take a few seconds for your changes to be reflected.", err=True)
+        click.echo(
+            "Saved successfully. It may take a few seconds for your changes to be reflected.",
+            err=True,
+        )
 
 
-_ShowResponse = TypedDict("_ShowResponse", {"shows": list[models.Show]})
+class _ShowResponse(TypedDict):
+    shows: list[models.Show]
 
 
 @contactsheet.command("assign", help="Assign a contact sheet template to shows.")
@@ -426,7 +470,8 @@ async def contactsheet_assign(ctx: click.Context) -> None:
 
         while True:
             show_list = ", ".join(
-                "{} [{}]".format(show["title"], show["tracking_code"]) for show in assigned_shows or []
+                "{} [{}]".format(show["title"], show["tracking_code"])
+                for show in assigned_shows or []
             )
             click.echo("Currently assigned shows: {}".format(show_list or "None"), err=True)
 
@@ -448,7 +493,7 @@ async def contactsheet_assign(ctx: click.Context) -> None:
                 break
 
             if len(shows) == 0:
-                click.echo("Error: No shows to {}".format(action), err=True)
+                click.echo(f"Error: No shows to {action}", err=True)
                 continue
 
             selected_shows = forms.prompt_multichoice(
@@ -456,7 +501,7 @@ async def contactsheet_assign(ctx: click.Context) -> None:
                     forms.Choice(i, "{} [{}]".format(show["title"], show["tracking_code"]))
                     for i, show in enumerate(shows)
                 ],
-                prompt="Specify a comma-separated list of shows to {}".format(action),
+                prompt=f"Specify a comma-separated list of shows to {action}",
             )
 
             if action == "assign":
@@ -504,8 +549,11 @@ async def choose_sequence_revision(
             [
                 forms.Choice(
                     rev,
-                    f"{rev.comment or '[No comment]'} - {rev.owner.username if rev.owner is not None else ''} "
-                    f"({rev.created_date})",
+                    "{comment} - {username} ({created_date})".format(
+                        comment=rev.comment or "[No comment]",
+                        username=rev.owner.username if rev.owner is not None else "",
+                        created_date=rev.created_date,
+                    ),
                 )
                 for rev in revs
             ],
@@ -565,7 +613,9 @@ async def export_quicktime(ctx: click.Context, include_dialogue: bool) -> None:
 async def export_dialogue(ctx: click.Context, file_format: str) -> None:
     async with await get_client(ctx) as flix_client:
         _, _, rev = await choose_sequence_revision(flix_client)
-        clip_name = click.prompt("Avid clip name", type=str, err=True) if file_format == "avid" else ""
+        clip_name = (
+            click.prompt("Avid clip name", type=str, err=True) if file_format == "avid" else ""
+        )
         dialogue_media_object = await rev.export_dialogue(
             file_format=types.DialogueFormat(file_format),
             clip_name=clip_name,
@@ -584,7 +634,10 @@ async def export_yaml(ctx: click.Context, anonymize: bool, include_assets: bool)
         if not click.confirm("Export all sequences?", err=True, default=True):
             all_sequences = await show.get_all_sequences()
             sequences = forms.prompt_multichoice(
-                [forms.Choice(seq, f"{seq.description} [{seq.tracking_code}]") for seq in all_sequences],
+                [
+                    forms.Choice(seq, f"{seq.description} [{seq.tracking_code}]")
+                    for seq in all_sequences
+                ],
                 label="Select sequences to export",
             )
 

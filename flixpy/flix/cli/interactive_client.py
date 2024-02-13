@@ -1,17 +1,22 @@
-from typing import Any
+"""A client that supports interactive authentication."""
 
-import aiohttp
+from __future__ import annotations
+
+import contextlib
+from typing import TYPE_CHECKING, Any
+
 import asyncclick as click
 
 from ..lib import client, errors
 
+if TYPE_CHECKING:
+    import aiohttp
 
 __all__ = ["InteractiveClient"]
 
 
 class InteractiveClient(client.Client):
-    """
-    An interactive Flix client that will automatically handle authentication.
+    """An interactive Flix client that will automatically handle authentication.
 
     The user will be prompted for authentication details if not specified elsewhere.
     The access key will be read from the configuration if available on initialisation,
@@ -26,7 +31,7 @@ class InteractiveClient(client.Client):
         config: dict[str, Any],
         username: str | None = None,
         password: str | None = None,
-    ):
+    ) -> None:
         try:
             access_key = client.AccessKey(config["access_key"])
         except KeyError:
@@ -46,10 +51,8 @@ class InteractiveClient(client.Client):
     async def _sign_in(self) -> None:
         click.echo("Not signed in, attempting to authenticate...", err=True)
 
-        try:
+        with contextlib.suppress(KeyError):
             del self._config["access_key"]
-        except KeyError:
-            pass
 
         username = self._username or click.prompt("Username", type=str, err=True)
         password = self._password or click.prompt("Password", type=str, hide_input=True, err=True)

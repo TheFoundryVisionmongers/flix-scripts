@@ -10,6 +10,7 @@ such as type hinting and streaming uploads to Flix.
 
 Note that this example does not take shots into account.
 """
+from __future__ import annotations
 
 import asyncio
 import logging
@@ -187,7 +188,7 @@ async def upload_thumbnail(show: flix.Show, image_url: str) -> flix.Asset:
         # stream the image to Flix
         return await show.upload_stream(
             # stream image in 8 MiB chunks
-            response.content.iter_chunked(1024*1024*8),
+            response.content.iter_chunked(1024 * 1024 * 8),
             flix.AssetType.SHOW_THUMBNAIL,
             name=response.url.name,
             size=response.content_length,

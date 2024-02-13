@@ -1,17 +1,23 @@
+"""Pythonic abstractions of the types use by the General Remote Client API."""
+
+from __future__ import annotations
+
 import dataclasses
 import enum
-from typing import Any, Protocol
+from typing import Any
 
+from typing_extensions import Self
+
+from ..lib import types as flix_types
 from .extension_api import models
 from .extension_api.models import (
-    ActionType,
     ActionState,
+    ActionType,
     AssetType,
     ClientEventType,
-    SourceFileType,
     SourceFilePreviewMode,
+    SourceFileType,
 )
-from ..lib import types as flix_types
 
 __all__ = [
     "SourceFile",
@@ -65,7 +71,7 @@ class ProjectDetails:
     sequence_revision: flix_types.SequenceRevision | None = None
 
     @classmethod
-    def from_model(cls, data: models.ProjectDetailsDto) -> "ProjectDetails":
+    def from_model(cls, data: models.ProjectDetailsDto) -> Self:
         show: flix_types.Show | None = None
         episode: flix_types.Episode | None = None
         sequence: flix_types.Sequence | None = None
@@ -132,18 +138,13 @@ class ConnectionEvent(Event):
     online: bool
 
 
-class _BaseEvent(Protocol):
-    def to_dict(self) -> dict[str, Any]:
-        ...
-
-
 @dataclasses.dataclass
 class ClientEvent(Event):
     type: str
     additional_properties: dict[str, Any]
 
     @classmethod
-    def parse_event(cls, event_data: dict[str, Any]) -> "ClientEvent":
+    def parse_event(cls, event_data: dict[str, Any]) -> ClientEvent:  # noqa: PLR0911
         try:
             ws_event = models.WebsocketEvent.from_dict(event_data)
         except (ValueError, LookupError, TypeError) as e:
@@ -152,24 +153,24 @@ class ClientEvent(Event):
             else:
                 raise ValueError("unexpected event format") from e
 
-        data, type = ws_event.data.data, ws_event.data.type
+        data, event_type = ws_event.data.data, ws_event.data.type
         if isinstance(data, models.OpenFileEvent):
-            return OpenEvent.from_dict(type, data)
+            return OpenEvent.from_dict(event_type, data)
         elif isinstance(data, models.OpenSourceFileEvent):
-            return OpenSourceFileEvent.from_dict(type, data)
+            return OpenSourceFileEvent.from_dict(event_type, data)
         elif isinstance(data, models.ActionEvent):
-            return ActionEvent.from_dict(type, data)
+            return ActionEvent.from_dict(event_type, data)
         elif isinstance(data, models.ProjectDetailsDto):
-            return ProjectEvent.from_dict(type, data)
+            return ProjectEvent.from_dict(event_type, data)
         elif isinstance(data, models.VersionEvent):
-            return VersionEvent.from_dict(type, data)
+            return VersionEvent.from_dict(event_type, data)
         elif isinstance(data, models.StatusResponse):
-            return StatusEvent.from_dict(type, data)
+            return StatusEvent.from_dict(event_type, data)
         elif isinstance(data, models.PingEvent):
-            return ClientPingEvent.from_dict(type, data)
+            return ClientPingEvent.from_dict(event_type, data)
 
         return cls(
-            type=type,
+            type=event_type,
             additional_properties=data.to_dict(),
         )
 
@@ -179,9 +180,9 @@ class ClientPingEvent(ClientEvent):
     api_client_id: int
 
     @classmethod
-    def from_dict(cls, type: str, data: models.PingEvent) -> "ClientPingEvent":
+    def from_dict(cls, event_type: str, data: models.PingEvent) -> Self:
         return cls(
-            type=type,
+            type=event_type,
             api_client_id=data.api_client_id,
             additional_properties=data.additional_properties,
         )
@@ -195,9 +196,9 @@ class ActionEvent(ClientEvent):
     api_client_id: int | None
 
     @classmethod
-    def from_dict(cls, type: str, data: models.ActionEvent) -> "ActionEvent":
+    def from_dict(cls, event_type: str, data: models.ActionEvent) -> Self:
         return cls(
-            type=type,
+            type=event_type,
             state=data.state,
             action=data.action,
             action_id=data.action_id,
@@ -211,9 +212,9 @@ class VersionEvent(ClientEvent):
     latest_version: str
 
     @classmethod
-    def from_dict(cls, type: str, data: models.VersionEvent) -> "VersionEvent":
+    def from_dict(cls, event_type: str, data: models.VersionEvent) -> Self:
         return cls(
-            type=type,
+            type=event_type,
             latest_version=data.latest_version,
             additional_properties=data.additional_properties,
         )
@@ -222,10 +223,10 @@ class VersionEvent(ClientEvent):
 @dataclasses.dataclass
 class ProjectEvent(ProjectDetails, ClientEvent):
     @classmethod
-    def from_dict(cls, type: str, data: models.ProjectDetailsDto) -> "ProjectEvent":
+    def from_dict(cls, event_type: str, data: models.ProjectDetailsDto) -> Self:
         project_details = ProjectDetails.from_model(data)
         return cls(
-            type=type,
+            type=event_type,
             show=project_details.show,
             episode=project_details.episode,
             sequence=project_details.sequence,
@@ -242,12 +243,14 @@ class ProjectIds:
     sequence_revision_number: int | None
 
     @classmethod
-    def from_dict(cls, data: models.ProjectIdsDto) -> "ProjectIds":
+    def from_dict(cls, data: models.ProjectIdsDto) -> Self:
         return cls(
             show_id=data.show_id if data.show_id else None,
             episode_id=data.episode_id if data.episode_id else None,
             sequence_id=data.sequence_id if data.sequence_id else None,
-            sequence_revision_number=data.sequence_revision_id if data.sequence_revision_id else None,
+            sequence_revision_number=data.sequence_revision_id
+            if data.sequence_revision_id
+            else None,
         )
 
 
@@ -273,7 +276,7 @@ class PanelBrowserStatus:
     actions_in_progress: ActionsInProgress = dataclasses.field(default_factory=ActionsInProgress)
 
     @classmethod
-    def from_model(cls, data: models.StatusResponse) -> "PanelBrowserStatus":
+    def from_model(cls, data: models.StatusResponse) -> Self:
         return cls(
             can_create=data.can_create,
             revision_status=RevisionStatus(
@@ -293,10 +296,10 @@ class PanelBrowserStatus:
 @dataclasses.dataclass
 class StatusEvent(PanelBrowserStatus, ClientEvent):
     @classmethod
-    def from_dict(cls, type: str, data: models.StatusResponse) -> "StatusEvent":
+    def from_dict(cls, event_type: str, data: models.StatusResponse) -> Self:
         status = PanelBrowserStatus.from_model(data)
         return cls(
-            type=type,
+            type=event_type,
             can_create=status.can_create,
             revision_status=status.revision_status,
             actions_in_progress=status.actions_in_progress,
@@ -313,7 +316,7 @@ class OpenPanelData:
     annotation_asset_id: int | None
 
     @classmethod
-    def from_dict(cls, data: models.OpenFilePanelData) -> "OpenPanelData":
+    def from_dict(cls, data: models.OpenFilePanelData) -> Self:
         return cls(
             panel_id=data.id,
             asset_id=data.asset_id,
@@ -329,9 +332,9 @@ class OpenEvent(ClientEvent):
     panels: list[OpenPanelData]
 
     @classmethod
-    def from_dict(cls, type: str, data: models.OpenFileEvent) -> "OpenEvent":
+    def from_dict(cls, event_type: str, data: models.OpenFileEvent) -> Self:
         return cls(
-            type=type,
+            type=event_type,
             project=ProjectIds.from_dict(data.project),
             panels=[OpenPanelData.from_dict(panel) for panel in data.panels],
             additional_properties=data.additional_properties,
@@ -343,10 +346,12 @@ class OpenSourceFileEvent(ClientEvent):
     asset_id: int
 
     @classmethod
-    def from_dict(cls, type: str, data: models.OpenSourceFileEvent) -> "OpenSourceFileEvent":
+    def from_dict(cls, event_type: str, data: models.OpenSourceFileEvent) -> Self:
         return cls(
-            type=type,
-            asset_id=data.source_file.asset_id if data.source_file and data.source_file.asset_id else 0,
+            type=event_type,
+            asset_id=data.source_file.asset_id
+            if data.source_file and data.source_file.asset_id
+            else 0,
             additional_properties=data.additional_properties,
         )
 
@@ -359,7 +364,7 @@ class DownloadResponse:
     media_object_id: int
 
     @classmethod
-    def from_dict(cls, data: models.DownloadResponse) -> "DownloadResponse":
+    def from_dict(cls, data: models.DownloadResponse) -> Self:
         return cls(
             file_name=data.file_name,
             file_path=data.file_path,

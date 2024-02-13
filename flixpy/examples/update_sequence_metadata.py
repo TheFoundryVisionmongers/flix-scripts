@@ -1,6 +1,16 @@
-import datetime
+"""Demonstrates manipulating metadata on a Flix model.
+
+This code provides examples of using various functions for manipulating metadata.
+
+While this example only shows how to do this for sequence revisions,
+the same methods are available for all models that support metadata,
+including panels, panel revisions and sequence revisions.
+"""
+
+from __future__ import annotations
 
 import asyncio
+import datetime
 
 import flix
 
@@ -13,7 +23,8 @@ SHOW_ID = 478
 SEQUENCE_ID = 415
 
 
-async def main() -> None:
+async def update_sequence_metadata() -> None:
+    """Updates metadata for an existing sequence."""
     async with flix.Client(HOSTNAME, PORT) as client:
         # authenticate with the Flix server
         await client.authenticate(USERNAME, PASSWORD)
@@ -26,7 +37,7 @@ async def main() -> None:
         print("Current metadata:", sequence.metadata)
 
         # set a single metadata field without persisting to the database
-        sequence.metadata["processed_time"] = datetime.datetime.utcnow()
+        sequence.metadata["processed_time"] = datetime.datetime.now(tz=datetime.timezone.utc)
 
         # set multiple metadata fields
         sequence.metadata.update(
@@ -75,4 +86,4 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(update_sequence_metadata())

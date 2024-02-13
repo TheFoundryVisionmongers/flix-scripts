@@ -1,3 +1,7 @@
+"""Pythonic abstractions of the models used by the Flix Server REST API."""
+
+from __future__ import annotations
+
 import base64
 import collections.abc
 import contextlib
@@ -7,11 +11,11 @@ import enum
 import os
 import pathlib
 from collections.abc import AsyncIterable, Callable, Iterable, Iterator, Mapping, MutableMapping
-from typing import Any, BinaryIO, Protocol, Type, TypedDict, cast
+from typing import Any, BinaryIO, Protocol, TypedDict, cast
 
 import dateutil.parser
 
-from . import models, client, transfers, websocket, errors
+from . import client, errors, models, transfers, websocket
 
 __all__ = [
     "MetadataField",
@@ -53,11 +57,11 @@ def _params(**kwargs: Any) -> dict[str, Any]:
 
 
 class FlixType:
-    def __init__(self, _client: "client.Client | None"):
+    def __init__(self, _client: client.Client | None) -> None:
         self._client = _client
 
     @property
-    def client(self) -> "client.Client":
+    def client(self) -> client.Client:
         if self._client is None:
             raise errors.FlixError("client is not set")
         return self._client
@@ -76,14 +80,14 @@ class MetadataField:
         value_type: str = "",
         created_date: datetime.datetime | None = None,
         modified_date: datetime.datetime | None = None,
-    ):
+    ) -> None:
         self._value = value
         self._value_type = value_type
         self.created_date = created_date or datetime.datetime.now(datetime.timezone.utc)
         self.modified_date = modified_date or datetime.datetime.now(datetime.timezone.utc)
 
     @classmethod
-    def from_dict(cls, data: models.MetadataField) -> "MetadataField":
+    def from_dict(cls, data: models.MetadataField) -> MetadataField:
         if data["value"] and data["value_type"] == "datetime":
             value = dateutil.parser.parse(data["value"])
         else:
@@ -122,7 +126,7 @@ class MetadataField:
         return self._value_type
 
     @staticmethod
-    def get_value_type(value: Any) -> str:
+    def get_value_type(value: Any) -> str:  # noqa: PLR0911
         match value:
             case bool():
                 return "bool"
@@ -189,14 +193,18 @@ class MetadataField:
         )
 
 
+class _MetadataModel(TypedDict):
+    metadata: list[models.MetadataField]
+
+
 class Metadata(FlixType, MutableMapping[str, Any]):
     def __init__(
         self,
         metadata: Mapping[str, Any] | None = None,
         *,
         parent: AddressableFlixType | None,
-        _client: "client.Client | None",
-    ):
+        _client: client.Client | None,
+    ) -> None:
         super().__init__(_client)
         self._fields = dict[str, MetadataField]()
         self._parent = parent
@@ -212,10 +220,10 @@ class Metadata(FlixType, MutableMapping[str, Any]):
         cls,
         data: list[models.MetadataField] | None,
         *,
-        into: "Metadata | None" = None,
+        into: Metadata | None = None,
         parent: AddressableFlixType | None,
-        _client: "client.Client | None",
-    ) -> "Metadata":
+        _client: client.Client | None,
+    ) -> Metadata:
         if into is None:
             into = cls(parent=parent, _client=_client)
         else:
@@ -255,16 +263,15 @@ class Metadata(FlixType, MutableMapping[str, Any]):
             raise errors.FlixError("metadata parent is not set")
         return f"{self._parent.path_prefix()}/metadata"
 
-    class _MetadataModel(TypedDict):
-        metadata: list[models.MetadataField]
-
-    async def fetch_metadata(self) -> "Metadata":
-        result = cast(Metadata._MetadataModel, await self.client.get(self.path_prefix()))
+    async def fetch_metadata(self) -> Metadata:
+        result = cast(_MetadataModel, await self.client.get(self.path_prefix()))
         Metadata.from_dict(result["metadata"], into=self, parent=self._parent, _client=self.client)
         return self
 
     async def fetch_field(self, name: str) -> MetadataField:
-        result = cast(models.MetadataField, await self.client.get(self.path_prefix(), params={"name": name}))
+        result = cast(
+            models.MetadataField, await self.client.get(self.path_prefix(), params={"name": name})
+        )
         field = MetadataField.from_dict(result)
         self.set_field(name, field)
         return field
@@ -275,15 +282,21 @@ class Metadata(FlixType, MutableMapping[str, Any]):
 
     async def set_and_save(self, name: str, value: Any) -> None:
         self[name] = value
-        await self.client.put(self.path_prefix(), body=self.get_field(name).to_dict(name), params={"name": name})
+        await self.client.put(
+            self.path_prefix(), body=self.get_field(name).to_dict(name), params={"name": name}
+        )
 
     async def set_field_and_save(self, name: str, field: MetadataField) -> None:
         self.set_field(name, field)
-        await self.client.put(self.path_prefix(), body=self.get_field(name).to_dict(name), params={"name": name})
+        await self.client.put(
+            self.path_prefix(), body=self.get_field(name).to_dict(name), params={"name": name}
+        )
 
     async def save(self, clear_missing: bool = False) -> None:
         method = "PUT" if clear_missing else "PATCH"
-        await self.client.request(method, self.path_prefix(), body=Metadata._MetadataModel(metadata=self.to_dict()))
+        await self.client.request(
+            method, self.path_prefix(), body=_MetadataModel(metadata=self.to_dict())
+        )
 
     def __getitem__(self, key: str) -> Any:
         return self.get_field(key).value
@@ -307,7 +320,8 @@ class Metadata(FlixType, MutableMapping[str, Any]):
         self._fields.clear()
 
     def __repr__(self) -> str:
-        return f"Metadata({', '.join('{}={}'.format(name, field.value) for name, field in self._fields.items())})"
+        fields = ", ".join(f"{name}={field.value}" for name, field in self._fields.items())
+        return f"Metadata({fields})"
 
 
 @dataclasses.dataclass
@@ -316,7 +330,7 @@ class Group:
     group_id: int | None = None
 
     @staticmethod
-    def from_dict(data: models.Group) -> "Group":
+    def from_dict(data: models.Group) -> Group:
         return Group(
             title=data.get("title", ""),
             group_id=data["id"],
@@ -337,7 +351,7 @@ class Permission:
     mask: int
 
     @staticmethod
-    def from_dict(data: models.Permission) -> "Permission":
+    def from_dict(data: models.Permission) -> Permission:
         return Permission(
             name=data["name"],
             mask=data["mask"],
@@ -357,7 +371,7 @@ class Role:
     role_id: int | None = None
 
     @staticmethod
-    def from_dict(data: models.Role) -> "Role":
+    def from_dict(data: models.Role) -> Role:
         return Role(
             role_id=data["id"],
             name=data.get("name", ""),
@@ -371,7 +385,7 @@ class GroupRolePair:
     role: Role
 
     @staticmethod
-    def from_dict(data: models.GroupRolePair) -> "GroupRolePair":
+    def from_dict(data: models.GroupRolePair) -> GroupRolePair:
         return GroupRolePair(
             group=Group.from_dict(data["group"]),
             role=Role.from_dict(data["role"]),
@@ -394,15 +408,17 @@ class User(FlixType):
         user_type: str = "flix",
         deleted: bool = False,
         metadata: Mapping[str, Any] | None = None,
-        _client: "client.Client | None",
-    ):
+        _client: client.Client | None,
+    ) -> None:
         super().__init__(_client)
         self.user_id = user_id
         self.username = username
         self.password = password
         self.email = email
         self.groups = groups or []
-        self.created_date: datetime.datetime = created_date or datetime.datetime.now(datetime.timezone.utc)
+        self.created_date: datetime.datetime = created_date or datetime.datetime.now(
+            datetime.timezone.utc
+        )
         self.user_type = user_type
         self.is_admin = is_admin
         self.is_system = is_system
@@ -411,7 +427,9 @@ class User(FlixType):
         self.metadata = Metadata(metadata, parent=self, _client=_client)
 
     @classmethod
-    def from_dict(cls, data: models.User, *, into: "User | None" = None, _client: "client.Client | None") -> "User":
+    def from_dict(
+        cls, data: models.User, *, into: User | None = None, _client: client.Client | None
+    ) -> User:
         if into is None:
             into = cls(_client=_client)
         into.user_id = data["id"]
@@ -432,19 +450,34 @@ class User(FlixType):
 
 
 class MediaObjectStatus(enum.Enum):
+    """Describes the status of a media object."""
+
     INITIALIZED = 0
+    """The media object has been created, but no file data has been uploaded."""
     UPLOADED = 1
+    """File data has been successfully uploaded for the media object."""
     ERRORED = 2
+    """The media object is in a failed state."""
 
 
 @dataclasses.dataclass
 class MediaObjectHash:
+    """A hash of the contents of the file described by a media object.
+
+    This may be a simple MD5 hash of the file,
+    but it could also be something like a perceptual hash allowing for
+    measuring the visual similarity of two images.
+    """
+
     value: str
+    """The hash string used to find other possibly identical files."""
     source_type: str
+    """The type of this hash."""
     data: bytes | None
+    """Optional binary data allowing for more fine-grained comparison of files."""
 
     @classmethod
-    def from_dict(cls, data: models.Hash) -> "MediaObjectHash":
+    def from_dict(cls, data: models.Hash) -> MediaObjectHash:
         return cls(
             value=data["value"],
             source_type=data["source_type"],
@@ -462,6 +495,8 @@ class MediaObjectHash:
 
 
 class MediaObject(FlixType):
+    """Represents a single physical file within an asset."""
+
     def __init__(
         self,
         media_object_id: int = 0,
@@ -475,24 +510,47 @@ class MediaObject(FlixType):
         owner: User | None = None,
         asset_type: str = "",
         *,
-        _client: "client.Client | None",
-    ):
+        _client: client.Client | None,
+    ) -> None:
+        """Initialise a MediaObject.
+
+        Args:
+            media_object_id: The unique ID of the media object.
+            asset_id: The ID of the asset this media object belongs to.
+            filename: The name of the file described by this media object.
+            content_type: The content type of the file described by this media object.
+            content_length: The size of the file described by this media object.
+            content_hashes: Hashes for comparing the contents of the file
+                described by this media object.
+            created_date: The date this media object was created.
+            status: The status of this media object.
+            owner: The user that created this media object.
+            asset_type: A string describing the purpose of this media object,
+                e.g. `"artwork"` or `"thumbnail"`
+            _client: A [Client][flix.Client] instance.
+        """
         super().__init__(_client)
-        self.media_object_id = media_object_id
-        self.asset_id = asset_id
-        self.filename = filename
-        self.content_type = content_type
-        self.content_length = content_length
-        self.content_hashes = content_hashes or []
-        self.created_date = created_date or datetime.datetime.now(datetime.timezone.utc)
-        self.status = status
-        self.owner = owner
-        self.asset_type = asset_type
+        self.media_object_id: int = media_object_id
+        self.asset_id: int = asset_id
+        self.filename: str = filename
+        self.content_type: str = content_type
+        self.content_length: int = content_length
+        self.content_hashes: list[MediaObjectHash] = content_hashes or []
+        self.created_date: datetime.datetime = created_date or datetime.datetime.now(
+            datetime.timezone.utc
+        )
+        self.status: MediaObjectStatus = status
+        self.owner: User | None = owner
+        self.asset_type: str = asset_type
 
     @classmethod
     def from_dict(
-        cls, data: models.MediaObject, *, into: "MediaObject | None" = None, _client: "client.Client | None"
-    ) -> "MediaObject":
+        cls,
+        data: models.MediaObject,
+        *,
+        into: MediaObject | None = None,
+        _client: client.Client | None,
+    ) -> MediaObject:
         if into is None:
             into = cls(_client=_client)
         into.media_object_id = data["id"]
@@ -500,12 +558,18 @@ class MediaObject(FlixType):
         into.filename = data.get("name", "")
         into.content_type = data.get("content_type", "")
         into.content_length = data.get("content_length", 0)
-        into.content_hashes = [MediaObjectHash.from_dict(h) for h in data.get("content_hashes") or []]
+        into.content_hashes = [
+            MediaObjectHash.from_dict(h) for h in data.get("content_hashes") or []
+        ]
         into.created_date = dateutil.parser.parse(data["created_date"])
-        into.status = MediaObjectStatus(data["status"]) if data.get("status") else MediaObjectStatus.INITIALIZED
+        into.status = (
+            MediaObjectStatus(data["status"])
+            if data.get("status")
+            else MediaObjectStatus.INITIALIZED
+        )
         into.owner = User.from_dict(data["owner"], _client=_client) if data.get("owner") else None
         into.asset_type = data.get("asset_type", "")
-        into._client = _client
+        into._client = _client  # noqa: SLF001
         return into
 
     async def update(self) -> None:
@@ -576,9 +640,18 @@ class MediaObject(FlixType):
         Returns:
             A byte string containing the entire file contents of this media object.
         """
-        return b"".join([chunk async for chunk in transfers.download(self.client, self.asset_id, self.media_object_id)])
+        return b"".join(
+            [
+                chunk
+                async for chunk in transfers.download(
+                    self.client, self.asset_id, self.media_object_id
+                )
+            ]
+        )
 
-    async def download_to(self, directory: str | os.PathLike[str], filename: str | None = None) -> pathlib.Path:
+    async def download_to(
+        self, directory: str | os.PathLike[str], filename: str | None = None
+    ) -> pathlib.Path:
         """Save this media object's file contents to disk.
 
         Args:
@@ -615,9 +688,9 @@ class Episode(FlixType):
         created_date: datetime.datetime | None = None,
         owner: User | None = None,
         metadata: Mapping[str, Any] | None = None,
-        _show: "Show",
-        _client: "client.Client | None",
-    ):
+        _show: Show,
+        _client: client.Client | None,
+    ) -> None:
         super().__init__(_client)
         self._show = _show
         self.tracking_code = tracking_code
@@ -631,8 +704,13 @@ class Episode(FlixType):
 
     @classmethod
     def from_dict(
-        cls, data: models.Episode, *, into: "Episode | None" = None, _show: "Show", _client: "client.Client | None"
-    ) -> "Episode":
+        cls,
+        data: models.Episode,
+        *,
+        into: Episode | None = None,
+        _show: Show,
+        _client: client.Client | None,
+    ) -> Episode:
         if into is None:
             into = cls(_show=_show, _client=_client)
         into.episode_id = data["id"]
@@ -662,15 +740,17 @@ class Episode(FlixType):
 
     async def get_all_sequences(
         self, include_hidden: bool = False, page: int | None = None, per_page: int | None = None
-    ) -> list["Sequence"]:
+    ) -> list[Sequence]:
+        class _AllSequences(TypedDict):
+            sequences: list[models.Sequence]
+
         path = f"{self.path_prefix()}/sequences"
         params = _params(
             display_hidden="true" if include_hidden else None,
             page=page,
             per_page=per_page,
         )
-        all_sequences_model = TypedDict("all_sequences_model", {"sequences": list[models.Sequence]})
-        all_sequences = cast(all_sequences_model, await self.client.get(path, params=params))
+        all_sequences = cast(_AllSequences, await self.client.get(path, params=params))
         return [
             Sequence.from_dict(sequence, _show=self._show, _episode=self, _client=self.client)
             for sequence in all_sequences["sequences"]
@@ -699,17 +779,19 @@ class Sequence(FlixType):
         revision_count: int = 0,
         panel_revision_count: int = 0,
         metadata: Mapping[str, Any] | None = None,
-        _show: "Show",
-        _episode: "Episode | None",
-        _client: "client.Client | None",
-    ):
+        _show: Show,
+        _episode: Episode | None,
+        _client: client.Client | None,
+    ) -> None:
         super().__init__(_client)
         self._show = _show
         self._episode = _episode
         self.sequence_id = sequence_id
         self.tracking_code = tracking_code
         self.description = description
-        self.created_date: datetime.datetime = created_date or datetime.datetime.now(datetime.timezone.utc)
+        self.created_date: datetime.datetime = created_date or datetime.datetime.now(
+            datetime.timezone.utc
+        )
         self.owner = owner
         self.revision_count = revision_count
         self.panel_revision_count = panel_revision_count
@@ -721,11 +803,11 @@ class Sequence(FlixType):
         cls,
         data: models.Sequence,
         *,
-        into: "Sequence | None" = None,
-        _show: "Show",
-        _episode: "Episode | None",
-        _client: "client.Client | None",
-    ) -> "Sequence":
+        into: Sequence | None = None,
+        _show: Show,
+        _episode: Episode | None,
+        _client: client.Client | None,
+    ) -> Sequence:
         if into is None:
             into = cls(_show=_show, _episode=_episode, _client=_client)
         into.sequence_id = data["id"]
@@ -760,9 +842,9 @@ class Sequence(FlixType):
     def new_sequence_revision(
         self,
         comment: str = "",
-        panels: list["SequencePanel"] | None = None,
-        source_files: list["Asset"] | None = None,
-    ) -> "SequenceRevision":
+        panels: list[SequencePanel] | None = None,
+        source_files: list[Asset] | None = None,
+    ) -> SequenceRevision:
         return SequenceRevision(
             comment=comment,
             panels=panels,
@@ -774,10 +856,10 @@ class Sequence(FlixType):
     def new_panel(
         self,
         origin: str = "Manual Import",
-        asset: "Asset | None" = None,
+        asset: Asset | None = None,
         is_ref: bool = False,
-        related_panels: list["PanelRevision"] | None = None,
-    ) -> "PanelRevision":
+        related_panels: list[PanelRevision] | None = None,
+    ) -> PanelRevision:
         return PanelRevision(
             origin=origin,
             asset=asset,
@@ -787,29 +869,39 @@ class Sequence(FlixType):
             _client=self.client,
         )
 
-    async def save_panels(self, panels: list["PanelRevision"]) -> None:
-        path = f"{self.path_prefix(False)}/panels"
-        panels_model = TypedDict("panels_model", {"panels": list[models.PanelRevision]})
-        result = cast(panels_model, await self.client.post(path, body=[panel.to_dict() for panel in panels]))
-        for i, result_panel in enumerate(result["panels"]):
-            PanelRevision.from_dict(result_panel, into=panels[i], _sequence=self, _client=self.client)
+    async def save_panels(self, panels: list[PanelRevision]) -> None:
+        class _Panels(TypedDict):
+            panels: list[models.PanelRevision]
 
-    async def get_sequence_revision(self, revision_number: int) -> "SequenceRevision":
+        prefix = self.path_prefix(include_episode=False)
+        path = f"{prefix}/panels"
+        result = cast(
+            _Panels, await self.client.post(path, body=[panel.to_dict() for panel in panels])
+        )
+        for i, result_panel in enumerate(result["panels"]):
+            PanelRevision.from_dict(
+                result_panel, into=panels[i], _sequence=self, _client=self.client
+            )
+
+    async def get_sequence_revision(self, revision_number: int) -> SequenceRevision:
         path = f"{self.path_prefix()}/revision/{revision_number}"
         revision = cast(models.SequenceRevision, await self.client.get(path))
         return SequenceRevision.from_dict(revision, _sequence=self, _client=self.client)
 
-    async def get_all_sequence_revisions(self) -> list["SequenceRevision"]:
+    async def get_all_sequence_revisions(self) -> list[SequenceRevision]:
+        class _AllRevisions(TypedDict):
+            sequence_revisions: list[models.SequenceRevision]
+
         path = f"{self.path_prefix()}/revisions"
-        all_revisions_model = TypedDict("all_revisions_model", {"sequence_revisions": list[models.SequenceRevision]})
-        all_revisions = cast(all_revisions_model, await self.client.get(path))
+        all_revisions = cast(_AllRevisions, await self.client.get(path))
         return [
             SequenceRevision.from_dict(revision, _sequence=self, _client=self.client)
             for revision in all_revisions["sequence_revisions"]
         ]
 
-    async def get_panel_revision(self, panel_id: int, panel_revision: int) -> "PanelRevision":
-        path = f"{self.path_prefix(False)}/panel/{panel_id}/revision/{panel_revision}"
+    async def get_panel_revision(self, panel_id: int, panel_revision: int) -> PanelRevision:
+        prefix = self.path_prefix(include_episode=False)
+        path = f"{prefix}/panel/{panel_id}/revision/{panel_revision}"
         result = cast(models.PanelRevision, await self.client.get(path))
         return PanelRevision.from_dict(result, _sequence=self, _client=self.client)
 
@@ -818,26 +910,32 @@ class Sequence(FlixType):
         latest_revision_only: bool = True,
         page: int | None = None,
         per_page: int | None = None,
-    ) -> list["PanelRevision"]:
-        path = f"{self.path_prefix(False)}/panels"
+    ) -> list[PanelRevision]:
+        class _AllPanels(TypedDict):
+            panels: list[models.PanelRevision]
+
+        path = f"{self.path_prefix(include_episode=False)}/panels"
         params = _params(
             showAll="true" if not latest_revision_only else None,
             page=page,
             per_page=per_page,
         )
-        all_panels_model = TypedDict("all_panels_model", {"panels": list[models.PanelRevision]})
-        all_panels = cast(all_panels_model, await self.client.get(path, params=params))
-        return [PanelRevision.from_dict(panel, _sequence=self, _client=self.client) for panel in all_panels["panels"]]
+        all_panels = cast(_AllPanels, await self.client.get(path, params=params))
+        return [
+            PanelRevision.from_dict(panel, _sequence=self, _client=self.client)
+            for panel in all_panels["panels"]
+        ]
 
     async def import_aaf(
         self,
-        aaf_asset: "Asset",
+        aaf_asset: Asset,
         comment: str = "",
         extra_params: Mapping[str, Any] | None = None,
         timeout: float | None = None,
         chain_status_callback: Callable[[websocket.MessageJobChainStatus], None] | None = None,
-        panel_status_callback: Callable[[websocket.MessageEditorialImportStatus], None] | None = None,
-    ) -> "SequenceRevision":
+        panel_status_callback: Callable[[websocket.MessageEditorialImportStatus], None]
+        | None = None,
+    ) -> SequenceRevision:
         path = f"{self.path_prefix()}/revision/0/reconform/avid"
         params = extra_params or {}
         async with self.client.websocket() as ws:
@@ -860,9 +958,15 @@ class Sequence(FlixType):
                 timeout=timeout,
             )
             async for msg in waiter:
-                if isinstance(msg, websocket.MessageJobChainStatus) and chain_status_callback is not None:
+                if (
+                    isinstance(msg, websocket.MessageJobChainStatus)
+                    and chain_status_callback is not None
+                ):
                     chain_status_callback(msg)
-                elif isinstance(msg, websocket.MessageEditorialImportStatus) and panel_status_callback is not None:
+                elif (
+                    isinstance(msg, websocket.MessageEditorialImportStatus)
+                    and panel_status_callback is not None
+                ):
                     panel_status_callback(msg)
             return await waiter.result.get_sequence_revision(self)
 
@@ -873,7 +977,9 @@ class Sequence(FlixType):
         else:
             path = self.path_prefix()
             result = cast(models.Sequence, await self.client.patch(path, body=self.to_dict()))
-        self.from_dict(result, into=self, _show=self._show, _episode=self._episode, _client=self.client)
+        self.from_dict(
+            result, into=self, _show=self._show, _episode=self._episode, _client=self.client
+        )
 
     async def delete(self) -> None:
         path = self.path_prefix()
@@ -881,6 +987,16 @@ class Sequence(FlixType):
 
 
 class Asset(FlixType):
+    """A collection of files.
+
+    An asset generally contains one or more [media objects][flix.MediaObject],
+    grouped by [asset type][flix.MediaObject.asset_type].
+    For instance, an asset belonging to an animated panel might contain a single
+    `artwork` media object for the original artwork created by the artist,
+    a `source_media` media object containing a prerendered QuickTime of the panel,
+    and a number of `thumbnail` media objects, one per frame.
+    """
+
     def __init__(
         self,
         *,
@@ -889,22 +1005,36 @@ class Asset(FlixType):
         created_date: datetime.datetime | None = None,
         owner: User | None = None,
         media_objects: dict[str, list[MediaObject]] | None = None,
-        _client: "client.Client | None",
-    ):
+        _client: client.Client | None,
+    ) -> None:
+        """Initialise an Asset.
+
+        Args:
+            asset_id: The unique ID of the asset.
+            show_id: The ID of the show this asset belongs to.
+            created_date: The time this asset was created.
+            owner: The user that created this asset.
+            media_objects: The media objects belonging to this asset.
+            _client: A [Client][flix.Client] instance.
+        """
         super().__init__(_client)
-        self.asset_id = asset_id
-        self.show_id = show_id
-        self.created_date = created_date or datetime.datetime.now(datetime.timezone.utc)
-        self.owner = owner
-        self.media_objects = media_objects or {}
+        self.asset_id: int = asset_id
+        self.show_id: int | None = show_id
+        self.created_date: datetime.datetime = created_date or datetime.datetime.now(
+            datetime.timezone.utc
+        )
+        self.owner: User | None = owner
+        self.media_objects: dict[str, list[MediaObject]] = media_objects or {}
 
     @staticmethod
-    def from_dict(data: models.Asset, *, _client: "client.Client | None") -> "Asset":
+    def from_dict(data: models.Asset, *, _client: client.Client | None) -> Asset:
         return Asset(
             asset_id=data["asset_id"],
             show_id=data["show_id"],
             created_date=dateutil.parser.parse(data["created_date"]),
-            owner=User.from_dict(data["owner_id"], _client=_client) if data.get("owner_id") else None,
+            owner=User.from_dict(data["owner_id"], _client=_client)
+            if data.get("owner_id")
+            else None,
             media_objects={
                 ref: [MediaObject.from_dict(mo, _client=_client) for mo in mos]
                 for ref, mos in (data.get("media_objects") or {}).items()
@@ -919,10 +1049,12 @@ class Asset(FlixType):
         return asset
 
     async def create_media_object(self, ref: str) -> MediaObject:
+        class _MediaObjects(TypedDict):
+            media_objects: list[models.MediaObject]
+
         path = f"/show/{self.show_id}/media_object/{ref}"
         body = {"asset_ids": [self.asset_id]}
-        mos_model = TypedDict("mos_model", {"media_objects": list[models.MediaObject]})
-        mos = cast(mos_model, await self.client.post(path, body=body))
+        mos = cast(_MediaObjects, await self.client.post(path, body=body))
         media_object = MediaObject.from_dict(mos["media_objects"][0], _client=self.client)
         self.media_objects.setdefault(ref, []).append(media_object)
         return media_object
@@ -980,14 +1112,18 @@ class ContactSheet(FlixType):
         owner: User | None = None,
         created_date: datetime.datetime | None = None,
         modified_date: datetime.datetime | None = None,
-        _client: "client.Client | None",
-    ):
+        _client: client.Client | None,
+    ) -> None:
         super().__init__(_client)
         self.contactsheet_id = contactsheet_id
         self.name = name
         self.owner = owner
-        self.created_date: datetime.datetime = created_date or datetime.datetime.now(datetime.timezone.utc)
-        self.modified_date: datetime.datetime = modified_date or datetime.datetime.now(datetime.timezone.utc)
+        self.created_date: datetime.datetime = created_date or datetime.datetime.now(
+            datetime.timezone.utc
+        )
+        self.modified_date: datetime.datetime = modified_date or datetime.datetime.now(
+            datetime.timezone.utc
+        )
 
         self.orientation = orientation
         self.width = width
@@ -1006,8 +1142,12 @@ class ContactSheet(FlixType):
 
     @classmethod
     def from_dict(
-        cls, data: models.ContactSheet, *, into: "ContactSheet | None" = None, _client: "client.Client | None"
-    ) -> "ContactSheet":
+        cls,
+        data: models.ContactSheet,
+        *,
+        into: ContactSheet | None = None,
+        _client: client.Client | None,
+    ) -> ContactSheet:
         if into is None:
             into = cls(_client=_client)
         into.contactsheet_id = data["id"]
@@ -1021,13 +1161,17 @@ class ContactSheet(FlixType):
         into.style = ContactSheetStyle(data["style"])
         into.columns = data.get("columns")
         into.rows = data.get("rows")
-        into.panel_options = {ContactSheetPanelOptions(opt) for opt in data.get("panel_options") or ()}
+        into.panel_options = {
+            ContactSheetPanelOptions(opt) for opt in data.get("panel_options") or ()
+        }
         into.show_header = data["show_header"]
         into.show_comments = data["show_comments"]
         into.show_watermark = data["show_watermark"]
         into.show_company = data["show_company"]
         into.show_cover = data["show_cover"]
-        into.cover_options = {ContactSheetCoverOptions(opt) for opt in data.get("cover_options") or ()}
+        into.cover_options = {
+            ContactSheetCoverOptions(opt) for opt in data.get("cover_options") or ()
+        }
         into.cover_description = data["cover_description"]
         return into
 
@@ -1075,8 +1219,8 @@ class Show(FlixType):
         owner: User | None = None,
         created_date: datetime.datetime | None = None,
         metadata: Mapping[str, Any] | None = None,
-        _client: "client.Client | None",
-    ):
+        _client: client.Client | None,
+    ) -> None:
         super().__init__(_client)
         self.show_id = show_id
         self.tracking_code = tracking_code
@@ -1089,13 +1233,19 @@ class Show(FlixType):
         self.show_thumbnail_id = show_thumbnail_id
         self.hidden = hidden
         self.owner = owner
-        self.created_date: datetime.datetime = created_date or datetime.datetime.now(datetime.timezone.utc)
+        self.created_date: datetime.datetime = created_date or datetime.datetime.now(
+            datetime.timezone.utc
+        )
         self.metadata = Metadata(metadata, parent=self, _client=_client)
 
     @classmethod
     def from_dict(
-        cls: Type["Show"], data: models.Show, *, into: "Show | None" = None, _client: "client.Client | None"
-    ) -> "Show":
+        cls: type[Show],
+        data: models.Show,
+        *,
+        into: Show | None = None,
+        _client: client.Client | None,
+    ) -> Show:
         if into is None:
             into = cls(_client=_client)
         into.show_id = data["id"]
@@ -1146,14 +1296,16 @@ class Show(FlixType):
     async def get_all_sequences(
         self, include_hidden: bool = False, page: int | None = None, per_page: int | None = None
     ) -> list[Sequence]:
+        class _AllSequences(TypedDict):
+            sequences: list[models.Sequence]
+
         path = f"{self.path_prefix()}/sequences"
         params = _params(
             display_hidden="true" if include_hidden else None,
             page=page,
             per_page=per_page,
         )
-        all_sequences_model = TypedDict("all_sequences_model", {"sequences": list[models.Sequence]})
-        all_sequences = cast(all_sequences_model, await self.client.get(path, params=params))
+        all_sequences = cast(_AllSequences, await self.client.get(path, params=params))
         return [
             Sequence.from_dict(sequence, _show=self, _episode=None, _client=self.client)
             for sequence in all_sequences["sequences"]
@@ -1165,30 +1317,46 @@ class Show(FlixType):
         return Episode.from_dict(episode, _show=self, _client=self.client)
 
     async def get_all_episodes(self) -> list[Episode]:
+        class _AllEpisodes(TypedDict):
+            episodes: list[models.Episode]
+
         path = f"{self.path_prefix()}/episodes"
-        all_episodes_model = TypedDict("all_episodes_model", {"episodes": list[models.Episode]})
-        all_episodes = cast(all_episodes_model, await self.client.get(path))
-        return [Episode.from_dict(episode, _show=self, _client=self.client) for episode in all_episodes["episodes"]]
+        all_episodes = cast(_AllEpisodes, await self.client.get(path))
+        return [
+            Episode.from_dict(episode, _show=self, _client=self.client)
+            for episode in all_episodes["episodes"]
+        ]
 
     async def get_assigned_contactsheets(self) -> list[ContactSheet]:
+        class _AllContactSheets(TypedDict):
+            contact_sheets: list[models.ContactSheet]
+
         path = f"{self.path_prefix()}/contactsheets"
-        all_contactsheets_model = TypedDict("all_contactsheets_model", {"contact_sheets": list[models.ContactSheet]})
-        all_contactsheets = cast(all_contactsheets_model, await self.client.get(path))
-        return [ContactSheet.from_dict(cs, _client=self.client) for cs in all_contactsheets["contact_sheets"]]
+        all_contactsheets = cast(_AllContactSheets, await self.client.get(path))
+        return [
+            ContactSheet.from_dict(cs, _client=self.client)
+            for cs in all_contactsheets["contact_sheets"]
+        ]
 
     async def create_assets(self, num_assets: int) -> list[Asset]:
+        class _Assets(TypedDict):
+            assets: list[models.Asset]
+
         path = f"{self.path_prefix()}/asset"
         body = {"asset_count": num_assets}
-        assets_model = TypedDict("assets_model", {"assets": list[models.Asset]})
-        assets = cast(assets_model, await self.client.post(path, body=body))
+        assets = cast(_Assets, await self.client.post(path, body=body))
         return [Asset.from_dict(asset, _client=self.client) for asset in assets["assets"]]
 
     async def create_media_objects(self, assets: list[Asset], ref: str) -> list[MediaObject]:
+        class _MediaObjects(TypedDict):
+            media_objects: list[models.MediaObject]
+
         path = f"{self.path_prefix()}/media_object/{ref}"
         body = {"asset_ids": [asset.asset_id for asset in assets]}
-        mos_model = TypedDict("mos_model", {"media_objects": list[models.MediaObject]})
-        mos = cast(mos_model, await self.client.post(path, body=body))
-        media_objects = [MediaObject.from_dict(mo, _client=self.client) for mo in mos["media_objects"]]
+        mos = cast(_MediaObjects, await self.client.post(path, body=body))
+        media_objects = [
+            MediaObject.from_dict(mo, _client=self.client) for mo in mos["media_objects"]
+        ]
 
         asset_by_id: dict[int, Asset] = {asset.asset_id: asset for asset in assets}
         for mo in media_objects:
@@ -1198,15 +1366,23 @@ class Show(FlixType):
         return media_objects
 
     async def transcode_assets(self, assets: list[Asset]) -> list[str]:
+        """Transcodes an asset with an 'artwork' media object.
+
+        This will create thumbnail, scaled and fullres images for the asset.
+
+        Args:
+            assets: The list of assets which need to be transcoded.
+
+        Returns:
+            The list of task IDs which have been created to perform the transcode jobs.
         """
-        Transcodes an asset with an 'artwork' media object into thumbnail, scaled and fullres images
-        :param assets: The list of assets which need to be transcoded
-        :return: The list of task IDs which have been created to perform the transcode jobs.
-        """
+
+        class _Tasks(TypedDict):
+            task_ids: list[str]
+
         path = f"{self.path_prefix()}/asset/transcode"
         body = {"asset_ids": [a.asset_id for a in assets]}
-        tasks_model = TypedDict("tasks_model", {"task_ids": list[str]})
-        task_ids = cast(tasks_model, await self.client.post(path, body))
+        task_ids = cast(_Tasks, await self.client.post(path, body))
         return task_ids["task_ids"]
 
     async def upload_file(
@@ -1216,7 +1392,7 @@ class Show(FlixType):
 
         This will create a new asset and a new media object with the given asset type.
 
-        Examples:
+        Example:
             ```python
             with open("artwork.psd", "rb") as f:
                 await show.upload_file(f, "artwork")
@@ -1294,7 +1470,10 @@ class Show(FlixType):
         )
 
     async def export_yaml(
-        self, anonymize_strings: bool = False, include_assets: bool = False, sequences: list[Sequence] | None = None
+        self,
+        anonymize_strings: bool = False,
+        include_assets: bool = False,
+        sequences: list[Sequence] | None = None,
     ) -> MediaObject:
         path = f"{self.path_prefix()}/export/yaml"
         params: dict[str, Any] = {
@@ -1306,7 +1485,9 @@ class Show(FlixType):
 
         async with self.client.websocket() as ws:
             await self.client.post(path, body=params, headers={"Flix-Client-Id": ws.client_id})
-            complete_msg: websocket.MessageStateYAMLCreated = await ws.wait_on_chain(websocket.MessageStateYAMLCreated)
+            complete_msg: websocket.MessageStateYAMLCreated = await ws.wait_on_chain(
+                websocket.MessageStateYAMLCreated
+            )
 
         asset = await complete_msg.get_asset()
         return asset.media_objects["state_yaml"][0]
@@ -1345,7 +1526,7 @@ class Keyframe:
     panel_revision: int | None = None
 
     @staticmethod
-    def from_dict(data: models.Keyframe) -> "Keyframe":
+    def from_dict(data: models.Keyframe) -> Keyframe:
         return Keyframe(
             show_id=data["show_id"],
             sequence_id=data["sequence_id"],
@@ -1412,14 +1593,16 @@ class PanelComment:
     owner: User | None = None
 
     @staticmethod
-    def from_dict(data: models.PanelComment, *, _client: "client.Client | None") -> "PanelComment":
+    def from_dict(data: models.PanelComment, *, _client: client.Client | None) -> PanelComment:
         return PanelComment(
             comment_id=data["id"],
             body=data.get("body", ""),
             panel_id=data["panel_id"],
             revision_id=data["revision_id"],
             closer_user_id=data.get("closer_user_id"),
-            closed_date=dateutil.parser.parse(data["closed_date"]) if data.get("closed_date") else None,
+            closed_date=dateutil.parser.parse(data["closed_date"])
+            if data.get("closed_date")
+            else None,
             created_date=dateutil.parser.parse(data["created_date"]),
             deleted=data.get("deleted", False),
             closed=data.get("closed", False),
@@ -1435,7 +1618,7 @@ class OriginSBP:
     layer_transform_hash: str | None
 
     @staticmethod
-    def from_dict(data: models.OriginSBP) -> "OriginSBP":
+    def from_dict(data: models.OriginSBP) -> OriginSBP:
         return OriginSBP(
             project_path=data.get("project_path", ""),
             sbp_id=data.get("sbp_id", ""),
@@ -1457,7 +1640,7 @@ class OriginAvid:
     effects_hash: str | None
 
     @staticmethod
-    def from_dict(data: models.OriginAvid) -> "OriginAvid":
+    def from_dict(data: models.OriginAvid) -> OriginAvid:
         return OriginAvid(
             effects_hash=data.get("effects_hash") or None,
         )
@@ -1474,7 +1657,7 @@ class OriginFCPXML:
     editorial_id: str | None
 
     @staticmethod
-    def from_dict(data: models.OriginFCPXML) -> "OriginFCPXML":
+    def from_dict(data: models.OriginFCPXML) -> OriginFCPXML:
         return OriginFCPXML(
             effect_hash=data.get("effect_hash"),
             editorial_id=data.get("editorial_id"),
@@ -1496,7 +1679,7 @@ class DuplicateRef:
     sequence_id: int
 
     @staticmethod
-    def from_dict(data: models.DuplicateRef) -> "DuplicateRef":
+    def from_dict(data: models.DuplicateRef) -> DuplicateRef:
         return DuplicateRef(
             panel_id=data["panel_id"],
             panel_revision=data["panel_revision"],
@@ -1523,8 +1706,8 @@ class Panel(FlixType):
         created_date: datetime.datetime | None = None,
         metadata: Mapping[str, Any] | None = None,
         _sequence: Sequence | None,
-        _client: "client.Client | None",
-    ):
+        _client: client.Client | None,
+    ) -> None:
         super().__init__(_client)
         self.panel_id = panel_id
         self.sequence_id = sequence_id
@@ -1540,10 +1723,10 @@ class Panel(FlixType):
         cls,
         data: models.Panel,
         *,
-        into: "Panel | None" = None,
+        into: Panel | None = None,
         _sequence: Sequence | None,
-        _client: "client.Client | None",
-    ) -> "Panel":
+        _client: client.Client | None,
+    ) -> Panel:
         if into is None:
             into = cls(_sequence=_sequence, _client=_client)
         into.panel_id = data["id"]
@@ -1568,7 +1751,7 @@ class Panel(FlixType):
     def path_prefix(self) -> str:
         if self._sequence is None:
             raise errors.FlixError("sequence is not set")
-        return f"{self._sequence.path_prefix(False)}/panel/{self.panel_id}"
+        return f"{self._sequence.path_prefix(include_episode=False)}/panel/{self.panel_id}"
 
 
 class PanelRevision(FlixType):
@@ -1578,7 +1761,7 @@ class PanelRevision(FlixType):
         asset: Asset | None = None,
         is_ref: bool = False,
         keyframes: list[Keyframe] | None = None,
-        related_panels: list["PanelRevision"] | None = None,
+        related_panels: list[PanelRevision] | None = None,
         *,
         panel_id: int | None = None,
         revision_number: int | None = None,
@@ -1598,8 +1781,8 @@ class PanelRevision(FlixType):
         panel: Panel | None = None,
         metadata: Mapping[str, Any] | None = None,
         _sequence: Sequence | None,
-        _client: "client.Client | None",
-    ):
+        _client: client.Client | None,
+    ) -> None:
         super().__init__(_client)
         self._sequence = _sequence
         self.sequence_id = sequence_id
@@ -1612,8 +1795,12 @@ class PanelRevision(FlixType):
         self.keyframes = keyframes or []
         self.related_panels = related_panels or []
         self.revision_counter = revision_counter
-        self.created_date: datetime.datetime = created_date or datetime.datetime.now(datetime.timezone.utc)
-        self.modified_date: datetime.datetime = modified_date or datetime.datetime.now(datetime.timezone.utc)
+        self.created_date: datetime.datetime = created_date or datetime.datetime.now(
+            datetime.timezone.utc
+        )
+        self.modified_date: datetime.datetime = modified_date or datetime.datetime.now(
+            datetime.timezone.utc
+        )
         self.owner = owner
         self.published = published
         self.latest_open_comment = latest_open_comment
@@ -1627,13 +1814,13 @@ class PanelRevision(FlixType):
 
     @classmethod
     def from_dict(
-        cls: Type["PanelRevision"],
+        cls: type[PanelRevision],
         data: models.PanelRevision,
         *,
-        into: "PanelRevision | None" = None,
+        into: PanelRevision | None = None,
         _sequence: Sequence | None,
-        _client: "client.Client | None",
-    ) -> "PanelRevision":
+        _client: client.Client | None,
+    ) -> PanelRevision:
         if into is None:
             into = cls(_sequence=_sequence, _client=_client)
         into.sequence_id = data["sequence_id"]
@@ -1656,12 +1843,24 @@ class PanelRevision(FlixType):
             if data.get("latest_open_comment")
             else None
         )
-        into.origin_sbp = OriginSBP.from_dict(data["origin_sbp"]) if data.get("origin_sbp") else None
-        into.origin_avid = OriginAvid.from_dict(data["origin_avid"]) if data.get("origin_avid") else None
-        into.origin_fcpxml = OriginFCPXML.from_dict(data["origin_fcpxml"]) if data.get("origin_fcpxml") else None
+        into.origin_sbp = (
+            OriginSBP.from_dict(data["origin_sbp"]) if data.get("origin_sbp") else None
+        )
+        into.origin_avid = (
+            OriginAvid.from_dict(data["origin_avid"]) if data.get("origin_avid") else None
+        )
+        into.origin_fcpxml = (
+            OriginFCPXML.from_dict(data["origin_fcpxml"]) if data.get("origin_fcpxml") else None
+        )
         into.layer_transform = data.get("layer_transform", False)
-        into.duplicate = DuplicateRef.from_dict(data["duplicate"]) if data.get("duplicate") else None
-        into.panel = Panel.from_dict(data["panel"], _sequence=_sequence, _client=_client) if data.get("panel") else None
+        into.duplicate = (
+            DuplicateRef.from_dict(data["duplicate"]) if data.get("duplicate") else None
+        )
+        into.panel = (
+            Panel.from_dict(data["panel"], _sequence=_sequence, _client=_client)
+            if data.get("panel")
+            else None
+        )
         into.metadata = Metadata.from_dict(data.get("metadata"), parent=into, _client=_client)
         return into
 
@@ -1695,7 +1894,8 @@ class PanelRevision(FlixType):
     def path_prefix(self, include_episode: bool = False) -> str:
         if self._sequence is None:
             raise errors.FlixError("sequence is not set")
-        return f"{self._sequence.path_prefix(include_episode)}/panel/{self.panel_id}/revision/{self.revision_number}"
+        prefix = self._sequence.path_prefix(include_episode=include_episode)
+        return f"{prefix}/panel/{self.panel_id}/revision/{self.revision_number}"
 
     def new_sequence_panel(
         self,
@@ -1703,7 +1903,7 @@ class PanelRevision(FlixType):
         trim_in_frame: int | None = None,
         trim_out_frame: int | None = None,
         sequence_revision: int | None = None,
-    ) -> "SequencePanel":
+    ) -> SequencePanel:
         return SequencePanel(
             panel=self,
             duration=duration,
@@ -1759,8 +1959,12 @@ class SequencePanel:
 
     @classmethod
     def from_dict(
-        cls, data: models.SequencePanel, *, _sequence: Sequence | None, _client: "client.Client | None"
-    ) -> "SequencePanel":
+        cls,
+        data: models.SequencePanel,
+        *,
+        _sequence: Sequence | None,
+        _client: client.Client | None,
+    ) -> SequencePanel:
         return cls(
             panel=PanelRevision.from_dict(data, _sequence=_sequence, _client=_client),
             sequence_revision=data["sequence_revision"],
@@ -1805,8 +2009,8 @@ class SequenceRevision(FlixType):
         source_files: list[Asset] | None = None,
         metadata: Mapping[str, Any] | None = None,
         _sequence: Sequence | None,
-        _client: "client.Client | None",
-    ):
+        _client: client.Client | None,
+    ) -> None:
         super().__init__(_client)
         self._sequence = _sequence
         self.sequence_id = sequence_id
@@ -1816,7 +2020,9 @@ class SequenceRevision(FlixType):
         self.panels = panels or []
         self.comment = comment
         self.owner = owner
-        self.created_date: datetime.datetime = created_date or datetime.datetime.now(datetime.timezone.utc)
+        self.created_date: datetime.datetime = created_date or datetime.datetime.now(
+            datetime.timezone.utc
+        )
         self.published = published
         self.imported = imported
         self.task_id = task_id
@@ -1828,10 +2034,10 @@ class SequenceRevision(FlixType):
         cls,
         data: models.SequenceRevision,
         *,
-        into: "SequenceRevision | None" = None,
+        into: SequenceRevision | None = None,
         _sequence: Sequence | None,
-        _client: "client.Client | None",
-    ) -> "SequenceRevision":
+        _client: client.Client | None,
+    ) -> SequenceRevision:
         if into is None:
             into = cls(_sequence=_sequence, _client=_client)
         into.revision_number = data["revision"]
@@ -1844,7 +2050,9 @@ class SequenceRevision(FlixType):
         into.published = data.get("published", False)
         into.imported = data.get("imported", False)
         into.task_id = data.get("task_id")
-        into.source_files = [Asset.from_dict(asset, _client=_client) for asset in data.get("source_files") or []]
+        into.source_files = [
+            Asset.from_dict(asset, _client=_client) for asset in data.get("source_files") or []
+        ]
         into.metadata = Metadata.from_dict(data.get("metadata"), parent=into, _client=_client)
         return into
 
@@ -1890,9 +2098,11 @@ class SequenceRevision(FlixType):
         self.panels.append(sequence_panel)
 
     async def get_all_panel_revisions(self) -> list[SequencePanel]:
+        class _AllPanels(TypedDict):
+            panels: list[models.SequencePanel]
+
         path = f"{self.path_prefix()}/panels"
-        all_panels_model = TypedDict("all_panels_model", {"panels": list[models.SequencePanel]})
-        all_panels = cast(all_panels_model, await self.client.get(path))
+        all_panels = cast(_AllPanels, await self.client.get(path))
         return [
             SequencePanel.from_dict(panel, _sequence=self._sequence, _client=self.client)
             for panel in all_panels["panels"]
@@ -1900,7 +2110,7 @@ class SequenceRevision(FlixType):
 
     async def _export(
         self,
-        msg_type: Type[websocket.AssetCreatedMessageType],
+        msg_type: type[websocket.AssetCreatedMessageType],
         asset_ref: str,
         path: str,
         params: dict[str, Any],
@@ -1921,17 +2131,24 @@ class SequenceRevision(FlixType):
     ) -> MediaObject:
         path = f"{self.path_prefix()}/export/quicktime"
         params: dict[str, Any] = {"include_dialogue": include_dialogue}
-        return await self._export(websocket.MessageQuicktimeCreated, "artwork", path, params, panels)
+        return await self._export(
+            websocket.MessageQuicktimeCreated, "artwork", path, params, panels
+        )
 
     async def export_dialogue(
-        self, file_format: DialogueFormat, clip_name: str = "", panels: list[PanelRevision] | None = None
+        self,
+        file_format: DialogueFormat,
+        clip_name: str = "",
+        panels: list[PanelRevision] | None = None,
     ) -> MediaObject:
         path = f"{self.path_prefix()}/export/dialogue"
         params: dict[str, Any] = {
             "format": file_format.value,
             "clip_name": clip_name,
         }
-        return await self._export(websocket.MessageDialogueComplete, "dialogue", path, params, panels)
+        return await self._export(
+            websocket.MessageDialogueComplete, "dialogue", path, params, panels
+        )
 
     async def export_contactsheet(
         self, template: ContactSheet, panels: list[PanelRevision] | None = None
@@ -1940,7 +2157,9 @@ class SequenceRevision(FlixType):
         params: dict[str, Any] = {
             "contactsheet_id": template.contactsheet_id,
         }
-        return await self._export(websocket.MessageContactSheetCreated, "contactsheet", path, params, panels)
+        return await self._export(
+            websocket.MessageContactSheetCreated, "contactsheet", path, params, panels
+        )
 
     async def save(self, force_create_new: bool = False) -> None:
         if self._sequence is None:
@@ -1948,10 +2167,14 @@ class SequenceRevision(FlixType):
 
         if self.revision_number is None or force_create_new:
             path = f"{self._sequence.path_prefix()}/revision"
-            result = cast(models.SequenceRevision, await self.client.post(path, body=self.to_dict()))
+            result = cast(
+                models.SequenceRevision, await self.client.post(path, body=self.to_dict())
+            )
         else:
             path = self.path_prefix()
-            result = cast(models.SequenceRevision, await self.client.patch(path, body=self.to_dict()))
+            result = cast(
+                models.SequenceRevision, await self.client.patch(path, body=self.to_dict())
+            )
         self.from_dict(result, into=self, _sequence=self._sequence, _client=self.client)
 
 
@@ -1969,7 +2192,7 @@ class Server:
     transfer_port: int
 
     @classmethod
-    def from_dict(cls, data: models.Server) -> "Server":
+    def from_dict(cls, data: models.Server) -> Server:
         return cls(
             uuid=data["id"],
             region=data["region"],

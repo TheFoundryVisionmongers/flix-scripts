@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import time
-from typing import ParamSpec, Callable, TypeVar, Awaitable
+from collections.abc import Awaitable, Callable
+from typing import ParamSpec, TypeVar
 
 Params = ParamSpec("Params")
 ReturnType = TypeVar("ReturnType")
