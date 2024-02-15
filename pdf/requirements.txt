@@ -1,6 +1,0 @@
-appdirs==1.4.4
-reportlab==3.6.2
-requests==2.21.0
-PySide2==5.15.1
-matplotlib==3.3.2
-PyYAML==6.0
