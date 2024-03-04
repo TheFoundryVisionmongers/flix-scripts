@@ -1,21 +1,26 @@
-# WARNING: These scripts are intended for Flix 6.5 and will not work as intended with earlier versions
+# Experimental Python SDK for Flix
 
-This project aims to provide a fully-featured Python SDK for interacting with Flix,
-along with a command line utility providing commands for some of the most common actions.
+This project aims to provide a fully-featured Python SDK for interacting with [Flix](https://www.foundry.com/products/flix),
+the story development hub from Foundry.
+It also comes with a command line utility for performing some common actions from the terminal.
 
-# Installing
+## Requirements
 
-Install the SDK using `pip`:
+This version of the SDK requires:
+* Flix 7.0.0 or later
+* Python 3.10 or later
+
+## Installing
+
+Install the SDK using `pip`, or the package manager of your choice:
 ```
 $ pip install flix-sdk
 ```
 after which the CLI utility can be accessed as `flix` or `python -m flix`.
 
-An installation of Python 3.10 or higher is required.
+## Usage
 
-# Usage
-
-## As a command-line utility
+### As a command-line utility
 
 This package comes with a `flix` CLI utility that lets you perform some common actions.
 At the moment you can use it to perform basic cURL-like requests, as well as to manage webhook.
@@ -75,12 +80,12 @@ Password:
 {"servers": ...}
 ```
 
-## As a library
+### As a library
 
 This package also comes with an asyncio-based library to help you interact with Flix from your own Python scripts.
 See the `examples` folder for examples of how to use it.
 
-# Versioning policy
+## Versioning policy
 
 The Flix SDK follows semantic versioning:
 * The major version is increased if a breaking change is introduced, either at the Flix API level, or in the Flix SDK itself.
@@ -89,7 +94,7 @@ The Flix SDK follows semantic versioning:
 
 To ensure that an update will not break existing applications, we recommend specifying a dependency on `flix-sdk` in the form of `^1.2.3` or, equivalently, `>=1.2.3 <2.0.0`.
 
-# Development
+## Development
 
 This project makes use of [Poetry](https://python-poetry.org/) for packaging and dependency management.
 You can install a local development copy along with all dependencies using the `poetry´ command:
