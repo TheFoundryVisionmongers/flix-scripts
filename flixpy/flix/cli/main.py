@@ -649,6 +649,20 @@ async def export_yaml(ctx: click.Context, anonymize: bool, include_assets: bool)
         await download_file(yaml_media_object)
 
 
+@flix_cli.group(help="Archive and restore shows.")
+def archive() -> None:
+    pass
+
+
+@archive.command("create", help="Create a new archive from a show.")
+@click.pass_context
+async def archive_show(ctx: click.Context) -> None:
+    async with await get_client(ctx) as flix_client:
+        show = await choose_show(flix_client)
+        archive_path = await show.create_archive()
+        click.echo(f"Wrote archive to {archive_path}")
+
+
 async def _main() -> Any:
     try:
         # disable standalone mode to prevent click from calling sys.exit

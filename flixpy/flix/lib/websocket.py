@@ -50,7 +50,7 @@ __all__ = [
 ]
 
 
-class MessageType(enum.Enum):
+class MessageType(enum.IntEnum):
     PING = 0
     ASSET_UPDATED = 1
     PUBLISH_COMPLETED = 2
@@ -68,6 +68,8 @@ class MessageType(enum.Enum):
     THUMBNAIL_CREATION_ERROR = 18
     CONTACT_SHEET_CREATED = 19
     STATE_YAML_CREATED = 20
+    NEW_EXTENSION = 22
+    ARCHIVE_CREATED = 23
 
 
 class WebsocketMessage:
@@ -265,6 +267,18 @@ class MessageStateYAMLCreated(AssetCreatedMessage):
     pass
 
 
+class MessageArchiveCreated(KnownWebsocketMessage):
+    class Model(TypedDict):
+        taskId: str
+        archivePath: str
+
+    def __init__(self, flix_client: client.Client, msg_type: MessageType, raw_data: bytes) -> None:
+        super().__init__(flix_client, msg_type, raw_data)
+        data = cast(MessageArchiveCreated.Model, self.data)
+        self.task_id = data["taskId"]
+        self.archive_path = data["archivePath"]
+
+
 _MESSAGE_TYPES: dict[MessageType, type[KnownWebsocketMessage]] = {
     MessageType.PING: MessagePing,
     MessageType.ASSET_UPDATED: MessageAssetUpdated,
@@ -283,6 +297,7 @@ _MESSAGE_TYPES: dict[MessageType, type[KnownWebsocketMessage]] = {
     MessageType.THUMBNAIL_CREATION_ERROR: MessageThumbnailCreationError,
     MessageType.CONTACT_SHEET_CREATED: MessageContactSheetCreated,
     MessageType.STATE_YAML_CREATED: MessageStateYAMLCreated,
+    MessageType.ARCHIVE_CREATED: MessageArchiveCreated,
 }
 
 WebsocketSelf = TypeVar("WebsocketSelf", bound="Websocket")
