@@ -1492,6 +1492,21 @@ class Show(FlixType):
         asset = await complete_msg.get_asset()
         return asset.media_objects["state_yaml"][0]
 
+    async def create_archive(self) -> str:
+        """Create an archive of this show.
+
+        Returns:
+            The path to the archive on the Flix Server.
+        """
+        path = f"{self.path_prefix()}/archive"
+        async with self.client.websocket() as ws:
+            await self.client.post(path, headers={"Flix-Client-Id": ws.client_id})
+            complete_msg: websocket.MessageArchiveCreated = await ws.wait_on_chain(
+                websocket.MessageArchiveCreated
+            )
+
+        return complete_msg.archive_path
+
     async def save(self, force_create_new: bool = False) -> None:
         if self.show_id is None or force_create_new:
             path = "/show"
