@@ -69,7 +69,8 @@ class MessageType(enum.IntEnum):
     CONTACT_SHEET_CREATED = 19
     STATE_YAML_CREATED = 20
     NEW_EXTENSION = 22
-    ARCHIVE_CREATED = 23
+    JOB_STARTED = 23
+    ARCHIVE_CREATED = 24
 
 
 class WebsocketMessage:
