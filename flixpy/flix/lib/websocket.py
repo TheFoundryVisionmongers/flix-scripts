@@ -71,6 +71,7 @@ class MessageType(enum.IntEnum):
     NEW_EXTENSION = 22
     JOB_STARTED = 23
     ARCHIVE_CREATED = 24
+    ARCHIVE_RESTORED = 25
 
 
 class WebsocketMessage:
@@ -280,6 +281,18 @@ class MessageArchiveCreated(KnownWebsocketMessage):
         self.archive_path = data["archivePath"]
 
 
+class MessageArchiveRestored(KnownWebsocketMessage):
+    class Model(TypedDict):
+        taskId: str
+        showId: int
+
+    def __init__(self, flix_client: client.Client, msg_type: MessageType, raw_data: bytes) -> None:
+        super().__init__(flix_client, msg_type, raw_data)
+        data = cast(MessageArchiveRestored.Model, self.data)
+        self.task_id = data["taskId"]
+        self.show_id = data["showId"]
+
+
 _MESSAGE_TYPES: dict[MessageType, type[KnownWebsocketMessage]] = {
     MessageType.PING: MessagePing,
     MessageType.ASSET_UPDATED: MessageAssetUpdated,
@@ -299,6 +312,7 @@ _MESSAGE_TYPES: dict[MessageType, type[KnownWebsocketMessage]] = {
     MessageType.CONTACT_SHEET_CREATED: MessageContactSheetCreated,
     MessageType.STATE_YAML_CREATED: MessageStateYAMLCreated,
     MessageType.ARCHIVE_CREATED: MessageArchiveCreated,
+    MessageType.ARCHIVE_RESTORED: MessageArchiveRestored,
 }
 
 WebsocketSelf = TypeVar("WebsocketSelf", bound="Websocket")

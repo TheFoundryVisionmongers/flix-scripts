@@ -1507,6 +1507,23 @@ class Show(FlixType):
 
         return complete_msg.archive_path
 
+    async def restore_archive(self, archive_path: str) -> None:
+        """Restore an archive into this show.
+
+        Args:
+            archive_path: The path to the archive on the Flix Server.
+        """
+        path = f"{self.path_prefix()}/restore"
+        async with self.client.websocket() as ws:
+            await self.client.post(
+                path,
+                headers={"Flix-Client-Id": ws.client_id},
+                body={"archive_path": archive_path},
+            )
+            await ws.wait_on_chain(websocket.MessageArchiveRestored)
+
+        await self.update()
+
     async def save(self, force_create_new: bool = False) -> None:
         if self.show_id is None or force_create_new:
             path = "/show"
@@ -1514,6 +1531,12 @@ class Show(FlixType):
         else:
             path = self.path_prefix()
             result = cast(models.Show, await self.client.patch(path, body=self.to_dict()))
+        self.from_dict(result, into=self, _client=self.client)
+
+    async def update(self) -> None:
+        """Re-fetch this show from the server and update it in-place."""
+        path = f"/show/{self.show_id}"
+        result = cast(models.Show, await self.client.get(path))
         self.from_dict(result, into=self, _client=self.client)
 
 
