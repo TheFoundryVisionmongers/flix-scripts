@@ -663,6 +663,15 @@ async def archive_show(ctx: click.Context) -> None:
         click.echo(f"Wrote archive to {archive_path}")
 
 
+@archive.command("restore", help="Restore a show from an archive.")
+@click.argument("archive_path")
+@click.pass_context
+async def restore_show(ctx: click.Context, archive_path: str) -> None:
+    async with await get_client(ctx) as flix_client:
+        show = await flix_client.restore_archive(archive_path)
+        click.echo(f"Restored show {show.title} [{show.tracking_code}] (ID: {show.show_id})")
+
+
 async def _main() -> Any:
     try:
         # disable standalone mode to prevent click from calling sys.exit

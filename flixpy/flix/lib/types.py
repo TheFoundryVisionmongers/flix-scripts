@@ -1516,6 +1516,12 @@ class Show(FlixType):
             result = cast(models.Show, await self.client.patch(path, body=self.to_dict()))
         self.from_dict(result, into=self, _client=self.client)
 
+    async def update(self) -> None:
+        """Re-fetch this show from the server and update it in-place."""
+        path = f"/show/{self.show_id}"
+        result = cast(models.Show, await self.client.get(path))
+        self.from_dict(result, into=self, _client=self.client)
+
 
 @dataclasses.dataclass
 class Keyframe:

@@ -624,6 +624,28 @@ class Client(BaseClient):
             _client=self,
         )
 
+    async def restore_archive(self, archive_path: str) -> types.Show:
+        """Restore an archive as a new show.
+
+        Args:
+            archive_path: The path to the archive on the Flix Server.
+
+        Returns:
+            The restored show.
+        """
+        path = "/show/restore"
+        async with self.websocket() as ws:
+            await self.post(
+                path,
+                headers={"Flix-Client-Id": ws.client_id},
+                body={"archive_path": archive_path},
+            )
+            complete_msg: websocket.MessageArchiveRestored = await ws.wait_on_chain(
+                websocket.MessageArchiveRestored
+            )
+
+        return await self.get_show(complete_msg.show_id)
+
     async def get_all_users(self) -> list[types.User]:
         """Get all users visible to the authenticated user.
 
