@@ -8,7 +8,7 @@ import warnings
 import weakref
 from collections.abc import AsyncIterable, AsyncIterator, Coroutine
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, TypeVar, cast, List
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 import httpx
 import socketio
@@ -161,7 +161,7 @@ class Extension:
         name: str,
         client_uid: str,
         version: str | None = None,
-        log_paths: List[str] | None = None,
+        log_paths: list[str] | None = None,
         base_url: str = BASE_URL) -> None:
         """Initialise an Extension.
 
