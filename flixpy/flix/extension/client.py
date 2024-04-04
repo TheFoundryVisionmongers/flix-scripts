@@ -162,7 +162,8 @@ class Extension:
         client_uid: str,
         version: str | None = None,
         log_paths: list[str] | None = None,
-        base_url: str = BASE_URL) -> None:
+        base_url: str = BASE_URL,
+    ) -> None:
         """Initialise an Extension.
 
         Args:
@@ -366,7 +367,7 @@ class Extension:
                     name=self.name,
                     client_uid=self.client_uid,
                     version=self.version or api_types.UNSET,
-                    log_paths= self.log_paths
+                    log_paths=self.log_paths,
                 ),
             ),
         )
