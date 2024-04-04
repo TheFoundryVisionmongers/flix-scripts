@@ -21,7 +21,7 @@ class RegistrationRequest:
     name: str
     client_uid: str
     version: Union[Unset, str] = UNSET
-    log_paths: List[str] = None
+    log_paths: List[str] | None = None
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:

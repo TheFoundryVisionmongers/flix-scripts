@@ -161,7 +161,7 @@ class Extension:
         name: str,
         client_uid: str,
         version: str | None = None,
-        log_paths: List[str] = None,
+        log_paths: List[str] | None = None,
         base_url: str = BASE_URL) -> None:
         """Initialise an Extension.
 
