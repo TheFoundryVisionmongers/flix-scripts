@@ -8,7 +8,7 @@ import warnings
 import weakref
 from collections.abc import AsyncIterable, AsyncIterator, Coroutine
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any, TypeVar, cast, List
 
 import httpx
 import socketio
@@ -161,21 +161,24 @@ class Extension:
         name: str,
         client_uid: str,
         version: str | None = None,
-        base_url: str = BASE_URL,
-    ) -> None:
+        log_paths: List[str] = None,
+        base_url: str = BASE_URL) -> None:
         """Initialise an Extension.
 
         Args:
             name: The name of the extension
             client_uid: A unique ID for the extension; should remain unchanged for a given extension
             version: An optional version string for the extension
+            log_paths: List of paths to the extension's log files
             base_url: The URL to use to connect to the Flix Client, if something other than
                 the standard Flix Client port on localhost
+
         """
         self.name = name
         self.client_uid = client_uid
         self.version = version
         self.base_url = base_url
+        self.log_paths = log_paths
         self.panel_browser_status = types.PanelBrowserStatus()
         self.project = types.ProjectDetails()
         self._online = False
@@ -363,6 +366,7 @@ class Extension:
                     name=self.name,
                     client_uid=self.client_uid,
                     version=self.version or api_types.UNSET,
+                    log_paths= self.log_paths
                 ),
             ),
         )

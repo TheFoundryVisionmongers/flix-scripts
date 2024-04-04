@@ -15,17 +15,20 @@ class RegistrationRequest:
         name (str): The name for this API client
         client_uid (str): The API client-specified identifier for this API client
         version (Union[Unset, str]): The version of this API client (Optional)
+        log_paths (list of str): Paths to the Maya log file
     """
 
     name: str
     client_uid: str
     version: Union[Unset, str] = UNSET
+    log_paths: List[str] = None
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
         name = self.name
         client_uid = self.client_uid
         version = self.version
+        log_paths = self.log_paths
 
         field_dict: Dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -33,6 +36,7 @@ class RegistrationRequest:
             {
                 "name": name,
                 "clientUid": client_uid,
+                "logPaths": log_paths
             }
         )
         if version is not UNSET:
@@ -49,10 +53,13 @@ class RegistrationRequest:
 
         version = d.pop("version", UNSET)
 
+        log_paths = d.pop("logPaths")
+
         registration_request = cls(
             name=name,
             client_uid=client_uid,
             version=version,
+            log_paths=log_paths,
         )
 
         registration_request.additional_properties = d
