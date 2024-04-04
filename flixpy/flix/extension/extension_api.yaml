@@ -1,9 +1,117 @@
 openapi: 3.0.0
+info:
+  title: Flix General Remote Client API
+  description: |
+    # Getting Started
+
+    So you’ve decided you want to talk to the Flix Client API. This step-by-step guide will go through the steps required to register a new application - “My First Flix Extension” - with Flix and get you cracking on your integrations!
+
+    ### Step 1: Create an extension identity
+
+    The first thing every Flix Client extension needs is an identity. This means the extension needs a name, a version, and a unique identifier. We already have a name for our extension, “My First Flix Extension”, and as this is our first version we can call it v1.0.0. The only thing remaining is to create a unique identifier for the extension. We can use the UUID standard to generate a string that is unlikely to ever be duplicated by accident. Let’s go with `490a3e7e-fd22-467a-8169-cdc5b69b6175` for now, but you should generate your own.
+
+    ### Step 2: Check the Flix Client is running
+
+    Before we start sending off API requests, we should first check that the Flix Client is up and running. We can do this by sending a GET request to http://localhost:3000/health. If the Flix Client is up and running correctly, we should get back a 200 OK response with no additional content. If any other response comes back, or the request doesn’t complete, something is up with the Flix Client that likely requires some user intervention.
+
+    ### Step 3: Register with Flix
+
+    Now that we’ve got all the identifying details we need and we know the Flix Client is running, let’s register with it. We can do this having our extension send a POST request to http://localhost:3000/registration with this request body:
+
+    ```json
+    {
+      "name": "My First Flix Extension",
+      "clientUid": "490a3e7e-fd22-467a-8169-cdc5b69b6175",
+      "version": "1.0.0",
+      "logPaths": ["path/to/your/extension/logFile.log"]
+    }
+    ```
+
+    If we print out the response we get:
+
+    ```json
+    {
+      "flixId": 18,
+      "token": "BZIu4t8JyMpObY6HVUnt1u7IlIvkQWw-n-mSIxhDUTU"
+    }
+    ```
+
+    We don’t need the flixId right now, but let’s make sure we store that token for later.
+
+    ### Step 4: Check for access
+
+    Now that Flix knows about our extension, we should be able to access any endpoint of the Flix Client API. We can check this using the token it gave us. We’ll need to set the token as a Bearer auth header, so let’s do that by adding to our list of headers:
+
+    ```
+    Authorization: BEARER BZIu4t8JyMpObY6HVUnt1u7IlIvkQWw-n-mSIxhDUTU
+    ```
+
+    Then, we can do a quick request to the status endpoint to see what state the Flix Client is in. This is just a GET request to http://localhost:3000/status with the extra header from above. When everything works, we should see a JSON response like the following:
+
+    ```json
+    {
+      "canCreate": true,
+      "revisionStatus": {
+        "canPublish": true,
+        "canExport": true,
+        "canSave": false,
+        "selectedPanels": [1]
+      },
+      "actionsInProgress": {
+        "isSaving": false,
+        "isPublishing": false,
+        "isExporting": false
+      }
+    }
+    ```
+
+    ### Step 5: All done
+
+    That’s it! You’re now ready to interact with the Flix Client and ready to turn “My First Flix Extension” into the best thing ever. Although, maybe come up with a better name first.
+  version: v1
+  contact: {}
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+servers:
+  - url: http://localhost:3000
+    description: Flix Client API
+tags:
+  - name: Health Check
+    description: |
+      The health check endpoint is a basic test entrypoint for the Flix Client API and will always return a 200 OK response when the API is available. This endpoint can be used as a sanity check to validate connections to Flix before first connecting or after a disconnect.
+  - name: API Registration
+    description: |
+      Most of the Flix Client API is gated behind a simple API registration process. Each API consumer must first register with Flix by sending a POST request to http://localhost:3000/registration. The token in the registration response should be attached as a bearer token in the authorization header with future requests. To validate the registration, do a GET request to the same registration endpoint along with the auth header, and the registered API consumer details should be returned.
+
+      To unregister an API consumer, do a DELETE request to the same registration endpoint. This will invalidate the registration token and remove the registered API consumer details from the Flix client.
+
+      The `clientUid` that is specified with the registration should be the same as specified in the extension manifest file when packaging the extension. This should remain the same throughout the lifetime of the extension as it is used to compare extensions at registration and install time.
+  - name: Status
+    description: |
+      The status endpoint provides details on the current state of the Flix Client. It can be used to determine the auth status of the current user, and whether there are any other ongoing actions that may impact the use of the API.
+  - name: Project Details
+    description: |
+      The project endpoints provide details on the current state of the Flix Client. It can be used to determine the currently opened show, episode, sequence and sequence revision.
+  - name: Panel Management
+    description: |
+      The panels endpoint provides the ability to create, update and add annotations to panels in the sequence revision that is currently open in the Flix Client. This requires the Flix Client to have a sequence revision loaded in order to function and will return a 400 Bad Request error if that is not the case. The current Flix status can be checked using the project and status endpoints.
+
+      To create a new panel, send a POST request to the /panels endpoint with an object containing a `paths` property that is an array of strings that are paths to the artworks to be imported. Flix will then schedule a background action to import the specified artworks to the active sequence revision. The request will return an object containing the action ID of the scheduled action and will send updates through the websocket event gateway.
+
+      Updating panels or adding annotations works in the same way, but for PATCH requests to the /panels endpoint and /panels/annotate endpoints respectively. These requests also support specifying which panels should be updated or annotated by sending an object containing a `panels` property that is an array of objects specifying a panel ID and a path. These requests will also schedule a background action and return an object containing the action ID.
+
+      All of the panel actions require an `origin` property to be specified in the request body that is associated with the new panel revision and should specify where the panel originated. They also all accept an optional `startIndex` property that specifies at which index panels should be inserted/updated from. By default actions will use the currently selected panel as that start index. At the time of writing, this is the currently selected panel at the start of execution of the action. Since actions are queued and run sequentially, this may not be the same panel as the one selected at request time.
+
+      Finally, the create and update panel requests support including a `sourceFile` property. This is an object that should specify the path to the source file, a `previewMode` that tells Flix how to generate a preview for the source file, and the `sourceFileType` which Flix uses to determine how to open the source file. Valid `previewMode` options are `first_panel` which tells Flix to use the first associated panel’s thumbnail as the source file preview image, and `source_file` which tells Flix to try to generate a thumbnail preview image from the source file directly. The `sourceFileType` can be any of the defined extension types, `Sketch`, `Editorial`, `3D`, `Standalone`, or `Script`. Only `Sketch` or `3D` type source files can currently be re-opened by Flix.
+  - name: Media Object Download
+    description: |
+      The download endpoint provides the ability for an extension to request a specific asset from the Flix Server and have the Flix Client download it to a specified location. Before using this endpoint, you will need to figure out the ID of the asset to be downloaded and the type of the media object required, either using the other API endpoints or from the Flix Server API. Requests to the download API endpoint will begin the download immediately and will not complete until the download has finished, which means the request may be long-lived.
 paths:
   /health:
     get:
       operationId: HealthCheckController_healthCheck
-      summary: ''
+      summary: Health Check
       description: Basic health check endpoint. Always returns a 200 response
       parameters: []
       responses:
@@ -11,10 +119,12 @@ paths:
           description: ''
       tags:
         - Health Check
+      security:
+        - {}
   /registration:
     post:
       operationId: RegistrationController_registerClient
-      summary: ''
+      summary: Register API consumer
       description: Processes a registration request from a new API consumer
       parameters: []
       requestBody:
@@ -38,16 +148,16 @@ paths:
                 $ref: '#/components/schemas/RegistrationResponse'
         '400':
           description: The incoming API consumer details could not be validated
-      tags: &ref_0
+      tags:
         - API Registration
+      security:
+        - {}
     get:
       operationId: RegistrationController_getAll
-      summary: ''
-      description: >-
+      summary: List API consumers
+      description: |-
         Returns a list of registered API consumer details.
-
-        Details returned by the registration manager are mapped to a DTO to
-        avoid exposing access tokens
+        Details returned by the registration manager are mapped to a DTO to avoid exposing access tokens
       parameters: []
       responses:
         '200':
@@ -58,12 +168,13 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/RegistrationDetails'
-      tags: *ref_0
+      tags:
+        - API Registration
       security:
         - bearer: []
     delete:
       operationId: RegistrationController_unregisterClient
-      summary: ''
+      summary: Unregister API consumer
       description: Removes the registration for the requesting API consumer
       parameters:
         - name: authorization
@@ -74,12 +185,17 @@ paths:
       responses:
         '204':
           description: The API consumer has been unregistered from Flix
-      tags: *ref_0
+        '400':
+          description: The provided bearer token could not be validated
+      tags:
+        - API Registration
       security:
         - bearer: []
   /panels:
     post:
       operationId: PanelController_create
+      summary: Create New Panels
+      description: Creates new panels in the active sequence revision from the list of provided file paths
       parameters: []
       requestBody:
         required: true
@@ -91,15 +207,15 @@ paths:
         '200':
           description: The panel creation has been scheduled
         '400':
-          description: >-
-            No sequence revision is loaded, or the panel create request is
-            invalid
-      tags: &ref_1
+          description: No sequence revision is loaded, or the panel create request is invalid
+      tags:
         - Panel Management
-      security: &ref_2
+      security:
         - bearer: []
     patch:
       operationId: PanelController_update
+      summary: Update Existing Panels
+      description: Updates existing panels in the active sequence revision from the list of provided file paths
       parameters: []
       requestBody:
         required: true
@@ -113,14 +229,16 @@ paths:
         '200':
           description: The panel update has been scheduled
         '400':
-          description: >-
-            No sequence revision is loaded, or the panel update request is
-            invalid
-      tags: *ref_1
-      security: *ref_2
+          description: No sequence revision is loaded, or the panel update request is invalid
+      tags:
+        - Panel Management
+      security:
+        - bearer: []
   /panels/annotate:
     patch:
       operationId: PanelController_annotate
+      summary: Update Panel Annotations
+      description: Adds annotations to panels in the active sequence revision from the list of provided file paths
       parameters: []
       requestBody:
         required: true
@@ -134,18 +252,16 @@ paths:
         '200':
           description: The panel annotation has been scheduled
         '400':
-          description: >-
-            No sequence revision is loaded, or the panel annotation request is
-            invalid
-      tags: *ref_1
-      security: *ref_2
+          description: No sequence revision is loaded, or the panel annotation request is invalid
+      tags:
+        - Panel Management
+      security:
+        - bearer: []
   /download:
     post:
       operationId: DownloadController_downloadMediaObject
-      summary: ''
-      description: >-
-        Downloads a specific artwork type for a given asset, to a target folder
-        on the local machine
+      summary: Download Media Object
+      description: Downloads a specific artwork type for a given asset, to a target folder on the local machine
       parameters: []
       requestBody:
         required: true
@@ -169,6 +285,8 @@ paths:
   /project:
     get:
       operationId: ProjectController_get
+      summary: Get Current Flix Project
+      description: Returns details of the currently opened show, episode, sequence and sequence revision
       parameters: []
       responses:
         '200':
@@ -186,6 +304,8 @@ paths:
   /status:
     get:
       operationId: StatusController_get
+      summary: Get Flix Status
+      description: Returns details of the current state of the Flix Client
       parameters: []
       responses:
         '200':
@@ -200,13 +320,6 @@ paths:
         - Status
       security:
         - bearer: []
-info:
-  title: Flix General Remote Client API
-  description: The general remote API for the Flix client
-  version: '1'
-  contact: {}
-tags: []
-servers: []
 components:
   securitySchemes:
     bearer:
@@ -376,8 +489,7 @@ components:
           type: boolean
         sourceFile:
           nullable: true
-          allOf:
-            - $ref: '#/components/schemas/OpenSourceFileData'
+          $ref: '#/components/schemas/OpenSourceFileData'
       required:
         - id
         - assetId
@@ -422,13 +534,18 @@ components:
       properties:
         name:
           type: string
-          description: The name for this API client
+          description: The name of this API consumer
         clientUid:
           type: string
-          description: The API client-specified identifier for this API client
+          description: A unique identifier for this API consumer
         version:
           type: string
-          description: The version of this API client (Optional)
+          description: The version of this API consumer (Optional)
+        logPaths:
+          type: array
+          items:
+            type: string
+          description: The paths of the extension's log (Optional)
       required:
         - name
         - clientUid
@@ -437,10 +554,10 @@ components:
       properties:
         flixId:
           type: integer
-          description: The Flix-maintained identifier for this API client
+          description: The Flix-maintained identifier for this API consumer
         token:
           type: string
-          description: The generated access token for the API client
+          description: The generated access token that the API consumer can use to access the rest of the API
       required:
         - flixId
         - token
@@ -449,16 +566,16 @@ components:
       properties:
         flixId:
           type: integer
-          description: The Flix-maintained identifier for this API client
+          description: The Flix-maintained identifier for this API consumer
         name:
           type: string
-          description: The name for this API client
+          description: The name for this API consumer
         version:
           type: string
-          description: The version of this API client (Optional)
+          description: The version of this API consumer (Optional)
         clientUid:
           type: string
-          description: The API client-specified identifier for this API client
+          description: The API client-specified identifier for this API consumer
       required:
         - flixId
         - name
@@ -468,10 +585,12 @@ components:
       properties:
         panelId:
           type: integer
-          description: The panel IDs it should link to
+          description: The ID of the panel that should be updated
+          example: 15
         path:
           type: string
           description: The file path to upload
+          example: /path/to/file/1.psd
       required:
         - path
     PanelRequestSourceFile:
@@ -507,19 +626,20 @@ components:
       properties:
         startIndex:
           type: integer
-          description: the index at which to insert the created panels
+          description: (Optional) The index from which to insert or update panels. Defaults to currently selected panel
           example: 3
         panels:
-          description: The file paths to upload and the panel IDs they should link to
+          description: The file paths to upload and the IDs of the panels they should update
           type: array
           items:
             $ref: '#/components/schemas/PanelRequestItem'
         sourceFile:
-          description: The source file to upload
-          allOf:
-            - $ref: '#/components/schemas/PanelRequestSourceFile'
+          description: (Optional) The source file to upload
+          $ref: '#/components/schemas/PanelRequestSourceFile'
         origin:
           type: string
+          description: The origin of the incoming panel artwork
+          example: Photoshop
       required:
         - panels
         - origin
@@ -528,14 +648,18 @@ components:
       properties:
         startIndex:
           type: integer
-          description: the index at which to insert the created panels
+          description: (Optional) The index from which to annotate panels. Defaults to currently selected panel
+          example: 3
         paths:
-          description: The file paths to upload
+          description: The file paths to be uploaded as panel annotations
+          example: '[''/path/to/file/1.psd'',''/path/to/file/2.psd'']'
           type: array
           items:
             type: string
         origin:
           type: string
+          description: The origin of the incoming annotation
+          example: Photoshop
       required:
         - startIndex
         - paths
@@ -545,14 +669,17 @@ components:
       properties:
         startIndex:
           type: integer
-          description: the index at which to insert the created panels
+          description: (Optional) The index from which to annotate panels. Defaults to currently selected panel
+          example: 3
         panels:
-          description: The file paths to upload and the panel IDs they should link to
+          description: The file paths to upload and the panel IDs that they should annotate
           type: array
           items:
             $ref: '#/components/schemas/PanelRequestItem'
         origin:
           type: string
+          description: The origin of the incoming annotation
+          example: Photoshop
       required:
         - startIndex
         - panels
@@ -562,20 +689,21 @@ components:
       properties:
         startIndex:
           type: integer
-          description: the index at which to insert the created panels
+          description: (Optional) The index from which to insert or update panels. Defaults to currently selected panel
           example: 3
         paths:
-          description: The file paths to upload
+          description: The file paths to upload as new panel artwork
           example: '[''/path/to/file/1.psd'',''/path/to/file/2.psd'']'
           type: array
           items:
             type: string
         sourceFile:
-          description: The source file to upload
-          allOf:
-            - $ref: '#/components/schemas/PanelRequestSourceFile'
+          description: (Optional) The source file to upload
+          $ref: '#/components/schemas/PanelRequestSourceFile'
         origin:
           type: string
+          description: The origin of the incoming panel artwork
+          example: Photoshop
       required:
         - paths
         - origin
@@ -584,10 +712,13 @@ components:
       properties:
         assetId:
           type: integer
+          description: The identifier of an asset in Flix. For example, the asset specified in the `OPEN` event
         targetFolder:
           type: string
+          description: The folder that the requested asset should be downloaded into
         assetType:
           type: string
+          description: The type of media object to download for the specified asset
           enum:
             - artwork
             - thumbnail
@@ -616,12 +747,16 @@ components:
       properties:
         assetId:
           type: integer
+          description: The identifier of the downloaded asset
         mediaObjectId:
           type: integer
+          description: The identifier of the specific media object that was downloaded
         fileName:
           type: string
+          description: The name of the downloaded file on disk
         filePath:
           type: string
+          description: The final path of the downloaded file on disk. This should just be `${targetFolder}/${fileName}`
       required:
         - assetId
         - mediaObjectId
@@ -632,13 +767,17 @@ components:
       properties:
         id:
           type: integer
+          description: The Flix identifier for the show
         trackingCode:
           type: string
+          description: The show's tracking code
         title:
           type: string
           nullable: true
+          description: The show’s display title
         aspectRatio:
           type: number
+          description: The configured aspect ratio for the show
       required:
         - id
         - trackingCode
@@ -649,16 +788,21 @@ components:
       properties:
         id:
           type: integer
+          description: The Flix identifier for the episode
         trackingCode:
           type: string
+          description: The episode's tracking code
         createdDate:
           format: date-time
           type: string
+          description: The date the episode was created
         owner:
           type: string
+          description: The user that created the episode
         title:
           type: string
           nullable: true
+          description: The episode’s display title
       required:
         - id
         - trackingCode
@@ -670,16 +814,21 @@ components:
       properties:
         id:
           type: integer
+          description: The Flix identifier for the sequence
         trackingCode:
           type: string
+          description: The sequence's tracking code
         createdDate:
           format: date-time
           type: string
+          description: The date the sequence was created
         owner:
           type: string
+          description: The user that created the sequence
         title:
           type: string
           nullable: true
+          description: The sequence's display title
       required:
         - id
         - trackingCode
@@ -691,16 +840,21 @@ components:
       properties:
         id:
           type: integer
+          description: The Flix identifier for the sequence revision
         createdDate:
           format: date-time
           type: string
           nullable: true
+          description: The date the sequence revision was created
         owner:
           type: string
+          description: The user that created the sequence revision
         published:
           type: boolean
+          description: Whether this sequence revision has been published to editorial
         comment:
           type: string
+          description: Any comment added to the sequence revision when saving
       required:
         - id
         - createdDate
@@ -712,20 +866,20 @@ components:
       properties:
         show:
           nullable: true
-          allOf:
-            - $ref: '#/components/schemas/ShowDetailsDto'
+          description: Details of the currently opened show
+          $ref: '#/components/schemas/ShowDetailsDto'
         episode:
           nullable: true
-          allOf:
-            - $ref: '#/components/schemas/EpisodeDetailsDto'
+          description: Details of the currently opened episode, if in an episodic show
+          $ref: '#/components/schemas/EpisodeDetailsDto'
         sequence:
           nullable: true
-          allOf:
-            - $ref: '#/components/schemas/SequenceDetailsDto'
+          description: Details of the currently opened sequence
+          $ref: '#/components/schemas/SequenceDetailsDto'
         sequenceRevision:
           nullable: true
-          allOf:
-            - $ref: '#/components/schemas/SequenceRevisionDetailsDto'
+          description: Details of the currently opened sequence revision
+          $ref: '#/components/schemas/SequenceRevisionDetailsDto'
       required:
         - show
         - episode
@@ -736,14 +890,18 @@ components:
       properties:
         selectedPanels:
           type: array
+          description: A list of the currently selected panels
           items:
             type: integer
         canSave:
           type: boolean
+          description: Whether the current revision can be saved
         canPublish:
           type: boolean
+          description: Whether the user has permission to publish the current revision
         canExport:
           type: boolean
+          description: Whether the user has permission to export files from the current revision
       required:
         - selectedPanels
         - canSave
@@ -754,10 +912,13 @@ components:
       properties:
         isSaving:
           type: boolean
+          description: Whether the Flix Client is currently saving a sequence revision
         isPublishing:
           type: boolean
+          description: Whether the Flix Client is currently publishing a sequence revision
         isExporting:
           type: boolean
+          description: Whether the Flix Client is currently exporting files from a sequence revision
       required:
         - isSaving
         - isPublishing
@@ -767,9 +928,12 @@ components:
       properties:
         canCreate:
           type: boolean
+          description: Whether or not the panel browser is open and writable
         revisionStatus:
+          description: Details about the current sequence revision loaded into the panel browser
           $ref: '#/components/schemas/RevisionStatusResponse'
         actionsInProgress:
+          description: Details about any actions in progress by the Flix Client
           $ref: '#/components/schemas/ActionsInProgressResponse'
       required:
         - canCreate

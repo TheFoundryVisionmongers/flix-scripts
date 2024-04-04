@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Type, TypeVar, Union
+from typing import Any, Dict, List, Type, TypeVar, Union, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -12,23 +12,25 @@ T = TypeVar("T", bound="RegistrationRequest")
 class RegistrationRequest:
     """
     Attributes:
-        name (str): The name for this API client
-        client_uid (str): The API client-specified identifier for this API client
-        version (Union[Unset, str]): The version of this API client (Optional)
-        log_paths (list of str): Paths to the Maya log file
+        name (str): The name of this API consumer
+        client_uid (str): A unique identifier for this API consumer
+        version (Union[Unset, str]): The version of this API consumer (Optional)
+        log_paths (Union[Unset, List[str]]): The paths of the extension's log (Optional)
     """
 
     name: str
     client_uid: str
     version: Union[Unset, str] = UNSET
-    log_paths: List[str] | None = None
+    log_paths: Union[Unset, List[str]] = UNSET
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
         name = self.name
         client_uid = self.client_uid
         version = self.version
-        log_paths = self.log_paths
+        log_paths: Union[Unset, List[str]] = UNSET
+        if not isinstance(self.log_paths, Unset):
+            log_paths = self.log_paths
 
         field_dict: Dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -36,11 +38,12 @@ class RegistrationRequest:
             {
                 "name": name,
                 "clientUid": client_uid,
-                "logPaths": log_paths
             }
         )
         if version is not UNSET:
             field_dict["version"] = version
+        if log_paths is not UNSET:
+            field_dict["logPaths"] = log_paths
 
         return field_dict
 
@@ -53,7 +56,7 @@ class RegistrationRequest:
 
         version = d.pop("version", UNSET)
 
-        log_paths = d.pop("logPaths")
+        log_paths = cast(List[str], d.pop("logPaths", UNSET))
 
         registration_request = cls(
             name=name,

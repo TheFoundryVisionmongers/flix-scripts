@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, TypeVar
+from typing import TYPE_CHECKING, Any, Dict, List, Type, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -17,26 +17,26 @@ T = TypeVar("T", bound="ProjectDetailsDto")
 class ProjectDetailsDto:
     """
     Attributes:
-        show (Optional[ShowDetailsDto]):
-        episode (Optional[EpisodeDetailsDto]):
-        sequence (Optional[SequenceDetailsDto]):
-        sequence_revision (Optional[SequenceRevisionDetailsDto]):
+        show (ShowDetailsDto):
+        episode (EpisodeDetailsDto):
+        sequence (SequenceDetailsDto):
+        sequence_revision (SequenceRevisionDetailsDto):
     """
 
-    show: Optional["ShowDetailsDto"]
-    episode: Optional["EpisodeDetailsDto"]
-    sequence: Optional["SequenceDetailsDto"]
-    sequence_revision: Optional["SequenceRevisionDetailsDto"]
+    show: "ShowDetailsDto"
+    episode: "EpisodeDetailsDto"
+    sequence: "SequenceDetailsDto"
+    sequence_revision: "SequenceRevisionDetailsDto"
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
-        show = self.show.to_dict() if self.show else None
+        show = self.show.to_dict()
 
-        episode = self.episode.to_dict() if self.episode else None
+        episode = self.episode.to_dict()
 
-        sequence = self.sequence.to_dict() if self.sequence else None
+        sequence = self.sequence.to_dict()
 
-        sequence_revision = self.sequence_revision.to_dict() if self.sequence_revision else None
+        sequence_revision = self.sequence_revision.to_dict()
 
         field_dict: Dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -59,33 +59,15 @@ class ProjectDetailsDto:
         from ..models.show_details_dto import ShowDetailsDto
 
         d = src_dict.copy()
-        _show = d.pop("show")
-        show: Optional[ShowDetailsDto]
-        if _show is None:
-            show = None
-        else:
-            show = ShowDetailsDto.from_dict(_show)
+        show = ShowDetailsDto.from_dict(d.pop("show"))
 
-        _episode = d.pop("episode")
-        episode: Optional[EpisodeDetailsDto]
-        if _episode is None:
-            episode = None
-        else:
-            episode = EpisodeDetailsDto.from_dict(_episode)
+        episode = EpisodeDetailsDto.from_dict(d.pop("episode"))
 
-        _sequence = d.pop("sequence")
-        sequence: Optional[SequenceDetailsDto]
-        if _sequence is None:
-            sequence = None
-        else:
-            sequence = SequenceDetailsDto.from_dict(_sequence)
+        sequence = SequenceDetailsDto.from_dict(d.pop("sequence"))
 
-        _sequence_revision = d.pop("sequenceRevision")
-        sequence_revision: Optional[SequenceRevisionDetailsDto]
-        if _sequence_revision is None:
-            sequence_revision = None
-        else:
-            sequence_revision = SequenceRevisionDetailsDto.from_dict(_sequence_revision)
+        sequence_revision = SequenceRevisionDetailsDto.from_dict(
+            d.pop("sequenceRevision")
+        )
 
         project_details_dto = cls(
             show=show,

@@ -14,9 +14,10 @@ T = TypeVar("T", bound="FullPanelAnnotateRequest")
 class FullPanelAnnotateRequest:
     """
     Attributes:
-        start_index (int): the index at which to insert the created panels
-        panels (List['PanelRequestItem']): The file paths to upload and the panel IDs they should link to
-        origin (str):
+        start_index (int): (Optional) The index from which to annotate panels. Defaults to currently selected panel
+            Example: 3.
+        panels (List['PanelRequestItem']): The file paths to upload and the panel IDs that they should annotate
+        origin (str): The origin of the incoming annotation Example: Photoshop.
     """
 
     start_index: int

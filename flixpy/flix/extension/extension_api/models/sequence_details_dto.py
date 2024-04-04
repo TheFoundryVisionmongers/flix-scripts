@@ -12,11 +12,11 @@ T = TypeVar("T", bound="SequenceDetailsDto")
 class SequenceDetailsDto:
     """
     Attributes:
-        id (int):
-        tracking_code (str):
-        created_date (datetime.datetime):
-        owner (str):
-        title (Optional[str]):
+        id (int): The Flix identifier for the sequence
+        tracking_code (str): The sequence's tracking code
+        created_date (datetime.datetime): The date the sequence was created
+        owner (str): The user that created the sequence
+        title (Optional[str]): The sequence's display title
     """
 
     id: int

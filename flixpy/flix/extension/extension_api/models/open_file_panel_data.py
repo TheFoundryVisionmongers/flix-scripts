@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Type, TypeVar, Union
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -19,14 +19,14 @@ class OpenFilePanelData:
         id (int):
         asset_id (int):
         is_animated (bool):
+        source_file (OpenSourceFileData):
         annotation_asset_id (Union[Unset, int]):
-        source_file (Optional[OpenSourceFileData]):
     """
 
     id: int
     asset_id: int
     is_animated: bool
-    source_file: Optional["OpenSourceFileData"]
+    source_file: "OpenSourceFileData"
     annotation_asset_id: Union[Unset, int] = UNSET
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -34,8 +34,9 @@ class OpenFilePanelData:
         id = self.id
         asset_id = self.asset_id
         is_animated = self.is_animated
+        source_file = self.source_file.to_dict()
+
         annotation_asset_id = self.annotation_asset_id
-        source_file = self.source_file.to_dict() if self.source_file else None
 
         field_dict: Dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -63,21 +64,16 @@ class OpenFilePanelData:
 
         is_animated = d.pop("isAnimated")
 
-        annotation_asset_id = d.pop("annotationAssetId", UNSET)
+        source_file = OpenSourceFileData.from_dict(d.pop("sourceFile"))
 
-        _source_file = d.pop("sourceFile")
-        source_file: Optional[OpenSourceFileData]
-        if _source_file is None:
-            source_file = None
-        else:
-            source_file = OpenSourceFileData.from_dict(_source_file)
+        annotation_asset_id = d.pop("annotationAssetId", UNSET)
 
         open_file_panel_data = cls(
             id=id,
             asset_id=asset_id,
             is_animated=is_animated,
-            annotation_asset_id=annotation_asset_id,
             source_file=source_file,
+            annotation_asset_id=annotation_asset_id,
         )
 
         open_file_panel_data.additional_properties = d

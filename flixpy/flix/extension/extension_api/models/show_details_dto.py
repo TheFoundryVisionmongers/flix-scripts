@@ -10,10 +10,10 @@ T = TypeVar("T", bound="ShowDetailsDto")
 class ShowDetailsDto:
     """
     Attributes:
-        id (int):
-        tracking_code (str):
-        aspect_ratio (float):
-        title (Optional[str]):
+        id (int): The Flix identifier for the show
+        tracking_code (str): The show's tracking code
+        aspect_ratio (float): The configured aspect ratio for the show
+        title (Optional[str]): The show’s display title
     """
 
     id: int

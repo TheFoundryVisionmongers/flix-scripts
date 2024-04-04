@@ -51,7 +51,9 @@ def sync_detailed(
     *,
     client: AuthenticatedClient,
 ) -> Response[List["RegistrationDetails"]]:
-    """Returns a list of registered API consumer details.
+    """List API consumers
+
+     Returns a list of registered API consumer details.
     Details returned by the registration manager are mapped to a DTO to avoid exposing access tokens
 
     Raises:
@@ -75,7 +77,9 @@ def sync(
     *,
     client: AuthenticatedClient,
 ) -> Optional[List["RegistrationDetails"]]:
-    """Returns a list of registered API consumer details.
+    """List API consumers
+
+     Returns a list of registered API consumer details.
     Details returned by the registration manager are mapped to a DTO to avoid exposing access tokens
 
     Raises:
@@ -95,7 +99,9 @@ async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
 ) -> Response[List["RegistrationDetails"]]:
-    """Returns a list of registered API consumer details.
+    """List API consumers
+
+     Returns a list of registered API consumer details.
     Details returned by the registration manager are mapped to a DTO to avoid exposing access tokens
 
     Raises:
@@ -117,7 +123,9 @@ async def asyncio(
     *,
     client: AuthenticatedClient,
 ) -> Optional[List["RegistrationDetails"]]:
-    """Returns a list of registered API consumer details.
+    """List API consumers
+
+     Returns a list of registered API consumer details.
     Details returned by the registration manager are mapped to a DTO to avoid exposing access tokens
 
     Raises:

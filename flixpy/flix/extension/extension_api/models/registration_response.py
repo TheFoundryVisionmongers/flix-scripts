@@ -10,8 +10,8 @@ T = TypeVar("T", bound="RegistrationResponse")
 class RegistrationResponse:
     """
     Attributes:
-        flix_id (int): The Flix-maintained identifier for this API client
-        token (str): The generated access token for the API client
+        flix_id (int): The Flix-maintained identifier for this API consumer
+        token (str): The generated access token that the API consumer can use to access the rest of the API
     """
 
     flix_id: int

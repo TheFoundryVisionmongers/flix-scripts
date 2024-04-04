@@ -57,7 +57,9 @@ def sync_detailed(
     client: AuthenticatedClient,
     json_body: DownloadRequest,
 ) -> Response[Union[Any, DownloadResponse]]:
-    """Downloads a specific artwork type for a given asset, to a target folder on the local machine
+    """Download Media Object
+
+     Downloads a specific artwork type for a given asset, to a target folder on the local machine
 
     Args:
         json_body (DownloadRequest):
@@ -86,7 +88,9 @@ def sync(
     client: AuthenticatedClient,
     json_body: DownloadRequest,
 ) -> Optional[Union[Any, DownloadResponse]]:
-    """Downloads a specific artwork type for a given asset, to a target folder on the local machine
+    """Download Media Object
+
+     Downloads a specific artwork type for a given asset, to a target folder on the local machine
 
     Args:
         json_body (DownloadRequest):
@@ -110,7 +114,9 @@ async def asyncio_detailed(
     client: AuthenticatedClient,
     json_body: DownloadRequest,
 ) -> Response[Union[Any, DownloadResponse]]:
-    """Downloads a specific artwork type for a given asset, to a target folder on the local machine
+    """Download Media Object
+
+     Downloads a specific artwork type for a given asset, to a target folder on the local machine
 
     Args:
         json_body (DownloadRequest):
@@ -137,7 +143,9 @@ async def asyncio(
     client: AuthenticatedClient,
     json_body: DownloadRequest,
 ) -> Optional[Union[Any, DownloadResponse]]:
-    """Downloads a specific artwork type for a given asset, to a target folder on the local machine
+    """Download Media Object
+
+     Downloads a specific artwork type for a given asset, to a target folder on the local machine
 
     Args:
         json_body (DownloadRequest):
