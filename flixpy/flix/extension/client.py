@@ -14,6 +14,7 @@ import httpx
 import socketio
 from typing_extensions import Self
 
+from .extension_api.types import Unset
 from ..lib import errors
 from . import extension_api, types
 from .extension_api import models
@@ -127,6 +128,41 @@ class EventQueue(AsyncIterable[_ET_co]):
 
 
 class Extension:
+    def __init__(
+        self,
+        name: str,
+        client_uid: str,
+        log_paths: Unset | list[str],
+        version: str | None = None,
+        base_url: str = BASE_URL,
+    ) -> None:
+        """Initialise an Extension.
+
+        Args:
+            name: The name of the extension
+            client_uid: A unique ID for the extension; should remain unchanged for a given extension
+            log_paths: List of paths to the extension's log files
+            version: An optional version string for the extension
+            base_url: The URL to use to connect to the Flix Client, if something other than
+                the standard Flix Client port on localhost
+
+        """
+        self.name = name
+        self.client_uid = client_uid
+        self.version = version
+        self.base_url = base_url
+        self.log_paths = log_paths
+        self.panel_browser_status = types.PanelBrowserStatus()
+        self.project = types.ProjectDetails()
+        self._online = False
+
+        self._client = extension_api.Client(base_url=self.base_url)
+        self._registered_client: extension_api.AuthenticatedClient | None = None
+        self.sio = socketio.AsyncClient()
+        self._register_events()
+        self._queues = weakref.WeakSet[EventQueue[types.Event]]()
+        self._connection_task: asyncio.Task[None] | None = None
+
     """Provides functions for communicating with the Flix Client from remote extensions.
 
     The class is best used as a context manager in a with statement:
@@ -155,41 +191,6 @@ class Extension:
     await extension.close()
     ```
     """
-
-    def __init__(
-        self,
-        name: str,
-        client_uid: str,
-        version: str | None = None,
-        log_paths: list[str] | None = None,
-        base_url: str = BASE_URL,
-    ) -> None:
-        """Initialise an Extension.
-
-        Args:
-            name: The name of the extension
-            client_uid: A unique ID for the extension; should remain unchanged for a given extension
-            version: An optional version string for the extension
-            log_paths: List of paths to the extension's log files
-            base_url: The URL to use to connect to the Flix Client, if something other than
-                the standard Flix Client port on localhost
-
-        """
-        self.name = name
-        self.client_uid = client_uid
-        self.version = version
-        self.base_url = base_url
-        self.log_paths = log_paths
-        self.panel_browser_status = types.PanelBrowserStatus()
-        self.project = types.ProjectDetails()
-        self._online = False
-
-        self._client = extension_api.Client(base_url=self.base_url)
-        self._registered_client: extension_api.AuthenticatedClient | None = None
-        self.sio = socketio.AsyncClient()
-        self._register_events()
-        self._queues = weakref.WeakSet[EventQueue[types.Event]]()
-        self._connection_task: asyncio.Task[None] | None = None
 
     def _reset_status(self) -> None:
         self.online = False
