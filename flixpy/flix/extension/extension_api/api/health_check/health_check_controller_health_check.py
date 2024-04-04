@@ -41,7 +41,7 @@ def _build_response(
 
 def sync_detailed(
     *,
-    client: AuthenticatedClient,
+    client: Union[AuthenticatedClient, Client],
 ) -> Response[Any]:
     """Health Check
 
@@ -66,7 +66,7 @@ def sync_detailed(
 
 async def asyncio_detailed(
     *,
-    client: AuthenticatedClient,
+    client: Union[AuthenticatedClient, Client],
 ) -> Response[Any]:
     """Health Check
 

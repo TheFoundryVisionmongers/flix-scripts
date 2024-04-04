@@ -119,8 +119,6 @@ paths:
           description: ''
       tags:
         - Health Check
-      security:
-        - {}
   /registration:
     post:
       operationId: RegistrationController_registerClient
@@ -150,8 +148,6 @@ paths:
           description: The incoming API consumer details could not be validated
       tags:
         - API Registration
-      security:
-        - {}
     get:
       operationId: RegistrationController_getAll
       summary: List API consumers
