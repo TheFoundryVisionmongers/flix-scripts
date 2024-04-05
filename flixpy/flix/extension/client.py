@@ -127,7 +127,6 @@ class EventQueue(AsyncIterable[_ET_co]):
 
 
 class Extension:
-
     """Provides functions for communicating with the Flix Client from remote extensions.
 
     The class is best used as a context manager in a with statement:
@@ -156,6 +155,7 @@ class Extension:
     await extension.close()
     ```
     """
+
     def __init__(
         self,
         name: str,
