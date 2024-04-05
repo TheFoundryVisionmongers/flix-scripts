@@ -31,7 +31,9 @@ def _get_kwargs(
     }
 
 
-def _parse_response(*, client: Union[AuthenticatedClient, Client], response: httpx.Response) -> Optional[Any]:
+def _parse_response(
+    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
+) -> Optional[Any]:
     if response.status_code == HTTPStatus.OK:
         return None
     if response.status_code == HTTPStatus.BAD_REQUEST:
@@ -42,7 +44,9 @@ def _parse_response(*, client: Union[AuthenticatedClient, Client], response: htt
         return None
 
 
-def _build_response(*, client: Union[AuthenticatedClient, Client], response: httpx.Response) -> Response[Any]:
+def _build_response(
+    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
+) -> Response[Any]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -56,7 +60,10 @@ def sync_detailed(
     client: AuthenticatedClient,
     json_body: Union["BulkPanelRequest", "FullPanelRequest"],
 ) -> Response[Any]:
-    """
+    """Update Existing Panels
+
+     Updates existing panels in the active sequence revision from the list of provided file paths
+
     Args:
         json_body (Union['BulkPanelRequest', 'FullPanelRequest']):
 
@@ -84,7 +91,10 @@ async def asyncio_detailed(
     client: AuthenticatedClient,
     json_body: Union["BulkPanelRequest", "FullPanelRequest"],
 ) -> Response[Any]:
-    """
+    """Update Existing Panels
+
+     Updates existing panels in the active sequence revision from the list of provided file paths
+
     Args:
         json_body (Union['BulkPanelRequest', 'FullPanelRequest']):
 

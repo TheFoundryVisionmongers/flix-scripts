@@ -75,7 +75,9 @@ class OpenFileEvent:
         if isinstance(_sketching_tool_configuration, Unset):
             sketching_tool_configuration = UNSET
         else:
-            sketching_tool_configuration = PsConfiguration.from_dict(_sketching_tool_configuration)
+            sketching_tool_configuration = PsConfiguration.from_dict(
+                _sketching_tool_configuration
+            )
 
         open_file_event = cls(
             project=project,

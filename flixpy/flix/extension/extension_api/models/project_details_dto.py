@@ -36,7 +36,9 @@ class ProjectDetailsDto:
 
         sequence = self.sequence.to_dict() if self.sequence else None
 
-        sequence_revision = self.sequence_revision.to_dict() if self.sequence_revision else None
+        sequence_revision = (
+            self.sequence_revision.to_dict() if self.sequence_revision else None
+        )
 
         field_dict: Dict[str, Any] = {}
         field_dict.update(self.additional_properties)

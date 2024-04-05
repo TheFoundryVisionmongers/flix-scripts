@@ -49,7 +49,10 @@ def sync_detailed(
     *,
     client: AuthenticatedClient,
 ) -> Response[Union[Any, ProjectDetailsDto]]:
-    """
+    """Get Current Flix Project
+
+     Returns details of the currently opened show, episode, sequence and sequence revision
+
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
@@ -71,7 +74,10 @@ def sync(
     *,
     client: AuthenticatedClient,
 ) -> Optional[Union[Any, ProjectDetailsDto]]:
-    """
+    """Get Current Flix Project
+
+     Returns details of the currently opened show, episode, sequence and sequence revision
+
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
@@ -89,7 +95,10 @@ async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
 ) -> Response[Union[Any, ProjectDetailsDto]]:
-    """
+    """Get Current Flix Project
+
+     Returns details of the currently opened show, episode, sequence and sequence revision
+
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
@@ -109,7 +118,10 @@ async def asyncio(
     *,
     client: AuthenticatedClient,
 ) -> Optional[Union[Any, ProjectDetailsDto]]:
-    """
+    """Get Current Flix Project
+
+     Returns details of the currently opened show, episode, sequence and sequence revision
+
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.

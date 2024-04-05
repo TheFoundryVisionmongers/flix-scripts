@@ -22,8 +22,12 @@ def _get_kwargs(
     }
 
 
-def _parse_response(*, client: Union[AuthenticatedClient, Client], response: httpx.Response) -> Optional[Any]:
+def _parse_response(
+    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
+) -> Optional[Any]:
     if response.status_code == HTTPStatus.NO_CONTENT:
+        return None
+    if response.status_code == HTTPStatus.BAD_REQUEST:
         return None
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
@@ -31,7 +35,9 @@ def _parse_response(*, client: Union[AuthenticatedClient, Client], response: htt
         return None
 
 
-def _build_response(*, client: Union[AuthenticatedClient, Client], response: httpx.Response) -> Response[Any]:
+def _build_response(
+    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
+) -> Response[Any]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -45,7 +51,9 @@ def sync_detailed(
     client: AuthenticatedClient,
     authorization: str,
 ) -> Response[Any]:
-    """Removes the registration for the requesting API consumer
+    """Unregister API consumer
+
+     Removes the registration for the requesting API consumer
 
     Args:
         authorization (str):
@@ -74,7 +82,9 @@ async def asyncio_detailed(
     client: AuthenticatedClient,
     authorization: str,
 ) -> Response[Any]:
-    """Removes the registration for the requesting API consumer
+    """Unregister API consumer
+
+     Removes the registration for the requesting API consumer
 
     Args:
         authorization (str):

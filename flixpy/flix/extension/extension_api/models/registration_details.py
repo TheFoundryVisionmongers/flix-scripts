@@ -12,10 +12,10 @@ T = TypeVar("T", bound="RegistrationDetails")
 class RegistrationDetails:
     """
     Attributes:
-        flix_id (int): The Flix-maintained identifier for this API client
-        name (str): The name for this API client
-        client_uid (str): The API client-specified identifier for this API client
-        version (Union[Unset, str]): The version of this API client (Optional)
+        flix_id (int): The Flix-maintained identifier for this API consumer
+        name (str): The name for this API consumer
+        client_uid (str): The API client-specified identifier for this API consumer
+        version (Union[Unset, str]): The version of this API consumer (Optional)
     """
 
     flix_id: int

@@ -17,9 +17,10 @@ T = TypeVar("T", bound="FullPanelRequest")
 class FullPanelRequest:
     """
     Attributes:
-        panels (List['PanelRequestItem']): The file paths to upload and the panel IDs they should link to
-        origin (str):
-        start_index (Union[Unset, int]): the index at which to insert the created panels Example: 3.
+        panels (List['PanelRequestItem']): The file paths to upload and the IDs of the panels they should update
+        origin (str): The origin of the incoming panel artwork Example: Photoshop.
+        start_index (Union[Unset, int]): (Optional) The index from which to insert or update panels. Defaults to
+            currently selected panel Example: 3.
         source_file (Union[Unset, PanelRequestSourceFile]):
     """
 

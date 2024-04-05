@@ -12,8 +12,8 @@ T = TypeVar("T", bound="PanelRequestItem")
 class PanelRequestItem:
     """
     Attributes:
-        path (str): The file path to upload
-        panel_id (Union[Unset, int]): The panel IDs it should link to
+        path (str): The file path to upload Example: /path/to/file/1.psd.
+        panel_id (Union[Unset, int]): The ID of the panel that should be updated Example: 15.
     """
 
     path: str

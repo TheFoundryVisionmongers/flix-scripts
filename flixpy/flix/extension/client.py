@@ -160,6 +160,7 @@ class Extension:
         self,
         name: str,
         client_uid: str,
+        log_paths: list[str] | None = None,
         version: str | None = None,
         base_url: str = BASE_URL,
     ) -> None:
@@ -168,14 +169,17 @@ class Extension:
         Args:
             name: The name of the extension
             client_uid: A unique ID for the extension; should remain unchanged for a given extension
+            log_paths: List of paths to the extension's log files
             version: An optional version string for the extension
             base_url: The URL to use to connect to the Flix Client, if something other than
                 the standard Flix Client port on localhost
+
         """
         self.name = name
         self.client_uid = client_uid
         self.version = version
         self.base_url = base_url
+        self.log_paths = log_paths
         self.panel_browser_status = types.PanelBrowserStatus()
         self.project = types.ProjectDetails()
         self._online = False
@@ -363,6 +367,7 @@ class Extension:
                     name=self.name,
                     client_uid=self.client_uid,
                     version=self.version or api_types.UNSET,
+                    log_paths=self.log_paths or api_types.UNSET,
                 ),
             ),
         )

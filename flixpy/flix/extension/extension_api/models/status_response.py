@@ -15,7 +15,7 @@ T = TypeVar("T", bound="StatusResponse")
 class StatusResponse:
     """
     Attributes:
-        can_create (bool):
+        can_create (bool): Whether or not the panel browser is open and writable
         revision_status (RevisionStatusResponse):
         actions_in_progress (ActionsInProgressResponse):
     """
@@ -53,7 +53,9 @@ class StatusResponse:
 
         revision_status = RevisionStatusResponse.from_dict(d.pop("revisionStatus"))
 
-        actions_in_progress = ActionsInProgressResponse.from_dict(d.pop("actionsInProgress"))
+        actions_in_progress = ActionsInProgressResponse.from_dict(
+            d.pop("actionsInProgress")
+        )
 
         status_response = cls(
             can_create=can_create,

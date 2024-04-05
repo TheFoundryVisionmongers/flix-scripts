@@ -12,11 +12,11 @@ T = TypeVar("T", bound="SequenceRevisionDetailsDto")
 class SequenceRevisionDetailsDto:
     """
     Attributes:
-        id (int):
-        owner (str):
-        published (bool):
-        comment (str):
-        created_date (Optional[datetime.datetime]):
+        id (int): The Flix identifier for the sequence revision
+        owner (str): The user that created the sequence revision
+        published (bool): Whether this sequence revision has been published to editorial
+        comment (str): Any comment added to the sequence revision when saving
+        created_date (Optional[datetime.datetime]): The date the sequence revision was created
     """
 
     id: int
