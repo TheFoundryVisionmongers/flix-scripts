@@ -127,6 +127,35 @@ class EventQueue(AsyncIterable[_ET_co]):
 
 
 class Extension:
+
+    """Provides functions for communicating with the Flix Client from remote extensions.
+
+    The class is best used as a context manager in a with statement:
+
+    ```py
+    with Extension(
+        name="My Extension",
+        client_uid="97c8fd5d-c1f8-4561-9268-8701b5fa48d4",
+    ) as extension:
+        await extension.import_panels(
+            ["/path/to/image.png"]
+        )
+    ```
+
+    If you need a long-lived object, however, you can use the object as-is,
+    as long as you remember to call close when you're done:
+
+    ```python
+    extension = Extension(
+        name="My Extension",
+        client_uid="97c8fd5d-c1f8-4561-9268-8701b5fa48d4",
+    )
+    await extension.import_panels(
+        ["/path/to/image.png"]
+    )
+    await extension.close()
+    ```
+    """
     def __init__(
         self,
         name: str,
@@ -161,35 +190,6 @@ class Extension:
         self._register_events()
         self._queues = weakref.WeakSet[EventQueue[types.Event]]()
         self._connection_task: asyncio.Task[None] | None = None
-
-    """Provides functions for communicating with the Flix Client from remote extensions.
-
-    The class is best used as a context manager in a with statement:
-
-    ```py
-    with Extension(
-        name="My Extension",
-        client_uid="97c8fd5d-c1f8-4561-9268-8701b5fa48d4",
-    ) as extension:
-        await extension.import_panels(
-            ["/path/to/image.png"]
-        )
-    ```
-
-    If you need a long-lived object, however, you can use the object as-is,
-    as long as you remember to call close when you're done:
-
-    ```python
-    extension = Extension(
-        name="My Extension",
-        client_uid="97c8fd5d-c1f8-4561-9268-8701b5fa48d4",
-    )
-    await extension.import_panels(
-        ["/path/to/image.png"]
-    )
-    await extension.close()
-    ```
-    """
 
     def _reset_status(self) -> None:
         self.online = False
