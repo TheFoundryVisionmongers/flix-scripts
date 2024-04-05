@@ -863,19 +863,23 @@ components:
         show:
           nullable: true
           description: Details of the currently opened show
-          $ref: '#/components/schemas/ShowDetailsDto'
+          allOf:
+            - $ref: '#/components/schemas/ShowDetailsDto'
         episode:
           nullable: true
           description: Details of the currently opened episode, if in an episodic show
-          $ref: '#/components/schemas/EpisodeDetailsDto'
+          allOf:
+            - $ref: '#/components/schemas/EpisodeDetailsDto'
         sequence:
           nullable: true
           description: Details of the currently opened sequence
-          $ref: '#/components/schemas/SequenceDetailsDto'
+          allOf:
+            - $ref: '#/components/schemas/SequenceDetailsDto'
         sequenceRevision:
           nullable: true
           description: Details of the currently opened sequence revision
-          $ref: '#/components/schemas/SequenceRevisionDetailsDto'
+          allOf:
+            - $ref: '#/components/schemas/SequenceRevisionDetailsDto'
       required:
         - show
         - episode
