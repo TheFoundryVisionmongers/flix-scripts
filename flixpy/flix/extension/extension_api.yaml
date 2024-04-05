@@ -485,7 +485,8 @@ components:
           type: boolean
         sourceFile:
           nullable: true
-          $ref: '#/components/schemas/OpenSourceFileData'
+          allOf:
+            - $ref: '#/components/schemas/OpenSourceFileData'
       required:
         - id
         - assetId
