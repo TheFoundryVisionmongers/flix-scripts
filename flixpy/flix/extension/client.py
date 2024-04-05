@@ -14,7 +14,6 @@ import httpx
 import socketio
 from typing_extensions import Self
 
-from .extension_api.types import Unset
 from ..lib import errors
 from . import extension_api, types
 from .extension_api import models
@@ -132,7 +131,7 @@ class Extension:
         self,
         name: str,
         client_uid: str,
-        log_paths: Unset | list[str],
+        log_paths: list[str] | None = None,
         version: str | None = None,
         base_url: str = BASE_URL,
     ) -> None:
@@ -368,7 +367,7 @@ class Extension:
                     name=self.name,
                     client_uid=self.client_uid,
                     version=self.version or api_types.UNSET,
-                    log_paths=self.log_paths,
+                    log_paths=self.log_paths or api_types.UNSET,
                 ),
             ),
         )
