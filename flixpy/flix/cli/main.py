@@ -655,11 +655,14 @@ def archive() -> None:
 
 
 @archive.command("create", help="Create a new archive from a show.")
+@click.option(
+    "--skip-transcoded", is_flag=True, help="Don't include transcoded files such as thumbnails."
+)
 @click.pass_context
-async def archive_show(ctx: click.Context) -> None:
+async def archive_show(ctx: click.Context, skip_transcoded: bool) -> None:
     async with await get_client(ctx) as flix_client:
         show = await choose_show(flix_client)
-        archive_path = await show.create_archive()
+        archive_path = await show.create_archive(skip_transcoded_files=skip_transcoded)
         click.echo(f"Wrote archive to {archive_path}")
 
 
