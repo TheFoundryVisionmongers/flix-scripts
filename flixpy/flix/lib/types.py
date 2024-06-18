@@ -49,6 +49,7 @@ __all__ = [
     "SequenceRevision",
     "DialogueFormat",
     "Server",
+    "ColorTag",
 ]
 
 
@@ -677,6 +678,28 @@ class MediaObject(FlixType):
         return path
 
 
+@dataclasses.dataclass
+class ColorTag:
+    color_tag_id: int | None = None
+    color_name: str = ""
+    value: str = ""
+
+    @classmethod
+    def from_dict(cls, data: models.ColorTag) -> ColorTag:
+        return cls(
+            color_tag_id=data["id"],
+            color_name=data["colour_name"],
+            value=data["value"],
+        )
+
+    def to_dict(self) -> models.ColorTag:
+        return models.ColorTag(
+            id=self.color_tag_id or 0,
+            colour_name=self.color_name,
+            value=self.value,
+        )
+
+
 class Episode(FlixType):
     def __init__(
         self,
@@ -684,6 +707,7 @@ class Episode(FlixType):
         tracking_code: str = "",
         description: str = "",
         title: str = "",
+        hidden: bool = False,
         *,
         episode_id: int | None = None,
         created_date: datetime.datetime | None = None,
@@ -701,6 +725,7 @@ class Episode(FlixType):
         self.episode_number = episode_number
         self.created_date = created_date
         self.owner = owner
+        self.hidden = hidden
         self.metadata = Metadata(metadata, parent=self, _client=_client)
 
     @classmethod
@@ -722,6 +747,7 @@ class Episode(FlixType):
         into.created_date = dateutil.parser.parse(data["created_date"])
         into.owner = User.from_dict(data["owner"], _client=_client)
         into.metadata = Metadata.from_dict(data.get("metadata"), parent=into, _client=_client)
+        into.hidden = data["hidden"]
         return into
 
     def to_dict(self) -> models.Episode:
@@ -731,6 +757,7 @@ class Episode(FlixType):
             description=self.description,
             title=self.title,
             metadata=self.metadata.to_dict(),
+            hidden=self.hidden,
         )
         if self.episode_id is not None:
             episode["id"] = self.episode_id
@@ -773,6 +800,7 @@ class Sequence(FlixType):
         tracking_code: str = "",
         description: str = "",
         hidden: bool = False,
+        color_tag: ColorTag | None = None,
         *,
         sequence_id: int | None = None,
         created_date: datetime.datetime | None = None,
@@ -798,6 +826,7 @@ class Sequence(FlixType):
         self.panel_revision_count = panel_revision_count
         self.metadata = Metadata(metadata, parent=self, _client=_client)
         self.hidden = hidden
+        self.color_tag = color_tag
 
     @classmethod
     def from_dict(
@@ -820,6 +849,7 @@ class Sequence(FlixType):
         into.panel_revision_count = data.get("panel_revision_count", 0)
         into.metadata = Metadata.from_dict(data.get("metadata"), parent=into, _client=_client)
         into.hidden = data.get("hidden", False)
+        into.color_tag = ColorTag.from_dict(c) if (c := data.get("colour_tag")) else None
         return into
 
     def to_dict(self) -> models.Sequence:
@@ -828,6 +858,7 @@ class Sequence(FlixType):
             description=self.description,
             hidden=self.hidden,
             metadata=self.metadata.to_dict(),
+            colour_tag=self.color_tag.to_dict() if self.color_tag else None,
         )
         if self.sequence_id is not None:
             sequence["id"] = self.sequence_id
@@ -1211,6 +1242,15 @@ class ContactSheet(FlixType):
         return cs
 
 
+class ShowState(enum.Enum):
+    ACTIVE = "active"
+    ARCHIVING = "archiving"
+    ARCHIVED = "archived"
+    RESTORING = "restoring"
+    ARCHIVE_ERRORED = "archive_errored"
+    RESTORE_ERRORED = "restore_errored"
+
+
 class Show(FlixType):
     def __init__(
         self,
@@ -1227,6 +1267,7 @@ class Show(FlixType):
         show_id: int | None = None,
         owner: User | None = None,
         created_date: datetime.datetime | None = None,
+        state: ShowState = ShowState.ACTIVE,
         metadata: Mapping[str, Any] | None = None,
         _client: client.Client | None,
     ) -> None:
@@ -1245,6 +1286,7 @@ class Show(FlixType):
         self.created_date: datetime.datetime = created_date or datetime.datetime.now(
             datetime.timezone.utc
         )
+        self.state = state
         self.metadata = Metadata(metadata, parent=self, _client=_client)
 
     @classmethod
@@ -1270,6 +1312,7 @@ class Show(FlixType):
         into.created_date = dateutil.parser.parse(data["created_date"])
         into.metadata = Metadata.from_dict(data.get("metadata"), parent=into, _client=_client)
         into.hidden = data.get("hidden", False)
+        into.state = ShowState(data["state"])
         return into
 
     def to_dict(self) -> models.Show:
@@ -1944,6 +1987,7 @@ class PanelRevision(FlixType):
         duration: int = 12,
         trim_in_frame: int | None = None,
         trim_out_frame: int | None = None,
+        hidden: bool = False,
         sequence_revision: int | None = None,
     ) -> SequencePanel:
         return SequencePanel(
@@ -1951,6 +1995,7 @@ class PanelRevision(FlixType):
             duration=duration,
             trim_in_frame=trim_in_frame or 0,
             trim_out_frame=trim_out_frame or 0,
+            hidden=hidden,
             sequence_revision=sequence_revision,
         )
 
@@ -1994,6 +2039,7 @@ class SequencePanel:
     duration: int
     trim_in_frame: int
     trim_out_frame: int
+    hidden: bool = False
     sequence_revision: int | None = None
 
     @classmethod
@@ -2010,6 +2056,7 @@ class SequencePanel:
             duration=data["duration"],
             trim_in_frame=data.get("trim_in_frame") or 0,
             trim_out_frame=data.get("trim_out_frame") or 0,
+            hidden=data["hidden"],
         )
 
     def to_dict(self) -> models.RevisionedPanel:
@@ -2035,6 +2082,9 @@ class SequenceRevision(FlixType):
         self,
         panels: list[SequencePanel] | None = None,
         comment: str = "",
+        hidden: bool = False,
+        color_tag: ColorTag | None = None,
+        autosave: bool = False,
         *,
         sequence_id: int | None = None,
         episode_id: int | None = None,
@@ -2058,6 +2108,9 @@ class SequenceRevision(FlixType):
         self.revision_number = revision_number
         self.panels = panels or []
         self.comment = comment
+        self.hidden = hidden
+        self.color_tag = color_tag
+        self.autosave = autosave
         self.owner = owner
         self.created_date: datetime.datetime = created_date or datetime.datetime.now(
             datetime.timezone.utc
@@ -2084,6 +2137,9 @@ class SequenceRevision(FlixType):
         into.episode_id = data.get("episode_id", 0)
         into.show_id = data["show_id"]
         into.comment = data.get("comment", "")
+        into.hidden = data["hidden"]
+        into.color_tag = ColorTag.from_dict(c) if (c := data.get("colour_tag")) else None
+        into.autosave = data["autosave"]
         into.owner = User.from_dict(data["owner"], _client=_client) if data.get("owner") else None
         into.created_date = dateutil.parser.parse(data["created_date"])
         into.published = data.get("published", False)
@@ -2100,6 +2156,9 @@ class SequenceRevision(FlixType):
             comment=self.comment,
             revisioned_panels=[panel.to_dict() for panel in self.panels],
             source_files=[asset.to_dict() for asset in self.source_files],
+            hidden=self.hidden,
+            autosave=self.autosave,
+            colour_tag=self.color_tag.to_dict() if self.color_tag else None,
             metadata=self.metadata.to_dict(),
         )
         if self.show_id is not None:
