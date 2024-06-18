@@ -786,6 +786,11 @@ class Episode(FlixType):
         ]
 
     async def save(self, force_create_new: bool = False) -> None:
+        """Save this episode.
+
+        Args:
+            force_create_new: Always create a new episode instead of updating an existing one.
+        """
         if self.episode_id is None or force_create_new:
             path = f"{self._show.path_prefix()}/episode"
             result = cast(models.Episode, await self.client.post(path, body=self.to_dict()))
@@ -934,6 +939,11 @@ class Sequence(FlixType):
         )
 
     async def save_panels(self, panels: list[PanelRevision]) -> None:
+        """Save a batch of panel revisions.
+
+        Each panel revision will be given a new panel ID.
+        """
+
         class _Panels(TypedDict):
             panels: list[models.PanelRevision]
 
@@ -950,6 +960,15 @@ class Sequence(FlixType):
     async def get_sequence_revision(
         self, revision_number: int, *, fetch_panels: bool = False
     ) -> SequenceRevision:
+        """Fetch an existing revision of this sequence.
+
+        Args:
+            revision_number: The revision number of the sequence revision to fetch.
+            fetch_panels: Automatically populate the sequence revision with its panels.
+
+        Returns:
+            The sequence revision with the requested revision number.
+        """
         path = f"{self.path_prefix()}/revision/{revision_number}"
         revision = cast(models.SequenceRevision, await self.client.get(path))
         seqrev = SequenceRevision.from_dict(revision, _sequence=self, _client=self.client)
@@ -1041,6 +1060,11 @@ class Sequence(FlixType):
             return await waiter.result.get_sequence_revision(self)
 
     async def save(self, force_create_new: bool = False) -> None:
+        """Save this sequence.
+
+        Args:
+            force_create_new: Always create a new sequence instead of updating an existing one.
+        """
         if self.color_tag is not None and self.color_tag.color_tag_id is None:
             self.color_tag = await self.show.get_color_tag("sequence", self.color_tag.color_name)
 
@@ -1646,6 +1670,11 @@ class Show(FlixType):
         return complete_msg.archive_path
 
     async def save(self, force_create_new: bool = False) -> None:
+        """Save this show.
+
+        Args:
+            force_create_new: Always create a new show instead of updating an existing one.
+        """
         if self.show_id is None or force_create_new:
             path = "/show"
             result = cast(models.Show, await self.client.post(path, body=self.to_dict()))
@@ -2116,6 +2145,12 @@ class PanelRevision(FlixType):
         ]
 
     async def save(self, force_create_new_panel: bool = False) -> None:
+        """Save this panel revision.
+
+        Args:
+            force_create_new_panel: Always create a new panel ID for this panel revision
+                instead of versioning up an existing panel.
+        """
         if self.panel_id is None or force_create_new_panel:
             path = f"{self._sequence.path_prefix()}/panel"
             result = cast(models.PanelRevision, await self.client.post(path, body=self.to_dict()))
@@ -2179,6 +2214,11 @@ class Dialogue(FlixType):
         return dialogue
 
     async def save(self) -> None:
+        """Save this dialogue entry.
+
+        Always creates a new dialogue entry. Called automatically for any unsaved dialogue
+        when saving a sequence revision.
+        """
         path = f"{self._show.path_prefix()}/dialogue"
         result = cast(models.Dialogue, await self.client.post(path, body=self.to_dict()))
         self.from_dict(result, into=self, _client=self.client, _show=self._show)
@@ -2399,6 +2439,12 @@ class SequenceRevision(FlixType):
         self.panels.append(sequence_panel)
 
     async def get_all_panel_revisions(self) -> list[SequencePanel]:
+        """Fetch all panels belonging to this sequence revision.
+
+        This method also populates [panels][flix.SequenceRevision.panels]
+        with the returned panels.
+        """
+
         class _AllPanels(TypedDict):
             panels: list[models.SequencePanel]
 
@@ -2464,6 +2510,14 @@ class SequenceRevision(FlixType):
         )
 
     async def save(self, force_create_new: bool = False) -> None:
+        """Save this sequence revision.
+
+        Any unsaved dialogue will be saved automatically.
+
+        Args:
+            force_create_new: Always create a new sequence revision instead
+                of updating an existing one.
+        """
         if self.color_tag is not None and self.color_tag.color_tag_id is None:
             self.color_tag = await self.show.get_color_tag(
                 "sequencerevision", self.color_tag.color_name
