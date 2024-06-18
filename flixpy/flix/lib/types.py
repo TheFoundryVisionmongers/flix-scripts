@@ -880,6 +880,29 @@ class Sequence(FlixType):
         else:
             return f"{self._show.path_prefix()}/sequence/{self.sequence_id}"
 
+    @property
+    def color_tag_name(self) -> str:
+        """The name of the current color tag for this sequence.
+
+        This property allows for getting and setting color tags by name.
+        If a color tag is set by name, the corresponding ID will be looked up
+        when saving the sequence.
+
+        Setting the name to the empty string will clear the color tag.
+        Setting an invalid name will cause an error on save.
+        """
+        if self.color_tag is not None:
+            return self.color_tag.color_name
+        else:
+            return ""
+
+    @color_tag_name.setter
+    def color_tag_name(self, value: str) -> None:
+        if value != "":
+            self.color_tag = ColorTag(color_name=value)
+        else:
+            self.color_tag = None
+
     def new_sequence_revision(
         self,
         comment: str = "",
@@ -1012,6 +1035,9 @@ class Sequence(FlixType):
             return await waiter.result.get_sequence_revision(self)
 
     async def save(self, force_create_new: bool = False) -> None:
+        if self.color_tag is not None and self.color_tag.color_tag_id is None:
+            self.color_tag = await self.show.get_color_tag("sequence", self.color_tag.color_name)
+
         if self.sequence_id is None or force_create_new:
             path = f"{self._show.path_prefix()}/sequence"
             result = cast(models.Sequence, await self.client.post(path, body=self.to_dict()))
@@ -2315,6 +2341,26 @@ class SequenceRevision(FlixType):
     def show(self) -> Show:
         return self.sequence.show
 
+    @property
+    def color_tag_name(self) -> str:
+        """The name of the current color tag for this sequence.
+
+        This property allows for getting and setting color tags by name.
+        If a color tag is set by name, the corresponding ID will be looked up
+        when saving the sequence. Setting an invalid name will cause an error on save.
+        """
+        if self.color_tag is not None:
+            return self.color_tag.color_name
+        else:
+            return ""
+
+    @color_tag_name.setter
+    def color_tag_name(self, value: str) -> None:
+        if value != "":
+            self.color_tag = ColorTag(color_name=value)
+        else:
+            self.color_tag = None
+
     def add_panel(
         self,
         panel: PanelRevision,
@@ -2399,6 +2445,11 @@ class SequenceRevision(FlixType):
         )
 
     async def save(self, force_create_new: bool = False) -> None:
+        if self.color_tag is not None and self.color_tag.color_tag_id is None:
+            self.color_tag = await self.show.get_color_tag(
+                "sequencerevision", self.color_tag.color_name
+            )
+
         if self.revision_number is None or force_create_new:
             # auto-save any unsaved dialogue
             for panel in self.panels:
