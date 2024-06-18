@@ -834,6 +834,14 @@ class Sequence(FlixType):
 
         return sequence
 
+    @property
+    def show(self) -> Show:
+        return self._show
+
+    @property
+    def episode(self) -> Episode | None:
+        return self._episode
+
     def path_prefix(self, include_episode: bool = True) -> str:
         if self._episode is not None and include_episode:
             return f"{self._episode.path_prefix()}/sequence/{self.sequence_id}"
@@ -1919,6 +1927,14 @@ class PanelRevision(FlixType):
             pr["show_id"] = self.show_id
         return pr
 
+    @property
+    def sequence(self) -> Sequence:
+        return self._sequence
+
+    @property
+    def show(self) -> Show:
+        return self.sequence.show
+
     def path_prefix(self, include_episode: bool = False) -> str:
         prefix = self._sequence.path_prefix(include_episode=include_episode)
         return f"{prefix}/panel/{self.panel_id}/revision/{self.revision_number}"
@@ -2098,6 +2114,14 @@ class SequenceRevision(FlixType):
 
     def path_prefix(self, include_episode: bool = True) -> str:
         return f"{self._sequence.path_prefix(include_episode)}/revision/{self.revision_number}"
+
+    @property
+    def sequence(self) -> Sequence:
+        return self._sequence
+
+    @property
+    def show(self) -> Show:
+        return self.sequence.show
 
     def add_panel(
         self,
