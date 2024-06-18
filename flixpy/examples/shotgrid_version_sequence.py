@@ -14,6 +14,7 @@ The example assumes that you have registered a TCP webhook with the URL
 ``http://<hostname>:8888/events/shotgrid`` with the ``Publish to editorial``
 event enabled.
 """
+
 from __future__ import annotations
 
 import asyncio

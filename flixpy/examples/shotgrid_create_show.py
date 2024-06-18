@@ -10,6 +10,7 @@ such as type hinting and streaming uploads to Flix.
 
 Note that this example does not take shots into account.
 """
+
 from __future__ import annotations
 
 import asyncio

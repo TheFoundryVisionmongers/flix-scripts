@@ -188,8 +188,9 @@ class MetadataField:
                 return [str(other)]
 
     def __repr__(self) -> str:
-        return "MetadataField(value={}, value_type={}, created_date={}, modified_date={})".format(
-            self.value, self.value_type, self.created_date, self.modified_date
+        return (
+            f"MetadataField(value={self.value}, value_type={self.value_type}, "
+            f"created_date={self.created_date}, modified_date={self.modified_date})"
         )
 
 
