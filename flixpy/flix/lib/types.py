@@ -1735,7 +1735,7 @@ class Panel(FlixType):
         owner: User | None = None,
         created_date: datetime.datetime | None = None,
         metadata: Mapping[str, Any] | None = None,
-        _sequence: Sequence | None,
+        _sequence: Sequence,
         _client: client.Client | None,
     ) -> None:
         super().__init__(_client)
@@ -1754,7 +1754,7 @@ class Panel(FlixType):
         data: models.Panel,
         *,
         into: Panel | None = None,
-        _sequence: Sequence | None,
+        _sequence: Sequence,
         _client: client.Client | None,
     ) -> Panel:
         if into is None:
@@ -1779,8 +1779,6 @@ class Panel(FlixType):
         return panel
 
     def path_prefix(self) -> str:
-        if self._sequence is None:
-            raise errors.FlixError("sequence is not set")
         return f"{self._sequence.path_prefix(include_episode=False)}/panel/{self.panel_id}"
 
 
@@ -1810,7 +1808,7 @@ class PanelRevision(FlixType):
         duplicate: DuplicateRef | None = None,
         panel: Panel | None = None,
         metadata: Mapping[str, Any] | None = None,
-        _sequence: Sequence | None,
+        _sequence: Sequence,
         _client: client.Client | None,
     ) -> None:
         super().__init__(_client)
@@ -1848,7 +1846,7 @@ class PanelRevision(FlixType):
         data: models.PanelRevision,
         *,
         into: PanelRevision | None = None,
-        _sequence: Sequence | None,
+        _sequence: Sequence,
         _client: client.Client | None,
     ) -> PanelRevision:
         if into is None:
@@ -1922,8 +1920,6 @@ class PanelRevision(FlixType):
         return pr
 
     def path_prefix(self, include_episode: bool = False) -> str:
-        if self._sequence is None:
-            raise errors.FlixError("sequence is not set")
         prefix = self._sequence.path_prefix(include_episode=include_episode)
         return f"{prefix}/panel/{self.panel_id}/revision/{self.revision_number}"
 
@@ -1967,9 +1963,6 @@ class PanelRevision(FlixType):
         return kf
 
     async def save(self, force_create_new_panel: bool = False) -> None:
-        if self._sequence is None:
-            raise errors.FlixError("sequence is not set")
-
         if self.panel_id is None or force_create_new_panel:
             path = f"{self._sequence.path_prefix()}/panel"
             result = cast(models.PanelRevision, await self.client.post(path, body=self.to_dict()))
@@ -1992,7 +1985,7 @@ class SequencePanel:
         cls,
         data: models.SequencePanel,
         *,
-        _sequence: Sequence | None,
+        _sequence: Sequence,
         _client: client.Client | None,
     ) -> SequencePanel:
         return cls(
@@ -2038,7 +2031,7 @@ class SequenceRevision(FlixType):
         task_id: str | None = None,
         source_files: list[Asset] | None = None,
         metadata: Mapping[str, Any] | None = None,
-        _sequence: Sequence | None,
+        _sequence: Sequence,
         _client: client.Client | None,
     ) -> None:
         super().__init__(_client)
@@ -2065,7 +2058,7 @@ class SequenceRevision(FlixType):
         data: models.SequenceRevision,
         *,
         into: SequenceRevision | None = None,
-        _sequence: Sequence | None,
+        _sequence: Sequence,
         _client: client.Client | None,
     ) -> SequenceRevision:
         if into is None:
@@ -2104,8 +2097,6 @@ class SequenceRevision(FlixType):
         return revision
 
     def path_prefix(self, include_episode: bool = True) -> str:
-        if self._sequence is None:
-            raise errors.FlixError("sequence is not set")
         return f"{self._sequence.path_prefix(include_episode)}/revision/{self.revision_number}"
 
     def add_panel(
@@ -2192,9 +2183,6 @@ class SequenceRevision(FlixType):
         )
 
     async def save(self, force_create_new: bool = False) -> None:
-        if self._sequence is None:
-            raise errors.FlixError("sequence is not set")
-
         if self.revision_number is None or force_create_new:
             path = f"{self._sequence.path_prefix()}/revision"
             result = cast(
