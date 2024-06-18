@@ -2105,6 +2105,25 @@ class SequencePanel:
     hidden: bool = False
     sequence_revision: int | None = None
 
+    @property
+    def dialogue_text(self) -> str:
+        """The dialogue for this sequence panel as a string.
+
+        Safe to read and write even if ``dialogue`` is ``None``.
+        If set to the empty string, the dialogue will be removed.
+        """
+        if self.dialogue is not None:
+            return self.dialogue.text
+        else:
+            return ""
+
+    @dialogue_text.setter
+    def dialogue_text(self, value: str) -> None:
+        if value:
+            self.dialogue = Dialogue(text=value, _show=self.panel.show, _client=self.panel.client)
+        else:
+            self.dialogue = None
+
     @classmethod
     def from_dict(
         cls,
@@ -2336,6 +2355,11 @@ class SequenceRevision(FlixType):
 
     async def save(self, force_create_new: bool = False) -> None:
         if self.revision_number is None or force_create_new:
+            # auto-save any unsaved dialogue
+            for panel in self.panels:
+                if panel.dialogue and not panel.dialogue.dialogue_id:
+                    await panel.dialogue.save()
+
             path = f"{self._sequence.path_prefix()}/revision"
             result = cast(
                 models.SequenceRevision, await self.client.post(path, body=self.to_dict())
