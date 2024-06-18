@@ -947,10 +947,16 @@ class Sequence(FlixType):
                 result_panel, into=panels[i], _sequence=self, _client=self.client
             )
 
-    async def get_sequence_revision(self, revision_number: int) -> SequenceRevision:
+    async def get_sequence_revision(
+        self, revision_number: int, *, fetch_panels: bool = False
+    ) -> SequenceRevision:
         path = f"{self.path_prefix()}/revision/{revision_number}"
         revision = cast(models.SequenceRevision, await self.client.get(path))
-        return SequenceRevision.from_dict(revision, _sequence=self, _client=self.client)
+        seqrev = SequenceRevision.from_dict(revision, _sequence=self, _client=self.client)
+
+        if fetch_panels:
+            await seqrev.get_all_panel_revisions()
+        return seqrev
 
     async def get_all_sequence_revisions(self) -> list[SequenceRevision]:
         class _AllRevisions(TypedDict):
@@ -2398,10 +2404,11 @@ class SequenceRevision(FlixType):
 
         path = f"{self.path_prefix()}/panels"
         all_panels = cast(_AllPanels, await self.client.get(path))
-        return [
+        self.panels = [
             SequencePanel.from_dict(panel, _sequence=self._sequence, _client=self.client)
             for panel in all_panels["panels"]
         ]
+        return self.panels
 
     async def _export(
         self,
