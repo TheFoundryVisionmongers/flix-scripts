@@ -2097,6 +2097,18 @@ class PanelRevision(FlixType):
         self.keyframes.append(kf)
         return kf
 
+    async def get_dialogue_history(self) -> list[Dialogue]:
+        """Get all dialogue entries associated with the panel ID of this panel revision."""
+
+        class _AllDialogue(TypedDict):
+            dialogues: list[models.Dialogue]
+
+        path = f"{self._sequence.path_prefix()}/panel/{self.panel_id}/dialogues"
+        result = cast(_AllDialogue, await self.client.get(path))
+        return [
+            Dialogue.from_dict(d, _show=self.show, _client=self.client) for d in result["dialogues"]
+        ]
+
     async def save(self, force_create_new_panel: bool = False) -> None:
         if self.panel_id is None or force_create_new_panel:
             path = f"{self._sequence.path_prefix()}/panel"
