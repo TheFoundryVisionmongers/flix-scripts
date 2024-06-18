@@ -11,7 +11,7 @@ import enum
 import os
 import pathlib
 from collections.abc import AsyncIterable, Callable, Iterable, Iterator, Mapping, MutableMapping
-from typing import Any, BinaryIO, Protocol, TypedDict, cast
+from typing import Any, BinaryIO, Literal, Protocol, TypedDict, cast
 
 import dateutil.parser
 
@@ -1290,6 +1290,8 @@ class Show(FlixType):
         self.state = state
         self.metadata = Metadata(metadata, parent=self, _client=_client)
 
+        self._color_tags: dict[Literal["sequence", "sequencerevision"], dict[str, ColorTag]] = {}
+
     @classmethod
     def from_dict(
         cls: type[Show],
@@ -1390,6 +1392,49 @@ class Show(FlixType):
             ContactSheet.from_dict(cs, _client=self.client)
             for cs in all_contactsheets["contact_sheets"]
         ]
+
+    async def get_all_color_tags(
+        self, model: Literal["sequence", "sequencerevision"]
+    ) -> dict[str, ColorTag]:
+        """Get all color tags assignable to the given type in this show.
+
+        Returns:
+            A mapping from color tag name to color tag.
+        """
+        if cached_tags := self._color_tags.get(model):
+            return cached_tags
+
+        class _AllColorTags(TypedDict):
+            colour_tags: list[models.ColorTag]
+
+        path = f"{self.path_prefix()}/colourtags/{model}"
+        all_tags = cast(_AllColorTags, await self.client.get(path))
+        tag_by_name = {
+            tag["colour_name"]: ColorTag.from_dict(tag) for tag in all_tags["colour_tags"]
+        }
+
+        self._color_tags[model] = tag_by_name
+        return tag_by_name
+
+    async def get_color_tag(
+        self, model: Literal["sequence", "sequencerevision"], name: str
+    ) -> ColorTag:
+        """Get the color tag with the given name.
+
+        Raises:
+            errors.FlixError: If the given name is not a valid color tag name
+                for the specified type.
+        """
+        color_tags = await self.get_all_color_tags(model)
+        if tag := color_tags.get(name):
+            return tag
+        else:
+            raise errors.FlixError(
+                "'{}' is not a valid color tag name; available names: {}".format(
+                    name,
+                    ", ".join(color_tags),
+                )
+            )
 
     async def create_assets(self, num_assets: int) -> list[Asset]:
         class _Assets(TypedDict):
