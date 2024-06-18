@@ -112,25 +112,12 @@ class Episode(TypedDict, total=False):
     sequences: list[Sequence]
 
 
-class RevisionedDialogue(TypedDict, total=False):
-    id: int
-
-
-class RevisionedPanel(TypedDict, total=False):
-    panel_id: int
-    revision_number: int
-    duration: int
-    dialogue: RevisionedDialogue
-    trim_in_frame: int
-    trim_out_frame: int
-
-
 class SequenceRevision(TypedDict, total=False):
     revision: int
     owner: User
     created_date: str
     metadata: list[MetadataField]
-    revisioned_panels: list[RevisionedPanel]
+    revisioned_panels: list[SequencePanel]
     comment: str
     published: bool
     imported: bool
@@ -230,6 +217,13 @@ class Panel(TypedDict, total=False):
     metadata: list[MetadataField]
 
 
+class Dialogue(TypedDict):
+    dialogue_id: NotRequired[int]
+    text: str
+    created_date: NotRequired[str]
+    owner: NotRequired[User]
+
+
 class PanelRevision(TypedDict, total=False):
     sequence_id: int
     show_id: int
@@ -259,6 +253,7 @@ class SequencePanel(PanelRevision):
     trim_in_frame: int
     trim_out_frame: int
     hidden: bool
+    dialogue: NotRequired[Dialogue]
 
 
 class PageSize(TypedDict):

@@ -49,6 +49,7 @@ __all__ = [
     "SequenceRevision",
     "DialogueFormat",
     "Server",
+    "Dialogue",
     "ColorTag",
 ]
 
@@ -1987,6 +1988,7 @@ class PanelRevision(FlixType):
         duration: int = 12,
         trim_in_frame: int | None = None,
         trim_out_frame: int | None = None,
+        dialogue: Dialogue | None = None,
         hidden: bool = False,
         sequence_revision: int | None = None,
     ) -> SequencePanel:
@@ -1995,6 +1997,7 @@ class PanelRevision(FlixType):
             duration=duration,
             trim_in_frame=trim_in_frame or 0,
             trim_out_frame=trim_out_frame or 0,
+            dialogue=dialogue,
             hidden=hidden,
             sequence_revision=sequence_revision,
         )
@@ -2033,12 +2036,72 @@ class PanelRevision(FlixType):
         self.from_dict(result, into=self, _sequence=self._sequence, _client=self.client)
 
 
+class Dialogue(FlixType):
+    def __init__(
+        self,
+        text: str,
+        *,
+        created_date: datetime.datetime | None = None,
+        owner: User | None = None,
+        dialogue_id: int | None = None,
+        _show: Show,
+        _client: client.Client | None,
+    ) -> None:
+        super().__init__(_client)
+        self._show = _show
+        self.dialogue_id = dialogue_id
+        self._text = text
+        self.created_date = created_date or datetime.datetime.now(datetime.timezone.utc)
+        self.owner = owner
+
+    @property
+    def text(self) -> str:
+        return self._text
+
+    @text.setter
+    def text(self, value: str) -> None:
+        self._text = value
+        # clear dialogue id when updating text to avoid user error
+        # if changing dialogue of existing object
+        self.dialogue_id = None
+
+    @classmethod
+    def from_dict(
+        cls,
+        data: models.Dialogue,
+        *,
+        into: Dialogue | None = None,
+        _show: Show,
+        _client: client.Client | None,
+    ) -> Dialogue:
+        if into is None:
+            into = cls(text="", _client=_client, _show=_show)
+        # set text first since it also clears dialogue id
+        into.text = data["text"]
+        into.dialogue_id = data["dialogue_id"]
+        into.created_date = dateutil.parser.parse(data["created_date"])
+        into.owner = User.from_dict(data["owner"], _client=_client)
+        return into
+
+    def to_dict(self) -> models.Dialogue:
+        dialogue = models.Dialogue(text=self.text)
+        if self.dialogue_id is not None:
+            dialogue["dialogue_id"] = self.dialogue_id
+        return dialogue
+
+    async def save(self) -> None:
+        path = f"{self._show.path_prefix()}/dialogue"
+        result = cast(models.Dialogue, await self.client.post(path, body=self.to_dict()))
+        self.from_dict(result, into=self, _client=self.client, _show=self._show)
+
+
 @dataclasses.dataclass
 class SequencePanel:
     panel: PanelRevision
     duration: int
     trim_in_frame: int
     trim_out_frame: int
+    dialogue: Dialogue | None = None
     hidden: bool = False
     sequence_revision: int | None = None
 
@@ -2056,19 +2119,25 @@ class SequencePanel:
             duration=data["duration"],
             trim_in_frame=data.get("trim_in_frame") or 0,
             trim_out_frame=data.get("trim_out_frame") or 0,
+            dialogue=Dialogue.from_dict(d, _show=_sequence.show, _client=_client)
+            if (d := data.get("dialogue"))
+            else None,
             hidden=data["hidden"],
         )
 
-    def to_dict(self) -> models.RevisionedPanel:
-        pr = models.RevisionedPanel(
+    def to_dict(self) -> models.SequencePanel:
+        pr = models.SequencePanel(
             duration=self.duration,
             trim_in_frame=self.trim_in_frame,
             trim_out_frame=self.trim_out_frame,
+            hidden=self.hidden,
         )
         if self.panel.panel_id is not None:
             pr["panel_id"] = self.panel.panel_id
         if self.panel.revision_number is not None:
             pr["revision_number"] = self.panel.revision_number
+        if self.dialogue:
+            pr["dialogue"] = self.dialogue.to_dict()
         return pr
 
 
