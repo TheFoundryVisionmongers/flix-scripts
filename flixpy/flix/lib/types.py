@@ -1129,9 +1129,9 @@ class Asset(FlixType):
             asset_id=data["asset_id"],
             show_id=data["show_id"],
             created_date=dateutil.parser.parse(data["created_date"]),
-            owner=User.from_dict(data["owner_id"], _client=_client)
-            if data.get("owner_id")
-            else None,
+            owner=(
+                User.from_dict(data["owner_id"], _client=_client) if data.get("owner_id") else None
+            ),
             media_objects={
                 ref: [MediaObject.from_dict(mo, _client=_client) for mo in mos]
                 for ref, mos in (data.get("media_objects") or {}).items()
@@ -1727,15 +1727,17 @@ class Keyframe:
             center_vert=data.get("center_vert", 0),
             anchor_point_horiz=data.get("anchor_point_horiz", 0),
             anchor_point_vert=data.get("anchor_point_vert", 0),
-            viewport=Keyframe.Viewport(
-                width=data["viewport"]["width"],
-                height=data["viewport"]["height"],
-                offset_x=data["viewport"].get("offset_x", 0),
-                offset_y=data["viewport"].get("offset_y", 0),
-                scale=data["viewport"].get("scale", 1),
-            )
-            if data.get("viewport")
-            else None,
+            viewport=(
+                Keyframe.Viewport(
+                    width=data["viewport"]["width"],
+                    height=data["viewport"]["height"],
+                    offset_x=data["viewport"].get("offset_x", 0),
+                    offset_y=data["viewport"].get("offset_y", 0),
+                    scale=data["viewport"].get("scale", 1),
+                )
+                if data.get("viewport")
+                else None
+            ),
         )
 
     def to_dict(self) -> models.Keyframe:
@@ -1788,9 +1790,9 @@ class PanelComment:
             panel_id=data["panel_id"],
             revision_id=data["revision_id"],
             closer_user_id=data.get("closer_user_id"),
-            closed_date=dateutil.parser.parse(data["closed_date"])
-            if data.get("closed_date")
-            else None,
+            closed_date=(
+                dateutil.parser.parse(data["closed_date"]) if data.get("closed_date") else None
+            ),
             created_date=dateutil.parser.parse(data["created_date"]),
             deleted=data.get("deleted", False),
             closed=data.get("closed", False),
@@ -2267,9 +2269,11 @@ class SequencePanel:
             duration=data["duration"],
             trim_in_frame=data.get("trim_in_frame") or 0,
             trim_out_frame=data.get("trim_out_frame") or 0,
-            dialogue=Dialogue.from_dict(d, _show=_sequence.show, _client=_client)
-            if (d := data.get("dialogue"))
-            else None,
+            dialogue=(
+                Dialogue.from_dict(d, _show=_sequence.show, _client=_client)
+                if (d := data.get("dialogue"))
+                else None
+            ),
             hidden=data["hidden"],
         )
 
