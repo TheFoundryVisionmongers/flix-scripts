@@ -3,6 +3,7 @@
 The new panel revision will be available within Flix.
 We are not creating a new sequence revision with this example.
 """
+
 from __future__ import annotations
 
 import asyncio

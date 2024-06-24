@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any, TypedDict
 
+from typing_extensions import NotRequired
+
 
 class MetadataField(TypedDict, total=False):
     name: str
@@ -76,6 +78,12 @@ class Asset(TypedDict, total=False):
     media_objects: dict[str, list[MediaObject]]
 
 
+class ColorTag(TypedDict):
+    id: int
+    colour_name: str
+    value: str
+
+
 class Sequence(TypedDict, total=False):
     id: int
     description: str
@@ -85,6 +93,7 @@ class Sequence(TypedDict, total=False):
     panel_revision_count: int
     deleted: bool
     hidden: bool
+    colour_tag: ColorTag | None
     metadata: list[MetadataField]
     tracking_code: str
 
@@ -97,22 +106,10 @@ class Episode(TypedDict, total=False):
     owner: User
     description: str
     title: str
+    hidden: bool
     metadata: list[MetadataField]
     tracking_code: str
     sequences: list[Sequence]
-
-
-class RevisionedDialogue(TypedDict, total=False):
-    id: int
-
-
-class RevisionedPanel(TypedDict, total=False):
-    panel_id: int
-    revision_number: int
-    duration: int
-    dialogue: RevisionedDialogue
-    trim_in_frame: int
-    trim_out_frame: int
 
 
 class SequenceRevision(TypedDict, total=False):
@@ -120,10 +117,13 @@ class SequenceRevision(TypedDict, total=False):
     owner: User
     created_date: str
     metadata: list[MetadataField]
-    revisioned_panels: list[RevisionedPanel]
+    revisioned_panels: list[SequencePanel]
     comment: str
     published: bool
     imported: bool
+    hidden: bool
+    colour_tag: ColorTag | None
+    autosave: bool
     sequence_id: int
     show_id: int
     episode_id: int
@@ -145,6 +145,7 @@ class Show(TypedDict, total=False):
     show_thumbnail_id: int
     title: str
     tracking_code: str
+    state: str
 
 
 class PanelComment(TypedDict, total=False):
@@ -216,6 +217,13 @@ class Panel(TypedDict, total=False):
     metadata: list[MetadataField]
 
 
+class Dialogue(TypedDict):
+    dialogue_id: NotRequired[int]
+    text: str
+    created_date: NotRequired[str]
+    owner: NotRequired[User]
+
+
 class PanelRevision(TypedDict, total=False):
     sequence_id: int
     show_id: int
@@ -240,10 +248,12 @@ class PanelRevision(TypedDict, total=False):
 
 
 class SequencePanel(PanelRevision):
-    sequence_revision: int
+    sequence_revision: NotRequired[int]
     duration: int
     trim_in_frame: int
     trim_out_frame: int
+    hidden: bool
+    dialogue: NotRequired[Dialogue]
 
 
 class PageSize(TypedDict):

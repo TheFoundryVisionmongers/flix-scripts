@@ -11,7 +11,7 @@ import enum
 import os
 import pathlib
 from collections.abc import AsyncIterable, Callable, Iterable, Iterator, Mapping, MutableMapping
-from typing import Any, BinaryIO, Protocol, TypedDict, cast
+from typing import Any, BinaryIO, Literal, Protocol, TypedDict, cast
 
 import dateutil.parser
 
@@ -49,6 +49,8 @@ __all__ = [
     "SequenceRevision",
     "DialogueFormat",
     "Server",
+    "Dialogue",
+    "ColorTag",
 ]
 
 
@@ -188,8 +190,9 @@ class MetadataField:
                 return [str(other)]
 
     def __repr__(self) -> str:
-        return "MetadataField(value={}, value_type={}, created_date={}, modified_date={})".format(
-            self.value, self.value_type, self.created_date, self.modified_date
+        return (
+            f"MetadataField(value={self.value}, value_type={self.value_type}, "
+            f"created_date={self.created_date}, modified_date={self.modified_date})"
         )
 
 
@@ -676,6 +679,28 @@ class MediaObject(FlixType):
         return path
 
 
+@dataclasses.dataclass
+class ColorTag:
+    color_tag_id: int | None = None
+    color_name: str = ""
+    value: str = ""
+
+    @classmethod
+    def from_dict(cls, data: models.ColorTag) -> ColorTag:
+        return cls(
+            color_tag_id=data["id"],
+            color_name=data["colour_name"],
+            value=data["value"],
+        )
+
+    def to_dict(self) -> models.ColorTag:
+        return models.ColorTag(
+            id=self.color_tag_id or 0,
+            colour_name=self.color_name,
+            value=self.value,
+        )
+
+
 class Episode(FlixType):
     def __init__(
         self,
@@ -683,6 +708,7 @@ class Episode(FlixType):
         tracking_code: str = "",
         description: str = "",
         title: str = "",
+        hidden: bool = False,
         *,
         episode_id: int | None = None,
         created_date: datetime.datetime | None = None,
@@ -700,6 +726,7 @@ class Episode(FlixType):
         self.episode_number = episode_number
         self.created_date = created_date
         self.owner = owner
+        self.hidden = hidden
         self.metadata = Metadata(metadata, parent=self, _client=_client)
 
     @classmethod
@@ -721,6 +748,7 @@ class Episode(FlixType):
         into.created_date = dateutil.parser.parse(data["created_date"])
         into.owner = User.from_dict(data["owner"], _client=_client)
         into.metadata = Metadata.from_dict(data.get("metadata"), parent=into, _client=_client)
+        into.hidden = data["hidden"]
         return into
 
     def to_dict(self) -> models.Episode:
@@ -730,6 +758,7 @@ class Episode(FlixType):
             description=self.description,
             title=self.title,
             metadata=self.metadata.to_dict(),
+            hidden=self.hidden,
         )
         if self.episode_id is not None:
             episode["id"] = self.episode_id
@@ -757,6 +786,11 @@ class Episode(FlixType):
         ]
 
     async def save(self, force_create_new: bool = False) -> None:
+        """Save this episode.
+
+        Args:
+            force_create_new: Always create a new episode instead of updating an existing one.
+        """
         if self.episode_id is None or force_create_new:
             path = f"{self._show.path_prefix()}/episode"
             result = cast(models.Episode, await self.client.post(path, body=self.to_dict()))
@@ -772,6 +806,7 @@ class Sequence(FlixType):
         tracking_code: str = "",
         description: str = "",
         hidden: bool = False,
+        color_tag: ColorTag | None = None,
         *,
         sequence_id: int | None = None,
         created_date: datetime.datetime | None = None,
@@ -797,6 +832,7 @@ class Sequence(FlixType):
         self.panel_revision_count = panel_revision_count
         self.metadata = Metadata(metadata, parent=self, _client=_client)
         self.hidden = hidden
+        self.color_tag = color_tag
 
     @classmethod
     def from_dict(
@@ -819,6 +855,7 @@ class Sequence(FlixType):
         into.panel_revision_count = data.get("panel_revision_count", 0)
         into.metadata = Metadata.from_dict(data.get("metadata"), parent=into, _client=_client)
         into.hidden = data.get("hidden", False)
+        into.color_tag = ColorTag.from_dict(c) if (c := data.get("colour_tag")) else None
         return into
 
     def to_dict(self) -> models.Sequence:
@@ -827,17 +864,49 @@ class Sequence(FlixType):
             description=self.description,
             hidden=self.hidden,
             metadata=self.metadata.to_dict(),
+            colour_tag=self.color_tag.to_dict() if self.color_tag else None,
         )
         if self.sequence_id is not None:
             sequence["id"] = self.sequence_id
 
         return sequence
 
+    @property
+    def show(self) -> Show:
+        return self._show
+
+    @property
+    def episode(self) -> Episode | None:
+        return self._episode
+
     def path_prefix(self, include_episode: bool = True) -> str:
         if self._episode is not None and include_episode:
             return f"{self._episode.path_prefix()}/sequence/{self.sequence_id}"
         else:
             return f"{self._show.path_prefix()}/sequence/{self.sequence_id}"
+
+    @property
+    def color_tag_name(self) -> str:
+        """The name of the current color tag for this sequence.
+
+        This property allows for getting and setting color tags by name.
+        If a color tag is set by name, the corresponding ID will be looked up
+        when saving the sequence.
+
+        Setting the name to the empty string will clear the color tag.
+        Setting an invalid name will cause an error on save.
+        """
+        if self.color_tag is not None:
+            return self.color_tag.color_name
+        else:
+            return ""
+
+    @color_tag_name.setter
+    def color_tag_name(self, value: str) -> None:
+        if value != "":
+            self.color_tag = ColorTag(color_name=value)
+        else:
+            self.color_tag = None
 
     def new_sequence_revision(
         self,
@@ -870,6 +939,11 @@ class Sequence(FlixType):
         )
 
     async def save_panels(self, panels: list[PanelRevision]) -> None:
+        """Save a batch of panel revisions.
+
+        Each panel revision will be given a new panel ID.
+        """
+
         class _Panels(TypedDict):
             panels: list[models.PanelRevision]
 
@@ -883,10 +957,25 @@ class Sequence(FlixType):
                 result_panel, into=panels[i], _sequence=self, _client=self.client
             )
 
-    async def get_sequence_revision(self, revision_number: int) -> SequenceRevision:
+    async def get_sequence_revision(
+        self, revision_number: int, *, fetch_panels: bool = False
+    ) -> SequenceRevision:
+        """Fetch an existing revision of this sequence.
+
+        Args:
+            revision_number: The revision number of the sequence revision to fetch.
+            fetch_panels: Automatically populate the sequence revision with its panels.
+
+        Returns:
+            The sequence revision with the requested revision number.
+        """
         path = f"{self.path_prefix()}/revision/{revision_number}"
         revision = cast(models.SequenceRevision, await self.client.get(path))
-        return SequenceRevision.from_dict(revision, _sequence=self, _client=self.client)
+        seqrev = SequenceRevision.from_dict(revision, _sequence=self, _client=self.client)
+
+        if fetch_panels:
+            await seqrev.get_all_panel_revisions()
+        return seqrev
 
     async def get_all_sequence_revisions(self) -> list[SequenceRevision]:
         class _AllRevisions(TypedDict):
@@ -971,6 +1060,14 @@ class Sequence(FlixType):
             return await waiter.result.get_sequence_revision(self)
 
     async def save(self, force_create_new: bool = False) -> None:
+        """Save this sequence.
+
+        Args:
+            force_create_new: Always create a new sequence instead of updating an existing one.
+        """
+        if self.color_tag is not None and self.color_tag.color_tag_id is None:
+            self.color_tag = await self.show.get_color_tag("sequence", self.color_tag.color_name)
+
         if self.sequence_id is None or force_create_new:
             path = f"{self._show.path_prefix()}/sequence"
             result = cast(models.Sequence, await self.client.post(path, body=self.to_dict()))
@@ -1032,9 +1129,9 @@ class Asset(FlixType):
             asset_id=data["asset_id"],
             show_id=data["show_id"],
             created_date=dateutil.parser.parse(data["created_date"]),
-            owner=User.from_dict(data["owner_id"], _client=_client)
-            if data.get("owner_id")
-            else None,
+            owner=(
+                User.from_dict(data["owner_id"], _client=_client) if data.get("owner_id") else None
+            ),
             media_objects={
                 ref: [MediaObject.from_dict(mo, _client=_client) for mo in mos]
                 for ref, mos in (data.get("media_objects") or {}).items()
@@ -1202,6 +1299,15 @@ class ContactSheet(FlixType):
         return cs
 
 
+class ShowState(enum.Enum):
+    ACTIVE = "active"
+    ARCHIVING = "archiving"
+    ARCHIVED = "archived"
+    RESTORING = "restoring"
+    ARCHIVE_ERRORED = "archive_errored"
+    RESTORE_ERRORED = "restore_errored"
+
+
 class Show(FlixType):
     def __init__(
         self,
@@ -1218,6 +1324,7 @@ class Show(FlixType):
         show_id: int | None = None,
         owner: User | None = None,
         created_date: datetime.datetime | None = None,
+        state: ShowState = ShowState.ACTIVE,
         metadata: Mapping[str, Any] | None = None,
         _client: client.Client | None,
     ) -> None:
@@ -1236,7 +1343,10 @@ class Show(FlixType):
         self.created_date: datetime.datetime = created_date or datetime.datetime.now(
             datetime.timezone.utc
         )
+        self.state = state
         self.metadata = Metadata(metadata, parent=self, _client=_client)
+
+        self._color_tags: dict[Literal["sequence", "sequencerevision"], dict[str, ColorTag]] = {}
 
     @classmethod
     def from_dict(
@@ -1261,6 +1371,7 @@ class Show(FlixType):
         into.created_date = dateutil.parser.parse(data["created_date"])
         into.metadata = Metadata.from_dict(data.get("metadata"), parent=into, _client=_client)
         into.hidden = data.get("hidden", False)
+        into.state = ShowState(data["state"])
         return into
 
     def to_dict(self) -> models.Show:
@@ -1337,6 +1448,49 @@ class Show(FlixType):
             ContactSheet.from_dict(cs, _client=self.client)
             for cs in all_contactsheets["contact_sheets"]
         ]
+
+    async def get_all_color_tags(
+        self, model: Literal["sequence", "sequencerevision"]
+    ) -> dict[str, ColorTag]:
+        """Get all color tags assignable to the given type in this show.
+
+        Returns:
+            A mapping from color tag name to color tag.
+        """
+        if cached_tags := self._color_tags.get(model):
+            return cached_tags
+
+        class _AllColorTags(TypedDict):
+            colour_tags: list[models.ColorTag]
+
+        path = f"{self.path_prefix()}/colourtags/{model}"
+        all_tags = cast(_AllColorTags, await self.client.get(path))
+        tag_by_name = {
+            tag["colour_name"]: ColorTag.from_dict(tag) for tag in all_tags["colour_tags"]
+        }
+
+        self._color_tags[model] = tag_by_name
+        return tag_by_name
+
+    async def get_color_tag(
+        self, model: Literal["sequence", "sequencerevision"], name: str
+    ) -> ColorTag:
+        """Get the color tag with the given name.
+
+        Raises:
+            errors.FlixError: If the given name is not a valid color tag name
+                for the specified type.
+        """
+        color_tags = await self.get_all_color_tags(model)
+        if tag := color_tags.get(name):
+            return tag
+        else:
+            raise errors.FlixError(
+                "'{}' is not a valid color tag name; available names: {}".format(
+                    name,
+                    ", ".join(color_tags),
+                )
+            )
 
     async def create_assets(self, num_assets: int) -> list[Asset]:
         class _Assets(TypedDict):
@@ -1516,6 +1670,11 @@ class Show(FlixType):
         return complete_msg.archive_path
 
     async def save(self, force_create_new: bool = False) -> None:
+        """Save this show.
+
+        Args:
+            force_create_new: Always create a new show instead of updating an existing one.
+        """
         if self.show_id is None or force_create_new:
             path = "/show"
             result = cast(models.Show, await self.client.post(path, body=self.to_dict()))
@@ -1568,15 +1727,17 @@ class Keyframe:
             center_vert=data.get("center_vert", 0),
             anchor_point_horiz=data.get("anchor_point_horiz", 0),
             anchor_point_vert=data.get("anchor_point_vert", 0),
-            viewport=Keyframe.Viewport(
-                width=data["viewport"]["width"],
-                height=data["viewport"]["height"],
-                offset_x=data["viewport"].get("offset_x", 0),
-                offset_y=data["viewport"].get("offset_y", 0),
-                scale=data["viewport"].get("scale", 1),
-            )
-            if data.get("viewport")
-            else None,
+            viewport=(
+                Keyframe.Viewport(
+                    width=data["viewport"]["width"],
+                    height=data["viewport"]["height"],
+                    offset_x=data["viewport"].get("offset_x", 0),
+                    offset_y=data["viewport"].get("offset_y", 0),
+                    scale=data["viewport"].get("scale", 1),
+                )
+                if data.get("viewport")
+                else None
+            ),
         )
 
     def to_dict(self) -> models.Keyframe:
@@ -1629,9 +1790,9 @@ class PanelComment:
             panel_id=data["panel_id"],
             revision_id=data["revision_id"],
             closer_user_id=data.get("closer_user_id"),
-            closed_date=dateutil.parser.parse(data["closed_date"])
-            if data.get("closed_date")
-            else None,
+            closed_date=(
+                dateutil.parser.parse(data["closed_date"]) if data.get("closed_date") else None
+            ),
             created_date=dateutil.parser.parse(data["created_date"]),
             deleted=data.get("deleted", False),
             closed=data.get("closed", False),
@@ -1734,7 +1895,7 @@ class Panel(FlixType):
         owner: User | None = None,
         created_date: datetime.datetime | None = None,
         metadata: Mapping[str, Any] | None = None,
-        _sequence: Sequence | None,
+        _sequence: Sequence,
         _client: client.Client | None,
     ) -> None:
         super().__init__(_client)
@@ -1753,7 +1914,7 @@ class Panel(FlixType):
         data: models.Panel,
         *,
         into: Panel | None = None,
-        _sequence: Sequence | None,
+        _sequence: Sequence,
         _client: client.Client | None,
     ) -> Panel:
         if into is None:
@@ -1778,8 +1939,6 @@ class Panel(FlixType):
         return panel
 
     def path_prefix(self) -> str:
-        if self._sequence is None:
-            raise errors.FlixError("sequence is not set")
         return f"{self._sequence.path_prefix(include_episode=False)}/panel/{self.panel_id}"
 
 
@@ -1809,7 +1968,7 @@ class PanelRevision(FlixType):
         duplicate: DuplicateRef | None = None,
         panel: Panel | None = None,
         metadata: Mapping[str, Any] | None = None,
-        _sequence: Sequence | None,
+        _sequence: Sequence,
         _client: client.Client | None,
     ) -> None:
         super().__init__(_client)
@@ -1847,7 +2006,7 @@ class PanelRevision(FlixType):
         data: models.PanelRevision,
         *,
         into: PanelRevision | None = None,
-        _sequence: Sequence | None,
+        _sequence: Sequence,
         _client: client.Client | None,
     ) -> PanelRevision:
         if into is None:
@@ -1920,9 +2079,15 @@ class PanelRevision(FlixType):
             pr["show_id"] = self.show_id
         return pr
 
+    @property
+    def sequence(self) -> Sequence:
+        return self._sequence
+
+    @property
+    def show(self) -> Show:
+        return self.sequence.show
+
     def path_prefix(self, include_episode: bool = False) -> str:
-        if self._sequence is None:
-            raise errors.FlixError("sequence is not set")
         prefix = self._sequence.path_prefix(include_episode=include_episode)
         return f"{prefix}/panel/{self.panel_id}/revision/{self.revision_number}"
 
@@ -1931,6 +2096,8 @@ class PanelRevision(FlixType):
         duration: int = 12,
         trim_in_frame: int | None = None,
         trim_out_frame: int | None = None,
+        dialogue: Dialogue | None = None,
+        hidden: bool = False,
         sequence_revision: int | None = None,
     ) -> SequencePanel:
         return SequencePanel(
@@ -1938,6 +2105,8 @@ class PanelRevision(FlixType):
             duration=duration,
             trim_in_frame=trim_in_frame or 0,
             trim_out_frame=trim_out_frame or 0,
+            dialogue=dialogue,
+            hidden=hidden,
             sequence_revision=sequence_revision,
         )
 
@@ -1965,10 +2134,25 @@ class PanelRevision(FlixType):
         self.keyframes.append(kf)
         return kf
 
-    async def save(self, force_create_new_panel: bool = False) -> None:
-        if self._sequence is None:
-            raise errors.FlixError("sequence is not set")
+    async def get_dialogue_history(self) -> list[Dialogue]:
+        """Get all dialogue entries associated with the panel ID of this panel revision."""
 
+        class _AllDialogue(TypedDict):
+            dialogues: list[models.Dialogue]
+
+        path = f"{self._sequence.path_prefix()}/panel/{self.panel_id}/dialogues"
+        result = cast(_AllDialogue, await self.client.get(path))
+        return [
+            Dialogue.from_dict(d, _show=self.show, _client=self.client) for d in result["dialogues"]
+        ]
+
+    async def save(self, force_create_new_panel: bool = False) -> None:
+        """Save this panel revision.
+
+        Args:
+            force_create_new_panel: Always create a new panel ID for this panel revision
+                instead of versioning up an existing panel.
+        """
         if self.panel_id is None or force_create_new_panel:
             path = f"{self._sequence.path_prefix()}/panel"
             result = cast(models.PanelRevision, await self.client.post(path, body=self.to_dict()))
@@ -1978,20 +2162,105 @@ class PanelRevision(FlixType):
         self.from_dict(result, into=self, _sequence=self._sequence, _client=self.client)
 
 
+class Dialogue(FlixType):
+    def __init__(
+        self,
+        text: str,
+        *,
+        created_date: datetime.datetime | None = None,
+        owner: User | None = None,
+        dialogue_id: int | None = None,
+        _show: Show,
+        _client: client.Client | None,
+    ) -> None:
+        super().__init__(_client)
+        self._show = _show
+        self.dialogue_id = dialogue_id
+        self._text = text
+        self.created_date = created_date or datetime.datetime.now(datetime.timezone.utc)
+        self.owner = owner
+
+    @property
+    def text(self) -> str:
+        return self._text
+
+    @text.setter
+    def text(self, value: str) -> None:
+        self._text = value
+        # clear dialogue id when updating text to avoid user error
+        # if changing dialogue of existing object
+        self.dialogue_id = None
+
+    @classmethod
+    def from_dict(
+        cls,
+        data: models.Dialogue,
+        *,
+        into: Dialogue | None = None,
+        _show: Show,
+        _client: client.Client | None,
+    ) -> Dialogue:
+        if into is None:
+            into = cls(text="", _client=_client, _show=_show)
+        # set text first since it also clears dialogue id
+        into.text = data["text"]
+        into.dialogue_id = data["dialogue_id"]
+        into.created_date = dateutil.parser.parse(data["created_date"])
+        into.owner = User.from_dict(data["owner"], _client=_client)
+        return into
+
+    def to_dict(self) -> models.Dialogue:
+        dialogue = models.Dialogue(text=self.text)
+        if self.dialogue_id is not None:
+            dialogue["dialogue_id"] = self.dialogue_id
+        return dialogue
+
+    async def save(self) -> None:
+        """Save this dialogue entry.
+
+        Always creates a new dialogue entry. Called automatically for any unsaved dialogue
+        when saving a sequence revision.
+        """
+        path = f"{self._show.path_prefix()}/dialogue"
+        result = cast(models.Dialogue, await self.client.post(path, body=self.to_dict()))
+        self.from_dict(result, into=self, _client=self.client, _show=self._show)
+
+
 @dataclasses.dataclass
 class SequencePanel:
     panel: PanelRevision
     duration: int
     trim_in_frame: int
     trim_out_frame: int
+    dialogue: Dialogue | None = None
+    hidden: bool = False
     sequence_revision: int | None = None
+
+    @property
+    def dialogue_text(self) -> str:
+        """The dialogue for this sequence panel as a string.
+
+        Safe to read and write even if ``dialogue`` is ``None``.
+        If set to the empty string, the dialogue will be removed.
+        """
+        if self.dialogue is not None:
+            return self.dialogue.text
+        else:
+            return ""
+
+    @dialogue_text.setter
+    def dialogue_text(self, value: str) -> None:
+        if value:
+            self.dialogue = Dialogue(text=value, _show=self.panel.show, _client=self.panel.client)
+        else:
+            self.dialogue = None
 
     @classmethod
     def from_dict(
         cls,
         data: models.SequencePanel,
         *,
-        _sequence: Sequence | None,
+        _sequence: Sequence,
         _client: client.Client | None,
     ) -> SequencePanel:
         return cls(
@@ -2000,18 +2269,27 @@ class SequencePanel:
             duration=data["duration"],
             trim_in_frame=data.get("trim_in_frame") or 0,
             trim_out_frame=data.get("trim_out_frame") or 0,
+            dialogue=(
+                Dialogue.from_dict(d, _show=_sequence.show, _client=_client)
+                if (d := data.get("dialogue"))
+                else None
+            ),
+            hidden=data["hidden"],
         )
 
-    def to_dict(self) -> models.RevisionedPanel:
-        pr = models.RevisionedPanel(
+    def to_dict(self) -> models.SequencePanel:
+        pr = models.SequencePanel(
             duration=self.duration,
             trim_in_frame=self.trim_in_frame,
             trim_out_frame=self.trim_out_frame,
+            hidden=self.hidden,
         )
         if self.panel.panel_id is not None:
             pr["panel_id"] = self.panel.panel_id
         if self.panel.revision_number is not None:
             pr["revision_number"] = self.panel.revision_number
+        if self.dialogue:
+            pr["dialogue"] = self.dialogue.to_dict()
         return pr
 
 
@@ -2025,6 +2303,9 @@ class SequenceRevision(FlixType):
         self,
         panels: list[SequencePanel] | None = None,
         comment: str = "",
+        hidden: bool = False,
+        color_tag: ColorTag | None = None,
+        autosave: bool = False,
         *,
         sequence_id: int | None = None,
         episode_id: int | None = None,
@@ -2037,7 +2318,7 @@ class SequenceRevision(FlixType):
         task_id: str | None = None,
         source_files: list[Asset] | None = None,
         metadata: Mapping[str, Any] | None = None,
-        _sequence: Sequence | None,
+        _sequence: Sequence,
         _client: client.Client | None,
     ) -> None:
         super().__init__(_client)
@@ -2048,6 +2329,9 @@ class SequenceRevision(FlixType):
         self.revision_number = revision_number
         self.panels = panels or []
         self.comment = comment
+        self.hidden = hidden
+        self.color_tag = color_tag
+        self.autosave = autosave
         self.owner = owner
         self.created_date: datetime.datetime = created_date or datetime.datetime.now(
             datetime.timezone.utc
@@ -2064,7 +2348,7 @@ class SequenceRevision(FlixType):
         data: models.SequenceRevision,
         *,
         into: SequenceRevision | None = None,
-        _sequence: Sequence | None,
+        _sequence: Sequence,
         _client: client.Client | None,
     ) -> SequenceRevision:
         if into is None:
@@ -2074,6 +2358,9 @@ class SequenceRevision(FlixType):
         into.episode_id = data.get("episode_id", 0)
         into.show_id = data["show_id"]
         into.comment = data.get("comment", "")
+        into.hidden = data["hidden"]
+        into.color_tag = ColorTag.from_dict(c) if (c := data.get("colour_tag")) else None
+        into.autosave = data["autosave"]
         into.owner = User.from_dict(data["owner"], _client=_client) if data.get("owner") else None
         into.created_date = dateutil.parser.parse(data["created_date"])
         into.published = data.get("published", False)
@@ -2090,6 +2377,9 @@ class SequenceRevision(FlixType):
             comment=self.comment,
             revisioned_panels=[panel.to_dict() for panel in self.panels],
             source_files=[asset.to_dict() for asset in self.source_files],
+            hidden=self.hidden,
+            autosave=self.autosave,
+            colour_tag=self.color_tag.to_dict() if self.color_tag else None,
             metadata=self.metadata.to_dict(),
         )
         if self.show_id is not None:
@@ -2103,9 +2393,35 @@ class SequenceRevision(FlixType):
         return revision
 
     def path_prefix(self, include_episode: bool = True) -> str:
-        if self._sequence is None:
-            raise errors.FlixError("sequence is not set")
         return f"{self._sequence.path_prefix(include_episode)}/revision/{self.revision_number}"
+
+    @property
+    def sequence(self) -> Sequence:
+        return self._sequence
+
+    @property
+    def show(self) -> Show:
+        return self.sequence.show
+
+    @property
+    def color_tag_name(self) -> str:
+        """The name of the current color tag for this sequence.
+
+        This property allows for getting and setting color tags by name.
+        If a color tag is set by name, the corresponding ID will be looked up
+        when saving the sequence. Setting an invalid name will cause an error on save.
+        """
+        if self.color_tag is not None:
+            return self.color_tag.color_name
+        else:
+            return ""
+
+    @color_tag_name.setter
+    def color_tag_name(self, value: str) -> None:
+        if value != "":
+            self.color_tag = ColorTag(color_name=value)
+        else:
+            self.color_tag = None
 
     def add_panel(
         self,
@@ -2127,15 +2443,22 @@ class SequenceRevision(FlixType):
         self.panels.append(sequence_panel)
 
     async def get_all_panel_revisions(self) -> list[SequencePanel]:
+        """Fetch all panels belonging to this sequence revision.
+
+        This method also populates [panels][flix.SequenceRevision.panels]
+        with the returned panels.
+        """
+
         class _AllPanels(TypedDict):
             panels: list[models.SequencePanel]
 
         path = f"{self.path_prefix()}/panels"
         all_panels = cast(_AllPanels, await self.client.get(path))
-        return [
+        self.panels = [
             SequencePanel.from_dict(panel, _sequence=self._sequence, _client=self.client)
             for panel in all_panels["panels"]
         ]
+        return self.panels
 
     async def _export(
         self,
@@ -2191,10 +2514,25 @@ class SequenceRevision(FlixType):
         )
 
     async def save(self, force_create_new: bool = False) -> None:
-        if self._sequence is None:
-            raise errors.FlixError("sequence is not set")
+        """Save this sequence revision.
+
+        Any unsaved dialogue will be saved automatically.
+
+        Args:
+            force_create_new: Always create a new sequence revision instead
+                of updating an existing one.
+        """
+        if self.color_tag is not None and self.color_tag.color_tag_id is None:
+            self.color_tag = await self.show.get_color_tag(
+                "sequencerevision", self.color_tag.color_name
+            )
 
         if self.revision_number is None or force_create_new:
+            # auto-save any unsaved dialogue
+            for panel in self.panels:
+                if panel.dialogue and not panel.dialogue.dialogue_id:
+                    await panel.dialogue.save()
+
             path = f"{self._sequence.path_prefix()}/revision"
             result = cast(
                 models.SequenceRevision, await self.client.post(path, body=self.to_dict())
