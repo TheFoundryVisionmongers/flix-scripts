@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "flix-sdk"
-version = "2.0.1"
+version = "2.0.2"
 description = "Python SDK and command-line utilities for Flix"
 authors = []
 homepage = "https://www.foundry.com/products/flix"
