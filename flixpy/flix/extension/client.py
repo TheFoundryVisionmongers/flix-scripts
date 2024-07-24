@@ -315,9 +315,7 @@ class Extension:
             try:
                 registered_client = await self._get_registered_client()
             except (errors.FlixError, httpx.HTTPError):
-                logger.exception(
-                    "could not connect to client, waiting 10 seconds before retrying..."
-                )
+                logger.debug("could not connect to client, waiting 10 seconds before retrying...")
                 await asyncio.sleep(10)
                 continue
 
