@@ -474,14 +474,14 @@ class Extension:
                 models.PanelRequestResponse,
                 await panel_controller_create.asyncio_detailed(
                     client=await self._get_registered_client(), json_body=json_body
-                )
+                ),
             )
         else:
             response = _assert_response(
                 models.PanelRequestResponse,
                 await panel_controller_update.asyncio_detailed(
                     client=await self._get_registered_client(), json_body=json_body
-                )
+                ),
             )
 
         return types.PanelRequestResponse.from_dict(response)
