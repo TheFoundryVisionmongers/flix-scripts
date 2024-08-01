@@ -18,8 +18,12 @@ from .open_file_panel_data import OpenFilePanelData
 from .open_source_file_data import OpenSourceFileData
 from .open_source_file_event import OpenSourceFileEvent
 from .panel_request_item import PanelRequestItem
+from .panel_request_response import PanelRequestResponse
 from .panel_request_source_file import PanelRequestSourceFile
 from .ping_event import PingEvent
+from .preferences_controller_post_response_200 import (
+    PreferencesControllerPostResponse200,
+)
 from .project_details_dto import ProjectDetailsDto
 from .project_ids_dto import ProjectIdsDto
 from .ps_configuration import PsConfiguration
@@ -48,6 +52,9 @@ from .websocket_event_data_type_4 import WebsocketEventDataType4
 from .websocket_event_data_type_4_type import WebsocketEventDataType4Type
 from .websocket_event_data_type_5 import WebsocketEventDataType5
 from .websocket_event_data_type_5_type import WebsocketEventDataType5Type
+from .websocket_event_data_type_6 import WebsocketEventDataType6
+from .websocket_event_data_type_6_data import WebsocketEventDataType6Data
+from .websocket_event_data_type_6_type import WebsocketEventDataType6Type
 
 __all__ = (
     "ActionEvent",
@@ -68,8 +75,10 @@ __all__ = (
     "OpenSourceFileData",
     "OpenSourceFileEvent",
     "PanelRequestItem",
+    "PanelRequestResponse",
     "PanelRequestSourceFile",
     "PingEvent",
+    "PreferencesControllerPostResponse200",
     "ProjectDetailsDto",
     "ProjectIdsDto",
     "PsConfiguration",
@@ -98,4 +107,7 @@ __all__ = (
     "WebsocketEventDataType4Type",
     "WebsocketEventDataType5",
     "WebsocketEventDataType5Type",
+    "WebsocketEventDataType6",
+    "WebsocketEventDataType6Data",
+    "WebsocketEventDataType6Type",
 )

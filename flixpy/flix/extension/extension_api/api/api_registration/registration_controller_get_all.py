@@ -54,7 +54,7 @@ def sync_detailed(
     """List API consumers
 
      Returns a list of registered API consumer details.
-    Details returned by the registration manager are mapped to a DTO to avoid exposing access tokens
+    Details returned by the registration manager are mapped to a DTO to avoid exposing access tokens.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -80,7 +80,7 @@ def sync(
     """List API consumers
 
      Returns a list of registered API consumer details.
-    Details returned by the registration manager are mapped to a DTO to avoid exposing access tokens
+    Details returned by the registration manager are mapped to a DTO to avoid exposing access tokens.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -102,7 +102,7 @@ async def asyncio_detailed(
     """List API consumers
 
      Returns a list of registered API consumer details.
-    Details returned by the registration manager are mapped to a DTO to avoid exposing access tokens
+    Details returned by the registration manager are mapped to a DTO to avoid exposing access tokens.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -126,7 +126,7 @@ async def asyncio(
     """List API consumers
 
      Returns a list of registered API consumer details.
-    Details returned by the registration manager are mapped to a DTO to avoid exposing access tokens
+    Details returned by the registration manager are mapped to a DTO to avoid exposing access tokens.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

@@ -16,18 +16,21 @@ T = TypeVar("T", bound="BulkPanelRequest")
 class BulkPanelRequest:
     """
     Attributes:
-        paths (List[str]): The file paths to upload as new panel artwork Example:
+        paths (List[str]): The file paths to upload as new panel artwork. Example:
             ['/path/to/file/1.psd','/path/to/file/2.psd'].
-        origin (str): The origin of the incoming panel artwork Example: Photoshop.
+        origin (str): The origin of the incoming panel artwork. Example: Photoshop.
         start_index (Union[Unset, int]): (Optional) The index from which to insert or update panels. Defaults to
-            currently selected panel Example: 3.
+            currently selected panel. Example: 3.
         source_file (Union[Unset, PanelRequestSourceFile]):
+        skip_panel_reuse (Union[Unset, bool]): Whether panel reuse checks should be skipped. Will always skip if true,
+            and always do reuse checks if false. Example: True.
     """
 
     paths: List[str]
     origin: str
     start_index: Union[Unset, int] = UNSET
     source_file: Union[Unset, "PanelRequestSourceFile"] = UNSET
+    skip_panel_reuse: Union[Unset, bool] = UNSET
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -38,6 +41,8 @@ class BulkPanelRequest:
         source_file: Union[Unset, Dict[str, Any]] = UNSET
         if not isinstance(self.source_file, Unset):
             source_file = self.source_file.to_dict()
+
+        skip_panel_reuse = self.skip_panel_reuse
 
         field_dict: Dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -51,6 +56,8 @@ class BulkPanelRequest:
             field_dict["startIndex"] = start_index
         if source_file is not UNSET:
             field_dict["sourceFile"] = source_file
+        if skip_panel_reuse is not UNSET:
+            field_dict["skipPanelReuse"] = skip_panel_reuse
 
         return field_dict
 
@@ -72,11 +79,14 @@ class BulkPanelRequest:
         else:
             source_file = PanelRequestSourceFile.from_dict(_source_file)
 
+        skip_panel_reuse = d.pop("skipPanelReuse", UNSET)
+
         bulk_panel_request = cls(
             paths=paths,
             origin=origin,
             start_index=start_index,
             source_file=source_file,
+            skip_panel_reuse=skip_panel_reuse,
         )
 
         bulk_panel_request.additional_properties = d

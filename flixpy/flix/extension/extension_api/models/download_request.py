@@ -12,9 +12,9 @@ T = TypeVar("T", bound="DownloadRequest")
 class DownloadRequest:
     """
     Attributes:
-        asset_id (int): The identifier of an asset in Flix. For example, the asset specified in the `OPEN` event
-        target_folder (str): The folder that the requested asset should be downloaded into
-        asset_type (AssetType): The type of media object to download for the specified asset
+        asset_id (int): The identifier of an asset in Flix. For example, the asset specified in the `OPEN` event.
+        target_folder (str): The folder that the requested asset should be downloaded into.
+        asset_type (AssetType): The type of media object to download for the specified asset.
     """
 
     asset_id: int

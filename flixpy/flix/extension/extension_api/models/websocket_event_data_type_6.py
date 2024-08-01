@@ -1,55 +1,63 @@
-from typing import Any, Dict, List, Type, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Type, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-from ..types import UNSET, Unset
+from ..models.websocket_event_data_type_6_type import WebsocketEventDataType6Type
 
-T = TypeVar("T", bound="PanelRequestItem")
+if TYPE_CHECKING:
+    from ..models.websocket_event_data_type_6_data import WebsocketEventDataType6Data
+
+
+T = TypeVar("T", bound="WebsocketEventDataType6")
 
 
 @_attrs_define
-class PanelRequestItem:
+class WebsocketEventDataType6:
     """
     Attributes:
-        path (str): The file path to upload. Example: /path/to/file/1.psd.
-        panel_id (Union[Unset, int]): The ID of the panel that should be updated. Example: 15.
+        type (WebsocketEventDataType6Type):
+        data (WebsocketEventDataType6Data):
     """
 
-    path: str
-    panel_id: Union[Unset, int] = UNSET
+    type: WebsocketEventDataType6Type
+    data: "WebsocketEventDataType6Data"
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
-        path = self.path
-        panel_id = self.panel_id
+        type = self.type.value
+
+        data = self.data.to_dict()
 
         field_dict: Dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
             {
-                "path": path,
+                "type": type,
+                "data": data,
             }
         )
-        if panel_id is not UNSET:
-            field_dict["panelId"] = panel_id
 
         return field_dict
 
     @classmethod
     def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
-        d = src_dict.copy()
-        path = d.pop("path")
-
-        panel_id = d.pop("panelId", UNSET)
-
-        panel_request_item = cls(
-            path=path,
-            panel_id=panel_id,
+        from ..models.websocket_event_data_type_6_data import (
+            WebsocketEventDataType6Data,
         )
 
-        panel_request_item.additional_properties = d
-        return panel_request_item
+        d = src_dict.copy()
+        type = WebsocketEventDataType6Type(d.pop("type"))
+
+        data = WebsocketEventDataType6Data.from_dict(d.pop("data"))
+
+        websocket_event_data_type_6 = cls(
+            type=type,
+            data=data,
+        )
+
+        websocket_event_data_type_6.additional_properties = d
+        return websocket_event_data_type_6
 
     @property
     def additional_keys(self) -> List[str]:

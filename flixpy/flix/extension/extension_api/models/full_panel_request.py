@@ -17,17 +17,20 @@ T = TypeVar("T", bound="FullPanelRequest")
 class FullPanelRequest:
     """
     Attributes:
-        panels (List['PanelRequestItem']): The file paths to upload and the IDs of the panels they should update
-        origin (str): The origin of the incoming panel artwork Example: Photoshop.
+        panels (List['PanelRequestItem']): The file paths to upload and the IDs of the panels they should update.
+        origin (str): The origin of the incoming panel artwork. Example: Photoshop.
         start_index (Union[Unset, int]): (Optional) The index from which to insert or update panels. Defaults to
-            currently selected panel Example: 3.
+            currently selected panel. Example: 3.
         source_file (Union[Unset, PanelRequestSourceFile]):
+        skip_panel_reuse (Union[Unset, bool]): Whether panel reuse checks should be skipped. Will always skip if true,
+            and always do reuse checks if false. Example: True.
     """
 
     panels: List["PanelRequestItem"]
     origin: str
     start_index: Union[Unset, int] = UNSET
     source_file: Union[Unset, "PanelRequestSourceFile"] = UNSET
+    skip_panel_reuse: Union[Unset, bool] = UNSET
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -43,6 +46,8 @@ class FullPanelRequest:
         if not isinstance(self.source_file, Unset):
             source_file = self.source_file.to_dict()
 
+        skip_panel_reuse = self.skip_panel_reuse
+
         field_dict: Dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -55,6 +60,8 @@ class FullPanelRequest:
             field_dict["startIndex"] = start_index
         if source_file is not UNSET:
             field_dict["sourceFile"] = source_file
+        if skip_panel_reuse is not UNSET:
+            field_dict["skipPanelReuse"] = skip_panel_reuse
 
         return field_dict
 
@@ -82,11 +89,14 @@ class FullPanelRequest:
         else:
             source_file = PanelRequestSourceFile.from_dict(_source_file)
 
+        skip_panel_reuse = d.pop("skipPanelReuse", UNSET)
+
         full_panel_request = cls(
             panels=panels,
             origin=origin,
             start_index=start_index,
             source_file=source_file,
+            skip_panel_reuse=skip_panel_reuse,
         )
 
         full_panel_request.additional_properties = d
