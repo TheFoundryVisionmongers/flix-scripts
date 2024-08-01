@@ -45,7 +45,7 @@ def sync_detailed(
 ) -> Response[Any]:
     """Health Check
 
-     Basic health check endpoint. Always returns a 200 response
+     Basic health check endpoint. Always returns a 200 response.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -70,7 +70,7 @@ async def asyncio_detailed(
 ) -> Response[Any]:
     """Health Check
 
-     Basic health check endpoint. Always returns a 200 response
+     Basic health check endpoint. Always returns a 200 response.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

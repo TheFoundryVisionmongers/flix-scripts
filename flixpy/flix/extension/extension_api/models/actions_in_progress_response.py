@@ -10,9 +10,9 @@ T = TypeVar("T", bound="ActionsInProgressResponse")
 class ActionsInProgressResponse:
     """
     Attributes:
-        is_saving (bool): Whether the Flix Client is currently saving a sequence revision
-        is_publishing (bool): Whether the Flix Client is currently publishing a sequence revision
-        is_exporting (bool): Whether the Flix Client is currently exporting files from a sequence revision
+        is_saving (bool): Whether the Flix Client is currently saving a sequence revision.
+        is_publishing (bool): Whether the Flix Client is currently publishing a sequence revision.
+        is_exporting (bool): Whether the Flix Client is currently exporting files from a sequence revision.
     """
 
     is_saving: bool

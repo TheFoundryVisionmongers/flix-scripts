@@ -1,55 +1,52 @@
-from typing import Any, Dict, List, Type, TypeVar, Union
+from typing import Any, Dict, List, Type, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-from ..types import UNSET, Unset
-
-T = TypeVar("T", bound="PanelRequestItem")
+T = TypeVar("T", bound="PanelRequestResponse")
 
 
 @_attrs_define
-class PanelRequestItem:
+class PanelRequestResponse:
     """
     Attributes:
-        path (str): The file path to upload. Example: /path/to/file/1.psd.
-        panel_id (Union[Unset, int]): The ID of the panel that should be updated. Example: 15.
+        action_id (int): The ID of the action scheduled by the panel request.
+        message (str): A summary message of the scheduled panel action.
     """
 
-    path: str
-    panel_id: Union[Unset, int] = UNSET
+    action_id: int
+    message: str
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
-        path = self.path
-        panel_id = self.panel_id
+        action_id = self.action_id
+        message = self.message
 
         field_dict: Dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
             {
-                "path": path,
+                "actionId": action_id,
+                "message": message,
             }
         )
-        if panel_id is not UNSET:
-            field_dict["panelId"] = panel_id
 
         return field_dict
 
     @classmethod
     def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
         d = src_dict.copy()
-        path = d.pop("path")
+        action_id = d.pop("actionId")
 
-        panel_id = d.pop("panelId", UNSET)
+        message = d.pop("message")
 
-        panel_request_item = cls(
-            path=path,
-            panel_id=panel_id,
+        panel_request_response = cls(
+            action_id=action_id,
+            message=message,
         )
 
-        panel_request_item.additional_properties = d
-        return panel_request_item
+        panel_request_response.additional_properties = d
+        return panel_request_response
 
     @property
     def additional_keys(self) -> List[str]:

@@ -10,11 +10,11 @@ T = TypeVar("T", bound="DownloadResponse")
 class DownloadResponse:
     """
     Attributes:
-        asset_id (int): The identifier of the downloaded asset
-        media_object_id (int): The identifier of the specific media object that was downloaded
-        file_name (str): The name of the downloaded file on disk
+        asset_id (int): The identifier of the downloaded asset.
+        media_object_id (int): The identifier of the specific media object that was downloaded.
+        file_name (str): The name of the downloaded file on disk.
         file_path (str): The final path of the downloaded file on disk. This should just be
-            `${targetFolder}/${fileName}`
+            `${targetFolder}/${fileName}`.
     """
 
     asset_id: int

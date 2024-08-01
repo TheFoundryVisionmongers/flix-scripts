@@ -12,11 +12,11 @@ T = TypeVar("T", bound="EpisodeDetailsDto")
 class EpisodeDetailsDto:
     """
     Attributes:
-        id (int): The Flix identifier for the episode
-        tracking_code (str): The episode's tracking code
-        created_date (datetime.datetime): The date the episode was created
-        owner (str): The user that created the episode
-        title (Optional[str]): The episode’s display title
+        id (int): The Flix identifier for the episode.
+        tracking_code (str): The episode's tracking code.
+        created_date (datetime.datetime): The date the episode was created.
+        owner (str): The user that created the episode.
+        title (Optional[str]): The episode's display title.
     """
 
     id: int

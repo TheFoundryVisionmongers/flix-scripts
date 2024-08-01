@@ -440,7 +440,7 @@ class Extension:
         source_file: types.SourceFile | None = None,
         start_index: int | None = None,
         replace_panels: bool = False,
-    ) -> None:
+    ) -> models.PanelRequestResponse:
         """Instructs the Flix Client to import the given files as panel revisions.
 
         Args:
@@ -470,13 +470,15 @@ class Extension:
         )
 
         if not replace_panels:
-            _assert_ok(
+            return _assert_response(
+                models.PanelRequestResponse,
                 await panel_controller_create.asyncio_detailed(
                     client=await self._get_registered_client(), json_body=json_body
                 )
             )
         else:
-            _assert_ok(
+            return _assert_response(
+                models.PanelRequestResponse,
                 await panel_controller_update.asyncio_detailed(
                     client=await self._get_registered_client(), json_body=json_body
                 )

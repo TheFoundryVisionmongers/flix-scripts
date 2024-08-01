@@ -10,10 +10,10 @@ T = TypeVar("T", bound="RevisionStatusResponse")
 class RevisionStatusResponse:
     """
     Attributes:
-        selected_panels (List[int]): A list of the currently selected panels
-        can_save (bool): Whether the current revision can be saved
-        can_publish (bool): Whether the user has permission to publish the current revision
-        can_export (bool): Whether the user has permission to export files from the current revision
+        selected_panels (List[int]): A list of the currently selected panels.
+        can_save (bool): Whether the current revision can be saved.
+        can_publish (bool): Whether the user has permission to publish the current revision.
+        can_export (bool): Whether the user has permission to export files from the current revision.
     """
 
     selected_panels: List[int]

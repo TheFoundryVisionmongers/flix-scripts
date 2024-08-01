@@ -45,6 +45,7 @@ __all__ = [
     "StatusEvent",
     "RevisionStatus",
     "Status",
+    "PanelRequestResponse",
 ]
 
 
@@ -370,4 +371,16 @@ class DownloadResponse:
             file_path=data.file_path,
             asset_id=data.asset_id,
             media_object_id=data.media_object_id,
+        )
+
+@dataclasses.dataclass
+class PanelRequestResponse:
+    message: str
+    action_id: int
+
+    @classmethod
+    def from_dict(cls, data: models.PanelRequestResponse) -> Self:
+        return cls(
+            message=data.message,
+            action_id=data.action_id,
         )

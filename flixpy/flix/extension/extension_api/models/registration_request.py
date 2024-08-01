@@ -12,10 +12,10 @@ T = TypeVar("T", bound="RegistrationRequest")
 class RegistrationRequest:
     """
     Attributes:
-        name (str): The name of this API consumer
-        client_uid (str): A unique identifier for this API consumer
-        version (Union[Unset, str]): The version of this API consumer (Optional)
-        log_paths (Union[Unset, List[str]]): The paths of the extension's log (Optional)
+        name (str): The name of this API consumer.
+        client_uid (str): A unique identifier for this API consumer.
+        version (Union[Unset, str]): The version of this API consumer (Optional).
+        log_paths (Union[Unset, List[str]]): Paths to the extension's log files.
     """
 
     name: str

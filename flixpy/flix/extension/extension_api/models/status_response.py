@@ -15,7 +15,7 @@ T = TypeVar("T", bound="StatusResponse")
 class StatusResponse:
     """
     Attributes:
-        can_create (bool): Whether or not the panel browser is open and writable
+        can_create (bool): Whether or not the panel browser is open and writable.
         revision_status (RevisionStatusResponse):
         actions_in_progress (ActionsInProgressResponse):
     """

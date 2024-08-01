@@ -51,7 +51,7 @@ def sync_detailed(
 ) -> Response[Union[Any, ProjectDetailsDto]]:
     """Get Current Flix Project
 
-     Returns details of the currently opened show, episode, sequence and sequence revision
+     Returns details of the currently opened show, episode, sequence and sequence revision.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -76,7 +76,7 @@ def sync(
 ) -> Optional[Union[Any, ProjectDetailsDto]]:
     """Get Current Flix Project
 
-     Returns details of the currently opened show, episode, sequence and sequence revision
+     Returns details of the currently opened show, episode, sequence and sequence revision.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -97,7 +97,7 @@ async def asyncio_detailed(
 ) -> Response[Union[Any, ProjectDetailsDto]]:
     """Get Current Flix Project
 
-     Returns details of the currently opened show, episode, sequence and sequence revision
+     Returns details of the currently opened show, episode, sequence and sequence revision.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -120,7 +120,7 @@ async def asyncio(
 ) -> Optional[Union[Any, ProjectDetailsDto]]:
     """Get Current Flix Project
 
-     Returns details of the currently opened show, episode, sequence and sequence revision
+     Returns details of the currently opened show, episode, sequence and sequence revision.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
