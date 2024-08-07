@@ -200,7 +200,7 @@ paths:
             schema:
               $ref: '#/components/schemas/BulkPanelRequest'
       responses:
-        '200':
+        '201':
           description: The panel creation has been scheduled
           content:
             application/json:

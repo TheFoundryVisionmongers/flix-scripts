@@ -28,10 +28,10 @@ def _get_kwargs(
 def _parse_response(
     *, client: Union[AuthenticatedClient, Client], response: httpx.Response
 ) -> Optional[Union[Any, PanelRequestResponse]]:
-    if response.status_code == HTTPStatus.OK:
-        response_200 = PanelRequestResponse.from_dict(response.json())
+    if response.status_code == HTTPStatus.CREATED:
+        response_201 = PanelRequestResponse.from_dict(response.json())
 
-        return response_200
+        return response_201
     if response.status_code == HTTPStatus.BAD_REQUEST:
         response_400 = cast(Any, None)
         return response_400
