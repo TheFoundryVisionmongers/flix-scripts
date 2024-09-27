@@ -296,6 +296,10 @@ class PublishToEditorialEvent(Event):
     user: User
 
 
+class CommentAddedEvent(Event):
+    comment: PanelComment
+
+
 class PublishToFlixEvent(Event):
     sequence: Sequence
     new_sequence_revision: SequenceRevision
