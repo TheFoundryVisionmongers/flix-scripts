@@ -37,6 +37,7 @@ __all__ = [
     "NewSequenceRevisionEvent",
     "NewPanelRevisionEvent",
     "NewContactSheetEvent",
+    "CommentAddedEvent",
     "PingEvent",
     "WebhookHandler",
     "webhook",
@@ -56,6 +57,7 @@ class EventType(enum.Enum):
     NEW_SEQUENCE_REVISION = "Sequence revision created"
     NEW_PANEL_REVISION = "Panel revision created"
     NEW_CONTACT_SHEET = "Contact sheet created"
+    COMMENT_ADDED = "Comment added"
     PING = "Ping"
 
 
@@ -76,12 +78,12 @@ _EVENT_TYPES: dict[EventType, EventFactory[WebhookEvent]] = {}
 
 
 def _event(
-    event_type: EventType,
+        event_type: EventType,
 ) -> Callable[[EventFactory[WebhookEventType]], EventFactory[WebhookEventType]]:
     """Registers a class as an event type."""
 
     def _register_event(
-        f: EventFactory[WebhookEventType],
+            f: EventFactory[WebhookEventType],
     ) -> EventFactory[WebhookEventType]:
         _EVENT_TYPES[event_type] = f
         return f
@@ -105,9 +107,9 @@ class PublishEditorialEvent(WebhookEvent):
     """An event sent when publishing from Flix to editorial."""
 
     def __init__(
-        self,
-        data: models.Event,
-        client: _client.Client | None,
+            self,
+            data: models.Event,
+            client: _client.Client | None,
     ) -> None:
         super().__init__(data)
         event_data = cast(models.PublishToEditorialEvent, data)
@@ -185,9 +187,9 @@ class NewSequenceRevisionEvent(WebhookEvent):
     """An event sent when a new sequence revision is saved."""
 
     def __init__(
-        self,
-        data: models.Event,
-        client: _client.Client | None,
+            self,
+            data: models.Event,
+            client: _client.Client | None,
     ) -> None:
         super().__init__(data)
         event_data = cast(models.SequenceRevisionCreatedEvent, data)
@@ -203,9 +205,9 @@ class NewPanelRevisionEvent(WebhookEvent):
     """An event sent when a new panel revision is saved."""
 
     def __init__(
-        self,
-        data: models.Event,
-        client: _client.Client | None,
+            self,
+            data: models.Event,
+            client: _client.Client | None,
     ) -> None:
         super().__init__(data)
         event_data = cast(models.PanelRevisionCreatedEvent, data)
@@ -221,9 +223,9 @@ class NewContactSheetEvent(WebhookEvent):
     """An event sent when a new contact sheet is exported."""
 
     def __init__(
-        self,
-        data: models.Event,
-        client: _client.Client | None,
+            self,
+            data: models.Event,
+            client: _client.Client | None,
     ) -> None:
         super().__init__(data)
         event_data = cast(models.ContactSheetCreatedEvent, data)
@@ -251,6 +253,16 @@ class PingEvent(WebhookEvent):
         self.user = types.User.from_dict(event_data["user"], _client=client)
 
 
+@_event(EventType.COMMENT_ADDED)
+class CommentAddedEvent(WebhookEvent):
+    """An event sent when the server is asked to ping a webhook."""
+
+    def __init__(self, data: models.Event, client: _client.Client | None) -> None:
+        super().__init__(data)
+        event_data = cast(models.CommentAddedEvent, data)
+        self.comment = types.User.from_dict(event_data["comment"], _client=client)
+
+
 class WebhookHandler:
     """This class handles authentication and parsing of incoming Flix events.
 
@@ -260,10 +272,10 @@ class WebhookHandler:
     """
 
     def __init__(
-        self,
-        handler: WebhookHandlerType[WebhookEvent],
-        path: str = "/",
-        secret: str | None = None,
+            self,
+            handler: WebhookHandlerType[WebhookEvent],
+            path: str = "/",
+            secret: str | None = None,
     ) -> None:
         self.path = path
         self.secret = secret
@@ -281,7 +293,7 @@ class WebhookHandler:
         self.secret = secret
 
     def handle(
-        self, event_type: EventFactory[WebhookEventType]
+            self, event_type: EventFactory[WebhookEventType]
     ) -> Callable[[WebhookHandlerType[WebhookEventType]], WebhookHandlerType[WebhookEventType]]:
         """A decorator for specialised webhook handlers that handle a specific type of event.
 
@@ -293,7 +305,7 @@ class WebhookHandler:
         """
 
         def decorator(
-            f: WebhookHandlerType[WebhookEventType],
+                f: WebhookHandlerType[WebhookEventType],
         ) -> WebhookHandlerType[WebhookEventType]:
             self._add_handler(event_type, f)
             return f
@@ -301,16 +313,16 @@ class WebhookHandler:
         return decorator
 
     def _add_handler(
-        self,
-        event_type: EventFactory[WebhookEventType],
-        handler: WebhookHandlerType[WebhookEventType],
+            self,
+            event_type: EventFactory[WebhookEventType],
+            handler: WebhookHandlerType[WebhookEventType],
     ) -> None:
         if event_type not in self._sub_handlers:
             self._sub_handlers[event_type] = []
         self._sub_handlers[event_type].append(cast(WebhookHandlerType[WebhookEvent], handler))
 
     def _get_handlers(
-        self, event_type: EventFactory[WebhookEventType]
+            self, event_type: EventFactory[WebhookEventType]
     ) -> list[WebhookHandlerType[WebhookEventType]]:
         if (handlers := self._sub_handlers.get(event_type)) is not None:
             return cast(list[WebhookHandlerType[WebhookEventType]], handlers)
@@ -332,7 +344,7 @@ class WebhookHandler:
         return aiohttp.web.post(self.path, _handle)
 
     async def __call__(
-        self, request: aiohttp.web.BaseRequest, *, client: _client.Client | None = None
+            self, request: aiohttp.web.BaseRequest, *, client: _client.Client | None = None
     ) -> aiohttp.web.Response:
         if self.secret is None:
             raise errors.FlixError("no secret set for webhook handler")
@@ -363,8 +375,8 @@ class WebhookHandler:
 
 
 def webhook(
-    secret: str | None = None,
-    path: str = "/",
+        secret: str | None = None,
+        path: str = "/",
 ) -> Callable[[WebhookHandlerType[WebhookEvent]], WebhookHandler]:
     """Decorator for webhook handlers.
 
@@ -405,12 +417,12 @@ class ServerOptions(TypedDict, total=False):
 
 
 async def run_webhook_server(
-    *handlers: WebhookHandler,
-    host: str | None = None,
-    port: int | None = None,
-    ssl_context: ssl.SSLContext | None = None,
-    client_options: ClientOptions | None = None,
-    **kwargs: Unpack[ServerOptions],
+        *handlers: WebhookHandler,
+        host: str | None = None,
+        port: int | None = None,
+        ssl_context: ssl.SSLContext | None = None,
+        client_options: ClientOptions | None = None,
+        **kwargs: Unpack[ServerOptions],
 ) -> None:
     """Run a server that listens for webhook events.
 
@@ -473,7 +485,7 @@ async def run_webhook_server(
 
 @contextlib.asynccontextmanager
 async def _webhook_client(
-    client_options: ClientOptions | None,
+        client_options: ClientOptions | None,
 ) -> AsyncIterator[_client.Client | None]:
     if client_options is not None:
         async with _client.Client(**client_options) as client:
@@ -484,7 +496,7 @@ async def _webhook_client(
 
 @contextlib.asynccontextmanager
 async def _webhook_runner(
-    app: aiohttp.web.Application,
+        app: aiohttp.web.Application,
 ) -> AsyncIterator[aiohttp.web.AppRunner]:
     runner = aiohttp.web.AppRunner(app)
     await runner.setup()
