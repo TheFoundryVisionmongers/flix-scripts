@@ -1,5 +1,7 @@
 """Pythonic abstractions of the models used by the Flix Server REST API."""
 
+# pyright: reportTypedDictNotRequiredAccess=warning
+
 from __future__ import annotations
 
 import base64
@@ -46,9 +48,9 @@ __all__ = [
     "Permission",
     "Role",
     "Sequence",
-    "SequencePanel",
     "SequenceRevision",
     "Server",
+    "ShotPanelRevision",
     "Show",
     "User",
 ]
@@ -910,12 +912,12 @@ class Sequence(FlixType):
     def new_sequence_revision(
         self,
         comment: str = "",
-        panels: list[SequencePanel] | None = None,
+        shots: list[SequenceRevisionShot] | None = None,
         source_files: list[Asset] | None = None,
     ) -> SequenceRevision:
         return SequenceRevision(
             comment=comment,
-            panels=panels,
+            shots=shots,
             source_files=source_files,
             _sequence=self,
             _client=self.client,
@@ -957,13 +959,13 @@ class Sequence(FlixType):
             )
 
     async def get_sequence_revision(
-        self, revision_number: int, *, fetch_panels: bool = False
+        self, revision_number: int, *, fetch_shots: bool = False
     ) -> SequenceRevision:
         """Fetch an existing revision of this sequence.
 
         Args:
             revision_number: The revision number of the sequence revision to fetch.
-            fetch_panels: Automatically populate the sequence revision with its panels.
+            fetch_shots: Automatically populate the sequence revision with its shots.
 
         Returns:
             The sequence revision with the requested revision number.
@@ -972,8 +974,8 @@ class Sequence(FlixType):
         revision = cast(models.SequenceRevision, await self.client.get(path))
         seqrev = SequenceRevision.from_dict(revision, _sequence=self, _client=self.client)
 
-        if fetch_panels:
-            await seqrev.get_all_panel_revisions()
+        if fetch_shots:
+            await seqrev.get_all_shots()
         return seqrev
 
     async def get_all_sequence_revisions(self) -> list[SequenceRevision]:
@@ -2097,16 +2099,14 @@ class PanelRevision(FlixType):
         trim_out_frame: int | None = None,
         dialogue: Dialogue | None = None,
         hidden: bool = False,
-        sequence_revision: int | None = None,
-    ) -> SequencePanel:
-        return SequencePanel(
+    ) -> ShotPanelRevision:
+        return ShotPanelRevision(
             panel=self,
             duration=duration,
             trim_in_frame=trim_in_frame or 0,
             trim_out_frame=trim_out_frame or 0,
             dialogue=dialogue,
             hidden=hidden,
-            sequence_revision=sequence_revision,
         )
 
     def new_keyframe(
@@ -2226,14 +2226,13 @@ class Dialogue(FlixType):
 
 
 @dataclasses.dataclass
-class SequencePanel:
+class ShotPanelRevision:
     panel: PanelRevision
     duration: int
     trim_in_frame: int
     trim_out_frame: int
     dialogue: Dialogue | None = None
     hidden: bool = False
-    sequence_revision: int | None = None
 
     @property
     def dialogue_text(self) -> str:
@@ -2257,14 +2256,15 @@ class SequencePanel:
     @classmethod
     def from_dict(
         cls,
-        data: models.SequencePanel,
+        data: models.ShotPanelRevision,
         *,
         _sequence: Sequence,
         _client: client.Client | None,
-    ) -> SequencePanel:
+    ) -> ShotPanelRevision:
         return cls(
-            panel=PanelRevision.from_dict(data, _sequence=_sequence, _client=_client),
-            sequence_revision=data["sequence_revision"],
+            panel=PanelRevision.from_dict(
+                data["panel_revision"], _sequence=_sequence, _client=_client
+            ),
             duration=data["duration"],
             trim_in_frame=data.get("trim_in_frame") or 0,
             trim_out_frame=data.get("trim_out_frame") or 0,
@@ -2276,20 +2276,160 @@ class SequencePanel:
             hidden=data["hidden"],
         )
 
-    def to_dict(self) -> models.SequencePanel:
-        pr = models.SequencePanel(
+    def to_dict(self) -> models.ShotPanelRevision:
+        spr = models.ShotPanelRevision(
             duration=self.duration,
             trim_in_frame=self.trim_in_frame,
             trim_out_frame=self.trim_out_frame,
             hidden=self.hidden,
+            panel_revision=models.PanelRevision(),
         )
+        if self.panel.show_id is not None:
+            spr["panel_revision"]["show_id"] = self.panel.show_id
+        if self.panel.sequence_id is not None:
+            spr["panel_revision"]["sequence_id"] = self.panel.sequence_id
         if self.panel.panel_id is not None:
-            pr["panel_id"] = self.panel.panel_id
+            spr["panel_revision"]["panel_id"] = self.panel.panel_id
         if self.panel.revision_number is not None:
-            pr["revision_number"] = self.panel.revision_number
+            spr["panel_revision"]["revision_number"] = self.panel.revision_number
         if self.dialogue:
-            pr["dialogue"] = self.dialogue.to_dict()
-        return pr
+            spr["dialogue"] = self.dialogue.to_dict()
+        return spr
+
+
+class Shot(FlixType):
+    def __init__(
+        self,
+        panel_revisions: list[ShotPanelRevision] | None = None,
+        transitive: bool = True,
+        *,
+        owner: User | None = None,
+        created_date: datetime.datetime | None = None,
+        metadata: Mapping[str, Any] | None = None,
+        shot_id: int | None = None,
+        show_id: int | None = None,
+        sequence_id: int | None = None,
+        _client: client.Client | None,
+    ) -> None:
+        super().__init__(_client)
+        self.panel_revisions: list[ShotPanelRevision] = panel_revisions or []
+        self.transitive: bool = transitive
+        self.owner: User | None = owner
+        self.created_date: datetime.datetime = created_date or datetime.datetime.now(
+            datetime.timezone.utc
+        )
+        self.metadata = Metadata(metadata, parent=self, _client=_client)
+        self.shot_id: int | None = shot_id
+        self.show_id: int | None = show_id
+        self.sequence_id: int | None = sequence_id
+
+    @classmethod
+    def from_dict(
+        cls,
+        data: models.Shot,
+        *,
+        into: Shot | None = None,
+        _sequence: Sequence,
+        _client: client.Client | None,
+    ) -> Shot:
+        if into is None:
+            into = cls(_client=_client)
+        into.transitive = t if (t := data.get("transitive")) is not None else True
+        into.panel_revisions = [
+            ShotPanelRevision.from_dict(p, _sequence=_sequence, _client=_client)
+            for p in (data.get("related_panel_revisions") or [])
+        ]
+        into.owner = User.from_dict(o, _client=_client) if (o := data.get("owner")) else None
+        into.created_date = (
+            dateutil.parser.parse(d)
+            if (d := data.get("created_date"))
+            else datetime.datetime.now(datetime.timezone.utc)
+        )
+        into.shot_id = data.get("id")
+        into.show_id = data.get("show_id")
+        into.sequence_id = data.get("sequence_id")
+        into.metadata = Metadata.from_dict(data.get("metadata"), parent=into, _client=_client)
+        return into
+
+    def to_dict(self) -> models.Shot:
+        shot = models.Shot(
+            transitive=self.transitive,
+            related_panel_revisions=[p.to_dict() for p in self.panel_revisions],
+            metadata=self.metadata.to_dict(),
+        )
+        if self.shot_id:
+            shot["id"] = self.shot_id
+        if self.show_id:
+            shot["show_id"] = self.show_id
+        if self.sequence_id:
+            shot["sequence_id"] = self.sequence_id
+        return shot
+
+    def path_prefix(self) -> str:
+        return f"/shot/{self.shot_id}"
+
+    def add_panel(
+        self,
+        panel: PanelRevision,
+        duration: int = 12,
+        trim_in_frame: int | None = None,
+        trim_out_frame: int | None = None,
+    ) -> None:
+        """Add a panel revision to this shot.
+
+        Args:
+            panel: The panel revision to add to the end of this shot.
+            duration: The duration of the panel within the shot.
+            trim_in_frame: How many frames to skip at the start of the panel.
+                Only relevant to animated panels.
+            trim_out_frame: How many frames to skip at the end of the panel.
+                Only relevant to animated panels.
+        """
+        self.add_shot_panel_revision(
+            panel.new_sequence_panel(
+                duration=duration,
+                trim_in_frame=trim_in_frame,
+                trim_out_frame=trim_out_frame,
+            )
+        )
+
+    def add_shot_panel_revision(self, spr: ShotPanelRevision) -> None:
+        """Add an already timed panel to this shot.
+
+        Args:
+            spr: The panel to add to the end of this shot.
+        """
+        self.panel_revisions.append(spr)
+
+
+@dataclasses.dataclass
+class SequenceRevisionShot:
+    name: str
+    shot: Shot
+    sequence_revision: int | None = None
+
+    @classmethod
+    def from_dict(
+        cls,
+        data: models.SequenceRevisionShot,
+        *,
+        _sequence: Sequence,
+        _client: client.Client | None,
+    ) -> SequenceRevisionShot:
+        return cls(
+            name=data.get("name") or "",
+            shot=Shot.from_dict(data["shot"], _sequence=_sequence, _client=_client),
+            sequence_revision=data.get("sequence_revision"),
+        )
+
+    def to_dict(self) -> models.SequenceRevisionShot:
+        srs = models.SequenceRevisionShot(
+            name=self.name,
+            shot=self.shot.to_dict(),
+        )
+        if self.sequence_revision:
+            srs["sequence_revision"] = self.sequence_revision
+        return srs
 
 
 class DialogueFormat(enum.Enum):
@@ -2300,14 +2440,13 @@ class DialogueFormat(enum.Enum):
 class SequenceRevision(FlixType):
     def __init__(
         self,
-        panels: list[SequencePanel] | None = None,
+        shots: list[SequenceRevisionShot] | None = None,
         comment: str = "",
         hidden: bool = False,
         color_tag: ColorTag | None = None,
         autosave: bool = False,
         *,
         sequence_id: int | None = None,
-        episode_id: int | None = None,
         show_id: int | None = None,
         revision_number: int | None = None,
         owner: User | None = None,
@@ -2323,10 +2462,9 @@ class SequenceRevision(FlixType):
         super().__init__(_client)
         self._sequence = _sequence
         self.sequence_id = sequence_id
-        self.episode_id = episode_id
         self.show_id = show_id
         self.revision_number = revision_number
-        self.panels = panels or []
+        self.shots = shots or []
         self.comment = comment
         self.hidden = hidden
         self.color_tag = color_tag
@@ -2354,7 +2492,6 @@ class SequenceRevision(FlixType):
             into = cls(_sequence=_sequence, _client=_client)
         into.revision_number = data["revision"]
         into.sequence_id = data["sequence_id"]
-        into.episode_id = data.get("episode_id", 0)
         into.show_id = data["show_id"]
         into.comment = data.get("comment", "")
         into.hidden = data["hidden"]
@@ -2374,7 +2511,7 @@ class SequenceRevision(FlixType):
     def to_dict(self) -> models.SequenceRevision:
         revision = models.SequenceRevision(
             comment=self.comment,
-            revisioned_panels=[panel.to_dict() for panel in self.panels],
+            related_shots=[shot.to_dict() for shot in self.shots],
             source_files=[asset.to_dict() for asset in self.source_files],
             hidden=self.hidden,
             autosave=self.autosave,
@@ -2383,8 +2520,6 @@ class SequenceRevision(FlixType):
         )
         if self.show_id is not None:
             revision["show_id"] = self.show_id
-        if self.episode_id is not None:
-            revision["episode_id"] = self.episode_id
         if self.sequence_id is not None:
             revision["sequence_id"] = self.sequence_id
         if self.revision_number is not None:
@@ -2401,6 +2536,12 @@ class SequenceRevision(FlixType):
     @property
     def show(self) -> Show:
         return self.sequence.show
+
+    @property
+    def panels(self) -> Iterator[ShotPanelRevision]:
+        """An iterator over all panels of the shots added to this sequence revision."""
+        for shot in self.shots:
+            yield from shot.shot.panel_revisions
 
     @property
     def color_tag_name(self) -> str:
@@ -2422,42 +2563,37 @@ class SequenceRevision(FlixType):
         else:
             self.color_tag = None
 
-    def add_panel(
-        self,
-        panel: PanelRevision,
-        duration: int = 12,
-        trim_in_frame: int | None = None,
-        trim_out_frame: int | None = None,
-    ) -> None:
-        self.add_sequence_panel(
-            panel.new_sequence_panel(
-                duration=duration,
-                trim_in_frame=trim_in_frame,
-                trim_out_frame=trim_out_frame,
-                sequence_revision=self.revision_number,
+    def add_shot(self, shot: Shot, name: str = "") -> None:
+        """Append a single shot to this sequence revision with the given name.
+
+        Args:
+            shot: The shot to add to the end of this sequence revision.
+            name: The name of the shot within the sequence revision.
+        """
+        self.shots.append(
+            SequenceRevisionShot(
+                shot=shot,
+                name=name,
             )
         )
 
-    def add_sequence_panel(self, sequence_panel: SequencePanel) -> None:
-        self.panels.append(sequence_panel)
+    async def get_all_shots(self) -> list[SequenceRevisionShot]:
+        """Fetch all shots belonging to this sequence revision.
 
-    async def get_all_panel_revisions(self) -> list[SequencePanel]:
-        """Fetch all panels belonging to this sequence revision.
-
-        This method also populates [panels][flix.SequenceRevision.panels]
-        with the returned panels.
+        This method also populates [shots][flix.SequenceRevision.shots]
+        with the returned shots.
         """
 
-        class _AllPanels(TypedDict):
-            panels: list[models.SequencePanel]
+        class _AllShots(TypedDict):
+            sequence_revision_shots: list[models.SequenceRevisionShot]
 
-        path = f"{self.path_prefix()}/panels"
-        all_panels = cast(_AllPanels, await self.client.get(path))
-        self.panels = [
-            SequencePanel.from_dict(panel, _sequence=self._sequence, _client=self.client)
-            for panel in all_panels["panels"]
+        path = f"{self.path_prefix()}/shots"
+        all_shots = cast(_AllShots, await self.client.get(path))
+        self.shots = [
+            SequenceRevisionShot.from_dict(shot, _sequence=self._sequence, _client=self.client)
+            for shot in all_shots["sequence_revision_shots"]
         ]
-        return self.panels
+        return self.shots
 
     async def _export(
         self,
@@ -2528,9 +2664,10 @@ class SequenceRevision(FlixType):
 
         if self.revision_number is None or force_create_new:
             # auto-save any unsaved dialogue
-            for panel in self.panels:
-                if panel.dialogue and not panel.dialogue.dialogue_id:
-                    await panel.dialogue.save()
+            for shot in self.shots:
+                for panel in shot.shot.panel_revisions:
+                    if panel.dialogue and not panel.dialogue.dialogue_id:
+                        await panel.dialogue.save()
 
             path = f"{self._sequence.path_prefix()}/revision"
             result = cast(
