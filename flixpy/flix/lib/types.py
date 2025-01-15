@@ -2227,6 +2227,8 @@ class Dialogue(FlixType):
 
 @dataclasses.dataclass
 class ShotPanelRevision:
+    """A timed view of a panel revision within a shot."""
+
     panel: PanelRevision
     duration: int
     trim_in_frame: int
@@ -2298,6 +2300,12 @@ class ShotPanelRevision:
 
 
 class Shot(FlixType):
+    """A list of panels representing a single shot.
+
+    A shot may be either transitive (implicit) or non-transitive (explicit).
+    Only non-transitive shots are rendered as shots by the Flix client.
+    """
+
     def __init__(
         self,
         panel_revisions: list[ShotPanelRevision] | None = None,
@@ -2401,9 +2409,37 @@ class Shot(FlixType):
         """
         self.panel_revisions.append(spr)
 
+    def add_panels_from(self, other: Shot) -> None:
+        """Append the panels belonging to the given shot to this shot.
+
+        Args:
+            other: The shot whose panels to append to the end of this shot.
+        """
+        self.panel_revisions.extend(other.panel_revisions)
+
+    def split_at(self, panel: int) -> Shot:
+        """Split this shot at the given panel index.
+
+        This will shrink the current shot and create a new shot containing the panels
+        after the cut point. This method will *not* automatically add the sequence revision
+        associated with this shot.
+
+        Args:
+            panel: The panel index within the shot to split the shot at.
+                The panel at the given index will be added to the right-hand shot.
+
+        Returns:
+            The new right-hand shot.
+        """
+        right_shot = Shot(self.panel_revisions[panel:], self.transitive, _client=self._client)
+        self.panel_revisions = self.panel_revisions[:panel]
+        return right_shot
+
 
 @dataclasses.dataclass
 class SequenceRevisionShot:
+    """A named view of a shot within a sequence revision."""
+
     name: str
     shot: Shot
     sequence_revision: int | None = None
@@ -2430,6 +2466,32 @@ class SequenceRevisionShot:
         if self.sequence_revision:
             srs["sequence_revision"] = self.sequence_revision
         return srs
+
+    def split_at(self, panel: int) -> SequenceRevisionShot:
+        """Split this shot at the given panel index.
+
+        This will shrink the current shot and create a new shot containing the panels
+        after the cut point. This method will *not* automatically add the sequence revision
+        associated with this shot.
+
+        Args:
+            panel: The panel index within the shot to split the shot at.
+                The panel at the given index will be added to the right-hand shot.
+
+        Returns:
+            The new right-hand shot.
+        """
+        right_shot = self.shot.split_at(panel)
+        return SequenceRevisionShot(self.name, right_shot)
+
+    def make_explicit(self, name: str) -> None:
+        """Make this an explicit, non-transitive shot.
+
+        Args:
+            name: The name to use for the shot within its current sequence revision.
+        """
+        self.shot.transitive = False
+        self.name = name
 
 
 class DialogueFormat(enum.Enum):
@@ -2594,6 +2656,92 @@ class SequenceRevision(FlixType):
             for shot in all_shots["sequence_revision_shots"]
         ]
         return self.shots
+
+    def split_shot_at(self, panel: int) -> tuple[SequenceRevisionShot, SequenceRevisionShot]:
+        """Split a shot at the given panel index.
+
+        Args:
+            panel: The index within the sequence revision of the panel at which to split the shot.
+                The panel at the index will be the first panel of the right-hand shot.
+
+        Returns:
+            The two new shots formed by splitting the existing one.
+        """
+        i = 0
+        for shot_i, shot in enumerate(self.shots):
+            for j, _ in enumerate(shot.shot.panel_revisions):
+                if i == panel:
+                    return self._split_shot(shot, shot_i, j)
+                i += 1
+        raise IndexError
+
+    def _split_shot(
+        self, shot: SequenceRevisionShot, shot_index: int, panel_index_in_shot: int
+    ) -> tuple[SequenceRevisionShot, SequenceRevisionShot]:
+        new_shot = shot.split_at(panel_index_in_shot)
+        self.shots.insert(shot_index + 1, new_shot)
+        return shot, new_shot
+
+    def make_shot(self, start_panel: int, end_panel: int, name: str = "") -> SequenceRevisionShot:
+        """Add the panels in the given inclusive range to a new shot with the given name.
+
+        Args:
+            start_panel: The index of the first panel within the sequence revision
+                to add to the shot.
+            end_panel: The index of the last panel within the sequence revision to add to the shot.
+            name: The name of the new shot.
+
+        Returns:
+            The new shot.
+        """
+        start_shot, start_shot_panel = self.find_panel_index(start_panel)
+        end_shot, end_shot_panel = self.find_panel_index(end_panel)
+        # split shots for panels that don't fall on existing shot boundaries;
+        # split end shot first since it doesn't affect shot/panel indices,
+        # to make calculations simpler
+        if end_shot_panel + 1 < len(self.shots[start_shot].shot.panel_revisions):
+            self.split_shot_at(end_panel + 1)
+        if start_shot_panel > 0:
+            self.split_shot_at(start_panel)
+            start_shot += 1
+            end_shot += 1
+
+        new_shot = self.merge_shots(start_shot, end_shot)
+        new_shot.make_explicit(name)
+        return new_shot
+
+    def merge_shots(self, start_shot: int, end_shot: int) -> SequenceRevisionShot:
+        """Combine the shots in the given (inclusive) range into a single shot.
+
+        Args:
+            start_shot: The index of the first shot to include.
+            end_shot: The index of the last shot to include.
+
+        Returns:
+            The merged shot.
+        """
+        for i in range(start_shot + 1, end_shot + 1):
+            self.shots[start_shot].shot.add_panels_from(self.shots[i].shot)
+        if end_shot > start_shot:
+            self.shots = self.shots[: start_shot + 1] + self.shots[end_shot + 1 :]
+        return self.shots[start_shot]
+
+    def find_panel_index(self, panel: int) -> tuple[int, int]:
+        """Get the index of a panel within the shot it belongs to.
+
+        Args:
+            panel: The index of the panel.
+
+        Returns:
+            A tuple of the index containing the panel and the index of the panel within its shot.
+        """
+        i = 0
+        for shot_i, shot in enumerate(self.shots):
+            panels_in_shot = len(shot.shot.panel_revisions)
+            if i + panels_in_shot > panel:
+                return shot_i, panel - i
+            i += panels_in_shot
+        raise IndexError(f"sequence revision does not contain a panel with index: {panel}")
 
     async def _export(
         self,
