@@ -18,39 +18,39 @@ import dateutil.parser
 from . import client, errors, models, transfers, websocket
 
 __all__ = [
-    "MetadataField",
-    "Metadata",
-    "Group",
-    "Permission",
-    "Role",
-    "GroupRolePair",
-    "User",
-    "MediaObjectStatus",
-    "MediaObjectHash",
-    "MediaObject",
-    "Episode",
-    "Sequence",
     "Asset",
-    "ContactSheetOrientation",
-    "ContactSheetStyle",
-    "ContactSheetPanelOptions",
-    "ContactSheetCoverOptions",
+    "ColorTag",
     "ContactSheet",
-    "Show",
+    "ContactSheetCoverOptions",
+    "ContactSheetOrientation",
+    "ContactSheetPanelOptions",
+    "ContactSheetStyle",
+    "Dialogue",
+    "DialogueFormat",
+    "DuplicateRef",
+    "Episode",
+    "Group",
+    "GroupRolePair",
     "Keyframe",
-    "PanelComment",
-    "OriginSBP",
+    "MediaObject",
+    "MediaObjectHash",
+    "MediaObjectStatus",
+    "Metadata",
+    "MetadataField",
     "OriginAvid",
     "OriginFCPXML",
-    "DuplicateRef",
+    "OriginSBP",
     "Panel",
+    "PanelComment",
     "PanelRevision",
+    "Permission",
+    "Role",
+    "Sequence",
     "SequencePanel",
     "SequenceRevision",
-    "DialogueFormat",
     "Server",
-    "Dialogue",
-    "ColorTag",
+    "Show",
+    "User",
 ]
 
 
@@ -70,8 +70,7 @@ class FlixType:
 
 
 class AddressableFlixType(Protocol):
-    def path_prefix(self) -> str:
-        ...
+    def path_prefix(self) -> str: ...
 
 
 class MetadataField:
@@ -605,7 +604,7 @@ class MediaObject(FlixType):
             transfers.chunk_file(f),
             self.asset_id,
             self.media_object_id,
-            name=name,
+            name=name or "unknown",
             size=size,
         )
 

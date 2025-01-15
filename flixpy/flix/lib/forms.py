@@ -13,15 +13,15 @@ from typing import Any, ClassVar, Generic, TypedDict, TypeVar, cast
 import asyncclick as click
 
 __all__ = [
-    "Form",
-    "Field",
-    "StringField",
-    "IntField",
-    "FloatField",
     "BoolField",
-    "EnumField",
-    "MultichoiceField",
     "Choice",
+    "EnumField",
+    "Field",
+    "FloatField",
+    "Form",
+    "IntField",
+    "MultichoiceField",
+    "StringField",
     "prompt_enum",
 ]
 

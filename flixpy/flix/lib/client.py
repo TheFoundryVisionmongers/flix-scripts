@@ -23,7 +23,7 @@ from . import _utils, errors, forms, models, signing, types, websocket
 if TYPE_CHECKING:
     from types import TracebackType
 
-__all__ = ["Client", "AccessKey"]
+__all__ = ["AccessKey", "Client"]
 
 logger = logging.getLogger(__name__)
 

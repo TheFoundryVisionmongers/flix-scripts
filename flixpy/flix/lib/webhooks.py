@@ -28,21 +28,21 @@ if TYPE_CHECKING:
     import ssl
 
 __all__ = [
-    "EventType",
-    "WebhookEvent",
     "ErrorEvent",
+    "EventFactory",
+    "EventType",
+    "ExportSBPEvent",
+    "NewContactSheetEvent",
+    "NewPanelRevisionEvent",
+    "NewSequenceRevisionEvent",
+    "PingEvent",
     "PublishEditorialEvent",
     "PublishFlixEvent",
-    "ExportSBPEvent",
-    "NewSequenceRevisionEvent",
-    "NewPanelRevisionEvent",
-    "NewContactSheetEvent",
-    "PingEvent",
+    "WebhookEvent",
     "WebhookHandler",
-    "webhook",
     "WebhookHandlerType",
-    "EventFactory",
     "run_webhook_server",
+    "webhook",
 ]
 
 logger = logging.getLogger(__name__)
@@ -422,15 +422,13 @@ async def run_webhook_server(
         @flix.webhook(path="/events", secret="...")
         def on_event(
             event: flix.WebhookEvent,
-        ) -> None:
-            ...
+        ) -> None: ...
 
 
         @on_event.handle(flix.PublishEditorialEvent)
         def on_publish(
             event: flix.PublishEditorialEvent,
-        ) -> None:
-            ...
+        ) -> None: ...
 
 
         # start webhook server
