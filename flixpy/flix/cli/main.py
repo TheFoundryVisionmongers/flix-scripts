@@ -310,8 +310,7 @@ async def webhook_server(
     await site.start()
 
     click.echo(f"Listening for events on {address}:{port} (press CTRL+C to abort)...", err=True)
-    while True:
-        await asyncio.sleep(3600)
+    await asyncio.Event().wait()
 
 
 @flix_cli.group(help="Manage contact sheet templates.")
@@ -344,7 +343,7 @@ async def contactsheet_edit_loop(
             pdf_response = await flix_client.request(
                 "GET", "/contactsheet/preview", params={"data": b64, "format": "pdf"}
             )
-            with pathlib.Path(preview_file).open("wb") as f:  # noqa: ASYNC101
+            with pathlib.Path(preview_file).open("wb") as f:  # noqa: ASYNC230
                 f.write(await pdf_response.read())
         elif action == "save":
             return data

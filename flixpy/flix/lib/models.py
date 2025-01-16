@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, TypedDict
 
-from typing_extensions import NotRequired
+from typing_extensions import NotRequired, Required
 
 
 class MetadataField(TypedDict, total=False):
@@ -117,7 +117,7 @@ class SequenceRevision(TypedDict, total=False):
     owner: User
     created_date: str
     metadata: list[MetadataField]
-    revisioned_panels: list[SequencePanel]
+    related_shots: list[SequenceRevisionShot]
     comment: str
     published: bool
     imported: bool
@@ -126,7 +126,6 @@ class SequenceRevision(TypedDict, total=False):
     autosave: bool
     sequence_id: int
     show_id: int
-    episode_id: int
     task_id: str
     source_files: list[Asset]
 
@@ -247,13 +246,30 @@ class PanelRevision(TypedDict, total=False):
     panel: Panel
 
 
-class SequencePanel(PanelRevision):
-    sequence_revision: NotRequired[int]
+class ShotPanelRevision(TypedDict, total=False):
+    panel_revision: PanelRevision
     duration: int
     trim_in_frame: int
     trim_out_frame: int
     hidden: bool
     dialogue: NotRequired[Dialogue]
+
+
+class Shot(TypedDict, total=False):
+    id: int
+    show_id: int
+    sequence_id: int
+    owner: User
+    created_date: str
+    transitive: bool
+    related_panel_revisions: list[ShotPanelRevision]
+    metadata: list[MetadataField]
+
+
+class SequenceRevisionShot(TypedDict, total=False):
+    sequence_revision: int
+    shot: Required[Shot]
+    name: str
 
 
 class PageSize(TypedDict):

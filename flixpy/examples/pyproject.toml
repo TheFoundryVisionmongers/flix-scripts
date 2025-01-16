@@ -7,5 +7,5 @@ ignore = [
     "T201", # allow print()
     "ERA001", # allow commented-out code
     "PLR2004", # allow magic values in comparisons
-    "ASYNC101", # allow blocking calls in async functions for demonstration purposes
+    "ASYNC230", # allow blocking calls in async functions for demonstration purposes
 ]

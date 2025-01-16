@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "flix-sdk"
-version = "2.0.3"
+version = "3.0.0"
 description = "Python SDK and command-line utilities for Flix"
 authors = []
 homepage = "https://www.foundry.com/products/flix"
@@ -32,12 +32,12 @@ types-python-dateutil = "^2.8.19.14"
 types-appdirs = "^1.4.3.5"
 grpcio-tools = "^1.57.0"
 grpc-stubs = {git = "https://github.com/shabbyrobe/grpc-stubs.git"}
-types-protobuf = "^4.24.0.1"
-mypy-protobuf = "^3.5.0"
-mypy = "^1.8.0"
+types-protobuf = "^5.29.1.20241207"
+mypy-protobuf = "^3.6.0"
+mypy = "^1.14.1"
 openapi-python-client = "^0.15.1"
-pyright = "^1.1.350"
-ruff = "^0.2.1"
+pyright = "^1.1.391"
+ruff = "^0.9.0"
 pre-commit = "^3.6.1"
 
 
@@ -77,8 +77,6 @@ select = ["ALL"]
 ignore = [
     # conflict with ruff format
     "ISC001", "COM812",
-    # type hinting self/cls is superfluous
-    "ANN101", "ANN102",
     # lots of arguments is ok as long as they're keyword arguments
     "PLR0913",
     # very silly rule, why would you want less informative exceptions
@@ -89,6 +87,10 @@ ignore = [
     "TID252",
     # removing else would change the semantics if the return was removed
     "RET505", "RET506", "RET507", "RET508",
+    # str.format is more readable than f-strings sometimes
+    "UP032",
+    # breaking change
+    "A005",
     # TODO re-enable these ASAP
     "FBT001", "FBT002", "ANN401",
     "D101", "D102", "D103", "D105", "D106", "D107",
