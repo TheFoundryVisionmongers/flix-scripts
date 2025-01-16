@@ -939,6 +939,24 @@ class Sequence(FlixType):
             _client=self.client,
         )
 
+    def new_shot(
+        self, panels: list[ShotPanelRevision] | None = None, *, transitive: bool = True
+    ) -> Shot:
+        """Construct a new shot.
+
+        Args:
+            panels: The panel revisions to include in the shot, if any.
+            transitive: Whether the shot should be transitive (implicit).
+
+        Returns:
+            The new shot.
+        """
+        return Shot(
+            panel_revisions=panels or [],
+            transitive=transitive,
+            _client=self.client,
+        )
+
     async def save_panels(self, panels: list[PanelRevision]) -> None:
         """Save a batch of panel revisions.
 
@@ -2092,7 +2110,7 @@ class PanelRevision(FlixType):
         prefix = self._sequence.path_prefix(include_episode=include_episode)
         return f"{prefix}/panel/{self.panel_id}/revision/{self.revision_number}"
 
-    def new_sequence_panel(
+    def new_shot_panel_revision(
         self,
         duration: int = 12,
         trim_in_frame: int | None = None,
@@ -2376,6 +2394,20 @@ class Shot(FlixType):
     def path_prefix(self) -> str:
         return f"/shot/{self.shot_id}"
 
+    def new_sequence_revision_shot(self, name: str = "") -> SequenceRevisionShot:
+        """Construct a named view of this shot that can be added to a sequence revision.
+
+        Args:
+            name: The name of the shot.
+
+        Returns:
+            The new shot view.
+        """
+        return SequenceRevisionShot(
+            name=name,
+            shot=self,
+        )
+
     def add_panel(
         self,
         panel: PanelRevision,
@@ -2394,7 +2426,7 @@ class Shot(FlixType):
                 Only relevant to animated panels.
         """
         self.add_shot_panel_revision(
-            panel.new_sequence_panel(
+            panel.new_shot_panel_revision(
                 duration=duration,
                 trim_in_frame=trim_in_frame,
                 trim_out_frame=trim_out_frame,
