@@ -264,6 +264,7 @@ class Shot(TypedDict, total=False):
     transitive: bool
     related_panel_revisions: list[ShotPanelRevision]
     metadata: list[MetadataField]
+    origin: str
 
 
 class SequenceRevisionShot(TypedDict, total=False):

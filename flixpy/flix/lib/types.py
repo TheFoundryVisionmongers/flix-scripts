@@ -940,13 +940,18 @@ class Sequence(FlixType):
         )
 
     def new_shot(
-        self, panels: list[ShotPanelRevision] | None = None, *, transitive: bool = True
+        self,
+        panels: list[ShotPanelRevision] | None = None,
+        *,
+        transitive: bool = True,
+        origin: str = "Manual Import",
     ) -> Shot:
         """Construct a new shot.
 
         Args:
             panels: The panel revisions to include in the shot, if any.
             transitive: Whether the shot should be transitive (implicit).
+            origin: Origin of the shot, with a maximum of 25 characters.
 
         Returns:
             The new shot.
@@ -954,6 +959,7 @@ class Sequence(FlixType):
         return Shot(
             panel_revisions=panels or [],
             transitive=transitive,
+            origin=origin,
             _client=self.client,
         )
 
@@ -2335,6 +2341,7 @@ class Shot(FlixType):
         shot_id: int | None = None,
         show_id: int | None = None,
         sequence_id: int | None = None,
+        origin: str = "Manual Import",
         _client: client.Client | None,
     ) -> None:
         super().__init__(_client)
@@ -2348,6 +2355,7 @@ class Shot(FlixType):
         self.shot_id: int | None = shot_id
         self.show_id: int | None = show_id
         self.sequence_id: int | None = sequence_id
+        self.origin = origin
 
     @classmethod
     def from_dict(
@@ -2374,6 +2382,7 @@ class Shot(FlixType):
         into.shot_id = data.get("id")
         into.show_id = data.get("show_id")
         into.sequence_id = data.get("sequence_id")
+        into.origin = data.get("origin", "")
         into.metadata = Metadata.from_dict(data.get("metadata"), parent=into, _client=_client)
         return into
 
@@ -2389,6 +2398,8 @@ class Shot(FlixType):
             shot["show_id"] = self.show_id
         if self.sequence_id:
             shot["sequence_id"] = self.sequence_id
+        if self.origin:
+            shot["origin"] = self.origin
         return shot
 
     def path_prefix(self) -> str:
