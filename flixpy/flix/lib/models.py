@@ -48,6 +48,7 @@ class User(TypedDict, total=False):
     type: str
     username: str
     metadata: list[MetadataField]
+    password: str | None
 
 
 class Hash(TypedDict, total=False):
