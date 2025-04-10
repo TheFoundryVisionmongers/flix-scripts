@@ -36,7 +36,7 @@ __all__ = [
     "OpenSourceFileEvent",
     "PanelBrowserStatus",
     "PanelRequestResponse",
-    "PanelSelection"
+    "PanelSelection",
     "ProjectDetails",
     "ProjectEvent",
     "ProjectIds",
@@ -303,7 +303,10 @@ class PanelBrowserStatus:
                 can_publish=data.revision_status.can_publish,
                 can_export=data.revision_status.can_export,
                 selected_panels=data.revision_status.selected_panels,
-                panel_selection=[PanelSelection.from_dict(panel) for panel in data.revision_status.panel_selection]
+                panel_selection=[
+                    PanelSelection.from_dict(panel)
+                    for panel in data.revision_status.panel_selection
+                ],
             ),
             actions_in_progress=ActionsInProgress(
                 is_saving=data.actions_in_progress.is_saving,
@@ -404,6 +407,7 @@ class PanelRequestResponse:
             message=data.message,
             action_id=data.action_id,
         )
+
 
 @dataclasses.dataclass
 class VersionResponse:

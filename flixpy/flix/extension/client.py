@@ -242,11 +242,11 @@ class Extension:
     @property
     def selected_panels(self) -> list[types.PanelSelection]:
         if not self.online:
-            return list()
+            return []
         if self.project.sequence_revision is None:
-            return list()
+            return []
         if len(self.panel_browser_status.revision_status.panel_selection) <= 0:
-            return list()
+            return []
 
         return self.panel_browser_status.revision_status.panel_selection
 
@@ -454,9 +454,7 @@ class Extension:
 
         resp = _assert_response(
             models.InfoResponse,
-            await info_controller_get.asyncio_detailed(
-                client=await self._get_registered_client()
-            ),
+            await info_controller_get.asyncio_detailed(client=await self._get_registered_client()),
         )
 
         return types.VersionResponse.from_model(resp)
