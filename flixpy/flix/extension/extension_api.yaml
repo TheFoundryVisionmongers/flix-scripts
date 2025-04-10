@@ -68,11 +68,14 @@ info:
     ### Step 5: All done
 
     That's it! You're now ready to interact with the Flix Client and ready to turn “My First Flix Extension” into the best thing ever. Although, maybe come up with a better name first.
-  version: v1
-  contact: {}
+  version: v1.1.0
+  contact:
+    url: http://www.foundry.com
+    email: support@foundry.com
   license:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: https://www.foundry.com/eula
 servers:
   - url: http://localhost:3000
     description: Flix Client API
@@ -80,6 +83,9 @@ tags:
   - name: Health Check
     description: |
       The health check endpoint is a basic test entrypoint for the Flix Client API and will always return a 200 OK response when the API is available. This endpoint can be used as a sanity check to validate connections to Flix before first connecting or after a disconnect.
+  - name: Info
+    description: |
+      The Info endpoint provides essential information about the supported versions and the current client version. This endpoint consistently returns a 200 OK response when the API is operational.
   - name: API Registration
     description: |
       Most of the Flix Client API is gated behind a simple API registration process. Each API consumer must first register with Flix by sending a POST request to http://localhost:3000/registration. The token in the registration response should be attached as a bearer token in the authorization header with future requests. To validate the registration, do a GET request to the same registration endpoint along with the auth header, and the registered API consumer details should be returned.
@@ -107,6 +113,9 @@ tags:
   - name: Media Object Download
     description: |
       The download endpoint provides the ability for an extension to request a specific asset from the Flix Server and have the Flix Client download it to a specified location. Before using this endpoint, you will need to figure out the ID of the asset to be downloaded and the type of the media object required, either using the other API endpoints or from the Flix Server API. Requests to the download API endpoint will begin the download immediately and will not complete until the download has finished, which means the request may be long-lived.
+  - name: Preferences
+    description: |
+      The preferences endpoint provides a lookup for the current Flix Client user preferences. A GET request to this endpoint will return the full list of preferences currently set in the client. This can optionally be filtered down by specifying a subset of properties via the `keys` query parameter. This can either be a comma separated string, or be specified multiple times for each desired preference.
 paths:
   /health:
     get:
@@ -119,6 +128,21 @@ paths:
           description: ''
       tags:
         - Health Check
+  /info:
+    get:
+      operationId: InfoController_get
+      summary: Flix Client details
+      description: Provides details of current Flix Client and GRC API. Always returns a 200 response.
+      parameters: []
+      responses:
+        '200':
+          description: Flix Client details successfully returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InfoResponse'
+      tags:
+        - Info
   /registration:
     post:
       operationId: RegistrationController_registerClient
@@ -329,18 +353,18 @@ paths:
       security:
         - bearer: []
   /preferences:
-    post:
-      operationId: PreferencesController_post
+    get:
+      operationId: PreferencesController_lookupPreferences
       summary: Get Flix Preferences Values
-      parameters: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                type: string
+      parameters:
+        - name: keys
+          required: false
+          in: query
+          description: A list of keys for which to return the user preference values. Can either be a comma-separated list, or specified multiple times.
+          schema:
+            type: array
+            items:
+              type: string
       responses:
         '200':
           description: Returns a Config object for a provided list of preferences set in the Flix Client
@@ -366,6 +390,20 @@ components:
       bearerFormat: JWT
       type: http
   schemas:
+    InfoResponse:
+      type: object
+      properties:
+        flixVersion:
+          type: string
+          description: Current Flix Client version.
+        supportedApiVersions:
+          description: Supported GRC API versions.
+          type: array
+          items:
+            type: string
+      required:
+        - flixVersion
+        - supportedApiVersions
     SubscribeRequest:
       type: object
       properties:
@@ -977,12 +1015,29 @@ components:
         - episode
         - sequence
         - sequenceRevision
+    PanelSelectionResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: The ID of the selected panel.
+        revisionId:
+          type: integer
+          description: The revision of the selected panel.
+        index:
+          type: integer
+          description: The current index in the panel browser of the selected panel.
+      required:
+        - id
+        - revisionId
+        - index
     RevisionStatusResponse:
       type: object
       properties:
         selectedPanels:
           type: array
-          description: A list of the currently selected panels.
+          description: A list of the currently selected panel IDs.
+          deprecated: true
           items:
             type: integer
         canSave:
@@ -994,11 +1049,17 @@ components:
         canExport:
           type: boolean
           description: Whether the user has permission to export files from the current revision.
+        panelSelection:
+          description: A list of the currently selected panel details, including ID.
+          type: array
+          items:
+            $ref: '#/components/schemas/PanelSelectionResponse'
       required:
         - selectedPanels
         - canSave
         - canPublish
         - canExport
+        - panelSelection
     ActionsInProgressResponse:
       type: object
       properties:

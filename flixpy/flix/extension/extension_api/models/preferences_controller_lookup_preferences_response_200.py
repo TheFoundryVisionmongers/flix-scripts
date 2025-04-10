@@ -3,11 +3,11 @@ from typing import Any, Dict, List, Type, TypeVar, Union, cast
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-T = TypeVar("T", bound="PreferencesControllerPostResponse200")
+T = TypeVar("T", bound="PreferencesControllerLookupPreferencesResponse200")
 
 
 @_attrs_define
-class PreferencesControllerPostResponse200:
+class PreferencesControllerLookupPreferencesResponse200:
     """ """
 
     additional_properties: Dict[str, Union[bool, int, str]] = _attrs_field(
@@ -26,7 +26,7 @@ class PreferencesControllerPostResponse200:
     @classmethod
     def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
         d = src_dict.copy()
-        preferences_controller_post_response_200 = cls()
+        preferences_controller_lookup_preferences_response_200 = cls()
 
         additional_properties = {}
         for prop_name, prop_dict in d.items():
@@ -38,10 +38,10 @@ class PreferencesControllerPostResponse200:
 
             additional_properties[prop_name] = additional_property
 
-        preferences_controller_post_response_200.additional_properties = (
+        preferences_controller_lookup_preferences_response_200.additional_properties = (
             additional_properties
         )
-        return preferences_controller_post_response_200
+        return preferences_controller_lookup_preferences_response_200
 
     @property
     def additional_keys(self) -> List[str]:
