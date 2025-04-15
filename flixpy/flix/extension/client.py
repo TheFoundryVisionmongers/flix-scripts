@@ -241,14 +241,9 @@ class Extension:
 
     @property
     def selected_panels(self) -> list[types.PanelSelection]:
-        if not self.online:
-            return []
-        if self.project.sequence_revision is None:
-            return []
-        if len(self.panel_browser_status.revision_status.panel_selection) <= 0:
-            return []
-
-        return self.panel_browser_status.revision_status.panel_selection
+        if self.online and self.project.sequence_revision:
+            return self.panel_browser.status.revision_status.panel_selection
+        return []
 
     async def _on_connect(self) -> None:
         logger.info("connected to Flix Client, subscribing to events")
