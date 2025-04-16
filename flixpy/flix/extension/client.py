@@ -242,7 +242,7 @@ class Extension:
     @property
     def selected_panels(self) -> list[types.PanelSelection]:
         if self.online and self.project.sequence_revision:
-            return self.panel_browser.status.revision_status.panel_selection
+            return self.panel_browser_status.revision_status.panel_selection
         return []
 
     async def _on_connect(self) -> None:

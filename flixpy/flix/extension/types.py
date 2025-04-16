@@ -18,6 +18,7 @@ from .extension_api.models import (
     SourceFilePreviewMode,
     SourceFileType,
 )
+from .extension_api.types import Unset
 
 __all__ = [
     "ActionEvent",
@@ -306,7 +307,9 @@ class PanelBrowserStatus:
                 panel_selection=[
                     PanelSelection.from_dict(panel)
                     for panel in data.revision_status.panel_selection
-                ],
+                ]
+                if not isinstance(data.revision_status.panel_selection, Unset)
+                else [],
             ),
             actions_in_progress=ActionsInProgress(
                 is_saving=data.actions_in_progress.is_saving,

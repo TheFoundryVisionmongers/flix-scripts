@@ -1059,7 +1059,6 @@ components:
         - canSave
         - canPublish
         - canExport
-        - panelSelection
     ActionsInProgressResponse:
       type: object
       properties:
