@@ -1,0 +1,12 @@
+{
+    "name": "Version Up Away",
+    "version": "1.0",
+    "description": "A simple plugin that removes the 'Version Up' button from the Flix Panel Browser.",
+    "content_scripts": [
+      {
+        "matches": ["file://*"],
+        "js": ["main.js"]
+      }
+    ],
+    "manifest_version": 3
+  }
