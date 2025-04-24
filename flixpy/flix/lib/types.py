@@ -10,6 +10,7 @@ import contextlib
 import dataclasses
 import datetime
 import enum
+import hashlib
 import os
 import pathlib
 from collections.abc import AsyncIterable, Callable, Iterable, Iterator, Mapping, MutableMapping
@@ -382,6 +383,13 @@ class Role:
             permissions=[Permission.from_dict(role) for role in data.get("permissions") or []],
         )
 
+    def to_dict(self) -> models.Role:
+        return models.Role(
+            id=self.role_id or -1,
+            name=self.name,
+            permissions=[Permission.to_dict(role) for role in self.permissions],
+        )
+
 
 @dataclasses.dataclass
 class GroupRolePair:
@@ -394,6 +402,9 @@ class GroupRolePair:
             group=Group.from_dict(data["group"]),
             role=Role.from_dict(data["role"]),
         )
+
+    def to_dict(self) -> models.GroupRolePair:
+        return models.GroupRolePair(group=self.group.to_dict(), role=self.role.to_dict())
 
 
 class User(FlixType):
@@ -417,7 +428,7 @@ class User(FlixType):
         super().__init__(_client)
         self.user_id = user_id
         self.username = username
-        self.password = password
+        self.password = hashlib.sha256(password.encode()) if password else None
         self.email = email
         self.groups = groups or []
         self.created_date: datetime.datetime = created_date or datetime.datetime.now(
@@ -449,8 +460,29 @@ class User(FlixType):
         into.metadata = Metadata.from_dict(data.get("metadata"), parent=into, _client=_client)
         return into
 
+    def to_dict(self) -> models.User:
+        return models.User(
+            id=self.user_id if self.user_id else -1,
+            username=self.username,
+            email=self.email,
+            groups=[GroupRolePair.to_dict(group) for group in self.groups or []],
+            type=self.user_type,
+            is_admin=self.is_admin,
+            is_system=self.is_system,
+            is_third_party=self.is_third_party,
+            deleted=self.deleted,
+            metadata=self.metadata.to_dict(),
+            password=self.password.hexdigest() if self.password else None,
+        )
+
     def path_prefix(self) -> str:
         return f"/user/{self.user_id}"
+
+    async def save(self) -> None:
+        """Save this user."""
+        path = "/user"
+        result = cast(models.User, await self.client.post(path, body=self.to_dict()))
+        self.from_dict(result, into=self, _client=self.client)
 
 
 class MediaObjectStatus(enum.Enum):
