@@ -1,4 +1,8 @@
 /**
+ * Copyright (c) 2025 The Foundry Visionmongers Ltd.  All Rights Reserved.
+ */
+
+/**
  * Handles mutation observer events. Filters events down to DOM modification that impact the version up button, and hides it if it is visible.
  */
 const onDomChange = (mutations) => {
