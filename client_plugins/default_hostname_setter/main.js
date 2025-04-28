@@ -1,15 +1,16 @@
 /**
  * Copyright (c) 2025 The Foundry Visionmongers Ltd.  All Rights Reserved.
- * This plugin will only work on Flix Client <= 8.0.0.Beta
+ *
+ * Sets the default hostname in the hostname input when on the login page and the input value is empty.
  */
 function setDefaultHostname() {
-    if (!window.location.pathname.includes('login')) {
+    if (!window.location.href.includes('login')) {
         return;
     }
 
-    const hostInput = document.querySelector('input[name="host"]');
+    const hostInput = document.querySelector('input#login_hostname');
     if (!hostInput) {
-        console.warn('Default Hostname Setter: No input[name="host"] found.');
+        console.warn('Default Hostname Setter: No input#login_hostname found.');
         return;
     }
 
