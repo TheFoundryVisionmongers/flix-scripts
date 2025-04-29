@@ -11,3 +11,4 @@ provides a useful resource from which you can build your own customizations.
  - [License](https://github.com/TheFoundryVisionmongers/flix-scripts/tree/main/license_management) management - Retrieve information on seat availability and usage
  - [Move](https://github.com/TheFoundryVisionmongers/flix-scripts/tree/main/move_shows) shows - Move a sequence from one show to another
  - [Panels](https://github.com/TheFoundryVisionmongers/flix-scripts/tree/main/panels_media_object) media object - Fetch panels with media objects
+ - [Flix Client Plugins](https://github.com/TheFoundryVisionmongers/flix-scripts/tree/main/blender) - Example plugins to modify the behaviour of the Flix Client
