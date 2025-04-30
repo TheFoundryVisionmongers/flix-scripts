@@ -1,0 +1,13 @@
+{
+    "name": "Default Hostname Setter",
+    "version": "1.0",
+    "description": "Automatically sets a default hostname on the login page if hostname input value is empty.",
+    "content_scripts": [
+      {
+        "matches": ["file://*"],
+        "js": ["main.js"],
+        "run_at": "document_idle"
+      }
+    ],
+    "manifest_version": 3
+  }
