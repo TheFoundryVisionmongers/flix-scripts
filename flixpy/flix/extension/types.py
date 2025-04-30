@@ -18,6 +18,7 @@ from .extension_api.models import (
     SourceFilePreviewMode,
     SourceFileType,
 )
+from .extension_api.types import Unset
 
 __all__ = [
     "ActionEvent",
@@ -36,6 +37,7 @@ __all__ = [
     "OpenSourceFileEvent",
     "PanelBrowserStatus",
     "PanelRequestResponse",
+    "PanelSelection",
     "ProjectDetails",
     "ProjectEvent",
     "ProjectIds",
@@ -46,6 +48,7 @@ __all__ = [
     "Status",
     "StatusEvent",
     "VersionEvent",
+    "VersionResponse",
 ]
 
 
@@ -261,6 +264,22 @@ class RevisionStatus:
     can_publish: bool = False
     can_export: bool = False
     selected_panels: list[int] = dataclasses.field(default_factory=list)
+    panel_selection: list[PanelSelection] = dataclasses.field(default_factory=list)
+
+
+@dataclasses.dataclass
+class PanelSelection:
+    id: int
+    revision_id: int
+    index: int
+
+    @classmethod
+    def from_dict(cls, data: models.PanelSelectionResponse) -> Self:
+        return cls(
+            id=data.id,
+            revision_id=data.revision_id,
+            index=data.index,
+        )
 
 
 @dataclasses.dataclass
@@ -285,6 +304,12 @@ class PanelBrowserStatus:
                 can_publish=data.revision_status.can_publish,
                 can_export=data.revision_status.can_export,
                 selected_panels=data.revision_status.selected_panels,
+                panel_selection=[
+                    PanelSelection.from_dict(panel)
+                    for panel in data.revision_status.panel_selection
+                ]
+                if not isinstance(data.revision_status.panel_selection, Unset)
+                else [],
             ),
             actions_in_progress=ActionsInProgress(
                 is_saving=data.actions_in_progress.is_saving,
@@ -384,4 +409,17 @@ class PanelRequestResponse:
         return cls(
             message=data.message,
             action_id=data.action_id,
+        )
+
+
+@dataclasses.dataclass
+class VersionResponse:
+    flix_version: str
+    supported_api_versions: list[str]
+
+    @classmethod
+    def from_model(cls, data: models.InfoResponse) -> Self:
+        return cls(
+            flix_version=data.flix_version,
+            supported_api_versions=data.supported_api_versions,
         )

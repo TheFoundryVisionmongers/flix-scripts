@@ -239,6 +239,12 @@ class Extension:
 
         return status
 
+    @property
+    def selected_panels(self) -> list[types.PanelSelection]:
+        if self.online and self.project.sequence_revision:
+            return self.panel_browser_status.revision_status.panel_selection
+        return []
+
     async def _on_connect(self) -> None:
         logger.info("connected to Flix Client, subscribing to events")
         events = models.SubscribeRequest(
@@ -432,6 +438,21 @@ class Extension:
         )
 
         return types.PanelBrowserStatus.from_model(resp)
+
+    async def get_current_versions(self) -> types.VersionResponse:
+        """Get details about the current status of the Flix Client.
+
+        Returns:
+            An object containing information about the current Flix Client status.
+        """
+        from .extension_api.api.info import info_controller_get
+
+        resp = _assert_response(
+            models.InfoResponse,
+            await info_controller_get.asyncio_detailed(client=await self._get_registered_client()),
+        )
+
+        return types.VersionResponse.from_model(resp)
 
     async def import_panels(
         self,
