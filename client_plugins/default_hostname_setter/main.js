@@ -1,9 +1,13 @@
-// Set your default hostname here
+/**
+ * Copyright (c) 2025 The Foundry Visionmongers Ltd.  All Rights Reserved.
+ */
+
+/**
+ * Set your default hostname here.
+ */
 const DEFAULT_HOST_NAME = 'your-default-hostname.com'
 
 /**
- * Copyright (c) 2025 The Foundry Visionmongers Ltd.  All Rights Reserved.
- *
  * Sets the default hostname in the hostname input when on the login page and the input value is empty.
  */
 function setDefaultHostname() {
