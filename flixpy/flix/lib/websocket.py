@@ -183,9 +183,13 @@ class MessageEditorialImportStatus(KnownWebsocketMessage):
         error: str
 
     class Status(enum.Enum):
+        RELINK = "relink"
+        VERSIONUP = "versionUp"
+        NEWPANEL = "newPanel"
+        ARTWORK_REUSED = "newPanelArtworkReuse"
+        DUPLICATED = "newPanelDuplicated"
         PENDING = "pending"
         IN_PROGRESS = "inProgress"
-        COMPLETE = "complete"
         UNSUPPORTED = "unsupported"
         ERRORED = "errored"
 
