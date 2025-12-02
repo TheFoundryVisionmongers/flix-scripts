@@ -946,11 +946,13 @@ class Sequence(FlixType):
         comment: str = "",
         shots: list[SequenceRevisionShot] | None = None,
         source_files: list[Asset] | None = None,
+        files: list[Asset] | None = None,
     ) -> SequenceRevision:
         return SequenceRevision(
             comment=comment,
             shots=shots,
             source_files=source_files,
+            files=files,
             _sequence=self,
             _client=self.client,
         )
@@ -2593,6 +2595,7 @@ class SequenceRevision(FlixType):
         task_id: str | None = None,
         source_files: list[Asset] | None = None,
         metadata: Mapping[str, Any] | None = None,
+        files: Asset | None = None,
         _sequence: Sequence,
         _client: client.Client | None,
     ) -> None:
@@ -2614,6 +2617,7 @@ class SequenceRevision(FlixType):
         self.imported = imported
         self.task_id = task_id
         self.source_files = source_files or []
+        self.files = files or []
         self.metadata = Metadata(metadata, parent=self, _client=_client)
 
     @classmethod
@@ -2642,6 +2646,7 @@ class SequenceRevision(FlixType):
         into.source_files = [
             Asset.from_dict(asset, _client=_client) for asset in data.get("source_files") or []
         ]
+        into.files = data.get("files")
         into.metadata = Metadata.from_dict(data.get("metadata"), parent=into, _client=_client)
         return into
 
@@ -2650,6 +2655,7 @@ class SequenceRevision(FlixType):
             comment=self.comment,
             related_shots=[shot.to_dict() for shot in self.shots],
             source_files=[asset.to_dict() for asset in self.source_files],
+            files=self.files.to_dict() if self.files else None,
             hidden=self.hidden,
             autosave=self.autosave,
             colour_tag=self.color_tag.to_dict() if self.color_tag else None,
