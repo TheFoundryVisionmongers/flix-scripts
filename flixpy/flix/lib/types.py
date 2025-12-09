@@ -802,6 +802,45 @@ class Sequence(FlixType):
                 elif isinstance(msg, websocket.MessageEditorialImportStatus) and panel_status_callback is not None:
                     panel_status_callback(msg)
             return await waiter.result.get_sequence_revision(self)
+        
+    async def import_fcpxml(
+        self,
+        mov_asset: "Asset",
+        xml_asset: "Asset",
+        comment: str = "",
+        extra_params: Mapping[str, Any] | None = None,
+        timeout: float | None = None,
+        chain_status_callback: Callable[[websocket.MessageJobChainStatus], None] | None = None,
+        panel_status_callback: Callable[[websocket.MessageEditorialImportStatus], None] | None = None,
+    ) -> "SequenceRevision":
+        path = f"{self.path_prefix()}/revision/0/reconform/avid"
+        params = extra_params or {}
+        async with self.client.websocket() as ws:
+            await self.client.post(
+                path,
+                body={
+                    "asset_id": mov_asset.asset_id,
+                    "client_id": ws.client_id,
+                    "comment": comment,
+                    "publish_settings": {
+                        "bitrate": "36M",
+                    },
+                    "xml_asset_b64": xml_asset.decode("ascii"),
+                    **params,
+                },
+            )
+
+            waiter = ws.wait_on_chain(
+                websocket.MessageEditorialImportComplete,
+                message_filter=(websocket.MessageEditorialImportStatus,),
+                timeout=timeout,
+            )
+            async for msg in waiter:
+                if isinstance(msg, websocket.MessageJobChainStatus) and chain_status_callback is not None:
+                    chain_status_callback(msg)
+                elif isinstance(msg, websocket.MessageEditorialImportStatus) and panel_status_callback is not None:
+                    panel_status_callback(msg)
+            return await waiter.result.get_sequence_revision(self)
 
     async def save(self, force_create_new: bool = False) -> None:
         if self.sequence_id is None or force_create_new:
