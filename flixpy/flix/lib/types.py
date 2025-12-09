@@ -813,7 +813,7 @@ class Sequence(FlixType):
         chain_status_callback: Callable[[websocket.MessageJobChainStatus], None] | None = None,
         panel_status_callback: Callable[[websocket.MessageEditorialImportStatus], None] | None = None,
     ) -> "SequenceRevision":
-        path = f"{self.path_prefix()}/revision/0/reconform/avid"
+        path = f"{self.path_prefix()}/revision/0/reconform/premiere"
         params = extra_params or {}
         async with self.client.websocket() as ws:
             await self.client.post(
