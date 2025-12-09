@@ -1141,7 +1141,7 @@ class Sequence(FlixType):
                     "publish_settings": {
                         "bitrate": "36M",
                     },
-                    "xml_asset_id": xml_asset.asset_id,
+                    "xml_asset": xml_asset,
                     **params,
                 },
             )
