@@ -7,14 +7,19 @@ which listens for editorial publishes and exports to Storyboard Pro.
 from __future__ import annotations
 
 import asyncio
+import os
 
 import flix
+
+HOSTNAME = "localhost"
+PORT = 8080
+API_KEY = os.getenv("FLIX_API_KEY")
+API_SECRET = os.getenv("FLIX_API_SECRET")
 
 
 async def register_webhook() -> None:
     """Register a webhook with Flix."""
-    async with flix.Client("localhost", 8080) as client:
-        await client.authenticate("admin", "admin")
+    async with flix.Client(HOSTNAME, PORT, api_key=API_KEY, api_secret=API_SECRET) as client:
         webhook = await client.post(
             "/webhook",
             body={

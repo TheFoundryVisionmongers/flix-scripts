@@ -20,6 +20,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import logging
+import os
 import tempfile
 from typing import TYPE_CHECKING, Literal, TypedDict, cast
 
@@ -40,8 +41,8 @@ SHOTGRID_PASSWORD = "hunter2"
 # Flix server and credentials for exporting the QuickTime
 FLIX_HOSTNAME = "localhost"
 FLIX_PORT = 8080
-FLIX_USERNAME = "admin"
-FLIX_PASSWORD = "admin"
+FLIX_API_KEY = os.getenv("FLIX_API_KEY")
+FLIX_API_SECRET = os.getenv("FLIX_API_SECRET")
 
 # create long-lived ShotGrid client so we don't need
 # to create a new one for each event
@@ -172,8 +173,8 @@ async def run_publish_webhook() -> None:
             client_options={
                 "hostname": FLIX_HOSTNAME,
                 "port": FLIX_PORT,
-                "username": FLIX_USERNAME,
-                "password": FLIX_PASSWORD,
+                "api_key": FLIX_API_KEY,
+                "api_secret": FLIX_API_SECRET,
             },
         )
 
