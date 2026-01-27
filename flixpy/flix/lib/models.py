@@ -379,3 +379,10 @@ class Server(TypedDict):
     db_ident: str
     is_ssl: bool
     transfer_port: int
+
+
+class AccessKey(TypedDict):
+    id: str
+    secret_access_key: str
+    created_date: NotRequired[str]
+    expiry_date: NotRequired[str]

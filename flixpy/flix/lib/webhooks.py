@@ -382,16 +382,15 @@ def webhook(
     return decorator
 
 
-class ClientOptions(TypedDict, total=False):
+class ClientOptions(_client.DeprecatedOptions, total=False):
     """Options to pass to [Client][flix.Client]."""
 
     hostname: Required[str]
     port: Required[int]
     ssl: bool
     disable_ssl_validation: bool
-    username: str
-    password: str
-    auto_extend_session: bool
+    api_key: str | None
+    api_secret: str | None
     access_key: _client.AccessKey
 
 
