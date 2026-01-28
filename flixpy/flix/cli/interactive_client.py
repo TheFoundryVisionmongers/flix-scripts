@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-import contextlib
 from typing import TYPE_CHECKING, Any
 
 import asyncclick as click
 
-from ..lib import client, errors
+from ..lib import client, errors, models
 
 if TYPE_CHECKING:
     import aiohttp
@@ -31,33 +30,27 @@ class InteractiveClient(client.Client):
         config: dict[str, Any],
         username: str | None = None,
         password: str | None = None,
+        access_key: models.AccessKey | None = None,
     ) -> None:
-        try:
-            access_key = client.AccessKey(config["access_key"])
-        except KeyError:
-            access_key = None
-
         super().__init__(
             hostname,
             port,
             ssl=ssl,
-            access_key=access_key,
+            access_key=client.AccessKey(access_key) if access_key else None,
             disable_ssl_validation=config.get("disable_ssl_validation", False),
         )
-        self._config = config
-        self._username = username
-        self._password = password
+        self.__config = config
+        self.__username = username
+        self.__password = password
 
     async def _sign_in(self) -> None:
         click.echo("Not signed in, attempting to authenticate...", err=True)
+        self.__config.pop("access_key", None)
 
-        with contextlib.suppress(KeyError):
-            del self._config["access_key"]
-
-        username = self._username or click.prompt("Username", type=str, err=True)
-        password = self._password or click.prompt("Password", type=str, hide_input=True, err=True)
+        username = self.__username or click.prompt("Username", type=str, err=True)
+        password = self.__password or click.prompt("Password", type=str, hide_input=True, err=True)
         access_key = await self.authenticate(username, password)
-        self._config["access_key"] = access_key.to_json()
+        self.__config["access_key"] = access_key.to_json()
 
     async def request(self, *args: Any, **kwargs: Any) -> aiohttp.ClientResponse:
         try:

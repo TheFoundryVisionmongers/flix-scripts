@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import re
 from typing import TypedDict, cast
 
@@ -31,8 +32,8 @@ SHOTGRID_PROJECT = 421
 # Flix server and credentials for creating the new show
 FLIX_HOSTNAME = "localhost"
 FLIX_PORT = 8080
-FLIX_USERNAME = "admin"
-FLIX_PASSWORD = "admin"
+FLIX_API_KEY = os.getenv("FLIX_API_KEY")
+FLIX_API_SECRET = os.getenv("FLIX_API_SECRET")
 
 
 # optional statically typed schemas for our ShotGrid data,
@@ -83,9 +84,9 @@ async def import_sg_show() -> None:
     finally:
         sg.close()
 
-    async with flix.Client(FLIX_HOSTNAME, FLIX_PORT) as client:
-        await client.authenticate(FLIX_USERNAME, FLIX_PASSWORD)
-
+    async with flix.Client(
+        FLIX_HOSTNAME, FLIX_PORT, api_key=FLIX_API_KEY, api_secret=FLIX_API_SECRET
+    ) as client:
         # create a new show with the appropriate tracking code,
         # title and description; default values will be used for
         # the frame rate (24 fps) and aspect ratio (1.77)

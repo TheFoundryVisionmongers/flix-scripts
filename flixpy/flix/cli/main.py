@@ -52,16 +52,24 @@ async def get_client(ctx: click.Context, server: str | None = None) -> client.Cl
         config=ctx.obj["config"],
         username=ctx.obj.get("username"),
         password=ctx.obj.get("password"),
+        access_key=ctx.obj.get("access_key"),
     )
 
 
 @click.group()
 @click.option("-s", "--server", type=str, help="The URL of the Flix server.")
-@click.option("-u", "--username", type=str, help="The username to authenticate with.")
-@click.option("-p", "--password", type=str, help="The password to authenticate with.")
+@click.option("--key", type=str, help="The API key to authenticate with.")
+@click.option("--secret", type=str, help="The API key secret to authenticate with.")
+@click.option("-u", "--username", type=str, help="The username to authenticate with (deprecated).")
+@click.option("-p", "--password", type=str, help="The password to authenticate with (deprecated).")
 @click.pass_context
 async def flix_cli(
-    ctx: click.Context, server: str | None, username: str | None, password: str | None
+    ctx: click.Context,
+    server: str | None,
+    username: str | None,
+    password: str | None,
+    key: str | None,
+    secret: str | None,
 ) -> None:
     cfg = read_config()
     ctx.ensure_object(dict)
@@ -69,6 +77,12 @@ async def flix_cli(
     ctx.obj["server"] = server or cfg.get("server")
     ctx.obj["username"] = username or cfg.get("username")
     ctx.obj["password"] = password or cfg.get("password")
+    if key or secret:
+        if not key or not secret:
+            raise click.ClickException("Must provide both --key and --secret.")
+        ctx.obj["access_key"] = models.AccessKey(id=key, secret_access_key=secret)
+    else:
+        ctx.obj["access_key"] = cfg.get("access_key")
 
 
 @flix_cli.result_callback()
@@ -79,8 +93,10 @@ def save_config(ctx: click.Context, /, *_args: Any, **_kwargs: Any) -> None:
 
 @flix_cli.command("config", help="Set default configuration values.")
 @click.option("-s", "--server", type=str, help="The default server URL.")
-@click.option("-u", "--username", type=str, help="The default username.")
-@click.option("-p", "--password", type=str, help="The default password.")
+@click.option("--key", type=str, help="The API key to authenticate with.")
+@click.option("--secret", type=str, help="The API key secret to authenticate with.")
+@click.option("-u", "--username", type=str, help="The default username (deprecated).")
+@click.option("-p", "--password", type=str, help="The default password (deprecated).")
 @click.option(
     "--disable-ssl-validation",
     type=bool,
@@ -91,6 +107,8 @@ def save_config(ctx: click.Context, /, *_args: Any, **_kwargs: Any) -> None:
 def config(
     ctx: click.Context,
     server: str | None,
+    key: str | None,
+    secret: str | None,
     username: str | None,
     password: str | None,
     disable_ssl_validation: bool,
@@ -104,6 +122,12 @@ def config(
         cfg["username"] = username
     if password:
         cfg["password"] = password
+    if key or secret:
+        if not key or not secret:
+            raise click.ClickException("Must provide both --key and --secret.")
+        cfg["access_key"] = models.AccessKey(id=key, secret_access_key=secret)
+        cfg.pop("username", None)
+        cfg.pop("password", None)
     if clear:
         cfg = {}
     ctx.obj["config"] = cfg

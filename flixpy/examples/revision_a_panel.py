@@ -7,6 +7,7 @@ We are not creating a new sequence revision with this example.
 from __future__ import annotations
 
 import asyncio
+import os
 from pathlib import Path
 
 import flix
@@ -14,8 +15,8 @@ import flix
 # Authentication data
 HOSTNAME = "localhost"
 PORT = 8080
-USERNAME = "admin"
-PASSWORD = "admin"
+API_KEY = os.getenv("FLIX_API_KEY")
+API_SECRET = os.getenv("FLIX_API_SECRET")
 
 # Flix IDs
 SHOW_ID = 1
@@ -28,9 +29,7 @@ FILEPATH = Path("./new_file.psd")
 
 
 async def main() -> None:
-    async with flix.Client(HOSTNAME, PORT) as client:
-        # Log into the Flix server
-        await client.authenticate(USERNAME, PASSWORD)
+    async with flix.Client(HOSTNAME, PORT, api_key=API_KEY, api_secret=API_SECRET) as client:
         # Get the show from the server
         show = await client.get_show(SHOW_ID)
         # Create an 'artwork' media object with the file and transcode it to create a thumbnail

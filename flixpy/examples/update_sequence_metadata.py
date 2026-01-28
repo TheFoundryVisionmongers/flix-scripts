@@ -11,13 +11,14 @@ from __future__ import annotations
 
 import asyncio
 import datetime
+import os
 
 import flix
 
 HOSTNAME = "localhost"
 PORT = 8080
-USERNAME = "admin"
-PASSWORD = "admin"
+API_KEY = os.getenv("FLIX_API_KEY")
+API_SECRET = os.getenv("FLIX_API_SECRET")
 
 SHOW_ID = 478
 SEQUENCE_ID = 415
@@ -25,10 +26,7 @@ SEQUENCE_ID = 415
 
 async def update_sequence_metadata() -> None:
     """Updates metadata for an existing sequence."""
-    async with flix.Client(HOSTNAME, PORT) as client:
-        # authenticate with the Flix server
-        await client.authenticate(USERNAME, PASSWORD)
-
+    async with flix.Client(HOSTNAME, PORT, api_key=API_KEY, api_secret=API_SECRET) as client:
         # fetch show and sequence
         show = await client.get_show(SHOW_ID)
         sequence = await show.get_sequence(SEQUENCE_ID)

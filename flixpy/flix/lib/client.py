@@ -5,10 +5,10 @@ from __future__ import annotations
 import asyncio
 import base64
 import contextlib
-import dataclasses
 import datetime
 import json
 import logging
+import typing
 import urllib.parse
 import warnings
 from collections.abc import AsyncIterator, Mapping
@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING, Any, TypedDict, TypeVar, cast
 
 import aiohttp
 import dateutil.parser
+from typing_extensions import Unpack
 
 from . import _utils, errors, forms, models, signing, types, websocket
 
@@ -28,11 +29,10 @@ __all__ = ["AccessKey", "Client"]
 logger = logging.getLogger(__name__)
 
 
-@dataclasses.dataclass
 class AccessKey:
     """Holds information about a user session."""
 
-    def __init__(self, access_key: dict[str, Any]) -> None:
+    def __init__(self, access_key: models.AccessKey) -> None:
         """Constructs a new AccessKey object.
 
         Args:
@@ -42,16 +42,21 @@ class AccessKey:
         """The ID used to identify the access key."""
         self.secret_access_key: str = access_key["secret_access_key"]
         """The secret used to sign requests."""
-        self.created_date = dateutil.parser.parse(access_key["created_date"])
+        self.created_date = (
+            dateutil.parser.parse(v) if (v := access_key.get("created_date")) else None
+        )
         """When the access key was created."""
-        self.expiry_date = dateutil.parser.parse(access_key["expiry_date"])
+        self.expiry_date = (
+            dateutil.parser.parse(v) if (v := access_key.get("expiry_date")) else None
+        )
         """When the access key expires."""
 
     @property
     def has_expired(self) -> bool:
         """Whether this access key has expired."""
-        now = datetime.datetime.now(datetime.timezone.utc)
-        return self.expiry_date < now
+        return self.expiry_date is not None and self.expiry_date < datetime.datetime.now(
+            datetime.timezone.utc
+        )
 
     def to_json(self) -> dict[str, Any]:
         """Returns a JSON-serialisable representation of this access key.
@@ -62,19 +67,27 @@ class AccessKey:
         return {
             "id": self.id,
             "secret_access_key": self.secret_access_key,
-            "created_date": self.created_date.isoformat(),
-            "expiry_date": self.expiry_date.isoformat(),
+            "created_date": self.created_date.isoformat() if self.created_date else None,
+            "expiry_date": self.expiry_date.isoformat() if self.expiry_date else None,
         }
 
 
 ClientSelf = TypeVar("ClientSelf", bound="BaseClient")
 
 
+class DeprecatedOptions(typing.TypedDict, total=False):
+    """Additional deprecated/discouraged client options which may be removed in the future."""
+
+    auto_extend_session: bool
+    username: str | None
+    password: str | None
+
+
 class BaseClient:
     """Base class for [flix.Client][].
 
     A thin wrapper around aiohttp.ClientSession that provides
-    automatic signing of Flix requests and a helper function for authenticating..
+    automatic signing of Flix requests and a helper function for authenticating.
     """
 
     def __init__(
@@ -84,10 +97,10 @@ class BaseClient:
         ssl: bool = False,
         disable_ssl_validation: bool = False,
         *,
-        username: str | None = None,
-        password: str | None = None,
-        auto_extend_session: bool = True,
+        api_key: str | None = None,
+        api_secret: str | None = None,
         access_key: AccessKey | None = None,
+        **kwargs: Unpack[DeprecatedOptions],
     ) -> None:
         """Instantiate a new Flix client.
 
@@ -97,21 +110,32 @@ class BaseClient:
             ssl: Whether to use HTTPS to communicate with the server.
             disable_ssl_validation: Whether to disable validation of SSL certificates.
                 Enables MITM attacks.
-            username: The user to authenticate as. If provided, the client will automatically
-                authenticate whenever we don't have a valid session.
-            password: The password for the user to authenticate as. Must be provided
-                if ``username`` is provided.
-            auto_extend_session: Automatically keep the session alive by periodically extending
-                the access key validity time following a successful authentication.
+            api_key: The public ID of the API key, visible in the list of API keys
+                within the Flix client.
+            api_secret: The secret part of the API key, only shown when initially
+                creating the API key.
             access_key: The access key of an already authenticated user.
+            kwargs: Additional deprecated options.
         """
+        username = kwargs.get("username")
+        password = kwargs.get("password")
+        if username is not None or password is not None:
+            logger.warning(
+                "Using a username and password for authentication is not recommended. "
+                "Consider using an API key instead."
+            )
+        if api_key is not None and api_secret is not None:
+            if access_key is not None:
+                logger.warning("Both API key and access key provided; ignoring access key.")
+            access_key = AccessKey({"id": api_key, "secret_access_key": api_secret})
+
         self._hostname = hostname
         self._port = port
         self._ssl = ssl
         self._disable_ssl_validation = disable_ssl_validation
         self._username = username
         self._password = password
-        self._auto_extend_session = auto_extend_session
+        self._auto_extend_session = kwargs.get("auto_extend_session", True)
         self._access_key = access_key
 
         self._session = aiohttp.ClientSession()
@@ -373,6 +397,9 @@ class BaseClient:
 
         On a successful authentication, this will set access_key.
 
+        Deprecated: Prefer passing an API key when constructing a client
+        instead of using user credentials.
+
         Args:
             user: The username of the user to authenticate as.
             password: The password of the user to authenticate as.
@@ -384,12 +411,16 @@ class BaseClient:
         Returns:
             A new access key for the user.
         """
+        warnings.warn(
+            "Provide an API key when creating a Client instead", DeprecationWarning, stacklevel=1
+        )
         self._access_key = None
         # call _request directly to avoid recursion when automatically authenticating
         response = await self._request(
             "POST", "/authenticate", auth=aiohttp.BasicAuth(user, password)
         )
-        self._access_key = AccessKey(await response.json())
+        access_key = cast(models.AccessKey, await response.json())
+        self._access_key = AccessKey(access_key)
 
         if self._refresh_token_task is None and self._auto_extend_session:
             self._refresh_token_task = asyncio.create_task(self._periodically_refresh_token())
@@ -424,7 +455,8 @@ class BaseClient:
         # a FlixNotVerifiedError means the access key has expired,
         # in which case we'll reauthenticate before the next request
         with contextlib.suppress(errors.FlixNotVerifiedError):
-            self._access_key = AccessKey(await self.post("/authenticate/extend"))
+            access_key = cast(models.AccessKey, await self.post("/authenticate/extend"))
+            self._access_key = AccessKey(access_key)
 
     async def _periodically_refresh_token(self) -> None:
         """Try to extend the session once an hour."""
@@ -477,9 +509,12 @@ class Client(BaseClient):
 
     Example:
         ```python
-        async with Client("localhost", 8080) as client:
-            await client.authenticate("admin", "admin")
-
+        async with Client(
+            "localhost",
+            8080,
+            api_key="2268759986af4173898e",
+            api_secret="e7263d6a190644339f4e234aaf2a9bf38e761813",
+        ) as client:
             # print the tracking code of all shows
             shows = await client.get_all_shows()
             for show in shows:
@@ -494,10 +529,10 @@ class Client(BaseClient):
         ssl: bool = False,
         disable_ssl_validation: bool = False,
         *,
-        username: str | None = None,
-        password: str | None = None,
-        auto_extend_session: bool = True,
+        api_key: str | None = None,
+        api_secret: str | None = None,
         access_key: AccessKey | None = None,
+        **kwargs: Unpack[DeprecatedOptions],
     ) -> None:
         """Instantiate a new Flix client.
 
@@ -507,23 +542,22 @@ class Client(BaseClient):
             ssl: Whether to use HTTPS to communicate with the server.
             disable_ssl_validation: Whether to disable validation of SSL certificates.
                 Enables MITM attacks.
-            username: The user to authenticate as. If provided, the client will automatically
-                authenticate whenever we don't have a valid session.
-            password: The password for the user to authenticate as. Must be provided
-                if ``username`` is provided.
-            auto_extend_session: Automatically keep the session alive by periodically extending
-                the access key validity time following a successful authentication.
+            api_key: The public ID of the API key, visible in the list of API keys
+                within the Flix client.
+            api_secret: The secret part of the API key, only shown when initially
+                creating the API key.
             access_key: The access key of an already authenticated user.
+            kwargs: Additional deprecated options.
         """
         super().__init__(
             hostname=hostname,
             port=port,
             ssl=ssl,
             disable_ssl_validation=disable_ssl_validation,
-            username=username,
-            password=password,
-            auto_extend_session=auto_extend_session,
+            api_key=api_key,
+            api_secret=api_secret,
             access_key=access_key,
+            **kwargs,
         )
 
     @contextlib.asynccontextmanager
