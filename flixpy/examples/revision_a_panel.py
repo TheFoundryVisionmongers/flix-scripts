@@ -13,7 +13,7 @@ from pathlib import Path
 import flix
 
 # Authentication data
-HOSTNAME = "arvid-ubuntu"
+HOSTNAME = "localhost"
 PORT = 8080
 API_KEY = os.getenv("FLIX_API_KEY")
 API_SECRET = os.getenv("FLIX_API_SECRET")
