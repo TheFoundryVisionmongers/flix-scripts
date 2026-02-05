@@ -53,6 +53,11 @@ class InteractiveClient(client.Client):
         self.__config["access_key"] = access_key.to_json()
 
     async def request(self, *args: Any, **kwargs: Any) -> aiohttp.ClientResponse:
+        # try to auth ahead of time only if the username and password
+        # were explicitly provided
+        if self.access_key is None and self.__username and self.__password:
+            await self._sign_in()
+
         try:
             return await super().request(*args, **kwargs)
         except errors.FlixNotVerifiedError:
