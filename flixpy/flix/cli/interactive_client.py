@@ -55,7 +55,11 @@ class InteractiveClient(client.Client):
     async def request(self, *args: Any, **kwargs: Any) -> aiohttp.ClientResponse:
         # try to auth ahead of time only if the username and password
         # were explicitly provided
-        if self.access_key is None and self.__username and self.__password:
+        if (
+            (self.access_key is None or self.access_key.has_expired)
+            and self.__username
+            and self.__password
+        ):
             await self._sign_in()
 
         try:
