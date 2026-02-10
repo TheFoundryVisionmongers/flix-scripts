@@ -1227,7 +1227,7 @@ class Sequence(FlixType):
             self.color_tag = await self.show.get_color_tag("sequence", self.color_tag.color_name)
 
         if self.sequence_id is None or force_create_new:
-            path = f"{self._show.path_prefix()}/sequence"
+            path = f"{self._show.path_prefix()}/sequence" if self._episode is None else f"{self._episode.path_prefix()}/sequence"
             result = cast(models.Sequence, await self.client.post(path, body=self.to_dict()))
         else:
             path = self.path_prefix()
@@ -2313,10 +2313,10 @@ class PanelRevision(FlixType):
                 instead of versioning up an existing panel.
         """
         if self.panel_id is None or force_create_new_panel:
-            path = f"{self._sequence.path_prefix()}/panel"
+            path = f"{self._sequence.path_prefix(include_episode=False)}/panel"
             result = cast(models.PanelRevision, await self.client.post(path, body=self.to_dict()))
         else:
-            path = f"{self._sequence.path_prefix()}/panel/{self.panel_id}/revision"
+            path = f"{self._sequence.path_prefix(include_episode=False)}/panel/{self.panel_id}/revision"
             result = cast(models.PanelRevision, await self.client.post(path, body=self.to_dict()))
         self.from_dict(result, into=self, _sequence=self._sequence, _client=self.client)
 
