@@ -840,6 +840,7 @@ class Sequence(FlixType):
         description: str = "",
         hidden: bool = False,
         color_tag: ColorTag | None = None,
+        aspect_ratio: float | None = None,
         *,
         sequence_id: int | None = None,
         created_date: datetime.datetime | None = None,
@@ -866,6 +867,7 @@ class Sequence(FlixType):
         self.metadata = Metadata(metadata, parent=self, _client=_client)
         self.hidden = hidden
         self.color_tag = color_tag
+        self.aspect_ratio = aspect_ratio
 
     @classmethod
     def from_dict(
@@ -889,6 +891,7 @@ class Sequence(FlixType):
         into.metadata = Metadata.from_dict(data.get("metadata"), parent=into, _client=_client)
         into.hidden = data.get("hidden", False)
         into.color_tag = ColorTag.from_dict(c) if (c := data.get("colour_tag")) else None
+        into.aspect_ratio = data.get("aspect_ratio")
         return into
 
     def to_dict(self) -> models.Sequence:
@@ -901,6 +904,8 @@ class Sequence(FlixType):
         )
         if self.sequence_id is not None:
             sequence["id"] = self.sequence_id
+        if self.aspect_ratio is not None:
+            sequence["aspect_ratio"] = self.aspect_ratio
 
         return sequence
 
