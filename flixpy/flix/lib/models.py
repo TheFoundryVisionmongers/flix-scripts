@@ -93,6 +93,7 @@ class Sequence(TypedDict, total=False):
     panel_revision_count: int
     deleted: bool
     hidden: bool
+    aspect_ratio: NotRequired[float]
     colour_tag: ColorTag | None
     metadata: list[MetadataField]
     tracking_code: str

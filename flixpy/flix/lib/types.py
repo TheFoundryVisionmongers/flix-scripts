@@ -808,6 +808,7 @@ class Sequence(FlixType):
         description: str = "",
         hidden: bool = False,
         color_tag: ColorTag | None = None,
+        aspect_ratio: float | None = None,
         *,
         sequence_id: int | None = None,
         created_date: datetime.datetime | None = None,
@@ -834,6 +835,7 @@ class Sequence(FlixType):
         self.metadata = Metadata(metadata, parent=self, _client=_client)
         self.hidden = hidden
         self.color_tag = color_tag
+        self.aspect_ratio = aspect_ratio
 
     @classmethod
     def from_dict(
@@ -857,6 +859,7 @@ class Sequence(FlixType):
         into.metadata = Metadata.from_dict(data.get("metadata"), parent=into, _client=_client)
         into.hidden = data.get("hidden", False)
         into.color_tag = ColorTag.from_dict(c) if (c := data.get("colour_tag")) else None
+        into.aspect_ratio = data.get("aspect_ratio")
         return into
 
     def to_dict(self) -> models.Sequence:
@@ -869,6 +872,8 @@ class Sequence(FlixType):
         )
         if self.sequence_id is not None:
             sequence["id"] = self.sequence_id
+        if self.aspect_ratio is not None:
+            sequence["aspect_ratio"] = self.aspect_ratio
 
         return sequence
 
@@ -1337,7 +1342,7 @@ class Show(FlixType):
     def __init__(
         self,
         tracking_code: str = "",
-        aspect_ratio: float = 1.77,
+        aspect_ratio: float = 16 / 9,
         frame_rate: float = 24,
         title: str = "",
         description: str = "",
@@ -1639,10 +1644,13 @@ class Show(FlixType):
             _client=self.client,
         )
 
-    def new_sequence(self, tracking_code: str, description: str = "") -> Sequence:
+    def new_sequence(
+        self, tracking_code: str, description: str = "", aspect_ratio: float | None = None
+    ) -> Sequence:
         return Sequence(
             tracking_code=tracking_code,
             description=description or tracking_code,
+            aspect_ratio=aspect_ratio,
             _show=self,
             _episode=None,
             _client=self.client,
