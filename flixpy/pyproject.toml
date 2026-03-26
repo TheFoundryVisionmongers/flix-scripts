@@ -20,9 +20,9 @@ grpcio = "^1.57.0"
 protobuf = "^4.24.1"
 cryptography = "^43.0.0"
 httpx = ">=0.24.1"
-attrs = "^23.1.0"
-python-socketio = "^5.9.0"
-typing-extensions = "^4.9.0"
+attrs = ">=23.1.0"
+python-socketio = ">=5.9.0"
+typing-extensions = ">=4.9.0"
 
 [tool.poetry.scripts]
 flix = 'flix.cli.main:main'
