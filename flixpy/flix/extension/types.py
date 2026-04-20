@@ -338,8 +338,11 @@ class OpenPanelData:
     panel_id: int
     asset_id: int
     is_animated: bool
+    index: int
     source_file_asset_id: int | None
     annotation_asset_id: int | None
+    revision_id: int | None
+    duration: int | None
 
     @classmethod
     def from_dict(cls, data: models.OpenFilePanelData) -> Self:
@@ -349,6 +352,9 @@ class OpenPanelData:
             is_animated=data.is_animated,
             source_file_asset_id=data.source_file.asset_id if data.source_file else None,
             annotation_asset_id=data.annotation_asset_id if data.annotation_asset_id else None,
+            revision_id=data.revision_id if data.revision_id else None,
+            duration=data.duration if data.duration else None,
+            index=data.index,
         )
 
 

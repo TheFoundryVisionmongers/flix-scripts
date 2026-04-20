@@ -19,15 +19,21 @@ class OpenFilePanelData:
         id (int):
         asset_id (int):
         is_animated (bool):
+        index (int):
         annotation_asset_id (Union[Unset, int]):
         source_file (Optional[OpenSourceFileData]):
+        revision_id (Union[Unset, int]):
+        duration (Union[Unset, int]):
     """
 
     id: int
     asset_id: int
     is_animated: bool
+    index: int
     source_file: Optional["OpenSourceFileData"]
     annotation_asset_id: Union[Unset, int] = UNSET
+    revision_id: Union[Unset, int] = UNSET
+    duration: Union[Unset, int] = UNSET
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -36,6 +42,9 @@ class OpenFilePanelData:
         is_animated = self.is_animated
         annotation_asset_id = self.annotation_asset_id
         source_file = self.source_file.to_dict() if self.source_file else None
+        revision_id = self.revision_id
+        duration = self.duration
+        index = self.index
 
         field_dict: Dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -45,10 +54,16 @@ class OpenFilePanelData:
                 "assetId": asset_id,
                 "isAnimated": is_animated,
                 "sourceFile": source_file,
+                "index": index,
             }
         )
         if annotation_asset_id is not UNSET:
             field_dict["annotationAssetId"] = annotation_asset_id
+        if revision_id is not UNSET:
+            field_dict["revisionId"] = revision_id
+        if duration is not UNSET:
+            field_dict["duration"] = duration
+       
 
         return field_dict
 
@@ -64,6 +79,9 @@ class OpenFilePanelData:
         is_animated = d.pop("isAnimated")
 
         annotation_asset_id = d.pop("annotationAssetId", UNSET)
+        revision_id = d.pop("revisionId", UNSET)
+        duration = d.pop("duration", UNSET)
+        index = d.pop("index")
 
         _source_file = d.pop("sourceFile")
         source_file: Optional[OpenSourceFileData]
@@ -78,6 +96,9 @@ class OpenFilePanelData:
             is_animated=is_animated,
             annotation_asset_id=annotation_asset_id,
             source_file=source_file,
+            revision_id=revision_id,
+            duration=duration,
+            index=index,
         )
 
         open_file_panel_data.additional_properties = d
