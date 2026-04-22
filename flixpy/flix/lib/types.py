@@ -1676,14 +1676,14 @@ class Show(FlixType):
 
         return media_objects
 
-    async def transcode_assets(self, assets: list[Asset]) -> list[str]:
+    async def transcode_assets(self, assets: list[Asset], aspect_ratio: float = None) -> list[str]:
         """Transcodes an asset with an 'artwork' media object.
 
         This will create thumbnail, scaled and fullres images for the asset.
 
         Args:
             assets: The list of assets which need to be transcoded.
-
+            aspect_ratio: The aspect ratio to which the assets should be transcoded. If None, the default aspect ratio will be used.
         Returns:
             The list of task IDs which have been created to perform the transcode jobs.
         """
@@ -1693,6 +1693,8 @@ class Show(FlixType):
 
         path = f"{self.path_prefix()}/asset/transcode"
         body = {"asset_ids": [a.asset_id for a in assets]}
+        if aspect_ratio is not None:
+            body["aspect_ratio"] = aspect_ratio
         task_ids = cast(_Tasks, await self.client.post(path, body))
         return task_ids["task_ids"]
 
