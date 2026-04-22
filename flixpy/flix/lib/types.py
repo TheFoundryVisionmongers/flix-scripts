@@ -1169,7 +1169,6 @@ class Sequence(FlixType):
         
     async def import_sbp_fcpxml(
         self,
-        mov_asset: Asset,
         xml_asset: Asset,
         sboard_asset: Asset,
         sbp_project_filepath: str,
@@ -1186,7 +1185,7 @@ class Sequence(FlixType):
             await self.client.post(
                 path,
                 body={
-                    "asset_id": mov_asset.asset_id,
+                    "asset_id": 0,
                     "client_id": ws.client_id,
                     "comment": comment,
                     "publish_settings": {
@@ -1200,8 +1199,8 @@ class Sequence(FlixType):
             )
 
             waiter = ws.wait_on_chain(
-                websocket.MessageEditorialImportComplete,
-                message_filter=(websocket.MessageEditorialImportStatus,),
+                websocket.MessageStoryboardProImportComplete,
+                message_filter=(websocket.MessageStoryboardProImportComplete,),
                 timeout=timeout,
             )
             async for msg in waiter:
@@ -1211,11 +1210,11 @@ class Sequence(FlixType):
                 ):
                     chain_status_callback(msg)
                 elif (
-                    isinstance(msg, websocket.MessageEditorialImportStatus)
+                    isinstance(msg, websocket.MessageStoryboardProImportComplete)
                     and panel_status_callback is not None
                 ):
                     panel_status_callback(msg)
-            return await waiter.result.get_sequence_revision(self)
+            return waiter.result.sequence_revision, waiter.result.missing_assets
 
     async def save(self, force_create_new: bool = False) -> None:
         """Save this sequence.

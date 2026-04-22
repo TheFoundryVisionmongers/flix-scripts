@@ -231,6 +231,7 @@ class MessageStoryboardProImportComplete(KnownWebsocketMessage):
         super().__init__(flix_client, msg_type, raw_data)
         data = cast(MessageStoryboardProImportComplete.Model, self.data)
         self.sequence_revision = data["sequence_revision"]
+        self.missing_assets = data["missing_assets"]
 
 
 class MessageFCPXMLCreated(AssetCreatedMessage):
