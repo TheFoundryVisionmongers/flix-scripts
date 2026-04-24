@@ -108,6 +108,7 @@ class ProjectDetails:
                     created_date=data.sequence.created_date,
                     description=data.sequence.title or "",
                     owner=flix_types.User(data.sequence.owner, _client=None),
+                    aspect_ratio=data.sequence.aspect_ratio,
                     _show=show,
                     _episode=episode,
                     _client=None,

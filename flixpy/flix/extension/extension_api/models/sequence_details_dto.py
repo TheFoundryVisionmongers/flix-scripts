@@ -24,6 +24,7 @@ class SequenceDetailsDto:
     created_date: datetime.datetime
     owner: str
     title: Optional[str]
+    aspect_ratio: Optional[float] = None
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -33,6 +34,7 @@ class SequenceDetailsDto:
 
         owner = self.owner
         title = self.title
+        aspect_ratio = self.aspect_ratio
 
         field_dict: Dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -43,6 +45,7 @@ class SequenceDetailsDto:
                 "createdDate": created_date,
                 "owner": owner,
                 "title": title,
+                "aspectRatio": aspect_ratio,
             }
         )
 
@@ -60,13 +63,14 @@ class SequenceDetailsDto:
         owner = d.pop("owner")
 
         title = d.pop("title")
-
+        aspect_ratio = d.pop("aspectRatio", None)
         sequence_details_dto = cls(
             id=id,
             tracking_code=tracking_code,
             created_date=created_date,
             owner=owner,
             title=title,
+            aspect_ratio=aspect_ratio,
         )
 
         sequence_details_dto.additional_properties = d
