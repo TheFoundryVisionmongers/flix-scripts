@@ -344,6 +344,8 @@ class OpenPanelData:
     annotation_asset_id: int | None
     revision_id: int | None
     duration: int | None
+    shot_name: str | None
+    shot_id: int | None
 
     @classmethod
     def from_dict(cls, data: models.OpenFilePanelData) -> Self:
@@ -356,6 +358,8 @@ class OpenPanelData:
             revision_id=data.revision_id if data.revision_id else None,
             duration=data.duration if data.duration else None,
             index=data.index,
+            shot_name=data.shot_name if data.shot_name else None,
+            shot_id=data.shot_id if data.shot_id else None,
         )
 
 

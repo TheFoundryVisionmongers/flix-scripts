@@ -24,6 +24,8 @@ class OpenFilePanelData:
         source_file (Optional[OpenSourceFileData]):
         revision_id (Union[Unset, int]):
         duration (Union[Unset, int]):
+        shot_name (Union[Unset, str]):
+        shot_id (Union[Unset, int]):
     """
 
     id: int
@@ -34,6 +36,8 @@ class OpenFilePanelData:
     annotation_asset_id: Union[Unset, int] = UNSET
     revision_id: Union[Unset, int] = UNSET
     duration: Union[Unset, int] = UNSET
+    shot_name: Union[Unset, str] = UNSET
+    shot_id: Union[Unset, int] = UNSET
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -45,6 +49,8 @@ class OpenFilePanelData:
         revision_id = self.revision_id
         duration = self.duration
         index = self.index
+        shot_name = self.shot_name
+        shot_id = self.shot_id
 
         field_dict: Dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -64,6 +70,10 @@ class OpenFilePanelData:
         if duration is not UNSET:
             field_dict["duration"] = duration
        
+        if shot_name is not UNSET:
+            field_dict["shotName"] = shot_name
+        if shot_id is not UNSET:
+            field_dict["shotId"] = shot_id
 
         return field_dict
 
@@ -82,6 +92,8 @@ class OpenFilePanelData:
         revision_id = d.pop("revisionId", UNSET)
         duration = d.pop("duration", UNSET)
         index = d.pop("index")
+        shot_name = d.pop("shotName", UNSET)
+        shot_id = d.pop("shotId", UNSET)
 
         _source_file = d.pop("sourceFile")
         source_file: Optional[OpenSourceFileData]
@@ -99,6 +111,8 @@ class OpenFilePanelData:
             revision_id=revision_id,
             duration=duration,
             index=index,
+            shot_name=shot_name,
+            shot_id=shot_id,
         )
 
         open_file_panel_data.additional_properties = d
