@@ -272,7 +272,6 @@ class PanelSelection:
     id: int
     revision_id: int
     index: int
-    asset_id: int
 
     @classmethod
     def from_dict(cls, data: models.PanelSelectionResponse) -> Self:
@@ -280,7 +279,6 @@ class PanelSelection:
             id=data.id,
             revision_id=data.revision_id,
             index=data.index,
-            asset_id=data.asset_id,
         )
 
 
