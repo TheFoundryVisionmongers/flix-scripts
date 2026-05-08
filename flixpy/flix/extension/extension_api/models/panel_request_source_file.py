@@ -14,7 +14,8 @@ class PanelRequestSourceFile:
     """
     Attributes:
         path (str): The path to the source file. Example: /path/to/source/file.psd.
-        preview_mode (SourceFilePreviewMode): The mode to use to generate the source file preview. Example: source_file.
+        preview_mode (SourceFilePreviewMode): The mode to use to generate the source file preview.
+            @default 'first_panel' Example: source_file.
         source_file_type (SourceFileType): The extension type that the source file is coming from. Example: Sketch.
     """
 

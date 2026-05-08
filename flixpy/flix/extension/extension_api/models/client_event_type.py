@@ -3,6 +3,7 @@ from enum import Enum
 
 class ClientEventType(str, Enum):
     ACTION = "ACTION"
+    CUSTOM = "CUSTOM"
     OPEN = "OPEN"
     PING = "PING"
     PREFERENCES = "PREFERENCES"

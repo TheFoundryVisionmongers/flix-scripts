@@ -1,5 +1,5 @@
 import datetime
-from typing import Any, Dict, List, Optional, Type, TypeVar
+from typing import Any, Dict, List, Optional, Type, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -16,6 +16,8 @@ class SequenceRevisionDetailsDto:
         owner (str): The user that created the sequence revision.
         published (bool): Whether this sequence revision has been published to editorial.
         comment (str): Any comment added to the sequence revision when saving.
+        shot_names (List[str]): The list of shot names included in the sequence revision, derived from the named shots
+            of the panels in the sequence revision.
         created_date (Optional[datetime.datetime]): The date the sequence revision was created.
     """
 
@@ -23,6 +25,7 @@ class SequenceRevisionDetailsDto:
     owner: str
     published: bool
     comment: str
+    shot_names: List[str]
     created_date: Optional[datetime.datetime]
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -31,6 +34,8 @@ class SequenceRevisionDetailsDto:
         owner = self.owner
         published = self.published
         comment = self.comment
+        shot_names = self.shot_names
+
         created_date = self.created_date.isoformat() if self.created_date else None
 
         field_dict: Dict[str, Any] = {}
@@ -41,6 +46,7 @@ class SequenceRevisionDetailsDto:
                 "owner": owner,
                 "published": published,
                 "comment": comment,
+                "shotNames": shot_names,
                 "createdDate": created_date,
             }
         )
@@ -58,6 +64,8 @@ class SequenceRevisionDetailsDto:
 
         comment = d.pop("comment")
 
+        shot_names = cast(List[str], d.pop("shotNames"))
+
         _created_date = d.pop("createdDate")
         created_date: Optional[datetime.datetime]
         if _created_date is None:
@@ -70,6 +78,7 @@ class SequenceRevisionDetailsDto:
             owner=owner,
             published=published,
             comment=comment,
+            shot_names=shot_names,
             created_date=created_date,
         )
 

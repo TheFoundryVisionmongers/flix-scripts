@@ -68,9 +68,10 @@ info:
     ### Step 5: All done
 
     That's it! You're now ready to interact with the Flix Client and ready to turn “My First Flix Extension” into the best thing ever. Although, maybe come up with a better name first.
-  version: v1.1.0
+  version: v1.2.0
   contact:
-    url: http://www.foundry.com
+    name: Foundry
+    url: https://www.foundry.com
     email: support@foundry.com
   license:
     name: Apache 2.0
@@ -116,6 +117,14 @@ tags:
   - name: Preferences
     description: |
       The preferences endpoint provides a lookup for the current Flix Client user preferences. A GET request to this endpoint will return the full list of preferences currently set in the client. This can optionally be filtered down by specifying a subset of properties via the `keys` query parameter. This can either be a comma separated string, or be specified multiple times for each desired preference.
+  - name: Events
+    description: |
+      The events endpoint provides an alternative way to listen to events from the Flix Client for clients that don't support websockets.
+      Instead, it uses Server-Sent Events over a regular HTTP request to provide multiple updates for one request.
+      Authorised requests to `/events` will return an initial response, followed by any additional events for the requesting client,
+      along with a regular PING event as a way to validate the connection.
+
+      By default, only events for the requesting client will be sent, but additional events types can be requested by specifiying the `events` query parameter. This can be specified multiple times to include multiple types of events. For example, `/events?event=project&event=status` will include updates for the active project, and the status of the client.
 paths:
   /health:
     get:
@@ -211,6 +220,33 @@ paths:
         - API Registration
       security:
         - bearer: []
+  /registration/actions:
+    post:
+      operationId: RegistrationController_updateRegisteredActions
+      summary: Update registered actions
+      description: |-
+        Updates the list of actions that an API client can perform. This is used to keep the Flix Client aware of the actions that each
+        API client can perform, so that it can send the correct events when those actions are performed by the API clients.
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActionUpdateRequest'
+      responses:
+        '200':
+          description: Action event received
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistrationResponse'
+        '400':
+          description: The provided bearer token could not be validated
+      tags:
+        - API Registration
+      security:
+        - bearer: []
   /panels:
     post:
       operationId: PanelController_create
@@ -222,7 +258,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BulkPanelRequest'
+              oneOf:
+                - $ref: '#/components/schemas/BulkPanelRequest'
+                - $ref: '#/components/schemas/FullPanelRequest'
       responses:
         '201':
           description: The panel creation has been scheduled
@@ -283,6 +321,49 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PanelRequestResponse'
+        '400':
+          description: No sequence revision is loaded, or the panel annotation request is invalid
+      tags:
+        - Panel Management
+      security:
+        - bearer: []
+  /panels/track:
+    post:
+      operationId: PanelController_trackPanel
+      summary: Marks a panel as open in an extension
+      description: Allows an API client to indicate that it is tracking a specific panel. Will add an icon to the panel in the panel browser for supported extension types.
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PanelTrackRequest'
+      responses:
+        '200':
+          description: The panel has been marked as open in the extension
+        '201':
+          description: ''
+        '400':
+          description: No sequence revision is loaded, or the panel annotation request is invalid
+      tags:
+        - Panel Management
+      security:
+        - bearer: []
+    delete:
+      operationId: PanelController_untrackPanel
+      summary: Marks a panel as not open in an extension
+      description: Allows an API client to indicate that it is no longer tracking a specific panel. Will remove any icons from the panel browser for supported extension types.
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PanelTrackRequest'
+      responses:
+        '200':
+          description: The panel has been marked as not open in the extension
         '400':
           description: No sequence revision is loaded, or the panel annotation request is invalid
       tags:
@@ -383,6 +464,44 @@ paths:
         - Preferences
       security:
         - bearer: []
+  /events:
+    get:
+      operationId: EventController_handleConnection
+      summary: Subscribe to events from the Client.
+      description: |-
+        Provides an alternative to the websocket endpoint for API clients to subscribe to events.
+        This endpoint uses Server-Sent Events (SSE) to push events to the client.
+        It is designed for API clients that cannot use websockets, such as those running in
+        environments where websockets are not supported or practical.
+      parameters:
+        - name: event
+          required: false
+          in: query
+          description: An array of event types to subscribe to. If not provided, only client-specific events will be sent.
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - ping
+                - action
+                - open
+                - project
+                - status
+                - version
+                - preferences
+                - custom
+      responses:
+        '200':
+          description: A stream of events from the Flix Client.
+          content:
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/SSEEvent'
+      tags:
+        - Events
+      security:
+        - bearer: []
 components:
   securitySchemes:
     bearer:
@@ -419,6 +538,7 @@ components:
               - STATUS
               - VERSION
               - PREFERENCES
+              - CUSTOM
       required:
         - eventTypes
     WebsocketEvent:
@@ -519,6 +639,19 @@ components:
           type: integer
       required:
         - apiClientId
+    ActionEventPanelResponse:
+      type: object
+      properties:
+        panelId:
+          type: integer
+        panelRevision:
+          type: integer
+        path:
+          type: string
+      required:
+        - panelId
+        - panelRevision
+        - path
     ActionEvent:
       type: object
       properties:
@@ -540,6 +673,10 @@ components:
             - PANEL_CREATE
             - PANEL_UPDATE
             - PANEL_ANNOTATE
+        panels:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActionEventPanelResponse'
       required:
         - apiClientId
         - actionId
@@ -570,14 +707,114 @@ components:
           type: integer
       required:
         - assetId
+    ViewportRequest:
+      type: object
+      properties:
+        width:
+          type: number
+          description: Width is the width of the media in pixels, dictating the scale of horizontal camera movements.
+        height:
+          type: number
+          description: Height is the height of the media in pixels, dictating the scale of vertical camera movements.
+        scale:
+          type: number
+          description: |-
+            Stretch (Scale in API) specifies how much the source artwork has been stretched within this media.
+            More specifically, it is the inverse stretch, such that if the source artwork has a width of 1000
+            while the bounding box of the same artwork within this media has a width of 2000, the stretch will be
+            1000 / 2000 = 0.5.
+        offsetX:
+          type: number
+          description: |-
+            OffsetX is the horizontal offset of the source artwork within this media, if this media has been padded.
+            In particular, it is the horizontal distance from the centre of this media to the centre of the source artwork.
+            Specified in terms of the pixel space of the source artwork; calculate OffsetX / Stretch to get
+            the offset in pixels within this me.
+        offsetY:
+          type: number
+          description: |-
+            OffsetY is the vertical offset of the source artwork within this media, if this media has been padded.
+            In particular, it is the vertical distance from the centre of this media to the centre of the source artwork.
+            Specified in terms of the pixel space of the source artwork; calculate OffsetY / Stretch to get
+            the offset in pixels within this media.
+      required:
+        - width
+        - height
+        - scale
+        - offsetX
+        - offsetY
+    KeyframeRequest:
+      type: object
+      properties:
+        anchorPointHorizontal:
+          type: number
+          description: |-
+            The horizontal value of the point that CenterHoriz, CenterVert and Rotation are applied to,
+            specified as an offset from the viewport centre in fractions of the horizontal viewport resolution.
+            A value of 0 is the centre of the viewport, while a value of -0.5 is the left edge of the viewport.
+          default: 0
+        anchorPointVertical:
+          type: number
+          description: |-
+            The vertical value of the point that CenterHoriz, CenterVert and Rotation are applied to,
+            specified as an offset from the viewport centre in fractions of the vertical viewport resolution.
+            A value of 0 is the centre of the viewport, while a value of -0.5 is the top edge of the viewport.
+          default: 0
+        centerHorizontal:
+          type: number
+          description: |-
+            The horizontal position of the camera in fractions of the viewport width, relative to the centre of the viewport.
+            A positive value means the camera is positioned to the left of the viewport centre.
+          default: 0
+        centerVertical:
+          type: number
+          description: |-
+            The vertical position of the camera in fractions of the viewport height, relative to the centre of the viewport.
+            A positive value means the camera is positioned above the viewport centre.
+          default: 0
+        rotation:
+          type: number
+          description: How much to rotate the image clockwise in degrees.
+          default: 0
+        scale:
+          type: number
+          description: A vertical and horizontal scale, 100 meaning no scaling.
+          default: 0
+        startKey:
+          type: number
+          description: The frame of the panel revision that the information of this keyframe relates to, starting at 0.
+          default: 0
+        viewport:
+          description: |-
+            Describes the media a keyframe applies to.
+            In the event that the media is a padded or stretched version of some source artwork,
+            it will contain information about the nature of the padding/stretch to facilitate comparison of
+            the keyframes associated with this descriptor and the keyframes of the source panel.
+          default: null
+          allOf:
+            - $ref: '#/components/schemas/ViewportRequest'
+      required:
+        - anchorPointHorizontal
+        - anchorPointVertical
+        - centerHorizontal
+        - centerVertical
+        - rotation
+        - scale
+        - startKey
     OpenFilePanelData:
       type: object
       properties:
         id:
           type: integer
+        index:
+          type: integer
+        revisionId:
+          type: integer
         assetId:
           type: integer
         annotationAssetId:
+          type: integer
+        shotId:
           type: integer
         isAnimated:
           type: boolean
@@ -585,8 +822,20 @@ components:
           nullable: true
           allOf:
             - $ref: '#/components/schemas/OpenSourceFileData'
+        dialogue:
+          type: string
+        originSbp:
+          type: object
+        keyframes:
+          type: array
+          items:
+            $ref: '#/components/schemas/KeyframeRequest'
+        shotName:
+          type: string
       required:
         - id
+        - index
+        - revisionId
         - assetId
         - isAnimated
         - sourceFile
@@ -603,6 +852,25 @@ components:
         - alwaysOpenSourceFile
         - openBehaviour
         - sendAnnotationAsLayer
+    OpenFileShotData:
+      type: object
+      properties:
+        id:
+          type: integer
+        index:
+          type: integer
+        startPanelIndex:
+          type: integer
+        endPanelIndex:
+          type: integer
+        name:
+          type: string
+      required:
+        - id
+        - index
+        - startPanelIndex
+        - endPanelIndex
+        - name
     OpenFileEvent:
       type: object
       properties:
@@ -614,9 +882,16 @@ components:
             $ref: '#/components/schemas/OpenFilePanelData'
         sketchingToolConfiguration:
           $ref: '#/components/schemas/PsConfiguration'
+        shots:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenFileShotData'
+        actionId:
+          type: string
       required:
         - project
         - panels
+        - shots
     OpenSourceFileEvent:
       type: object
       properties:
@@ -624,6 +899,18 @@ components:
           $ref: '#/components/schemas/OpenSourceFileData'
       required:
         - sourceFile
+    RegistrationRequestAction:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier for this action.
+        name:
+          type: string
+          description: The user-friendly name for this action to be displayed in the UI.
+      required:
+        - id
+        - name
     RegistrationRequest:
       type: object
       properties:
@@ -641,9 +928,29 @@ components:
           type: array
           items:
             type: string
+        actions:
+          description: The actions available for this API consumer.
+          type: array
+          items:
+            $ref: '#/components/schemas/RegistrationRequestAction'
+        iconSvg:
+          type: string
+          description: The SVG icon for this API consumer.
       required:
         - name
         - clientUid
+    RegistrationResponseAction:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier for this action.
+        name:
+          type: string
+          description: The user-friendly name for this action to be displayed in the UI.
+      required:
+        - id
+        - name
     RegistrationResponse:
       type: object
       properties:
@@ -653,9 +960,15 @@ components:
         token:
           type: string
           description: The generated access token that the API consumer can use to access the rest of the API.
+        actions:
+          description: The actions registered for this API consumer.
+          type: array
+          items:
+            $ref: '#/components/schemas/RegistrationResponseAction'
       required:
         - flixId
         - token
+        - actions
     RegistrationDetails:
       type: object
       properties:
@@ -680,6 +993,16 @@ components:
         - flixId
         - name
         - clientUid
+    ActionUpdateRequest:
+      type: object
+      properties:
+        actions:
+          description: The actions available for this API consumer.
+          type: array
+          items:
+            $ref: '#/components/schemas/RegistrationRequestAction'
+      required:
+        - actions
     PanelRequestItem:
       type: object
       properties:
@@ -687,10 +1010,46 @@ components:
           type: integer
           description: The ID of the panel that should be updated.
           example: 15
+        duration:
+          type: integer
+          description: Duration is the number of frames this instance of [PanelRevision] has, within this [Shot].
+        trimInFrame:
+          type: integer
+          description: TrimInFrame is the trim in of this panel revision in a given sequence revision if this is an animated panel.
+        trimOutFrame:
+          type: integer
+          description: TrimOutFrame is the trim out of this panel revision in a given sequence revision if this is an animated panel.
         path:
           type: string
           description: The file path to upload.
           example: /path/to/file/1.psd
+        keyframes:
+          description: The camera move keyframes on this panel revisions.
+          type: array
+          items:
+            $ref: '#/components/schemas/KeyframeRequest'
+        originSbp:
+          type: object
+          description: |-
+            Contains information about panel revisions imported from Storyboard Pro.
+            This is for internal use by the Storyboard Pro extension and might be removed in the future without notice.
+        sourceMedia:
+          type: string
+          description: This is used to upload a MOV file that will be used as the source media for the panel preview.
+        dialogue:
+          type: string
+          description: This is dialogue text that will be associated with the panel.
+        layerTransform:
+          type: boolean
+          description: This indicates whether panel has layer transform.
+        shotName:
+          type: string
+          description: |-
+            The name of the shot this panel belongs to.
+            When specified, a shot with the given name will be created and this panel will be added to it.
+            If the name already exists within the sequence, the request will be rejected with a 400 Bad Request response.
+            If not provided, the panel will be added to an existing shot based on the target insert index.
+          example: Shot 001
       required:
         - path
     PanelRequestSourceFile:
@@ -702,7 +1061,9 @@ components:
           example: /path/to/source/file.psd
         previewMode:
           type: string
-          description: The mode to use to generate the source file preview.
+          description: |-
+            The mode to use to generate the source file preview.
+            @default 'first_panel'
           example: source_file
           enum:
             - first_panel
@@ -757,7 +1118,9 @@ components:
           example: 3
         paths:
           description: The file paths to be uploaded as panel annotations.
-          example: '[''/path/to/file/1.psd'',''/path/to/file/2.psd'']'
+          example:
+            - /path/to/file/1.psd
+            - /path/to/file/2.psd
           type: array
           items:
             type: string
@@ -798,7 +1161,9 @@ components:
           example: 3
         paths:
           description: The file paths to upload as new panel artwork.
-          example: '[''/path/to/file/1.psd'',''/path/to/file/2.psd'']'
+          example:
+            - /path/to/file/1.psd
+            - /path/to/file/2.psd
           type: array
           items:
             type: string
@@ -829,6 +1194,25 @@ components:
       required:
         - actionId
         - message
+    PanelTrackRequest:
+      type: object
+      properties:
+        showId:
+          type: integer
+          description: The ID of the show the tracked panel belongs to.
+          example: 1
+        sequenceId:
+          type: integer
+          description: The ID of the sequence the tracked panel belongs to.
+          example: 12
+        panelId:
+          type: integer
+          description: The ID of the panel that is being tracked.
+          example: 1234
+      required:
+        - showId
+        - sequenceId
+        - panelId
     DownloadRequest:
       type: object
       properties:
@@ -851,10 +1235,13 @@ components:
             - dnxhd
             - extension
             - fullres
+            - import_log
+            - import_log_bundle
             - logo
             - xml
             - publish
             - publish_fullsized
+            - sboard
             - scaled
             - show-thumbnail
             - source_media
@@ -903,12 +1290,17 @@ components:
           description: The show's display title.
         aspectRatio:
           type: number
-          description: The configured aspect ratio for the show.
+          description: The configured aspect ratio for the active sequence or show.
+          deprecated: true
+        defaultAspectRatio:
+          type: number
+          description: The configured default aspect ratio for the sequence.
       required:
         - id
         - trackingCode
         - title
         - aspectRatio
+        - defaultAspectRatio
     EpisodeDetailsDto:
       type: object
       properties:
@@ -955,12 +1347,16 @@ components:
           type: string
           nullable: true
           description: The sequence's display title.
+        aspectRatio:
+          type: number
+          description: The aspect ratio used by the sequence.
       required:
         - id
         - trackingCode
         - createdDate
         - owner
         - title
+        - aspectRatio
     SequenceRevisionDetailsDto:
       type: object
       properties:
@@ -981,12 +1377,18 @@ components:
         comment:
           type: string
           description: Any comment added to the sequence revision when saving.
+        shotNames:
+          description: The list of shot names included in the sequence revision, derived from the named shots of the panels in the sequence revision.
+          type: array
+          items:
+            type: string
       required:
         - id
         - createdDate
         - owner
         - published
         - comment
+        - shotNames
     ProjectDetailsDto:
       type: object
       properties:
@@ -1059,6 +1461,7 @@ components:
         - canSave
         - canPublish
         - canExport
+        - panelSelection
     ActionsInProgressResponse:
       type: object
       properties:
@@ -1093,3 +1496,94 @@ components:
         - canCreate
         - revisionStatus
         - actionsInProgress
+    SSEEvent:
+      type: object
+      properties:
+        data:
+          oneOf:
+            - type: object
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - PING
+                data:
+                  $ref: '#/components/schemas/PingEvent'
+              required:
+                - type
+                - data
+            - type: object
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - STATUS
+                data:
+                  $ref: '#/components/schemas/StatusResponse'
+              required:
+                - type
+                - data
+            - type: object
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - PROJECT
+                data:
+                  $ref: '#/components/schemas/ProjectDetailsDto'
+              required:
+                - type
+                - data
+            - type: object
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - ACTION
+                data:
+                  $ref: '#/components/schemas/ActionEvent'
+              required:
+                - type
+                - data
+            - type: object
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - OPEN
+                data:
+                  oneOf:
+                    - $ref: '#/components/schemas/OpenFileEvent'
+                    - $ref: '#/components/schemas/OpenSourceFileEvent'
+              required:
+                - type
+                - data
+            - type: object
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - VERSION
+                data:
+                  $ref: '#/components/schemas/VersionEvent'
+              required:
+                - type
+                - data
+            - type: object
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - PREFERENCES
+                data:
+                  type: object
+                  additionalProperties:
+                    oneOf:
+                      - type: string
+                      - type: integer
+                      - type: boolean
+              required:
+                - type
+                - data
+      required:
+        - data

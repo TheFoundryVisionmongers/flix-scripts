@@ -12,13 +12,15 @@ class ShowDetailsDto:
     Attributes:
         id (int): The Flix identifier for the show.
         tracking_code (str): The show's tracking code.
-        aspect_ratio (float): The configured aspect ratio for the show.
+        aspect_ratio (float): The configured aspect ratio for the active sequence or show.
+        default_aspect_ratio (float): The configured default aspect ratio for the sequence.
         title (Optional[str]): The show's display title.
     """
 
     id: int
     tracking_code: str
     aspect_ratio: float
+    default_aspect_ratio: float
     title: Optional[str]
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -26,6 +28,7 @@ class ShowDetailsDto:
         id = self.id
         tracking_code = self.tracking_code
         aspect_ratio = self.aspect_ratio
+        default_aspect_ratio = self.default_aspect_ratio
         title = self.title
 
         field_dict: Dict[str, Any] = {}
@@ -35,6 +38,7 @@ class ShowDetailsDto:
                 "id": id,
                 "trackingCode": tracking_code,
                 "aspectRatio": aspect_ratio,
+                "defaultAspectRatio": default_aspect_ratio,
                 "title": title,
             }
         )
@@ -50,12 +54,15 @@ class ShowDetailsDto:
 
         aspect_ratio = d.pop("aspectRatio")
 
+        default_aspect_ratio = d.pop("defaultAspectRatio")
+
         title = d.pop("title")
 
         show_details_dto = cls(
             id=id,
             tracking_code=tracking_code,
             aspect_ratio=aspect_ratio,
+            default_aspect_ratio=default_aspect_ratio,
             title=title,
         )
 

@@ -4,29 +4,23 @@ from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 if TYPE_CHECKING:
-    from ..models.registration_response_action import RegistrationResponseAction
+    from ..models.registration_request_action import RegistrationRequestAction
 
 
-T = TypeVar("T", bound="RegistrationResponse")
+T = TypeVar("T", bound="ActionUpdateRequest")
 
 
 @_attrs_define
-class RegistrationResponse:
+class ActionUpdateRequest:
     """
     Attributes:
-        flix_id (int): The Flix-maintained identifier for this API consumer.
-        token (str): The generated access token that the API consumer can use to access the rest of the API.
-        actions (List['RegistrationResponseAction']): The actions registered for this API consumer.
+        actions (List['RegistrationRequestAction']): The actions available for this API consumer.
     """
 
-    flix_id: int
-    token: str
-    actions: List["RegistrationResponseAction"]
+    actions: List["RegistrationRequestAction"]
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
-        flix_id = self.flix_id
-        token = self.token
         actions = []
         for actions_item_data in self.actions:
             actions_item = actions_item_data.to_dict()
@@ -37,8 +31,6 @@ class RegistrationResponse:
         field_dict.update(self.additional_properties)
         field_dict.update(
             {
-                "flixId": flix_id,
-                "token": token,
                 "actions": actions,
             }
         )
@@ -47,28 +39,22 @@ class RegistrationResponse:
 
     @classmethod
     def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
-        from ..models.registration_response_action import RegistrationResponseAction
+        from ..models.registration_request_action import RegistrationRequestAction
 
         d = src_dict.copy()
-        flix_id = d.pop("flixId")
-
-        token = d.pop("token")
-
         actions = []
         _actions = d.pop("actions")
         for actions_item_data in _actions:
-            actions_item = RegistrationResponseAction.from_dict(actions_item_data)
+            actions_item = RegistrationRequestAction.from_dict(actions_item_data)
 
             actions.append(actions_item)
 
-        registration_response = cls(
-            flix_id=flix_id,
-            token=token,
+        action_update_request = cls(
             actions=actions,
         )
 
-        registration_response.additional_properties = d
-        return registration_response
+        action_update_request.additional_properties = d
+        return action_update_request
 
     @property
     def additional_keys(self) -> List[str]:

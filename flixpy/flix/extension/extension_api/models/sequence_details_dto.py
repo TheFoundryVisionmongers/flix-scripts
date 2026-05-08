@@ -16,6 +16,7 @@ class SequenceDetailsDto:
         tracking_code (str): The sequence's tracking code.
         created_date (datetime.datetime): The date the sequence was created.
         owner (str): The user that created the sequence.
+        aspect_ratio (float): The aspect ratio used by the sequence.
         title (Optional[str]): The sequence's display title.
     """
 
@@ -23,6 +24,7 @@ class SequenceDetailsDto:
     tracking_code: str
     created_date: datetime.datetime
     owner: str
+    aspect_ratio: float
     title: Optional[str]
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -32,6 +34,7 @@ class SequenceDetailsDto:
         created_date = self.created_date.isoformat()
 
         owner = self.owner
+        aspect_ratio = self.aspect_ratio
         title = self.title
 
         field_dict: Dict[str, Any] = {}
@@ -42,6 +45,7 @@ class SequenceDetailsDto:
                 "trackingCode": tracking_code,
                 "createdDate": created_date,
                 "owner": owner,
+                "aspectRatio": aspect_ratio,
                 "title": title,
             }
         )
@@ -59,6 +63,8 @@ class SequenceDetailsDto:
 
         owner = d.pop("owner")
 
+        aspect_ratio = d.pop("aspectRatio")
+
         title = d.pop("title")
 
         sequence_details_dto = cls(
@@ -66,6 +72,7 @@ class SequenceDetailsDto:
             tracking_code=tracking_code,
             created_date=created_date,
             owner=owner,
+            aspect_ratio=aspect_ratio,
             title=title,
         )
 

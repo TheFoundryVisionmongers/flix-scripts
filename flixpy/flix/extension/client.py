@@ -543,6 +543,27 @@ class Extension:
         )
 
         return types.DownloadResponse.from_dict(resp)
+    
+    async def set_actions(
+        self,
+        actions: list[types.RegistrationRequestAction],
+    ) -> list[types.RegistrationRequestAction]:
+        from .extension_api.api.api_registration import (
+            registration_controller_update_registered_actions,
+        )
+
+        resp = _assert_response(
+            models.RegistrationResponse,
+            await registration_controller_update_registered_actions.asyncio_detailed(
+                client=await self._get_registered_client(),
+                json_body=models.ActionUpdateRequest(
+                    actions=[action.to_dict() for action in actions],
+                ),
+            ),
+        )
+
+        respActions = [models.RegistrationRequestAction.from_dict({ "id": action.id, "name": action.name }) for action in resp.actions]
+        return [types.RegistrationRequestAction.from_dict(action) for action in respActions]
 
     async def _aclose(self) -> None:
         # convert set to list to avoid modifying set while iterating over it

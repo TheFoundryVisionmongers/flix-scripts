@@ -358,6 +358,7 @@ class OpenPanelData:
 class OpenEvent(ClientEvent):
     project: ProjectIds
     panels: list[OpenPanelData]
+    action_id: str | None = None
 
     @classmethod
     def from_dict(cls, event_type: str, data: models.OpenFileEvent) -> Self:
@@ -365,9 +366,9 @@ class OpenEvent(ClientEvent):
             type=event_type,
             project=ProjectIds.from_dict(data.project),
             panels=[OpenPanelData.from_dict(panel) for panel in data.panels],
+            action_id=data.action_id if data.action_id else None,
             additional_properties=data.additional_properties,
         )
-
 
 @dataclasses.dataclass
 class OpenSourceFileEvent(ClientEvent):
@@ -424,4 +425,22 @@ class VersionResponse:
         return cls(
             flix_version=data.flix_version,
             supported_api_versions=data.supported_api_versions,
+        )
+
+@dataclasses.dataclass
+class RegistrationRequestAction:
+    id: str
+    name: str
+
+    @classmethod
+    def from_dict(cls, data: models.RegistrationRequestAction) -> Self:
+        return cls(
+            id=data.id,
+            name=data.name,
+        )
+    
+    def to_dict(self) -> models.RegistrationRequestAction:
+        return models.RegistrationRequestAction(
+            id=self.id,
+            name=self.name,
         )

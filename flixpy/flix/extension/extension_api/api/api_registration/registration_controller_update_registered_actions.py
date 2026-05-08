@@ -5,40 +5,33 @@ import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
-from ...models.bulk_panel_request import BulkPanelRequest
-from ...models.full_panel_request import FullPanelRequest
-from ...models.panel_request_response import PanelRequestResponse
+from ...models.action_update_request import ActionUpdateRequest
+from ...models.registration_response import RegistrationResponse
 from ...types import Response
 
 
 def _get_kwargs(
     *,
-    json_body: Union["BulkPanelRequest", "FullPanelRequest"],
+    json_body: ActionUpdateRequest,
 ) -> Dict[str, Any]:
     pass
 
-    json_json_body: Dict[str, Any]
-
-    if isinstance(json_body, BulkPanelRequest):
-        json_json_body = json_body.to_dict()
-
-    else:
-        json_json_body = json_body.to_dict()
+    json_json_body = json_body.to_dict()
 
     return {
         "method": "post",
-        "url": "/panels",
+        "url": "/registration/actions",
         "json": json_json_body,
     }
 
 
 def _parse_response(
     *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Optional[Union[Any, PanelRequestResponse]]:
-    if response.status_code == HTTPStatus.CREATED:
-        response_201 = PanelRequestResponse.from_dict(response.json())
+) -> Optional[Union[Any, RegistrationResponse]]:
+    if response.status_code == HTTPStatus.OK:
+        response_200 = RegistrationResponse.from_dict(response.json())
 
-        return response_201
+        return response_200
     if response.status_code == HTTPStatus.BAD_REQUEST:
         response_400 = cast(Any, None)
         return response_400
@@ -50,7 +43,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Response[Union[Any, PanelRequestResponse]]:
+) -> Response[Union[Any, RegistrationResponse]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -62,21 +55,24 @@ def _build_response(
 def sync_detailed(
     *,
     client: AuthenticatedClient,
-    json_body: Union["BulkPanelRequest", "FullPanelRequest"],
-) -> Response[Union[Any, PanelRequestResponse]]:
-    """Create New Panels
+    json_body: ActionUpdateRequest,
+) -> Response[Union[Any, RegistrationResponse]]:
+    """Update registered actions
 
-     Creates new panels in the active sequence revision from the list of provided file paths.
+     Updates the list of actions that an API client can perform. This is used to keep the Flix Client
+    aware of the actions that each
+    API client can perform, so that it can send the correct events when those actions are performed by
+    the API clients.
 
     Args:
-        json_body (Union['BulkPanelRequest', 'FullPanelRequest']):
+        json_body (ActionUpdateRequest):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, PanelRequestResponse]]
+        Response[Union[Any, RegistrationResponse]]
     """
 
     kwargs = _get_kwargs(
@@ -93,21 +89,24 @@ def sync_detailed(
 def sync(
     *,
     client: AuthenticatedClient,
-    json_body: Union["BulkPanelRequest", "FullPanelRequest"],
-) -> Optional[Union[Any, PanelRequestResponse]]:
-    """Create New Panels
+    json_body: ActionUpdateRequest,
+) -> Optional[Union[Any, RegistrationResponse]]:
+    """Update registered actions
 
-     Creates new panels in the active sequence revision from the list of provided file paths.
+     Updates the list of actions that an API client can perform. This is used to keep the Flix Client
+    aware of the actions that each
+    API client can perform, so that it can send the correct events when those actions are performed by
+    the API clients.
 
     Args:
-        json_body (Union['BulkPanelRequest', 'FullPanelRequest']):
+        json_body (ActionUpdateRequest):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, PanelRequestResponse]
+        Union[Any, RegistrationResponse]
     """
 
     return sync_detailed(
@@ -119,21 +118,24 @@ def sync(
 async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
-    json_body: Union["BulkPanelRequest", "FullPanelRequest"],
-) -> Response[Union[Any, PanelRequestResponse]]:
-    """Create New Panels
+    json_body: ActionUpdateRequest,
+) -> Response[Union[Any, RegistrationResponse]]:
+    """Update registered actions
 
-     Creates new panels in the active sequence revision from the list of provided file paths.
+     Updates the list of actions that an API client can perform. This is used to keep the Flix Client
+    aware of the actions that each
+    API client can perform, so that it can send the correct events when those actions are performed by
+    the API clients.
 
     Args:
-        json_body (Union['BulkPanelRequest', 'FullPanelRequest']):
+        json_body (ActionUpdateRequest):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, PanelRequestResponse]]
+        Response[Union[Any, RegistrationResponse]]
     """
 
     kwargs = _get_kwargs(
@@ -148,21 +150,24 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: AuthenticatedClient,
-    json_body: Union["BulkPanelRequest", "FullPanelRequest"],
-) -> Optional[Union[Any, PanelRequestResponse]]:
-    """Create New Panels
+    json_body: ActionUpdateRequest,
+) -> Optional[Union[Any, RegistrationResponse]]:
+    """Update registered actions
 
-     Creates new panels in the active sequence revision from the list of provided file paths.
+     Updates the list of actions that an API client can perform. This is used to keep the Flix Client
+    aware of the actions that each
+    API client can perform, so that it can send the correct events when those actions are performed by
+    the API clients.
 
     Args:
-        json_body (Union['BulkPanelRequest', 'FullPanelRequest']):
+        json_body (ActionUpdateRequest):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, PanelRequestResponse]
+        Union[Any, RegistrationResponse]
     """
 
     return (
