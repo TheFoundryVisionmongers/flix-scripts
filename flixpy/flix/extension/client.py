@@ -163,6 +163,7 @@ class Extension:
         log_paths: list[str] | None = None,
         version: str | None = None,
         base_url: str = BASE_URL,
+        icon_svg: str | None = None,
     ) -> None:
         """Initialise an Extension.
 
@@ -173,6 +174,7 @@ class Extension:
             version: An optional version string for the extension
             base_url: The URL to use to connect to the Flix Client, if something other than
                 the standard Flix Client port on localhost
+            icon_svg: An optional SVG icon for the extension
 
         """
         self.name = name
@@ -180,6 +182,7 @@ class Extension:
         self.version = version
         self.base_url = base_url
         self.log_paths = log_paths
+        self.icon_svg = icon_svg
         self.panel_browser_status = types.PanelBrowserStatus()
         self.project = types.ProjectDetails()
         self._online = False
@@ -372,6 +375,7 @@ class Extension:
                     client_uid=self.client_uid,
                     version=self.version or api_types.UNSET,
                     log_paths=self.log_paths or api_types.UNSET,
+                    icon_svg=self.icon_svg or api_types.UNSET,
                 ),
             ),
         )
