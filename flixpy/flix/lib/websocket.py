@@ -389,7 +389,8 @@ class Websocket:
         time = signing.get_time_rfc3999()
         # yarl does not escape : while the server does, so manually build the url for signing
         path_to_sign = (
-            f"{self.endpoint}?keyid={self._access_key.id}&expiretime={urllib.parse.quote(time)}"
+            f"{self._endpoint_str}?keyid={self._access_key.id}"
+            f"&expiretime={urllib.parse.quote(time)}"
         )
         signature = signing.signature(path_to_sign.encode(), self._access_key.secret_access_key)
         return self.endpoint.with_query(
@@ -402,11 +403,20 @@ class Websocket:
         )
 
     @property
-    def endpoint(self) -> yarl.URL:
+    def _endpoint_str(self) -> str:
+        """The websocket endpoint with the port always spelled out.
+
+        The server includes the port when it computes the signature, but yarl omits it
+        when it matches the default for the scheme (80 for ws, 443 for wss). Formatting
+        a yarl.URL would therefore drop the port and produce a signature mismatch, so
+        build the string by hand.
+        """
         protocol = "wss" if self._client.ssl else "ws"
-        return yarl.URL(
-            f"{protocol}://{self._client.hostname}:{self._client.port}/ws", encoded=True
-        )
+        return f"{protocol}://{self._client.hostname}:{self._client.port}/ws"
+
+    @property
+    def endpoint(self) -> yarl.URL:
+        return yarl.URL(self._endpoint_str, encoded=True)
 
     async def open(self) -> None:
         self._ws = await self._session.ws_connect(self.signed_path)
