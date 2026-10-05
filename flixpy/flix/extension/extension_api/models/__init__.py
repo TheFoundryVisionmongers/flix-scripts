@@ -6,6 +6,7 @@ from .action_state import ActionState
 from .action_type import ActionType
 from .action_update_request import ActionUpdateRequest
 from .actions_in_progress_response import ActionsInProgressResponse
+from .actions_update_response import ActionsUpdateResponse
 from .asset_type import AssetType
 from .bulk_panel_annotate_request import BulkPanelAnnotateRequest
 from .bulk_panel_request import BulkPanelRequest
@@ -93,6 +94,7 @@ __all__ = (
     "ActionEventPanelResponse",
     "ActionsInProgressResponse",
     "ActionState",
+    "ActionsUpdateResponse",
     "ActionType",
     "ActionUpdateRequest",
     "AssetType",

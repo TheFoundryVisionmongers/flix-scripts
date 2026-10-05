@@ -573,7 +573,7 @@ class Extension:
         )
 
         resp = _assert_response(
-            models.RegistrationResponse,
+            models.ActionsUpdateResponse,
             await registration_controller_update_registered_actions.asyncio_detailed(
                 client=await self._get_registered_client(),
                 json_body=models.ActionUpdateRequest(

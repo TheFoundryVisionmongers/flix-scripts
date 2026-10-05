@@ -6,7 +6,7 @@ import httpx
 from ... import errors
 from ...client import AuthenticatedClient, Client
 from ...models.action_update_request import ActionUpdateRequest
-from ...models.registration_response import RegistrationResponse
+from ...models.actions_update_response import ActionsUpdateResponse
 from ...types import UNSET, Response
 
 
@@ -28,9 +28,9 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Optional[Union[Any, RegistrationResponse]]:
+) -> Optional[Union[ActionsUpdateResponse, Any]]:
     if response.status_code == HTTPStatus.OK:
-        response_200 = RegistrationResponse.from_dict(response.json())
+        response_200 = ActionsUpdateResponse.from_dict(response.json())
 
         return response_200
     if response.status_code == HTTPStatus.BAD_REQUEST:
@@ -44,7 +44,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Response[Union[Any, RegistrationResponse]]:
+) -> Response[Union[ActionsUpdateResponse, Any]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -57,7 +57,7 @@ def sync_detailed(
     *,
     client: AuthenticatedClient,
     json_body: ActionUpdateRequest,
-) -> Response[Union[Any, RegistrationResponse]]:
+) -> Response[Union[ActionsUpdateResponse, Any]]:
     """Update registered actions
 
      Updates the list of actions that an API client can perform. This is used to keep the Flix Client
@@ -73,7 +73,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, RegistrationResponse]]
+        Response[Union[ActionsUpdateResponse, Any]]
     """
 
     kwargs = _get_kwargs(
@@ -91,7 +91,7 @@ def sync(
     *,
     client: AuthenticatedClient,
     json_body: ActionUpdateRequest,
-) -> Optional[Union[Any, RegistrationResponse]]:
+) -> Optional[Union[ActionsUpdateResponse, Any]]:
     """Update registered actions
 
      Updates the list of actions that an API client can perform. This is used to keep the Flix Client
@@ -107,7 +107,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, RegistrationResponse]
+        Union[ActionsUpdateResponse, Any]
     """
 
     return sync_detailed(
@@ -120,7 +120,7 @@ async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
     json_body: ActionUpdateRequest,
-) -> Response[Union[Any, RegistrationResponse]]:
+) -> Response[Union[ActionsUpdateResponse, Any]]:
     """Update registered actions
 
      Updates the list of actions that an API client can perform. This is used to keep the Flix Client
@@ -136,7 +136,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, RegistrationResponse]]
+        Response[Union[ActionsUpdateResponse, Any]]
     """
 
     kwargs = _get_kwargs(
@@ -152,7 +152,7 @@ async def asyncio(
     *,
     client: AuthenticatedClient,
     json_body: ActionUpdateRequest,
-) -> Optional[Union[Any, RegistrationResponse]]:
+) -> Optional[Union[ActionsUpdateResponse, Any]]:
     """Update registered actions
 
      Updates the list of actions that an API client can perform. This is used to keep the Flix Client
@@ -168,7 +168,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, RegistrationResponse]
+        Union[ActionsUpdateResponse, Any]
     """
 
     return (

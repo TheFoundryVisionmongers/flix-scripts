@@ -240,7 +240,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RegistrationResponse'
+                $ref: '#/components/schemas/ActionsUpdateResponse'
         '400':
           description: The provided bearer token could not be validated
       tags:
@@ -980,14 +980,18 @@ components:
         token:
           type: string
           description: The generated access token that the API consumer can use to access the rest of the API.
+      required:
+        - flixId
+        - token
+    ActionsUpdateResponse:
+      type: object
+      properties:
         actions:
           description: The actions registered for this API consumer.
           type: array
           items:
             $ref: '#/components/schemas/RegistrationResponseAction'
       required:
-        - flixId
-        - token
         - actions
     RegistrationDetails:
       type: object
