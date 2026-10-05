@@ -467,6 +467,16 @@ class RegistrationResponseAction:
     icon_svg: str | None = None
     type: CustomActionType | None = None
 
+    def as_request(self) -> RegistrationRequestAction:
+        """Convert this registered action back into a request, e.g. to resend it to `set_actions`."""
+        return RegistrationRequestAction(
+            id=self.id,
+            name=self.name,
+            description=self.description,
+            icon_svg=self.icon_svg,
+            type=self.type,
+        )
+
     @classmethod
     def from_dict(cls, data: models.RegistrationResponseAction) -> Self:
         return cls(
