@@ -1,7 +1,20 @@
-from typing import Any, Dict, List, Type, TypeVar
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    BinaryIO,
+    Dict,
+    List,
+    Optional,
+    TextIO,
+    Tuple,
+    Type,
+    TypeVar,
+)
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
+
+from ..types import UNSET, Unset
 
 T = TypeVar("T", bound="PanelSelectionResponse")
 
@@ -13,6 +26,7 @@ class PanelSelectionResponse:
         id (int): The ID of the selected panel.
         revision_id (int): The revision of the selected panel.
         index (int): The current index in the panel browser of the selected panel.
+        asset_id (int): The asset ID of the selected panel.
     """
 
     id: int
@@ -48,6 +62,7 @@ class PanelSelectionResponse:
         revision_id = d.pop("revisionId")
 
         index = d.pop("index")
+
         asset_id = d.pop("assetId")
 
         panel_selection_response = cls(

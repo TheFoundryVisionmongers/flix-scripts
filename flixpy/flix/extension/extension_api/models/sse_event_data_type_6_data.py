@@ -1,7 +1,22 @@
-from typing import Any, Dict, List, Type, TypeVar, Union, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    BinaryIO,
+    Dict,
+    List,
+    Optional,
+    TextIO,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+    cast,
+)
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
+
+from ..types import UNSET, Unset
 
 T = TypeVar("T", bound="SSEEventDataType6Data")
 
@@ -15,8 +30,10 @@ class SSEEventDataType6Data:
     )
 
     def to_dict(self) -> Dict[str, Any]:
+
         field_dict: Dict[str, Any] = {}
         for prop_name, prop in self.additional_properties.items():
+
             field_dict[prop_name] = prop
 
         field_dict.update({})

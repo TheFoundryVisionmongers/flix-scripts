@@ -1,4 +1,17 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Type, TypeVar, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    BinaryIO,
+    Dict,
+    List,
+    Optional,
+    TextIO,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+    cast,
+)
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -34,6 +47,11 @@ class OpenFileEvent:
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
+        from ..models.open_file_panel_data import OpenFilePanelData
+        from ..models.open_file_shot_data import OpenFileShotData
+        from ..models.project_ids_dto import ProjectIdsDto
+        from ..models.ps_configuration import PsConfiguration
+
         project = self.project.to_dict()
 
         panels = []

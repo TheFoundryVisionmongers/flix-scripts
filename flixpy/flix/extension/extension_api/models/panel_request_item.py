@@ -1,4 +1,17 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Type, TypeVar, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    BinaryIO,
+    Dict,
+    List,
+    Optional,
+    TextIO,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+    cast,
+)
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -54,6 +67,9 @@ class PanelRequestItem:
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
+        from ..models.keyframe_request import KeyframeRequest
+        from ..models.panel_request_item_origin_sbp import PanelRequestItemOriginSbp
+
         path = self.path
         panel_id = self.panel_id
         duration = self.duration

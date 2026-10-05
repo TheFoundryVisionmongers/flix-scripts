@@ -1,9 +1,22 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Type, TypeVar
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    BinaryIO,
+    Dict,
+    List,
+    Optional,
+    TextIO,
+    Tuple,
+    Type,
+    TypeVar,
+    cast,
+)
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 from ..models.websocket_event_data_type_5_type import WebsocketEventDataType5Type
+from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
     from ..models.version_event import VersionEvent
@@ -25,6 +38,8 @@ class WebsocketEventDataType5:
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
+        from ..models.version_event import VersionEvent
+
         type = self.type.value
 
         data = self.data.to_dict()

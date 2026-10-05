@@ -1,9 +1,23 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Type, TypeVar, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    BinaryIO,
+    Dict,
+    List,
+    Optional,
+    TextIO,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+    cast,
+)
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 from ..models.websocket_event_data_type_4_type import WebsocketEventDataType4Type
+from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
     from ..models.open_file_event import OpenFileEvent
@@ -27,6 +41,7 @@ class WebsocketEventDataType4:
 
     def to_dict(self) -> Dict[str, Any]:
         from ..models.open_file_event import OpenFileEvent
+        from ..models.open_source_file_event import OpenSourceFileEvent
 
         type = self.type.value
 

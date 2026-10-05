@@ -1,4 +1,4 @@
-""" Contains all the data models used in inputs/outputs """
+"""Contains all the data models used in inputs/outputs"""
 
 from .action_event import ActionEvent
 from .action_event_panel_response import ActionEventPanelResponse
@@ -16,6 +16,7 @@ from .episode_details_dto import EpisodeDetailsDto
 from .event_controller_handle_connection_event_item import (
     EventControllerHandleConnectionEventItem,
 )
+from .extension_custom_action_type import ExtensionCustomActionType
 from .full_panel_annotate_request import FullPanelAnnotateRequest
 from .full_panel_request import FullPanelRequest
 from .info_response import InfoResponse
@@ -102,6 +103,7 @@ __all__ = (
     "DownloadResponse",
     "EpisodeDetailsDto",
     "EventControllerHandleConnectionEventItem",
+    "ExtensionCustomActionType",
     "FullPanelAnnotateRequest",
     "FullPanelRequest",
     "InfoResponse",

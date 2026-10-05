@@ -899,6 +899,10 @@ components:
           $ref: '#/components/schemas/OpenSourceFileData'
       required:
         - sourceFile
+    ExtensionCustomActionType:
+      type: string
+      enum:
+        - PanelBrowserAction
     RegistrationRequestAction:
       type: object
       properties:
@@ -908,6 +912,14 @@ components:
         name:
           type: string
           description: The user-friendly name for this action to be displayed in the UI.
+        description:
+          type: string
+          description: The user-friendly description for this action to be displayed in the UI.
+        iconSvg:
+          type: string
+          description: A simple SVG icon for this specific action when displayed in the UI.
+        type:
+          $ref: '#/components/schemas/ExtensionCustomActionType'
       required:
         - id
         - name
@@ -948,6 +960,14 @@ components:
         name:
           type: string
           description: The user-friendly name for this action to be displayed in the UI.
+        description:
+          type: string
+          description: The user-friendly description for this action to be displayed in the UI.
+        iconSvg:
+          type: string
+          description: A simple SVG icon for this specific action when displayed in the UI.
+        type:
+          $ref: '#/components/schemas/ExtensionCustomActionType'
       required:
         - id
         - name
@@ -1429,10 +1449,14 @@ components:
         index:
           type: integer
           description: The current index in the panel browser of the selected panel.
+        assetId:
+          type: integer
+          description: The asset ID of the selected panel.
       required:
         - id
         - revisionId
         - index
+        - assetId
     RevisionStatusResponse:
       type: object
       properties:

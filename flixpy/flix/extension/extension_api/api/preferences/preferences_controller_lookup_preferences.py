@@ -15,7 +15,8 @@ def _get_kwargs(
     *,
     keys: Union[Unset, None, List[str]] = UNSET,
 ) -> Dict[str, Any]:
-    pass
+
+    cookies = {}
 
     params: Dict[str, Any] = {}
     json_keys: Union[Unset, None, List[str]] = UNSET

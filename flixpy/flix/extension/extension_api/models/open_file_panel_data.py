@@ -1,4 +1,17 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, TypeVar, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    BinaryIO,
+    Dict,
+    List,
+    Optional,
+    TextIO,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+    cast,
+)
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -47,6 +60,10 @@ class OpenFilePanelData:
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
+        from ..models.keyframe_request import KeyframeRequest
+        from ..models.open_file_panel_data_origin_sbp import OpenFilePanelDataOriginSbp
+        from ..models.open_source_file_data import OpenSourceFileData
+
         id = self.id
         index = self.index
         revision_id = self.revision_id

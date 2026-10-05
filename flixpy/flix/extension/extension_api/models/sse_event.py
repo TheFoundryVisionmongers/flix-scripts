@@ -1,7 +1,22 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Type, TypeVar, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    BinaryIO,
+    Dict,
+    List,
+    Optional,
+    TextIO,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+    cast,
+)
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
+
+from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
     from ..models.sse_event_data_type_0 import SSEEventDataType0
@@ -42,6 +57,7 @@ class SSEEvent:
         from ..models.sse_event_data_type_3 import SSEEventDataType3
         from ..models.sse_event_data_type_4 import SSEEventDataType4
         from ..models.sse_event_data_type_5 import SSEEventDataType5
+        from ..models.sse_event_data_type_6 import SSEEventDataType6
 
         data: Dict[str, Any]
 

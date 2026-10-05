@@ -1,7 +1,21 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, TypeVar
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    BinaryIO,
+    Dict,
+    List,
+    Optional,
+    TextIO,
+    Tuple,
+    Type,
+    TypeVar,
+    cast,
+)
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
+
+from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
     from ..models.episode_details_dto import EpisodeDetailsDto
@@ -30,6 +44,11 @@ class ProjectDetailsDto:
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
+        from ..models.episode_details_dto import EpisodeDetailsDto
+        from ..models.sequence_details_dto import SequenceDetailsDto
+        from ..models.sequence_revision_details_dto import SequenceRevisionDetailsDto
+        from ..models.show_details_dto import ShowDetailsDto
+
         show = self.show.to_dict() if self.show else None
 
         episode = self.episode.to_dict() if self.episode else None

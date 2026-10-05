@@ -15,10 +15,11 @@ from .extension_api.models import (
     ActionType,
     AssetType,
     ClientEventType,
+    ExtensionCustomActionType,
     SourceFilePreviewMode,
     SourceFileType,
 )
-from .extension_api.types import Unset
+from .extension_api.types import UNSET, Unset
 
 __all__ = [
     "ActionEvent",
@@ -30,6 +31,7 @@ __all__ = [
     "ClientEventType",
     "ClientPingEvent",
     "ConnectionEvent",
+    "CustomActionType",
     "DownloadResponse",
     "Event",
     "OpenEvent",
@@ -41,6 +43,8 @@ __all__ = [
     "ProjectDetails",
     "ProjectEvent",
     "ProjectIds",
+    "RegistrationRequestAction",
+    "RegistrationResponseAction",
     "RevisionStatus",
     "SourceFile",
     "SourceFilePreviewMode",
@@ -50,6 +54,8 @@ __all__ = [
     "VersionEvent",
     "VersionResponse",
 ]
+
+CustomActionType = ExtensionCustomActionType
 
 
 @dataclasses.dataclass
@@ -431,16 +437,44 @@ class VersionResponse:
 class RegistrationRequestAction:
     id: str
     name: str
+    description: str | None = None
+    icon_svg: str | None = None
+    type: CustomActionType | None = None
 
     @classmethod
     def from_dict(cls, data: models.RegistrationRequestAction) -> Self:
         return cls(
             id=data.id,
             name=data.name,
+            description=data.description if not isinstance(data.description, Unset) else None,
+            icon_svg=data.icon_svg if not isinstance(data.icon_svg, Unset) else None,
+            type=data.type if not isinstance(data.type, Unset) else None,
         )
-    
+
     def to_dict(self) -> models.RegistrationRequestAction:
         return models.RegistrationRequestAction(
             id=self.id,
             name=self.name,
+            description=self.description if self.description is not None else UNSET,
+            icon_svg=self.icon_svg if self.icon_svg is not None else UNSET,
+            type=self.type if self.type is not None else UNSET,
+        )
+
+
+@dataclasses.dataclass
+class RegistrationResponseAction:
+    id: str
+    name: str
+    description: str | None = None
+    icon_svg: str | None = None
+    type: CustomActionType | None = None
+
+    @classmethod
+    def from_dict(cls, data: models.RegistrationResponseAction) -> Self:
+        return cls(
+            id=data.id,
+            name=data.name,
+            description=data.description if not isinstance(data.description, Unset) else None,
+            icon_svg=data.icon_svg if not isinstance(data.icon_svg, Unset) else None,
+            type=data.type if not isinstance(data.type, Unset) else None,
         )

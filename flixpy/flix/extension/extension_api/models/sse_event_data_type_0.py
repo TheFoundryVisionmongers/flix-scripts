@@ -1,9 +1,22 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Type, TypeVar
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    BinaryIO,
+    Dict,
+    List,
+    Optional,
+    TextIO,
+    Tuple,
+    Type,
+    TypeVar,
+    cast,
+)
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 from ..models.sse_event_data_type_0_type import SSEEventDataType0Type
+from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
     from ..models.ping_event import PingEvent
@@ -25,6 +38,8 @@ class SSEEventDataType0:
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
+        from ..models.ping_event import PingEvent
+
         type = self.type.value
 
         data = self.data.to_dict()

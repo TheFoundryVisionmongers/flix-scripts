@@ -1,7 +1,22 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Type, TypeVar, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    BinaryIO,
+    Dict,
+    List,
+    Optional,
+    TextIO,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+    cast,
+)
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
+
+from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
     from ..models.websocket_event_data_type_0 import WebsocketEventDataType0
@@ -42,6 +57,7 @@ class WebsocketEvent:
         from ..models.websocket_event_data_type_3 import WebsocketEventDataType3
         from ..models.websocket_event_data_type_4 import WebsocketEventDataType4
         from ..models.websocket_event_data_type_5 import WebsocketEventDataType5
+        from ..models.websocket_event_data_type_6 import WebsocketEventDataType6
 
         data: Dict[str, Any]
 

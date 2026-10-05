@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Dict, Optional, Union, cast
+from typing import Any, Dict, List, Optional, Union, cast
 
 import httpx
 
@@ -8,14 +8,15 @@ from ...client import AuthenticatedClient, Client
 from ...models.bulk_panel_request import BulkPanelRequest
 from ...models.full_panel_request import FullPanelRequest
 from ...models.panel_request_response import PanelRequestResponse
-from ...types import Response
+from ...types import UNSET, Response
 
 
 def _get_kwargs(
     *,
     json_body: Union["BulkPanelRequest", "FullPanelRequest"],
 ) -> Dict[str, Any]:
-    pass
+
+    cookies = {}
 
     json_json_body: Dict[str, Any]
 

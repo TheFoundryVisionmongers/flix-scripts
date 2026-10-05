@@ -1,10 +1,22 @@
-from typing import Any, Dict, List, Type, TypeVar
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    BinaryIO,
+    Dict,
+    List,
+    Optional,
+    TextIO,
+    Tuple,
+    Type,
+    TypeVar,
+)
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 from ..models.source_file_preview_mode import SourceFilePreviewMode
 from ..models.source_file_type import SourceFileType
+from ..types import UNSET, Unset
 
 T = TypeVar("T", bound="PanelRequestSourceFile")
 

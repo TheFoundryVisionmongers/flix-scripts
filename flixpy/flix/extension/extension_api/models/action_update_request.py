@@ -1,7 +1,21 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Type, TypeVar
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    BinaryIO,
+    Dict,
+    List,
+    Optional,
+    TextIO,
+    Tuple,
+    Type,
+    TypeVar,
+    cast,
+)
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
+
+from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
     from ..models.registration_request_action import RegistrationRequestAction
@@ -21,6 +35,8 @@ class ActionUpdateRequest:
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
+        from ..models.registration_request_action import RegistrationRequestAction
+
         actions = []
         for actions_item_data in self.actions:
             actions_item = actions_item_data.to_dict()

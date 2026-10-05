@@ -164,6 +164,7 @@ class Extension:
         version: str | None = None,
         base_url: str = BASE_URL,
         icon_svg: str | None = None,
+        actions: list[types.RegistrationRequestAction] | None = None,
     ) -> None:
         """Initialise an Extension.
 
@@ -175,6 +176,7 @@ class Extension:
             base_url: The URL to use to connect to the Flix Client, if something other than
                 the standard Flix Client port on localhost
             icon_svg: An optional SVG icon for the extension
+            actions: An optional list of custom actions to register for this extension up front
 
         """
         self.name = name
@@ -183,6 +185,7 @@ class Extension:
         self.base_url = base_url
         self.log_paths = log_paths
         self.icon_svg = icon_svg
+        self.actions = actions
         self.panel_browser_status = types.PanelBrowserStatus()
         self.project = types.ProjectDetails()
         self._online = False
@@ -376,6 +379,9 @@ class Extension:
                     version=self.version or api_types.UNSET,
                     log_paths=self.log_paths or api_types.UNSET,
                     icon_svg=self.icon_svg or api_types.UNSET,
+                    actions=[action.to_dict() for action in self.actions]
+                    if self.actions
+                    else api_types.UNSET,
                 ),
             ),
         )
@@ -551,7 +557,17 @@ class Extension:
     async def set_actions(
         self,
         actions: list[types.RegistrationRequestAction],
-    ) -> list[types.RegistrationRequestAction]:
+    ) -> list[types.RegistrationResponseAction]:
+        """Update the list of custom actions registered for this extension.
+
+        Args:
+            actions: The full list of actions this extension should have registered.
+                This replaces any previously registered actions.
+
+        Returns:
+            The actions as registered by the Flix Client, which may differ from what
+                was requested (for example, the server may force a default `type`).
+        """
         from .extension_api.api.api_registration import (
             registration_controller_update_registered_actions,
         )
@@ -566,8 +582,7 @@ class Extension:
             ),
         )
 
-        respActions = [models.RegistrationRequestAction.from_dict({ "id": action.id, "name": action.name }) for action in resp.actions]
-        return [types.RegistrationRequestAction.from_dict(action) for action in respActions]
+        return [types.RegistrationResponseAction.from_dict(action) for action in resp.actions]
 
     async def _aclose(self) -> None:
         # convert set to list to avoid modifying set while iterating over it
