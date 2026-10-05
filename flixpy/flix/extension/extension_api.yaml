@@ -1453,14 +1453,10 @@ components:
         index:
           type: integer
           description: The current index in the panel browser of the selected panel.
-        assetId:
-          type: integer
-          description: The asset ID of the selected panel.
       required:
         - id
         - revisionId
         - index
-        - assetId
     RevisionStatusResponse:
       type: object
       properties:

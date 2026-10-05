@@ -26,20 +26,17 @@ class PanelSelectionResponse:
         id (int): The ID of the selected panel.
         revision_id (int): The revision of the selected panel.
         index (int): The current index in the panel browser of the selected panel.
-        asset_id (int): The asset ID of the selected panel.
     """
 
     id: int
     revision_id: int
     index: int
-    asset_id: int
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
         id = self.id
         revision_id = self.revision_id
         index = self.index
-        asset_id = self.asset_id
 
         field_dict: Dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -48,7 +45,6 @@ class PanelSelectionResponse:
                 "id": id,
                 "revisionId": revision_id,
                 "index": index,
-                "assetId": asset_id,
             }
         )
 
@@ -63,13 +59,10 @@ class PanelSelectionResponse:
 
         index = d.pop("index")
 
-        asset_id = d.pop("assetId")
-
         panel_selection_response = cls(
             id=id,
             revision_id=revision_id,
             index=index,
-            asset_id=asset_id,
         )
 
         panel_selection_response.additional_properties = d
