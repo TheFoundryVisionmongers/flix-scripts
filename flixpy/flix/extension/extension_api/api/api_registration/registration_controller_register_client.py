@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Dict, List, Optional, Union, cast
+from typing import Any, Dict, Optional, Union, cast
 
 import httpx
 
@@ -7,15 +7,14 @@ from ... import errors
 from ...client import AuthenticatedClient, Client
 from ...models.registration_request import RegistrationRequest
 from ...models.registration_response import RegistrationResponse
-from ...types import UNSET, Response
+from ...types import Response
 
 
 def _get_kwargs(
     *,
     json_body: RegistrationRequest,
 ) -> Dict[str, Any]:
-
-    cookies = {}
+    pass
 
     json_json_body = json_body.to_dict()
 

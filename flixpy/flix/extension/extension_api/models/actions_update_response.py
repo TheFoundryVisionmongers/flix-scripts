@@ -1,24 +1,10 @@
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    BinaryIO,
-    Dict,
-    List,
-    Optional,
-    TextIO,
-    Tuple,
-    Type,
-    TypeVar,
-    cast,
-)
+from typing import TYPE_CHECKING, Any, Dict, List, Type, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-from ..types import UNSET, Unset
-
 if TYPE_CHECKING:
-    from ..models.registration_response_action import RegistrationResponseAction
+    from ..models.action_registration_response import ActionRegistrationResponse
 
 
 T = TypeVar("T", bound="ActionsUpdateResponse")
@@ -28,15 +14,13 @@ T = TypeVar("T", bound="ActionsUpdateResponse")
 class ActionsUpdateResponse:
     """
     Attributes:
-        actions (List['RegistrationResponseAction']): The actions registered for this API consumer.
+        actions (List['ActionRegistrationResponse']): The list of actions registered for this API consumer's extension.
     """
 
-    actions: List["RegistrationResponseAction"]
+    actions: List["ActionRegistrationResponse"]
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
-        from ..models.registration_response_action import RegistrationResponseAction
-
         actions = []
         for actions_item_data in self.actions:
             actions_item = actions_item_data.to_dict()
@@ -55,13 +39,13 @@ class ActionsUpdateResponse:
 
     @classmethod
     def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
-        from ..models.registration_response_action import RegistrationResponseAction
+        from ..models.action_registration_response import ActionRegistrationResponse
 
         d = src_dict.copy()
         actions = []
         _actions = d.pop("actions")
         for actions_item_data in _actions:
-            actions_item = RegistrationResponseAction.from_dict(actions_item_data)
+            actions_item = ActionRegistrationResponse.from_dict(actions_item_data)
 
             actions.append(actions_item)
 

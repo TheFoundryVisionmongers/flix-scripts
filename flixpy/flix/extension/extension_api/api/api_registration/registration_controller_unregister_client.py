@@ -1,11 +1,11 @@
 from http import HTTPStatus
-from typing import Any, Dict, List, Optional, Union, cast
+from typing import Any, Dict, Optional, Union
 
 import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
-from ...types import UNSET, Response
+from ...types import Response
 
 
 def _get_kwargs(
@@ -14,8 +14,6 @@ def _get_kwargs(
 ) -> Dict[str, Any]:
     headers = {}
     headers["authorization"] = authorization
-
-    cookies = {}
 
     return {
         "method": "delete",

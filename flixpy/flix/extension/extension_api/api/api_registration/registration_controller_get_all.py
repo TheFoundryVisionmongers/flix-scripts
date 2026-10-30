@@ -1,17 +1,16 @@
 from http import HTTPStatus
-from typing import Any, Dict, List, Optional, Union, cast
+from typing import Any, Dict, List, Optional, Union
 
 import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
 from ...models.registration_details import RegistrationDetails
-from ...types import UNSET, Response
+from ...types import Response
 
 
 def _get_kwargs() -> Dict[str, Any]:
-
-    cookies = {}
+    pass
 
     return {
         "method": "get",

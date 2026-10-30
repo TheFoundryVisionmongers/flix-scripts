@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Dict, List, Optional, Union, cast
+from typing import Any, Dict, List, Optional, Union
 
 import httpx
 
@@ -15,8 +15,7 @@ def _get_kwargs(
     *,
     event: Union[Unset, None, List[EventControllerHandleConnectionEventItem]] = UNSET,
 ) -> Dict[str, Any]:
-
-    cookies = {}
+    pass
 
     params: Dict[str, Any] = {}
     json_event: Union[Unset, None, List[str]] = UNSET

@@ -3,7 +3,6 @@ from enum import Enum
 
 class EventControllerHandleConnectionEventItem(str, Enum):
     ACTION = "action"
-    CUSTOM = "custom"
     OPEN = "open"
     PING = "ping"
     PREFERENCES = "preferences"

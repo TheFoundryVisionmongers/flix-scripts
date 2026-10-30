@@ -1,22 +1,9 @@
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    BinaryIO,
-    Dict,
-    List,
-    Optional,
-    TextIO,
-    Tuple,
-    Type,
-    TypeVar,
-    cast,
-)
+from typing import Any, Dict, List, Type, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 from ..models.client_event_type import ClientEventType
-from ..types import UNSET, Unset
 
 T = TypeVar("T", bound="SubscribeRequest")
 

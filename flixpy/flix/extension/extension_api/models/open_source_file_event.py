@@ -1,21 +1,7 @@
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    BinaryIO,
-    Dict,
-    List,
-    Optional,
-    TextIO,
-    Tuple,
-    Type,
-    TypeVar,
-    cast,
-)
+from typing import TYPE_CHECKING, Any, Dict, List, Type, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
-
-from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
     from ..models.open_source_file_data import OpenSourceFileData
@@ -35,8 +21,6 @@ class OpenSourceFileEvent:
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
-        from ..models.open_source_file_data import OpenSourceFileData
-
         source_file = self.source_file.to_dict()
 
         field_dict: Dict[str, Any] = {}

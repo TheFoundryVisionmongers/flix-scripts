@@ -1,23 +1,26 @@
-"""Contains all the data models used in inputs/outputs"""
+""" Contains all the data models used in inputs/outputs """
 
 from .action_event import ActionEvent
 from .action_event_panel_response import ActionEventPanelResponse
+from .action_registration_response import ActionRegistrationResponse
+from .action_registration_response_type import ActionRegistrationResponseType
 from .action_state import ActionState
 from .action_type import ActionType
-from .action_update_request import ActionUpdateRequest
 from .actions_in_progress_response import ActionsInProgressResponse
+from .actions_update_request import ActionsUpdateRequest
 from .actions_update_response import ActionsUpdateResponse
 from .asset_type import AssetType
 from .bulk_panel_annotate_request import BulkPanelAnnotateRequest
 from .bulk_panel_request import BulkPanelRequest
 from .client_event_type import ClientEventType
+from .custom_action_registration_request import CustomActionRegistrationRequest
+from .custom_action_registration_request_type import CustomActionRegistrationRequestType
 from .download_request import DownloadRequest
 from .download_response import DownloadResponse
 from .episode_details_dto import EpisodeDetailsDto
 from .event_controller_handle_connection_event_item import (
     EventControllerHandleConnectionEventItem,
 )
-from .extension_custom_action_type import ExtensionCustomActionType
 from .full_panel_annotate_request import FullPanelAnnotateRequest
 from .full_panel_request import FullPanelRequest
 from .info_response import InfoResponse
@@ -42,10 +45,9 @@ from .project_details_dto import ProjectDetailsDto
 from .project_ids_dto import ProjectIdsDto
 from .ps_configuration import PsConfiguration
 from .registration_details import RegistrationDetails
+from .registration_details_actions_item import RegistrationDetailsActionsItem
 from .registration_request import RegistrationRequest
-from .registration_request_action import RegistrationRequestAction
 from .registration_response import RegistrationResponse
-from .registration_response_action import RegistrationResponseAction
 from .revision_status_response import RevisionStatusResponse
 from .sequence_details_dto import SequenceDetailsDto
 from .sequence_revision_details_dto import SequenceRevisionDetailsDto
@@ -92,20 +94,23 @@ from .websocket_event_data_type_6_type import WebsocketEventDataType6Type
 __all__ = (
     "ActionEvent",
     "ActionEventPanelResponse",
+    "ActionRegistrationResponse",
+    "ActionRegistrationResponseType",
     "ActionsInProgressResponse",
     "ActionState",
+    "ActionsUpdateRequest",
     "ActionsUpdateResponse",
     "ActionType",
-    "ActionUpdateRequest",
     "AssetType",
     "BulkPanelAnnotateRequest",
     "BulkPanelRequest",
     "ClientEventType",
+    "CustomActionRegistrationRequest",
+    "CustomActionRegistrationRequestType",
     "DownloadRequest",
     "DownloadResponse",
     "EpisodeDetailsDto",
     "EventControllerHandleConnectionEventItem",
-    "ExtensionCustomActionType",
     "FullPanelAnnotateRequest",
     "FullPanelRequest",
     "InfoResponse",
@@ -128,10 +133,9 @@ __all__ = (
     "ProjectIdsDto",
     "PsConfiguration",
     "RegistrationDetails",
+    "RegistrationDetailsActionsItem",
     "RegistrationRequest",
-    "RegistrationRequestAction",
     "RegistrationResponse",
-    "RegistrationResponseAction",
     "RevisionStatusResponse",
     "SequenceDetailsDto",
     "SequenceRevisionDetailsDto",

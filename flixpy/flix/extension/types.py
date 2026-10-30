@@ -8,6 +8,7 @@ from typing import Any
 
 from typing_extensions import Self
 
+
 from ..lib import types as flix_types
 from .extension_api import models
 from .extension_api.models import (
@@ -15,9 +16,11 @@ from .extension_api.models import (
     ActionType,
     AssetType,
     ClientEventType,
-    ExtensionCustomActionType,
     SourceFilePreviewMode,
     SourceFileType,
+    ActionRegistrationResponseType,
+    CustomActionRegistrationRequestType
+    
 )
 from .extension_api.types import UNSET, Unset
 
@@ -32,6 +35,7 @@ __all__ = [
     "ClientPingEvent",
     "ConnectionEvent",
     "CustomActionType",
+    "CustomActionRegistrationRequest",
     "DownloadResponse",
     "Event",
     "OpenEvent",
@@ -43,8 +47,9 @@ __all__ = [
     "ProjectDetails",
     "ProjectEvent",
     "ProjectIds",
-    "RegistrationRequestAction",
-    "RegistrationResponseAction",
+    "ActionRegistrationResponseType",
+    "CustomActionRegistrationRequestType",
+    "ActionRegistrationResponse",
     "RevisionStatus",
     "SourceFile",
     "SourceFilePreviewMode",
@@ -55,7 +60,6 @@ __all__ = [
     "VersionResponse",
 ]
 
-CustomActionType = ExtensionCustomActionType
 
 
 @dataclasses.dataclass
@@ -374,6 +378,7 @@ class OpenEvent(ClientEvent):
             additional_properties=data.additional_properties,
         )
 
+
 @dataclasses.dataclass
 class OpenSourceFileEvent(ClientEvent):
     asset_id: int
@@ -431,16 +436,17 @@ class VersionResponse:
             supported_api_versions=data.supported_api_versions,
         )
 
+
 @dataclasses.dataclass
-class RegistrationRequestAction:
+class CustomActionRegistrationRequest:
     id: str
     name: str
     description: str | None = None
     icon_svg: str | None = None
-    type: CustomActionType | None = None
+    type: CustomActionRegistrationRequestType | None = None
 
     @classmethod
-    def from_dict(cls, data: models.RegistrationRequestAction) -> Self:
+    def from_dict(cls, data: models.CustomActionRegistrationRequest) -> Self:
         return cls(
             id=data.id,
             name=data.name,
@@ -449,8 +455,8 @@ class RegistrationRequestAction:
             type=data.type if not isinstance(data.type, Unset) else None,
         )
 
-    def to_dict(self) -> models.RegistrationRequestAction:
-        return models.RegistrationRequestAction(
+    def to_dict(self) -> models.CustomActionRegistrationRequest:
+        return models.CustomActionRegistrationRequest(
             id=self.id,
             name=self.name,
             description=self.description if self.description is not None else UNSET,
@@ -460,25 +466,25 @@ class RegistrationRequestAction:
 
 
 @dataclasses.dataclass
-class RegistrationResponseAction:
+class ActionRegistrationResponse:
     id: str
     name: str
     description: str | None = None
     icon_svg: str | None = None
-    type: CustomActionType | None = None
+    type: ActionRegistrationResponseType | None = None
 
-    def as_request(self) -> RegistrationRequestAction:
+    def as_request(self) -> CustomActionRegistrationRequest:
         """Convert this registered action back into a request, e.g. to resend it to `set_actions`."""
-        return RegistrationRequestAction(
+        return CustomActionRegistrationRequest(
             id=self.id,
             name=self.name,
             description=self.description,
             icon_svg=self.icon_svg,
-            type=self.type,
+            type=CustomActionRegistrationRequestType(self.type) if self.type is not None else None
         )
 
     @classmethod
-    def from_dict(cls, data: models.RegistrationResponseAction) -> Self:
+    def from_dict(cls, data: models.ActionRegistrationResponse) -> Self:
         return cls(
             id=data.id,
             name=data.name,

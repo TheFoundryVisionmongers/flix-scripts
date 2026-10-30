@@ -164,7 +164,8 @@ class Extension:
         version: str | None = None,
         base_url: str = BASE_URL,
         icon_svg: str | None = None,
-        actions: list[types.RegistrationRequestAction] | None = None,
+        short_name: str | None = None,
+        actions: list[types.CustomActionRegistrationRequest] | None = None,
     ) -> None:
         """Initialise an Extension.
 
@@ -176,6 +177,7 @@ class Extension:
             base_url: The URL to use to connect to the Flix Client, if something other than
                 the standard Flix Client port on localhost
             icon_svg: An optional SVG icon for the extension
+            short_name: An optional short name for the extension
             actions: An optional list of custom actions to register for this extension up front
 
         """
@@ -186,6 +188,7 @@ class Extension:
         self.log_paths = log_paths
         self.icon_svg = icon_svg
         self.actions = actions
+        self.short_name = short_name
         self.panel_browser_status = types.PanelBrowserStatus()
         self.project = types.ProjectDetails()
         self._online = False
@@ -556,8 +559,8 @@ class Extension:
     
     async def set_actions(
         self,
-        actions: list[types.RegistrationRequestAction],
-    ) -> list[types.RegistrationResponseAction]:
+        actions: list[types.CustomActionRegistrationRequest],
+    ) -> list[types.ActionRegistrationResponse]:
         """Update the list of custom actions registered for this extension.
 
         Args:
@@ -569,20 +572,20 @@ class Extension:
                 was requested (for example, the server may force a default `type`).
         """
         from .extension_api.api.api_registration import (
-            registration_controller_update_registered_actions,
+            registration_controller_set_client_actions,
         )
 
         resp = _assert_response(
             models.ActionsUpdateResponse,
-            await registration_controller_update_registered_actions.asyncio_detailed(
+            await registration_controller_set_client_actions.asyncio_detailed(
                 client=await self._get_registered_client(),
-                json_body=models.ActionUpdateRequest(
+                json_body=models.ActionsUpdateRequest(
                     actions=[action.to_dict() for action in actions],
                 ),
             ),
         )
 
-        return [types.RegistrationResponseAction.from_dict(action) for action in resp.actions]
+        return [types.ActionRegistrationResponse.from_dict(action) for action in resp.actions]
 
     async def _aclose(self) -> None:
         # convert set to list to avoid modifying set while iterating over it

@@ -1,20 +1,19 @@
 from http import HTTPStatus
-from typing import Any, Dict, List, Optional, Union, cast
+from typing import Any, Dict, Optional, Union
 
 import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
 from ...models.panel_track_request import PanelTrackRequest
-from ...types import UNSET, Response
+from ...types import Response
 
 
 def _get_kwargs(
     *,
     json_body: PanelTrackRequest,
 ) -> Dict[str, Any]:
-
-    cookies = {}
+    pass
 
     json_json_body = json_body.to_dict()
 
@@ -29,8 +28,6 @@ def _parse_response(
     *, client: Union[AuthenticatedClient, Client], response: httpx.Response
 ) -> Optional[Any]:
     if response.status_code == HTTPStatus.OK:
-        return None
-    if response.status_code == HTTPStatus.CREATED:
         return None
     if response.status_code == HTTPStatus.BAD_REQUEST:
         return None

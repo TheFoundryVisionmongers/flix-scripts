@@ -2975,7 +2975,7 @@ class SequenceRevision(FlixType):
             websocket.MessageContactSheetCreated, "contactsheet", path, params, panels
         )
     
-    async def publish_aaf(self):
+    async def publish_aaf(self) -> None:
         path = f"{self.path_prefix()}/publish"
         await self.client.post(path, body={})
 

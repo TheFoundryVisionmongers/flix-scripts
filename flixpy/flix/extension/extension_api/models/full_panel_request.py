@@ -1,17 +1,4 @@
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    BinaryIO,
-    Dict,
-    List,
-    Optional,
-    TextIO,
-    Tuple,
-    Type,
-    TypeVar,
-    Union,
-    cast,
-)
+from typing import TYPE_CHECKING, Any, Dict, List, Type, TypeVar, Union
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -47,9 +34,6 @@ class FullPanelRequest:
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
-        from ..models.panel_request_item import PanelRequestItem
-        from ..models.panel_request_source_file import PanelRequestSourceFile
-
         panels = []
         for panels_item_data in self.panels:
             panels_item = panels_item_data.to_dict()

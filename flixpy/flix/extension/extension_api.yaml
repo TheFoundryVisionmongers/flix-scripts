@@ -1,6 +1,16 @@
 openapi: 3.0.0
 info:
   title: Flix General Remote Client API
+  version: v1.2.1
+  contact:
+    name: Foundry
+    url: https://www.foundry.com
+    email: https://support.foundry.com/hc
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: https://www.foundry.com/eula
+  title: Flix General Remote Client API
   description: |
     # Getting Started
 
@@ -67,16 +77,7 @@ info:
 
     ### Step 5: All done
 
-    That's it! You're now ready to interact with the Flix Client and ready to turn “My First Flix Extension” into the best thing ever. Although, maybe come up with a better name first.
-  version: v1.2.0
-  contact:
-    name: Foundry
-    url: https://www.foundry.com
-    email: support@foundry.com
-  license:
-    name: Apache 2.0
-    url: https://www.apache.org/licenses/LICENSE-2.0.html
-  termsOfService: https://www.foundry.com/eula
+    That's it! You're now ready to interact with the Flix Client and ready to turn “My First Flix Extension” into the best thing ever. Although, maybe come up with a better name first
 servers:
   - url: http://localhost:3000
     description: Flix Client API
@@ -150,12 +151,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/InfoResponse'
+      summary: Flix Client details
       tags:
         - Info
   /registration:
     post:
       operationId: RegistrationController_registerClient
-      summary: Register API consumer
       description: Processes a registration request from a new API consumer.
       parameters: []
       requestBody:
@@ -179,11 +180,11 @@ paths:
                 $ref: '#/components/schemas/RegistrationResponse'
         '400':
           description: The incoming API consumer details could not be validated
+      summary: Register API consumer
       tags:
         - API Registration
     get:
       operationId: RegistrationController_getAll
-      summary: List API consumers
       description: |-
         Returns a list of registered API consumer details.
         Details returned by the registration manager are mapped to a DTO to avoid exposing access tokens.
@@ -197,13 +198,13 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/RegistrationDetails'
-      tags:
-        - API Registration
       security:
         - bearer: []
+      summary: List API consumers
+      tags:
+        - API Registration
     delete:
       operationId: RegistrationController_unregisterClient
-      summary: Unregister API consumer
       description: Removes the registration for the requesting API consumer.
       parameters:
         - name: authorization
@@ -216,14 +217,14 @@ paths:
           description: The API consumer has been unregistered from Flix
         '400':
           description: The provided bearer token could not be validated
-      tags:
-        - API Registration
       security:
         - bearer: []
+      summary: Unregister API consumer
+      tags:
+        - API Registration
   /registration/actions:
     post:
-      operationId: RegistrationController_updateRegisteredActions
-      summary: Update registered actions
+      operationId: RegistrationController_setClientActions
       description: |-
         Updates the list of actions that an API client can perform. This is used to keep the Flix Client aware of the actions that each
         API client can perform, so that it can send the correct events when those actions are performed by the API clients.
@@ -233,24 +234,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ActionUpdateRequest'
+              $ref: '#/components/schemas/ActionsUpdateRequest'
       responses:
         '200':
-          description: Action event received
+          description: Actions for the API consumer have been set successfully
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ActionsUpdateResponse'
         '400':
-          description: The provided bearer token could not be validated
-      tags:
-        - API Registration
+          description: The incoming API consumer details could not be validated
       security:
         - bearer: []
+      summary: Set actions for the API consumer
+      tags:
+        - API Registration
   /panels:
     post:
       operationId: PanelController_create
-      summary: Create New Panels
       description: Creates new panels in the active sequence revision from the list of provided file paths.
       parameters: []
       requestBody:
@@ -269,15 +270,16 @@ paths:
               schema:
                 $ref: '#/components/schemas/PanelRequestResponse'
         '400':
-          description: No sequence revision is loaded, or the panel create request is invalid
-      tags:
-        - Panel Management
+          description: >-
+            No sequence revision is loaded, or the panel create request is
+            invalid
       security:
         - bearer: []
+      summary: Create New Panels
+      tags:
+        - Panel Management
     patch:
       operationId: PanelController_update
-      summary: Update Existing Panels
-      description: Updates existing panels in the active sequence revision from the list of provided file paths.
       parameters: []
       requestBody:
         required: true
@@ -295,15 +297,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/PanelRequestResponse'
         '400':
-          description: No sequence revision is loaded, or the panel update request is invalid
-      tags:
-        - Panel Management
+          description: >-
+            No sequence revision is loaded, or the panel update request is
+            invalid
       security:
         - bearer: []
+      summary: Update Existing Panels
+      tags:
+        - Panel Management
   /panels/annotate:
     patch:
       operationId: PanelController_annotate
-      summary: Update Panel Annotations
       description: Adds annotations to panels in the active sequence revision from the list of provided file paths.
       parameters: []
       requestBody:
@@ -322,15 +326,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/PanelRequestResponse'
         '400':
-          description: No sequence revision is loaded, or the panel annotation request is invalid
-      tags:
-        - Panel Management
+          description: >-
+            No sequence revision is loaded, or the panel annotation request is
+            invalid
       security:
         - bearer: []
+      summary: Update Panel Annotations
+      tags:
+        - Panel Management
   /panels/track:
     post:
       operationId: PanelController_trackPanel
-      summary: Marks a panel as open in an extension
       description: Allows an API client to indicate that it is tracking a specific panel. Will add an icon to the panel in the panel browser for supported extension types.
       parameters: []
       requestBody:
@@ -342,17 +348,17 @@ paths:
       responses:
         '200':
           description: The panel has been marked as open in the extension
-        '201':
-          description: ''
         '400':
-          description: No sequence revision is loaded, or the panel annotation request is invalid
-      tags:
-        - Panel Management
+          description: >-
+            No sequence revision is loaded, or the panel annotation request is
+            invalid
       security:
         - bearer: []
+      summary: Marks a panel as open in an extension
+      tags:
+        - Panel Management
     delete:
       operationId: PanelController_untrackPanel
-      summary: Marks a panel as not open in an extension
       description: Allows an API client to indicate that it is no longer tracking a specific panel. Will remove any icons from the panel browser for supported extension types.
       parameters: []
       requestBody:
@@ -365,15 +371,17 @@ paths:
         '200':
           description: The panel has been marked as not open in the extension
         '400':
-          description: No sequence revision is loaded, or the panel annotation request is invalid
-      tags:
-        - Panel Management
+          description: >-
+            No sequence revision is loaded, or the panel annotation request is
+            invalid
       security:
         - bearer: []
+      summary: Marks a panel as not open in an extension
+      tags:
+        - Panel Management
   /download:
     post:
       operationId: DownloadController_downloadMediaObject
-      summary: Download Media Object
       description: Downloads a specific artwork type for a given asset, to a target folder on the local machine.
       parameters: []
       requestBody:
@@ -391,14 +399,14 @@ paths:
                 $ref: '#/components/schemas/DownloadResponse'
         '400':
           description: The Flix Client is not logged in, or the request is invalid
-      tags:
-        - Media Object Download
       security:
         - bearer: []
+      summary: Download Media Object
+      tags:
+        - Media Object Download
   /project:
     get:
       operationId: ProjectController_get
-      summary: Get Current Flix Project
       description: Returns details of the currently opened show, episode, sequence and sequence revision.
       parameters: []
       responses:
@@ -410,14 +418,14 @@ paths:
                 $ref: '#/components/schemas/ProjectDetailsDto'
         '400':
           description: The Flix Client is not logged in to a server
-      tags:
-        - Project Details
       security:
         - bearer: []
+      summary: Get Current Flix Project
+      tags:
+        - Project Details
   /status:
     get:
       operationId: StatusController_get
-      summary: Get Flix Status
       description: Returns details of the current state of the Flix Client.
       parameters: []
       responses:
@@ -429,10 +437,11 @@ paths:
                 $ref: '#/components/schemas/StatusResponse'
         '400':
           description: The Flix Client is not logged in to a server
-      tags:
-        - Status
       security:
         - bearer: []
+      summary: Get Flix Status
+      tags:
+        - Status
   /preferences:
     get:
       operationId: PreferencesController_lookupPreferences
@@ -441,14 +450,18 @@ paths:
         - name: keys
           required: false
           in: query
-          description: A list of keys for which to return the user preference values. Can either be a comma-separated list, or specified multiple times.
+          description: >-
+            A list of keys for which to return the user preference values. Can
+            either be a comma-separated list, or specified multiple times.
           schema:
             type: array
             items:
               type: string
       responses:
         '200':
-          description: Returns a Config object for a provided list of preferences set in the Flix Client
+          description: >-
+            Returns a Config object for a provided list of preferences set in
+            the Flix Client
           content:
             application/json:
               schema:
@@ -460,14 +473,45 @@ paths:
                     - type: boolean
         '400':
           description: The Flix Client is not logged in to a server
-      tags:
-        - Preferences
       security:
         - bearer: []
+      tags:
+        - Preferences
+  /dev/error:
+    post:
+      operationId: DevErrorController_throwElectronError
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: string
+      responses:
+        '204':
+          description: The error was sent to the UI
+      summary: 'DEV MODE: Throws test error in Electron'
+      tags:
+        - DevError
+  /dev/error/ui:
+    post:
+      operationId: DevErrorController_throwUIError
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: string
+      responses:
+        '204':
+          description: The error was sent to the UI
+      summary: 'DEV MODE: Throws test error in the UI'
+      tags:
+        - DevError
   /events:
     get:
       operationId: EventController_handleConnection
-      summary: Subscribe to events from the Client.
       description: |-
         Provides an alternative to the websocket endpoint for API clients to subscribe to events.
         This endpoint uses Server-Sent Events (SSE) to push events to the client.
@@ -477,7 +521,9 @@ paths:
         - name: event
           required: false
           in: query
-          description: An array of event types to subscribe to. If not provided, only client-specific events will be sent.
+          description: >-
+            An array of event types to subscribe to. If not provided, only
+            client-specific events will be sent.
           schema:
             type: array
             items:
@@ -490,7 +536,6 @@ paths:
                 - status
                 - version
                 - preferences
-                - custom
       responses:
         '200':
           description: A stream of events from the Flix Client.
@@ -498,10 +543,34 @@ paths:
             text/event-stream:
               schema:
                 $ref: '#/components/schemas/SSEEvent'
-      tags:
-        - Events
       security:
         - bearer: []
+      summary: Subscribe to events from the Client.
+      tags:
+        - Events
+  
+tags:
+  - name: Health Check
+    description: ''
+  - name: Info
+    description: ''
+  - name: API Registration
+    description: ''
+  - name: Status
+    description: ''
+  - name: Project Details
+    description: ''
+  - name: Panel Management
+    description: ''
+  - name: Media Object Download
+    description: ''
+  - name: Preferences
+    description: ''
+  - name: Events
+    description: ''
+servers:
+  - url: http://localhost:3000
+    description: Flix Client API
 components:
   securitySchemes:
     bearer:
@@ -538,7 +607,6 @@ components:
               - STATUS
               - VERSION
               - PREFERENCES
-              - CUSTOM
       required:
         - eventTypes
     WebsocketEvent:
@@ -712,30 +780,52 @@ components:
       properties:
         width:
           type: number
-          description: Width is the width of the media in pixels, dictating the scale of horizontal camera movements.
+          description: >-
+            Width is the width of the media in pixels, dictating the scale of
+            horizontal camera movements.
         height:
           type: number
-          description: Height is the height of the media in pixels, dictating the scale of vertical camera movements.
+          description: >-
+            Height is the height of the media in pixels, dictating the scale of
+            vertical camera movements.
         scale:
           type: number
-          description: |-
-            Stretch (Scale in API) specifies how much the source artwork has been stretched within this media.
-            More specifically, it is the inverse stretch, such that if the source artwork has a width of 1000
-            while the bounding box of the same artwork within this media has a width of 2000, the stretch will be
+          description: >-
+            Stretch (Scale in API) specifies how much the source artwork has
+            been stretched within this media.
+
+            More specifically, it is the inverse stretch, such that if the
+            source artwork has a width of 1000
+
+            while the bounding box of the same artwork within this media has a
+            width of 2000, the stretch will be
+
             1000 / 2000 = 0.5.
         offsetX:
           type: number
-          description: |-
-            OffsetX is the horizontal offset of the source artwork within this media, if this media has been padded.
-            In particular, it is the horizontal distance from the centre of this media to the centre of the source artwork.
-            Specified in terms of the pixel space of the source artwork; calculate OffsetX / Stretch to get
+          description: >-
+            OffsetX is the horizontal offset of the source artwork within this
+            media, if this media has been padded.
+
+            In particular, it is the horizontal distance from the centre of this
+            media to the centre of the source artwork.
+
+            Specified in terms of the pixel space of the source artwork;
+            calculate OffsetX / Stretch to get
+
             the offset in pixels within this me.
         offsetY:
           type: number
-          description: |-
-            OffsetY is the vertical offset of the source artwork within this media, if this media has been padded.
-            In particular, it is the vertical distance from the centre of this media to the centre of the source artwork.
-            Specified in terms of the pixel space of the source artwork; calculate OffsetY / Stretch to get
+          description: >-
+            OffsetY is the vertical offset of the source artwork within this
+            media, if this media has been padded.
+
+            In particular, it is the vertical distance from the centre of this
+            media to the centre of the source artwork.
+
+            Specified in terms of the pixel space of the source artwork;
+            calculate OffsetY / Stretch to get
+
             the offset in pixels within this media.
       required:
         - width
@@ -748,29 +838,45 @@ components:
       properties:
         anchorPointHorizontal:
           type: number
-          description: |-
-            The horizontal value of the point that CenterHoriz, CenterVert and Rotation are applied to,
-            specified as an offset from the viewport centre in fractions of the horizontal viewport resolution.
-            A value of 0 is the centre of the viewport, while a value of -0.5 is the left edge of the viewport.
+          description: >-
+            The horizontal value of the point that CenterHoriz, CenterVert and
+            Rotation are applied to,
+
+            specified as an offset from the viewport centre in fractions of the
+            horizontal viewport resolution.
+
+            A value of 0 is the centre of the viewport, while a value of -0.5 is
+            the left edge of the viewport.
           default: 0
         anchorPointVertical:
           type: number
-          description: |-
-            The vertical value of the point that CenterHoriz, CenterVert and Rotation are applied to,
-            specified as an offset from the viewport centre in fractions of the vertical viewport resolution.
-            A value of 0 is the centre of the viewport, while a value of -0.5 is the top edge of the viewport.
+          description: >-
+            The vertical value of the point that CenterHoriz, CenterVert and
+            Rotation are applied to,
+
+            specified as an offset from the viewport centre in fractions of the
+            vertical viewport resolution.
+
+            A value of 0 is the centre of the viewport, while a value of -0.5 is
+            the top edge of the viewport.
           default: 0
         centerHorizontal:
           type: number
-          description: |-
-            The horizontal position of the camera in fractions of the viewport width, relative to the centre of the viewport.
-            A positive value means the camera is positioned to the left of the viewport centre.
+          description: >-
+            The horizontal position of the camera in fractions of the viewport
+            width, relative to the centre of the viewport.
+
+            A positive value means the camera is positioned to the left of the
+            viewport centre.
           default: 0
         centerVertical:
           type: number
-          description: |-
-            The vertical position of the camera in fractions of the viewport height, relative to the centre of the viewport.
-            A positive value means the camera is positioned above the viewport centre.
+          description: >-
+            The vertical position of the camera in fractions of the viewport
+            height, relative to the centre of the viewport.
+
+            A positive value means the camera is positioned above the viewport
+            centre.
           default: 0
         rotation:
           type: number
@@ -782,14 +888,22 @@ components:
           default: 0
         startKey:
           type: number
-          description: The frame of the panel revision that the information of this keyframe relates to, starting at 0.
+          description: >-
+            The frame of the panel revision that the information of this
+            keyframe relates to, starting at 0.
           default: 0
         viewport:
-          description: |-
+          description: >-
             Describes the media a keyframe applies to.
-            In the event that the media is a padded or stretched version of some source artwork,
-            it will contain information about the nature of the padding/stretch to facilitate comparison of
-            the keyframes associated with this descriptor and the keyframes of the source panel.
+
+            In the event that the media is a padded or stretched version of some
+            source artwork,
+
+            it will contain information about the nature of the padding/stretch
+            to facilitate comparison of
+
+            the keyframes associated with this descriptor and the keyframes of
+            the source panel.
           default: null
           allOf:
             - $ref: '#/components/schemas/ViewportRequest'
@@ -820,6 +934,7 @@ components:
           type: boolean
         sourceFile:
           nullable: true
+          type: object
           allOf:
             - $ref: '#/components/schemas/OpenSourceFileData'
         dialogue:
@@ -899,27 +1014,36 @@ components:
           $ref: '#/components/schemas/OpenSourceFileData'
       required:
         - sourceFile
-    ExtensionCustomActionType:
-      type: string
-      enum:
-        - PanelBrowserAction
-    RegistrationRequestAction:
+    CustomActionRegistrationRequest:
       type: object
       properties:
         id:
           type: string
-          description: The unique identifier for this action.
+          description: Unique identifier for this action.
         name:
           type: string
           description: The user-friendly name for this action to be displayed in the UI.
         description:
           type: string
-          description: The user-friendly description for this action to be displayed in the UI.
+          description: >-
+            The user-friendly description for this action to be displayed in the
+            UI.
         iconSvg:
           type: string
-          description: A simple SVG icon for this specific action when displayed in the UI.
+          description: >-
+            A simple SVG icon for this specific action when displayed in the UI.
+
+            This value will be processed upon registration and may display
+            incorrectly if unsupported SVG features are used.
         type:
-          $ref: '#/components/schemas/ExtensionCustomActionType'
+          type: string
+          description: >-
+            Context/location of the action within the application.
+
+            For now only PanelBrowserAction is supported and will be set
+            regardless of provided value.
+          enum:
+            - PanelBrowserAction
       required:
         - id
         - name
@@ -941,36 +1065,24 @@ components:
           items:
             type: string
         actions:
-          description: The actions available for this API consumer.
+          description: List of actions available for this extension.
           type: array
           items:
-            $ref: '#/components/schemas/RegistrationRequestAction'
+            $ref: '#/components/schemas/CustomActionRegistrationRequest'
         iconSvg:
           type: string
-          description: The SVG icon for this API consumer.
+          description: >-
+            A simple SVG icon to be displayed by default for extension actions
+            when displayed in the UI.
+
+            This value will be processed upon registration and may display
+            incorrectly if unsupported SVG features are used.
+        shortName:
+          type: string
+          description: Short name for extension to be used in context menu.
       required:
         - name
         - clientUid
-    RegistrationResponseAction:
-      type: object
-      properties:
-        id:
-          type: string
-          description: The unique identifier for this action.
-        name:
-          type: string
-          description: The user-friendly name for this action to be displayed in the UI.
-        description:
-          type: string
-          description: The user-friendly description for this action to be displayed in the UI.
-        iconSvg:
-          type: string
-          description: A simple SVG icon for this specific action when displayed in the UI.
-        type:
-          $ref: '#/components/schemas/ExtensionCustomActionType'
-      required:
-        - id
-        - name
     RegistrationResponse:
       type: object
       properties:
@@ -979,20 +1091,12 @@ components:
           description: The Flix-maintained identifier for this API consumer.
         token:
           type: string
-          description: The generated access token that the API consumer can use to access the rest of the API.
+          description: >-
+            The generated access token that the API consumer can use to access
+            the rest of the API.
       required:
         - flixId
         - token
-    ActionsUpdateResponse:
-      type: object
-      properties:
-        actions:
-          description: The actions registered for this API consumer.
-          type: array
-          items:
-            $ref: '#/components/schemas/RegistrationResponseAction'
-      required:
-        - actions
     RegistrationDetails:
       type: object
       properties:
@@ -1009,22 +1113,74 @@ components:
           type: string
           description: The API client-specified identifier for this API consumer.
         logPaths:
-          description: Paths to the location where the extension will write its logs for different versions of the app (Optional).
+          description: >-
+            Paths to the location where the extension will write its logs for
+            different versions of the app (Optional).
           type: array
           items:
             type: string
+        actions:
+          description: List of actions available for this extension.
+          type: array
+          items:
+            type: object
+        iconSvg:
+          type: string
+          description: SVG icon for the default extension button.
+        shortName:
+          type: string
+          description: Short name for extension to be used in context menu.
       required:
         - flixId
         - name
         - clientUid
-    ActionUpdateRequest:
+    ActionsUpdateRequest:
       type: object
       properties:
         actions:
-          description: The actions available for this API consumer.
+          description: List of actions to be updated for this API client.
           type: array
           items:
-            $ref: '#/components/schemas/RegistrationRequestAction'
+            $ref: '#/components/schemas/CustomActionRegistrationRequest'
+      required:
+        - actions
+    ActionRegistrationResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier for this action.
+        name:
+          type: string
+          description: The user-friendly name for this action to be displayed in the UI.
+        description:
+          type: string
+          description: >-
+            The user-friendly description for this action to be displayed in the
+            UI.
+        iconSvg:
+          type: string
+          description: A simple SVG icon for this specific action when displayed in the UI.
+        type:
+          type: string
+          description: >-
+            Context/location of the action within the application.
+
+            For now only PanelBrowserAction is supported and will be set
+            regardless of provided value.
+          enum:
+            - PanelBrowserAction
+      required:
+        - id
+        - name
+    ActionsUpdateResponse:
+      type: object
+      properties:
+        actions:
+          description: The list of actions registered for this API consumer's extension.
+          type: array
+          items:
+            $ref: '#/components/schemas/ActionRegistrationResponse'
       required:
         - actions
     PanelRequestItem:
@@ -1036,13 +1192,19 @@ components:
           example: 15
         duration:
           type: integer
-          description: Duration is the number of frames this instance of [PanelRevision] has, within this [Shot].
+          description: >-
+            Duration is the number of frames this instance of [PanelRevision]
+            has, within this [Shot].
         trimInFrame:
           type: integer
-          description: TrimInFrame is the trim in of this panel revision in a given sequence revision if this is an animated panel.
+          description: >-
+            TrimInFrame is the trim in of this panel revision in a given
+            sequence revision if this is an animated panel.
         trimOutFrame:
           type: integer
-          description: TrimOutFrame is the trim out of this panel revision in a given sequence revision if this is an animated panel.
+          description: >-
+            TrimOutFrame is the trim out of this panel revision in a given
+            sequence revision if this is an animated panel.
         path:
           type: string
           description: The file path to upload.
@@ -1054,12 +1216,19 @@ components:
             $ref: '#/components/schemas/KeyframeRequest'
         originSbp:
           type: object
-          description: |-
-            Contains information about panel revisions imported from Storyboard Pro.
-            This is for internal use by the Storyboard Pro extension and might be removed in the future without notice.
+          additionalProperties:
+            type: string
+          description: >-
+            Contains information about panel revisions imported from Storyboard
+            Pro.
+
+            This is for internal use by the Storyboard Pro extension and might
+            be removed in the future without notice.
         sourceMedia:
           type: string
-          description: This is used to upload a MOV file that will be used as the source media for the panel preview.
+          description: >-
+            This is used to upload a MOV file that will be used as the source
+            media for the panel preview.
         dialogue:
           type: string
           description: This is dialogue text that will be associated with the panel.
@@ -1068,11 +1237,17 @@ components:
           description: This indicates whether panel has layer transform.
         shotName:
           type: string
-          description: |-
+          description: >-
             The name of the shot this panel belongs to.
-            When specified, a shot with the given name will be created and this panel will be added to it.
-            If the name already exists within the sequence, the request will be rejected with a 400 Bad Request response.
-            If not provided, the panel will be added to an existing shot based on the target insert index.
+
+            When specified, a shot with the given name will be created and this
+            panel will be added to it.
+
+            If the name already exists within the sequence, the request will be
+            rejected with a 400 Bad Request response.
+
+            If not provided, the panel will be added to an existing shot based
+            on the target insert index.
           example: Shot 001
       required:
         - path
@@ -1111,10 +1286,14 @@ components:
       properties:
         startIndex:
           type: integer
-          description: (Optional) The index from which to insert or update panels. Defaults to currently selected panel.
+          description: >-
+            (Optional) The index from which to insert or update panels. Defaults
+            to currently selected panel.
           example: 3
         panels:
-          description: The file paths to upload and the IDs of the panels they should update.
+          description: >-
+            The file paths to upload and the IDs of the panels they should
+            update.
           type: array
           items:
             $ref: '#/components/schemas/PanelRequestItem'
@@ -1128,7 +1307,9 @@ components:
           example: Photoshop
         skipPanelReuse:
           type: boolean
-          description: Whether panel reuse checks should be skipped. Will always skip if true, and always do reuse checks if false.
+          description: >-
+            Whether panel reuse checks should be skipped. Will always skip if
+            true, and always do reuse checks if false.
           example: true
       required:
         - panels
@@ -1138,7 +1319,9 @@ components:
       properties:
         startIndex:
           type: integer
-          description: (Optional) The index from which to annotate panels. Defaults to currently selected panel.
+          description: >-
+            (Optional) The index from which to annotate panels. Defaults to
+            currently selected panel.
           example: 3
         paths:
           description: The file paths to be uploaded as panel annotations.
@@ -1161,10 +1344,14 @@ components:
       properties:
         startIndex:
           type: integer
-          description: (Optional) The index from which to annotate panels. Defaults to currently selected panel.
+          description: >-
+            (Optional) The index from which to annotate panels. Defaults to
+            currently selected panel.
           example: 3
         panels:
-          description: The file paths to upload and the panel IDs that they should annotate.
+          description: >-
+            The file paths to upload and the panel IDs that they should
+            annotate.
           type: array
           items:
             $ref: '#/components/schemas/PanelRequestItem'
@@ -1181,7 +1368,9 @@ components:
       properties:
         startIndex:
           type: integer
-          description: (Optional) The index from which to insert or update panels. Defaults to currently selected panel.
+          description: >-
+            (Optional) The index from which to insert or update panels. Defaults
+            to currently selected panel.
           example: 3
         paths:
           description: The file paths to upload as new panel artwork.
@@ -1201,7 +1390,9 @@ components:
           example: Photoshop
         skipPanelReuse:
           type: boolean
-          description: Whether panel reuse checks should be skipped. Will always skip if true, and always do reuse checks if false.
+          description: >-
+            Whether panel reuse checks should be skipped. Will always skip if
+            true, and always do reuse checks if false.
           example: true
       required:
         - paths
@@ -1242,7 +1433,9 @@ components:
       properties:
         assetId:
           type: integer
-          description: The identifier of an asset in Flix. For example, the asset specified in the `OPEN` event.
+          description: >-
+            The identifier of an asset in Flix. For example, the asset specified
+            in the `OPEN` event.
         targetFolder:
           type: string
           description: The folder that the requested asset should be downloaded into.
@@ -1265,6 +1458,11 @@ components:
             - xml
             - publish
             - publish_fullsized
+            - profile_original
+            - profile_image_64x64
+            - profile_image_128x128
+            - profile_image_256x256
+            - profile_image_512x512
             - sboard
             - scaled
             - show-thumbnail
@@ -1293,7 +1491,9 @@ components:
           description: The name of the downloaded file on disk.
         filePath:
           type: string
-          description: The final path of the downloaded file on disk. This should just be `${targetFolder}/${fileName}`.
+          description: >-
+            The final path of the downloaded file on disk. This should just be
+            `${targetFolder}/${fileName}`.
       required:
         - assetId
         - mediaObjectId
@@ -1402,7 +1602,9 @@ components:
           type: string
           description: Any comment added to the sequence revision when saving.
         shotNames:
-          description: The list of shot names included in the sequence revision, derived from the named shots of the panels in the sequence revision.
+          description: >-
+            The list of shot names included in the sequence revision, derived
+            from the named shots of the panels in the sequence revision.
           type: array
           items:
             type: string
@@ -1419,21 +1621,25 @@ components:
         show:
           nullable: true
           description: Details of the currently opened show.
+          type: object
           allOf:
             - $ref: '#/components/schemas/ShowDetailsDto'
         episode:
           nullable: true
           description: Details of the currently opened episode, if in an episodic show.
+          type: object
           allOf:
             - $ref: '#/components/schemas/EpisodeDetailsDto'
         sequence:
           nullable: true
           description: Details of the currently opened sequence.
+          type: object
           allOf:
             - $ref: '#/components/schemas/SequenceDetailsDto'
         sequenceRevision:
           nullable: true
           description: Details of the currently opened sequence revision.
+          type: object
           allOf:
             - $ref: '#/components/schemas/SequenceRevisionDetailsDto'
       required:
@@ -1474,7 +1680,9 @@ components:
           description: Whether the user has permission to publish the current revision.
         canExport:
           type: boolean
-          description: Whether the user has permission to export files from the current revision.
+          description: >-
+            Whether the user has permission to export files from the current
+            revision.
         panelSelection:
           description: A list of the currently selected panel details, including ID.
           type: array
@@ -1497,7 +1705,9 @@ components:
           description: Whether the Flix Client is currently publishing a sequence revision.
         isExporting:
           type: boolean
-          description: Whether the Flix Client is currently exporting files from a sequence revision.
+          description: >-
+            Whether the Flix Client is currently exporting files from a sequence
+            revision.
       required:
         - isSaving
         - isPublishing
@@ -1509,7 +1719,9 @@ components:
           type: boolean
           description: Whether or not the panel browser is open and writable.
         revisionStatus:
-          description: Details about the current sequence revision loaded into the panel browser.
+          description: >-
+            Details about the current sequence revision loaded into the panel
+            browser.
           allOf:
             - $ref: '#/components/schemas/RevisionStatusResponse'
         actionsInProgress:
