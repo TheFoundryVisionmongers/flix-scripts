@@ -34,7 +34,6 @@ __all__ = [
     "ClientEventType",
     "ClientPingEvent",
     "ConnectionEvent",
-    "CustomActionType",
     "CustomActionRegistrationRequest",
     "DownloadResponse",
     "Event",
