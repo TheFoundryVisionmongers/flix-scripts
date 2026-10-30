@@ -382,6 +382,7 @@ class Extension:
                     version=self.version or api_types.UNSET,
                     log_paths=self.log_paths or api_types.UNSET,
                     icon_svg=self.icon_svg or api_types.UNSET,
+                    short_name=self.short_name or api_types.UNSET,
                     actions=[action.to_dict() for action in self.actions]
                     if self.actions
                     else api_types.UNSET,
