@@ -253,6 +253,8 @@ class Extension:
                 types.ClientEventType.PROJECT,
                 types.ClientEventType.ACTION,
                 types.ClientEventType.OPEN,
+                types.ClientEventType.PANEL_METADATA_UPDATE,
+                types.ClientEventType.PROJECT_METADATA_UPDATE,
             ],
         )
         await self.sio.emit("subscribe", data=events.to_dict())
