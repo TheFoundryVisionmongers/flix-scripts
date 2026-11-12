@@ -7,6 +7,7 @@ from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
     from ..models.open_file_panel_data import OpenFilePanelData
+    from ..models.open_file_shot_data import OpenFileShotData
     from ..models.project_ids_dto import ProjectIdsDto
     from ..models.ps_configuration import PsConfiguration
 
@@ -20,11 +21,13 @@ class OpenFileEvent:
     Attributes:
         project (ProjectIdsDto):
         panels (List['OpenFilePanelData']):
+        shots (List['OpenFileShotData']):
         sketching_tool_configuration (Union[Unset, PsConfiguration]):
     """
 
     project: "ProjectIdsDto"
     panels: List["OpenFilePanelData"]
+    shots: List["OpenFileShotData"]
     sketching_tool_configuration: Union[Unset, "PsConfiguration"] = UNSET
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -37,6 +40,12 @@ class OpenFileEvent:
 
             panels.append(panels_item)
 
+        shots = []
+        for shots_item_data in self.shots:
+            shots_item = shots_item_data.to_dict()
+
+            shots.append(shots_item)
+
         sketching_tool_configuration: Union[Unset, Dict[str, Any]] = UNSET
         if not isinstance(self.sketching_tool_configuration, Unset):
             sketching_tool_configuration = self.sketching_tool_configuration.to_dict()
@@ -47,6 +56,7 @@ class OpenFileEvent:
             {
                 "project": project,
                 "panels": panels,
+                "shots": shots,
             }
         )
         if sketching_tool_configuration is not UNSET:
@@ -57,6 +67,7 @@ class OpenFileEvent:
     @classmethod
     def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
         from ..models.open_file_panel_data import OpenFilePanelData
+        from ..models.open_file_shot_data import OpenFileShotData
         from ..models.project_ids_dto import ProjectIdsDto
         from ..models.ps_configuration import PsConfiguration
 
@@ -70,6 +81,13 @@ class OpenFileEvent:
 
             panels.append(panels_item)
 
+        shots = []
+        _shots = d.pop("shots")
+        for shots_item_data in _shots:
+            shots_item = OpenFileShotData.from_dict(shots_item_data)
+
+            shots.append(shots_item)
+
         _sketching_tool_configuration = d.pop("sketchingToolConfiguration", UNSET)
         sketching_tool_configuration: Union[Unset, PsConfiguration]
         if isinstance(_sketching_tool_configuration, Unset):
@@ -82,6 +100,7 @@ class OpenFileEvent:
         open_file_event = cls(
             project=project,
             panels=panels,
+            shots=shots,
             sketching_tool_configuration=sketching_tool_configuration,
         )
 

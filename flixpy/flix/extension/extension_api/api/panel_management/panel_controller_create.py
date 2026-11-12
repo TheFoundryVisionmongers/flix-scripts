@@ -6,17 +6,24 @@ import httpx
 from ... import errors
 from ...client import AuthenticatedClient, Client
 from ...models.bulk_panel_request import BulkPanelRequest
+from ...models.full_panel_request import FullPanelRequest
 from ...models.panel_request_response import PanelRequestResponse
 from ...types import Response
 
 
 def _get_kwargs(
     *,
-    json_body: BulkPanelRequest,
+    json_body: Union["BulkPanelRequest", "FullPanelRequest"],
 ) -> Dict[str, Any]:
     pass
 
-    json_json_body = json_body.to_dict()
+    json_json_body: Dict[str, Any]
+
+    if isinstance(json_body, BulkPanelRequest):
+        json_json_body = json_body.to_dict()
+
+    else:
+        json_json_body = json_body.to_dict()
 
     return {
         "method": "post",
@@ -55,14 +62,14 @@ def _build_response(
 def sync_detailed(
     *,
     client: AuthenticatedClient,
-    json_body: BulkPanelRequest,
+    json_body: Union["BulkPanelRequest", "FullPanelRequest"],
 ) -> Response[Union[Any, PanelRequestResponse]]:
     """Create New Panels
 
      Creates new panels in the active sequence revision from the list of provided file paths.
 
     Args:
-        json_body (BulkPanelRequest):
+        json_body (Union['BulkPanelRequest', 'FullPanelRequest']):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -86,14 +93,14 @@ def sync_detailed(
 def sync(
     *,
     client: AuthenticatedClient,
-    json_body: BulkPanelRequest,
+    json_body: Union["BulkPanelRequest", "FullPanelRequest"],
 ) -> Optional[Union[Any, PanelRequestResponse]]:
     """Create New Panels
 
      Creates new panels in the active sequence revision from the list of provided file paths.
 
     Args:
-        json_body (BulkPanelRequest):
+        json_body (Union['BulkPanelRequest', 'FullPanelRequest']):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -112,14 +119,14 @@ def sync(
 async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
-    json_body: BulkPanelRequest,
+    json_body: Union["BulkPanelRequest", "FullPanelRequest"],
 ) -> Response[Union[Any, PanelRequestResponse]]:
     """Create New Panels
 
      Creates new panels in the active sequence revision from the list of provided file paths.
 
     Args:
-        json_body (BulkPanelRequest):
+        json_body (Union['BulkPanelRequest', 'FullPanelRequest']):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -141,14 +148,14 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: AuthenticatedClient,
-    json_body: BulkPanelRequest,
+    json_body: Union["BulkPanelRequest", "FullPanelRequest"],
 ) -> Optional[Union[Any, PanelRequestResponse]]:
     """Create New Panels
 
      Creates new panels in the active sequence revision from the list of provided file paths.
 
     Args:
-        json_body (BulkPanelRequest):
+        json_body (Union['BulkPanelRequest', 'FullPanelRequest']):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

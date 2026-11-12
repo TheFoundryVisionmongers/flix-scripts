@@ -1166,19 +1166,20 @@ class Sequence(FlixType):
                 ):
                     panel_status_callback(msg)
             return await waiter.result.get_sequence_revision(self)
-        
+
     async def import_sbp_fcpxml(
         self,
         xml_asset: Asset,
         sboard_asset: Asset,
         sbp_project_filepath: str,
         comment: str = "",
+        *,
         extra_params: Mapping[str, Any] | None = None,
         timeout: float | None = None,
         chain_status_callback: Callable[[websocket.MessageJobChainStatus], None] | None = None,
-        panel_status_callback: Callable[[websocket.MessageEditorialImportStatus], None]
+        panel_status_callback: Callable[[websocket.MessageStoryboardProImportComplete], None]
         | None = None,
-    ) -> SequenceRevision:
+    ) -> tuple[int, dict[str, websocket.MessageStoryboardProImportComplete.MissingAssetModel]]:
         path = f"{self.path_prefix()}/revision/0/reconform/sbp"
         params = extra_params or {}
         async with self.client.websocket() as ws:
@@ -1676,7 +1677,7 @@ class Show(FlixType):
 
         return media_objects
 
-    async def transcode_assets(self, assets: list[Asset], aspect_ratio: float = None) -> list[str]:
+    async def transcode_assets(self, assets: list[Asset], aspect_ratio: float | None = None) -> list[str]:
         """Transcodes an asset with an 'artwork' media object.
 
         This will create thumbnail, scaled and fullres images for the asset.
@@ -1692,10 +1693,11 @@ class Show(FlixType):
             task_ids: list[str]
 
         path = f"{self.path_prefix()}/asset/transcode"
-        body = {"asset_ids": [a.asset_id for a in assets]}
+        body: dict[str, object] = {"asset_ids": [a.asset_id for a in assets]}
         if aspect_ratio is not None:
             body["aspect_ratio"] = aspect_ratio
-        task_ids = cast(_Tasks, await self.client.post(path, body))
+        response = await self.client.post(path, body=body)
+        task_ids = cast("_Tasks", response)
         return task_ids["task_ids"]
 
     async def upload_file(
@@ -2975,10 +2977,6 @@ class SequenceRevision(FlixType):
         return await self._export(
             websocket.MessageContactSheetCreated, "contactsheet", path, params, panels
         )
-    
-    async def publish_aaf(self):
-        path = f"{self.path_prefix()}/publish"
-        await self.client.post(path, body={})
 
     async def save(self, force_create_new: bool = False) -> None:
         """Save this sequence revision.

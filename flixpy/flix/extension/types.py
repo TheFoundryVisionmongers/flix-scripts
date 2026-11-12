@@ -4,9 +4,15 @@ from __future__ import annotations
 
 import dataclasses
 import enum
-from typing import Any
+from typing import Any, Union
 
 from typing_extensions import Self
+
+from flixpy.flix.extension.extension_api.models.episode_details_dto import EpisodeDetailsDto
+from flixpy.flix.extension.extension_api.models.sequence_details_dto import SequenceDetailsDto
+from flixpy.flix.extension.extension_api.models.sequence_revision_details_dto import SequenceRevisionDetailsDto
+from flixpy.flix.extension.extension_api.models.show_details_dto import ShowDetailsDto
+from flixpy.flix.extension.extension_api.models.updated_panel_metadata_dto import UpdatedPanelMetadataDto
 
 from ..lib import types as flix_types
 from .extension_api import models
@@ -18,7 +24,7 @@ from .extension_api.models import (
     SourceFilePreviewMode,
     SourceFileType,
 )
-from .extension_api.types import Unset
+from .extension_api.types import UNSET, Unset
 
 __all__ = [
     "ActionEvent",
@@ -36,10 +42,12 @@ __all__ = [
     "OpenPanelData",
     "OpenSourceFileEvent",
     "PanelBrowserStatus",
+    "PanelMetadataUpdateEvent",
     "PanelRequestResponse",
     "PanelSelection",
     "ProjectDetails",
     "ProjectEvent",
+    "ProjectMetadataUpdateEvent",
     "ProjectIds",
     "RevisionStatus",
     "SourceFile",
@@ -343,7 +351,6 @@ class OpenPanelData:
     source_file_asset_id: int | None
     annotation_asset_id: int | None
     revision_id: int | None
-    duration: int | None
     shot_name: str | None
     shot_id: int | None
 
@@ -356,7 +363,6 @@ class OpenPanelData:
             source_file_asset_id=data.source_file.asset_id if data.source_file else None,
             annotation_asset_id=data.annotation_asset_id if data.annotation_asset_id else None,
             revision_id=data.revision_id if data.revision_id else None,
-            duration=data.duration if data.duration else None,
             index=data.index,
             shot_name=data.shot_name if data.shot_name else None,
             shot_id=data.shot_id if data.shot_id else None,
@@ -391,7 +397,6 @@ class OpenSourceFileEvent(ClientEvent):
             else 0,
             additional_properties=data.additional_properties,
         )
-
 
 @dataclasses.dataclass
 class DownloadResponse:
@@ -433,4 +438,36 @@ class VersionResponse:
         return cls(
             flix_version=data.flix_version,
             supported_api_versions=data.supported_api_versions,
+        )
+
+@dataclasses.dataclass
+class PanelMetadataUpdateEvent(ClientEvent):
+    panels: list[UpdatedPanelMetadataDto]
+
+    @classmethod
+    def from_dict(cls, event_type: str, data: models.PanelMetadataUpdateEvent) -> Self:
+        return cls(
+            type=event_type,
+            panels=[UpdatedPanelMetadataDto.from_dict(panel) for panel in data.panels],
+            additional_properties=data.additional_properties,
+        )
+
+@dataclasses.dataclass
+class ProjectMetadataUpdateEvent(ClientEvent):
+    success: bool
+    show: Unset | ShowDetailsDto
+    episode: Unset | EpisodeDetailsDto
+    sequence: Unset | SequenceDetailsDto
+    sequence_revision: Unset | SequenceRevisionDetailsDto
+
+    @classmethod
+    def from_dict(cls, event_type: str, data: models.ProjectMetadataUpdateEvent) -> Self:
+        return cls(
+            type=event_type,
+            success=data.success,
+            show=ShowDetailsDto.from_dict(data.show) if data.show else Unset,
+            episode=EpisodeDetailsDto.from_dict(data.episode) if data.episode else Unset,
+            sequence=SequenceDetailsDto.from_dict(data.sequence) if data.sequence else Unset,
+            sequence_revision=SequenceRevisionDetailsDto.from_dict(data.sequence_revision) if data.sequence_revision else Unset,
+            additional_properties=data.additional_properties,
         )
