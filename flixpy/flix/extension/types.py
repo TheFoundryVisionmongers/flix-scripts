@@ -451,7 +451,7 @@ class PanelMetadataUpdateEvent(ClientEvent):
     def from_dict(cls, event_type: str, data: models.PanelMetadataUpdateEvent) -> Self:
         return cls(
             type=event_type,
-            panels=[UpdatedPanelMetadataDto.from_dict(panel) for panel in data.panels],
+            panels=data.panels,
             additional_properties=data.additional_properties,
         )
 
@@ -468,9 +468,9 @@ class ProjectMetadataUpdateEvent(ClientEvent):
         return cls(
             type=event_type,
             success=data.success,
-            show=ShowDetailsDto.from_dict(data.show) if data.show else Unset,
-            episode=EpisodeDetailsDto.from_dict(data.episode) if data.episode else Unset,
-            sequence=SequenceDetailsDto.from_dict(data.sequence) if data.sequence else Unset,
-            sequence_revision=SequenceRevisionDetailsDto.from_dict(data.sequence_revision) if data.sequence_revision else Unset,
+            show=data.show or Unset,
+            episode=data.episode or Unset,
+            sequence=data.sequence or Unset,
+            sequence_revision=data.sequence_revision or Unset,
             additional_properties=data.additional_properties,
         )
