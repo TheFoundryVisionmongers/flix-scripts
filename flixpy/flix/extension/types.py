@@ -4,15 +4,9 @@ from __future__ import annotations
 
 import dataclasses
 import enum
-from typing import Any, Union
+from typing import Any
 
 from typing_extensions import Self
-
-from flixpy.flix.extension.extension_api.models.episode_details_dto import EpisodeDetailsDto
-from flixpy.flix.extension.extension_api.models.sequence_details_dto import SequenceDetailsDto
-from flixpy.flix.extension.extension_api.models.sequence_revision_details_dto import SequenceRevisionDetailsDto
-from flixpy.flix.extension.extension_api.models.show_details_dto import ShowDetailsDto
-from flixpy.flix.extension.extension_api.models.updated_panel_metadata_dto import UpdatedPanelMetadataDto
 
 from ..lib import types as flix_types
 from .extension_api import models
@@ -21,8 +15,13 @@ from .extension_api.models import (
     ActionType,
     AssetType,
     ClientEventType,
+    EpisodeDetailsDto,
+    SequenceDetailsDto,
+    SequenceRevisionDetailsDto,
+    ShowDetailsDto,
     SourceFilePreviewMode,
     SourceFileType,
+    UpdatedPanelMetadataDto,
 )
 from .extension_api.types import UNSET, Unset
 
