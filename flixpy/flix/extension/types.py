@@ -180,6 +180,10 @@ class ClientEvent(Event):
             return StatusEvent.from_dict(event_type, data)
         elif isinstance(data, models.PingEvent):
             return ClientPingEvent.from_dict(event_type, data)
+        elif isinstance(data, models.PanelMetadataUpdateEvent):
+            return PanelMetadataUpdateEvent.from_dict(event_type, data)
+        elif isinstance(data, models.ProjectMetadataUpdateEvent):
+            return ProjectMetadataUpdateEvent.from_dict(event_type, data)
 
         return cls(
             type=event_type,
