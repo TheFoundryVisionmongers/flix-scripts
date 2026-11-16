@@ -1619,24 +1619,46 @@ components:
       required:
         - paths
         - origin
-    Keyframe:
-      type: object
-      properties: {}
     PanelRevisionDetailsDto:
       type: object
       properties:
         panelId:
-          type: number
+          type: integer
           description: The identifier of this panel.
         revisionId:
-          type: number
+          type: integer
           description: The panel revision of this panel instance.
         panelPosition:
-          type: number
+          type: integer
           description: The position of the panel in the sequence revision it belongs to.
         assetId:
-          type: number
+          type: integer
           description: The identifier for the asset associated with this panel.
+        showId:
+          type: integer
+          description: The show this panel belongs to.
+        sequenceId:
+          type: integer
+          description: The sequence this panel belongs to.
+        trimInFrame:
+          type: integer
+          description: TrimInFrame is the trim in of this panel revision in a given sequence revision if this is an animated panel.
+        trimOutFrame:
+          type: integer
+          description: TrimOutFrame is the trim out of this panel revision in a given sequence revision if this is an animated panel.
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+          description: |-
+            Arbitrary key-value metadata to merge into the entity. Each value must be a string, or `null` to delete that key.
+
+            **Note:** Keys in this dictionary are **case-sensitive**.
+
+            Best practice: Use namespaced keys to avoid conflicts with other extensions (e.g., `vendor.plugin:key`).
+          example:
+            com.myextension:status: inprogress
+            com.myextension:tag: null
         createdDate:
           format: date-time
           type: string
@@ -1648,30 +1670,12 @@ components:
         owner:
           type: string
           description: The user that originally created this "panel revision".
-        showId:
-          type: number
-          description: The show this panel belongs to.
-        sequenceId:
-          type: number
-          description: The sequence this panel belongs to.
         hidden:
           type: boolean
           description: Flag that indicates if a panel has been hidden in a sequence revision.
         duration:
           type: number
           description: The duration of the panel in frames.
-        trimInFrame:
-          type: number
-          description: TrimInFrame is the trim in of this panel revision in a given sequence revision if this is an animated panel.
-        trimOutFrame:
-          type: number
-          description: TrimOutFrame is the trim out of this panel revision in a given sequence revision if this is an animated panel.
-        in:
-          type: number
-          description: The sequence frame in which this panel begins.
-        out:
-          type: number
-          description: The sequence frame in which this panel ends.
         layerTransform:
           type: boolean
           description: Whether the panel revision had a layer transform applied to it in Storyboard Pro.
@@ -1689,41 +1693,34 @@ components:
           description: The camera move keyframes on this panel revisions.
           type: array
           items:
-            $ref: '#/components/schemas/Keyframe'
+            $ref: '#/components/schemas/KeyframeRequest'
         origin:
           type: string
           description: Where the panel comes from e.g. "manual import".
         shotName:
           type: string
           description: Sequence Revision shot this panel belongs to.
-        metadata:
-          type: object
-          additionalProperties:
-            type: string
-          description: Metadata of the panel revision. Can be updated via GRC API by extensions.
       required:
         - panelId
         - revisionId
         - panelPosition
         - assetId
+        - showId
+        - sequenceId
+        - trimInFrame
+        - trimOutFrame
+        - metadata
         - createdDate
         - revisionDate
         - owner
-        - showId
-        - sequenceId
         - hidden
         - duration
-        - trimInFrame
-        - trimOutFrame
-        - in
-        - out
         - layerTransform
         - dialogue
         - originSbp
         - keyframes
         - origin
         - shotName
-        - metadata
     PanelDetailsResponse:
       type: object
       properties:
@@ -1764,6 +1761,28 @@ components:
             com.myextension:tag: null
       required:
         - metadata
+    PanelUpdateMetadataResponseItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: The panel ID against which this metadata item is associated.
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+          description: |-
+            Arbitrary key-value metadata to merge into the entity. Each value must be a string, or `null` to delete that key.
+
+            **Note:** Keys in this dictionary are **case-sensitive**.
+
+            Best practice: Use namespaced keys to avoid conflicts with other extensions (e.g., `vendor.plugin:key`).
+          example:
+            com.myextension:status: inprogress
+            com.myextension:tag: null
+      required:
+        - id
+        - metadata
     PanelUpdateMetadataResponse:
       type: object
       properties:
@@ -1775,7 +1794,7 @@ components:
                 com.myextension:status: inprogress
           type: array
           items:
-            type: object
+            $ref: '#/components/schemas/PanelUpdateMetadataResponseItem'
       required:
         - results
     PanelTrackRequest:

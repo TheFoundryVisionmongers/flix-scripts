@@ -14,15 +14,24 @@ from ..types import UNSET, Unset
 
 
 
-T = TypeVar("T", bound="PanelUpdateMetadataResponseResultsItem")
+T = TypeVar("T", bound="PanelUpdateMetadataResponseItemMetadata")
 
 
 
 @_attrs_define
-class PanelUpdateMetadataResponseResultsItem:
-    
+class PanelUpdateMetadataResponseItemMetadata:
+    """ Arbitrary key-value metadata to merge into the entity. Each value must be a string, or `null` to delete that key.
 
-    additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+    **Note:** Keys in this dictionary are **case-sensitive**.
+
+    Best practice: Use namespaced keys to avoid conflicts with other extensions (e.g., `vendor.plugin:key`).
+
+        Example:
+            {'com.myextension:status': 'inprogress', 'com.myextension:tag': None}
+
+     """
+
+    additional_properties: dict[str, str] = _attrs_field(init=False, factory=dict)
 
 
 
@@ -40,21 +49,21 @@ class PanelUpdateMetadataResponseResultsItem:
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         d = dict(src_dict)
-        panel_update_metadata_response_results_item = cls(
+        panel_update_metadata_response_item_metadata = cls(
         )
 
 
-        panel_update_metadata_response_results_item.additional_properties = d
-        return panel_update_metadata_response_results_item
+        panel_update_metadata_response_item_metadata.additional_properties = d
+        return panel_update_metadata_response_item_metadata
 
     @property
     def additional_keys(self) -> list[str]:
         return list(self.additional_properties.keys())
 
-    def __getitem__(self, key: str) -> Any:
+    def __getitem__(self, key: str) -> str:
         return self.additional_properties[key]
 
-    def __setitem__(self, key: str, value: Any) -> None:
+    def __setitem__(self, key: str, value: str) -> None:
         self.additional_properties[key] = value
 
     def __delitem__(self, key: str) -> None:

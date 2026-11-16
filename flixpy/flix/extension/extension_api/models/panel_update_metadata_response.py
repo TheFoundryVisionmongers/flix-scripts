@@ -11,7 +11,7 @@ from ..types import UNSET, Unset
 from typing import cast
 
 if TYPE_CHECKING:
-  from ..models.panel_update_metadata_response_results_item import PanelUpdateMetadataResponseResultsItem
+  from ..models.panel_update_metadata_response_item import PanelUpdateMetadataResponseItem
 
 
 
@@ -25,11 +25,11 @@ T = TypeVar("T", bound="PanelUpdateMetadataResponse")
 class PanelUpdateMetadataResponse:
     """ 
         Attributes:
-            results (list[PanelUpdateMetadataResponseResultsItem]): List of metadata update results. Each includes panel id
-                and updated metadata. Example: [{'id': '1', 'metadata': {'com.myextension:status': 'inprogress'}}].
+            results (list[PanelUpdateMetadataResponseItem]): List of metadata update results. Each includes panel id and
+                updated metadata. Example: [{'id': '1', 'metadata': {'com.myextension:status': 'inprogress'}}].
      """
 
-    results: list[PanelUpdateMetadataResponseResultsItem]
+    results: list[PanelUpdateMetadataResponseItem]
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
 
@@ -37,7 +37,7 @@ class PanelUpdateMetadataResponse:
 
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.panel_update_metadata_response_results_item import PanelUpdateMetadataResponseResultsItem # noqa: PLC0415
+        from ..models.panel_update_metadata_response_item import PanelUpdateMetadataResponseItem # noqa: PLC0415
         results = []
         for results_item_data in self.results:
             results_item = results_item_data.to_dict()
@@ -58,12 +58,12 @@ class PanelUpdateMetadataResponse:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.panel_update_metadata_response_results_item import PanelUpdateMetadataResponseResultsItem # noqa: PLC0415
+        from ..models.panel_update_metadata_response_item import PanelUpdateMetadataResponseItem # noqa: PLC0415
         d = dict(src_dict)
         results = []
         _results = d.pop("results")
         for results_item_data in (_results):
-            results_item = PanelUpdateMetadataResponseResultsItem.from_dict(results_item_data)
+            results_item = PanelUpdateMetadataResponseItem.from_dict(results_item_data)
 
 
 
