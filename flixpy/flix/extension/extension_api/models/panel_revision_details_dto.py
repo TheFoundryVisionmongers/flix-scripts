@@ -12,7 +12,7 @@ from typing import cast
 import datetime
 
 if TYPE_CHECKING:
-  from ..models.keyframe_request import KeyframeRequest
+  from ..models.keyframe_dto import KeyframeDto
   from ..models.panel_revision_details_dto_metadata import PanelRevisionDetailsDtoMetadata
   from ..models.panel_revision_details_dto_origin_sbp import PanelRevisionDetailsDtoOriginSbp
 
@@ -55,7 +55,7 @@ class PanelRevisionDetailsDto:
             origin_sbp (PanelRevisionDetailsDtoOriginSbp): Contains information about panel revisions imported from
                 Storyboard Pro.
                 This is for internal use by the Storyboard Pro extension and might be removed in the future without notice.
-            keyframes (list[KeyframeRequest]): The camera move keyframes on this panel revisions.
+            keyframes (list[KeyframeDto]): The camera move keyframes on this panel revisions.
             origin (str): Where the panel comes from e.g. "manual import".
             shot_name (str): Sequence Revision shot this panel belongs to.
      """
@@ -77,7 +77,7 @@ class PanelRevisionDetailsDto:
     layer_transform: bool
     dialogue: str
     origin_sbp: PanelRevisionDetailsDtoOriginSbp
-    keyframes: list[KeyframeRequest]
+    keyframes: list[KeyframeDto]
     origin: str
     shot_name: str
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
@@ -87,7 +87,7 @@ class PanelRevisionDetailsDto:
 
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.keyframe_request import KeyframeRequest # noqa: PLC0415
+        from ..models.keyframe_dto import KeyframeDto # noqa: PLC0415
         from ..models.panel_revision_details_dto_metadata import PanelRevisionDetailsDtoMetadata # noqa: PLC0415
         from ..models.panel_revision_details_dto_origin_sbp import PanelRevisionDetailsDtoOriginSbp # noqa: PLC0415
         panel_id = self.panel_id
@@ -167,7 +167,7 @@ class PanelRevisionDetailsDto:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.keyframe_request import KeyframeRequest # noqa: PLC0415
+        from ..models.keyframe_dto import KeyframeDto # noqa: PLC0415
         from ..models.panel_revision_details_dto_metadata import PanelRevisionDetailsDtoMetadata # noqa: PLC0415
         from ..models.panel_revision_details_dto_origin_sbp import PanelRevisionDetailsDtoOriginSbp # noqa: PLC0415
         d = dict(src_dict)
@@ -220,7 +220,7 @@ class PanelRevisionDetailsDto:
         keyframes = []
         _keyframes = d.pop("keyframes")
         for keyframes_item_data in (_keyframes):
-            keyframes_item = KeyframeRequest.from_dict(keyframes_item_data)
+            keyframes_item = KeyframeDto.from_dict(keyframes_item_data)
 
 
 

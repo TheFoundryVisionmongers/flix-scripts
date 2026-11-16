@@ -873,31 +873,31 @@ components:
           type: integer
       required:
         - assetId
-    ViewportRequest:
+    ViewportDto:
       type: object
       properties:
         width:
-          type: number
+          type: integer
           description: Width is the width of the media in pixels, dictating the scale of horizontal camera movements.
         height:
-          type: number
+          type: integer
           description: Height is the height of the media in pixels, dictating the scale of vertical camera movements.
         scale:
-          type: number
+          type: integer
           description: |-
             Stretch (Scale in API) specifies how much the source artwork has been stretched within this media.
             More specifically, it is the inverse stretch, such that if the source artwork has a width of 1000
             while the bounding box of the same artwork within this media has a width of 2000, the stretch will be
             1000 / 2000 = 0.5.
         offsetX:
-          type: number
+          type: integer
           description: |-
             OffsetX is the horizontal offset of the source artwork within this media, if this media has been padded.
             In particular, it is the horizontal distance from the centre of this media to the centre of the source artwork.
             Specified in terms of the pixel space of the source artwork; calculate OffsetX / Stretch to get
             the offset in pixels within this me.
         offsetY:
-          type: number
+          type: integer
           description: |-
             OffsetY is the vertical offset of the source artwork within this media, if this media has been padded.
             In particular, it is the vertical distance from the centre of this media to the centre of the source artwork.
@@ -909,45 +909,45 @@ components:
         - scale
         - offsetX
         - offsetY
-    KeyframeRequest:
+    KeyframeDto:
       type: object
       properties:
         anchorPointHorizontal:
-          type: number
+          type: integer
           description: |-
             The horizontal value of the point that CenterHoriz, CenterVert and Rotation are applied to,
             specified as an offset from the viewport centre in fractions of the horizontal viewport resolution.
             A value of 0 is the centre of the viewport, while a value of -0.5 is the left edge of the viewport.
           default: 0
         anchorPointVertical:
-          type: number
+          type: integer
           description: |-
             The vertical value of the point that CenterHoriz, CenterVert and Rotation are applied to,
             specified as an offset from the viewport centre in fractions of the vertical viewport resolution.
             A value of 0 is the centre of the viewport, while a value of -0.5 is the top edge of the viewport.
           default: 0
         centerHorizontal:
-          type: number
+          type: integer
           description: |-
             The horizontal position of the camera in fractions of the viewport width, relative to the centre of the viewport.
             A positive value means the camera is positioned to the left of the viewport centre.
           default: 0
         centerVertical:
-          type: number
+          type: integer
           description: |-
             The vertical position of the camera in fractions of the viewport height, relative to the centre of the viewport.
             A positive value means the camera is positioned above the viewport centre.
           default: 0
         rotation:
-          type: number
+          type: integer
           description: How much to rotate the image clockwise in degrees.
           default: 0
         scale:
-          type: number
+          type: integer
           description: A vertical and horizontal scale, 100 meaning no scaling.
           default: 0
         startKey:
-          type: number
+          type: integer
           description: The frame of the panel revision that the information of this keyframe relates to, starting at 0.
           default: 0
         viewport:
@@ -958,7 +958,7 @@ components:
             the keyframes associated with this descriptor and the keyframes of the source panel.
           default: null
           allOf:
-            - $ref: '#/components/schemas/ViewportRequest'
+            - $ref: '#/components/schemas/ViewportDto'
       required:
         - anchorPointHorizontal
         - anchorPointVertical
@@ -996,7 +996,7 @@ components:
         keyframes:
           type: array
           items:
-            $ref: '#/components/schemas/KeyframeRequest'
+            $ref: '#/components/schemas/KeyframeDto'
         shotName:
           type: string
       required:
@@ -1462,7 +1462,7 @@ components:
           description: The camera move keyframes on this panel revisions.
           type: array
           items:
-            $ref: '#/components/schemas/KeyframeRequest'
+            $ref: '#/components/schemas/KeyframeDto'
         originSbp:
           type: object
           additionalProperties:
@@ -1693,7 +1693,7 @@ components:
           description: The camera move keyframes on this panel revisions.
           type: array
           items:
-            $ref: '#/components/schemas/KeyframeRequest'
+            $ref: '#/components/schemas/KeyframeDto'
         origin:
           type: string
           description: Where the panel comes from e.g. "manual import".

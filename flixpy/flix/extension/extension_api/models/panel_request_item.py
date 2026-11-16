@@ -12,7 +12,7 @@ from ..types import UNSET, Unset
 from typing import cast
 
 if TYPE_CHECKING:
-  from ..models.keyframe_request import KeyframeRequest
+  from ..models.keyframe_dto import KeyframeDto
   from ..models.panel_request_item_metadata import PanelRequestItemMetadata
   from ..models.panel_request_item_origin_sbp import PanelRequestItemOriginSbp
 
@@ -43,7 +43,7 @@ class PanelRequestItem:
 
                 Best practice: Use namespaced keys to avoid conflicts with other extensions (e.g., `vendor.plugin:key`).
                 Example: {'com.myextension:status': 'inprogress', 'com.myextension:tag': None}.
-            keyframes (list[KeyframeRequest] | Unset): The camera move keyframes on this panel revisions.
+            keyframes (list[KeyframeDto] | Unset): The camera move keyframes on this panel revisions.
             origin_sbp (PanelRequestItemOriginSbp | Unset): Contains information about panel revisions imported from
                 Storyboard Pro.
                 This is for internal use by the Storyboard Pro extension and might be removed in the future without notice.
@@ -64,7 +64,7 @@ class PanelRequestItem:
     trim_in_frame: int | Unset = UNSET
     trim_out_frame: int | Unset = UNSET
     metadata: PanelRequestItemMetadata | Unset = UNSET
-    keyframes: list[KeyframeRequest] | Unset = UNSET
+    keyframes: list[KeyframeDto] | Unset = UNSET
     origin_sbp: PanelRequestItemOriginSbp | Unset = UNSET
     source_media: str | Unset = UNSET
     dialogue: str | Unset = UNSET
@@ -77,7 +77,7 @@ class PanelRequestItem:
 
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.keyframe_request import KeyframeRequest # noqa: PLC0415
+        from ..models.keyframe_dto import KeyframeDto # noqa: PLC0415
         from ..models.panel_request_item_metadata import PanelRequestItemMetadata # noqa: PLC0415
         from ..models.panel_request_item_origin_sbp import PanelRequestItemOriginSbp # noqa: PLC0415
         path = self.path
@@ -150,7 +150,7 @@ class PanelRequestItem:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.keyframe_request import KeyframeRequest # noqa: PLC0415
+        from ..models.keyframe_dto import KeyframeDto # noqa: PLC0415
         from ..models.panel_request_item_metadata import PanelRequestItemMetadata # noqa: PLC0415
         from ..models.panel_request_item_origin_sbp import PanelRequestItemOriginSbp # noqa: PLC0415
         d = dict(src_dict)
@@ -175,11 +175,11 @@ class PanelRequestItem:
 
 
         _keyframes = d.pop("keyframes", UNSET)
-        keyframes: list[KeyframeRequest] | Unset = UNSET
+        keyframes: list[KeyframeDto] | Unset = UNSET
         if _keyframes is not UNSET:
             keyframes = []
             for keyframes_item_data in _keyframes:
-                keyframes_item = KeyframeRequest.from_dict(keyframes_item_data)
+                keyframes_item = KeyframeDto.from_dict(keyframes_item_data)
 
 
 

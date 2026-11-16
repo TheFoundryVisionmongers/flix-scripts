@@ -24,7 +24,7 @@ from .event_controller_handle_connection_event_item import EventControllerHandle
 from .full_panel_annotate_request import FullPanelAnnotateRequest
 from .full_panel_request import FullPanelRequest
 from .info_response import InfoResponse
-from .keyframe_request import KeyframeRequest
+from .keyframe_dto import KeyframeDto
 from .open_file_event import OpenFileEvent
 from .open_file_panel_data import OpenFilePanelData
 from .open_file_panel_data_origin_sbp import OpenFilePanelDataOriginSbp
@@ -97,7 +97,7 @@ from .subscribe_request import SubscribeRequest
 from .updated_panel_metadata_dto import UpdatedPanelMetadataDto
 from .updated_panel_metadata_dto_metadata import UpdatedPanelMetadataDtoMetadata
 from .version_event import VersionEvent
-from .viewport_request import ViewportRequest
+from .viewport_dto import ViewportDto
 from .websocket_event import WebsocketEvent
 from .websocket_event_data_type_0 import WebsocketEventDataType0
 from .websocket_event_data_type_0_type import WebsocketEventDataType0Type
@@ -144,7 +144,7 @@ __all__ = (
     "FullPanelAnnotateRequest",
     "FullPanelRequest",
     "InfoResponse",
-    "KeyframeRequest",
+    "KeyframeDto",
     "OpenFileEvent",
     "OpenFilePanelData",
     "OpenFilePanelDataOriginSbp",
@@ -217,7 +217,7 @@ __all__ = (
     "UpdatedPanelMetadataDto",
     "UpdatedPanelMetadataDtoMetadata",
     "VersionEvent",
-    "ViewportRequest",
+    "ViewportDto",
     "WebsocketEvent",
     "WebsocketEventDataType0",
     "WebsocketEventDataType0Type",

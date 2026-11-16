@@ -12,7 +12,7 @@ from ..types import UNSET, Unset
 from typing import cast
 
 if TYPE_CHECKING:
-  from ..models.keyframe_request import KeyframeRequest
+  from ..models.keyframe_dto import KeyframeDto
   from ..models.open_file_panel_data_origin_sbp import OpenFilePanelDataOriginSbp
   from ..models.open_source_file_data import OpenSourceFileData
 
@@ -38,7 +38,7 @@ class OpenFilePanelData:
             shot_id (int | Unset):
             dialogue (str | Unset):
             origin_sbp (OpenFilePanelDataOriginSbp | Unset):
-            keyframes (list[KeyframeRequest] | Unset):
+            keyframes (list[KeyframeDto] | Unset):
             shot_name (str | Unset):
      """
 
@@ -52,7 +52,7 @@ class OpenFilePanelData:
     shot_id: int | Unset = UNSET
     dialogue: str | Unset = UNSET
     origin_sbp: OpenFilePanelDataOriginSbp | Unset = UNSET
-    keyframes: list[KeyframeRequest] | Unset = UNSET
+    keyframes: list[KeyframeDto] | Unset = UNSET
     shot_name: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -61,7 +61,7 @@ class OpenFilePanelData:
 
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.keyframe_request import KeyframeRequest # noqa: PLC0415
+        from ..models.keyframe_dto import KeyframeDto # noqa: PLC0415
         from ..models.open_file_panel_data_origin_sbp import OpenFilePanelDataOriginSbp # noqa: PLC0415
         from ..models.open_source_file_data import OpenSourceFileData # noqa: PLC0415
         id = self.id
@@ -127,7 +127,7 @@ class OpenFilePanelData:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.keyframe_request import KeyframeRequest # noqa: PLC0415
+        from ..models.keyframe_dto import KeyframeDto # noqa: PLC0415
         from ..models.open_file_panel_data_origin_sbp import OpenFilePanelDataOriginSbp # noqa: PLC0415
         from ..models.open_source_file_data import OpenSourceFileData # noqa: PLC0415
         d = dict(src_dict)
@@ -163,11 +163,11 @@ class OpenFilePanelData:
 
 
         _keyframes = d.pop("keyframes", UNSET)
-        keyframes: list[KeyframeRequest] | Unset = UNSET
+        keyframes: list[KeyframeDto] | Unset = UNSET
         if _keyframes is not UNSET:
             keyframes = []
             for keyframes_item_data in _keyframes:
-                keyframes_item = KeyframeRequest.from_dict(keyframes_item_data)
+                keyframes_item = KeyframeDto.from_dict(keyframes_item_data)
 
 
 

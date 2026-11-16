@@ -12,50 +12,49 @@ from ..types import UNSET, Unset
 from typing import cast
 
 if TYPE_CHECKING:
-  from ..models.viewport_request import ViewportRequest
+  from ..models.viewport_dto import ViewportDto
 
 
 
 
 
-T = TypeVar("T", bound="KeyframeRequest")
+T = TypeVar("T", bound="KeyframeDto")
 
 
 
 @_attrs_define
-class KeyframeRequest:
+class KeyframeDto:
     """ 
         Attributes:
-            anchor_point_horizontal (float): The horizontal value of the point that CenterHoriz, CenterVert and Rotation are
+            anchor_point_horizontal (int): The horizontal value of the point that CenterHoriz, CenterVert and Rotation are
                 applied to,
                 specified as an offset from the viewport centre in fractions of the horizontal viewport resolution.
-                A value of 0 is the centre of the viewport, while a value of -0.5 is the left edge of the viewport. Default:
-                0.0.
-            anchor_point_vertical (float): The vertical value of the point that CenterHoriz, CenterVert and Rotation are
+                A value of 0 is the centre of the viewport, while a value of -0.5 is the left edge of the viewport. Default: 0.
+            anchor_point_vertical (int): The vertical value of the point that CenterHoriz, CenterVert and Rotation are
                 applied to,
                 specified as an offset from the viewport centre in fractions of the vertical viewport resolution.
-                A value of 0 is the centre of the viewport, while a value of -0.5 is the top edge of the viewport. Default: 0.0.
-            center_horizontal (float): The horizontal position of the camera in fractions of the viewport width, relative to
+                A value of 0 is the centre of the viewport, while a value of -0.5 is the top edge of the viewport. Default: 0.
+            center_horizontal (int): The horizontal position of the camera in fractions of the viewport width, relative to
                 the centre of the viewport.
-                A positive value means the camera is positioned to the left of the viewport centre. Default: 0.0.
-            center_vertical (float): The vertical position of the camera in fractions of the viewport height, relative to
-                the centre of the viewport.
-                A positive value means the camera is positioned above the viewport centre. Default: 0.0.
-            rotation (float): How much to rotate the image clockwise in degrees. Default: 0.0.
-            scale (float): A vertical and horizontal scale, 100 meaning no scaling. Default: 0.0.
-            start_key (float): The frame of the panel revision that the information of this keyframe relates to, starting at
-                0. Default: 0.0.
-            viewport (ViewportRequest | Unset):
+                A positive value means the camera is positioned to the left of the viewport centre. Default: 0.
+            center_vertical (int): The vertical position of the camera in fractions of the viewport height, relative to the
+                centre of the viewport.
+                A positive value means the camera is positioned above the viewport centre. Default: 0.
+            rotation (int): How much to rotate the image clockwise in degrees. Default: 0.
+            scale (int): A vertical and horizontal scale, 100 meaning no scaling. Default: 0.
+            start_key (int): The frame of the panel revision that the information of this keyframe relates to, starting at
+                0. Default: 0.
+            viewport (ViewportDto | Unset):
      """
 
-    anchor_point_horizontal: float = 0.0
-    anchor_point_vertical: float = 0.0
-    center_horizontal: float = 0.0
-    center_vertical: float = 0.0
-    rotation: float = 0.0
-    scale: float = 0.0
-    start_key: float = 0.0
-    viewport: ViewportRequest | Unset = UNSET
+    anchor_point_horizontal: int = 0
+    anchor_point_vertical: int = 0
+    center_horizontal: int = 0
+    center_vertical: int = 0
+    rotation: int = 0
+    scale: int = 0
+    start_key: int = 0
+    viewport: ViewportDto | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
 
@@ -63,7 +62,7 @@ class KeyframeRequest:
 
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.viewport_request import ViewportRequest # noqa: PLC0415
+        from ..models.viewport_dto import ViewportDto # noqa: PLC0415
         anchor_point_horizontal = self.anchor_point_horizontal
 
         anchor_point_vertical = self.anchor_point_vertical
@@ -103,7 +102,7 @@ class KeyframeRequest:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.viewport_request import ViewportRequest # noqa: PLC0415
+        from ..models.viewport_dto import ViewportDto # noqa: PLC0415
         d = dict(src_dict)
         anchor_point_horizontal = d.pop("anchorPointHorizontal")
 
@@ -120,16 +119,16 @@ class KeyframeRequest:
         start_key = d.pop("startKey")
 
         _viewport = d.pop("viewport", UNSET)
-        viewport: ViewportRequest | Unset
+        viewport: ViewportDto | Unset
         if isinstance(_viewport,  Unset):
             viewport = UNSET
         else:
-            viewport = ViewportRequest.from_dict(_viewport)
+            viewport = ViewportDto.from_dict(_viewport)
 
 
 
 
-        keyframe_request = cls(
+        keyframe_dto = cls(
             anchor_point_horizontal=anchor_point_horizontal,
             anchor_point_vertical=anchor_point_vertical,
             center_horizontal=center_horizontal,
@@ -141,8 +140,8 @@ class KeyframeRequest:
         )
 
 
-        keyframe_request.additional_properties = d
-        return keyframe_request
+        keyframe_dto.additional_properties = d
+        return keyframe_dto
 
     @property
     def additional_keys(self) -> list[str]:
