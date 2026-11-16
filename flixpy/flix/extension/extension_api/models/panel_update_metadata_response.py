@@ -4,8 +4,8 @@ from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 if TYPE_CHECKING:
-    from ..models.panel_update_metadata_response_results_item import (
-        PanelUpdateMetadataResponseResultsItem,
+    from ..models.panel_update_metadata_response_item import (
+        PanelUpdateMetadataResponseItem,
     )
 
 
@@ -16,11 +16,11 @@ T = TypeVar("T", bound="PanelUpdateMetadataResponse")
 class PanelUpdateMetadataResponse:
     """
     Attributes:
-        results (List['PanelUpdateMetadataResponseResultsItem']): List of metadata update results. Each includes panel
-            id and updated metadata. Example: [{'id': '1', 'metadata': {'com.myextension:status': 'inprogress'}}].
+        results (List['PanelUpdateMetadataResponseItem']): List of metadata update results. Each includes panel id and
+            updated metadata. Example: [{'id': '1', 'metadata': {'com.myextension:status': 'inprogress'}}].
     """
 
-    results: List["PanelUpdateMetadataResponseResultsItem"]
+    results: List["PanelUpdateMetadataResponseItem"]
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -42,17 +42,15 @@ class PanelUpdateMetadataResponse:
 
     @classmethod
     def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
-        from ..models.panel_update_metadata_response_results_item import (
-            PanelUpdateMetadataResponseResultsItem,
+        from ..models.panel_update_metadata_response_item import (
+            PanelUpdateMetadataResponseItem,
         )
 
         d = src_dict.copy()
         results = []
         _results = d.pop("results")
         for results_item_data in _results:
-            results_item = PanelUpdateMetadataResponseResultsItem.from_dict(
-                results_item_data
-            )
+            results_item = PanelUpdateMetadataResponseItem.from_dict(results_item_data)
 
             results.append(results_item)
 

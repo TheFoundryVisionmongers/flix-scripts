@@ -26,7 +26,6 @@ from .event_controller_handle_connection_event_item import (
 from .full_panel_annotate_request import FullPanelAnnotateRequest
 from .full_panel_request import FullPanelRequest
 from .info_response import InfoResponse
-from .keyframe import Keyframe
 from .keyframe_request import KeyframeRequest
 from .open_file_event import OpenFileEvent
 from .open_file_panel_data import OpenFilePanelData
@@ -49,8 +48,9 @@ from .panel_track_request import PanelTrackRequest
 from .panel_update_metadata_request import PanelUpdateMetadataRequest
 from .panel_update_metadata_request_metadata import PanelUpdateMetadataRequestMetadata
 from .panel_update_metadata_response import PanelUpdateMetadataResponse
-from .panel_update_metadata_response_results_item import (
-    PanelUpdateMetadataResponseResultsItem,
+from .panel_update_metadata_response_item import PanelUpdateMetadataResponseItem
+from .panel_update_metadata_response_item_metadata import (
+    PanelUpdateMetadataResponseItemMetadata,
 )
 from .ping_event import PingEvent
 from .preferences_controller_lookup_preferences_response_200 import (
@@ -152,7 +152,6 @@ __all__ = (
     "FullPanelAnnotateRequest",
     "FullPanelRequest",
     "InfoResponse",
-    "Keyframe",
     "KeyframeRequest",
     "OpenFileEvent",
     "OpenFilePanelData",
@@ -175,7 +174,8 @@ __all__ = (
     "PanelUpdateMetadataRequest",
     "PanelUpdateMetadataRequestMetadata",
     "PanelUpdateMetadataResponse",
-    "PanelUpdateMetadataResponseResultsItem",
+    "PanelUpdateMetadataResponseItem",
+    "PanelUpdateMetadataResponseItemMetadata",
     "PingEvent",
     "PreferencesControllerLookupPreferencesResponse200",
     "ProjectDetailsDto",

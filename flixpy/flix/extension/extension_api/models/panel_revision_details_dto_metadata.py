@@ -8,7 +8,16 @@ T = TypeVar("T", bound="PanelRevisionDetailsDtoMetadata")
 
 @_attrs_define
 class PanelRevisionDetailsDtoMetadata:
-    """Metadata of the panel revision. Can be updated via GRC API by extensions."""
+    """Arbitrary key-value metadata to merge into the entity. Each value must be a string, or `null` to delete that key.
+
+    **Note:** Keys in this dictionary are **case-sensitive**.
+
+    Best practice: Use namespaced keys to avoid conflicts with other extensions (e.g., `vendor.plugin:key`).
+
+        Example:
+            {'com.myextension:status': 'inprogress', 'com.myextension:tag': None}
+
+    """
 
     additional_properties: Dict[str, str] = _attrs_field(init=False, factory=dict)
 
