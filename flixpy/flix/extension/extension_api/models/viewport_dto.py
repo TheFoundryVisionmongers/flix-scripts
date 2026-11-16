@@ -3,37 +3,36 @@ from typing import Any, Dict, List, Type, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-T = TypeVar("T", bound="ViewportRequest")
+T = TypeVar("T", bound="ViewportDto")
 
 
 @_attrs_define
-class ViewportRequest:
+class ViewportDto:
     """
     Attributes:
-        width (float): Width is the width of the media in pixels, dictating the scale of horizontal camera movements.
-        height (float): Height is the height of the media in pixels, dictating the scale of vertical camera movements.
-        scale (float): Stretch (Scale in API) specifies how much the source artwork has been stretched within this
-            media.
+        width (int): Width is the width of the media in pixels, dictating the scale of horizontal camera movements.
+        height (int): Height is the height of the media in pixels, dictating the scale of vertical camera movements.
+        scale (int): Stretch (Scale in API) specifies how much the source artwork has been stretched within this media.
             More specifically, it is the inverse stretch, such that if the source artwork has a width of 1000
             while the bounding box of the same artwork within this media has a width of 2000, the stretch will be
             1000 / 2000 = 0.5.
-        offset_x (float): OffsetX is the horizontal offset of the source artwork within this media, if this media has
-            been padded.
+        offset_x (int): OffsetX is the horizontal offset of the source artwork within this media, if this media has been
+            padded.
             In particular, it is the horizontal distance from the centre of this media to the centre of the source artwork.
             Specified in terms of the pixel space of the source artwork; calculate OffsetX / Stretch to get
             the offset in pixels within this me.
-        offset_y (float): OffsetY is the vertical offset of the source artwork within this media, if this media has been
+        offset_y (int): OffsetY is the vertical offset of the source artwork within this media, if this media has been
             padded.
             In particular, it is the vertical distance from the centre of this media to the centre of the source artwork.
             Specified in terms of the pixel space of the source artwork; calculate OffsetY / Stretch to get
             the offset in pixels within this media.
     """
 
-    width: float
-    height: float
-    scale: float
-    offset_x: float
-    offset_y: float
+    width: int
+    height: int
+    scale: int
+    offset_x: int
+    offset_y: int
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -70,7 +69,7 @@ class ViewportRequest:
 
         offset_y = d.pop("offsetY")
 
-        viewport_request = cls(
+        viewport_dto = cls(
             width=width,
             height=height,
             scale=scale,
@@ -78,8 +77,8 @@ class ViewportRequest:
             offset_y=offset_y,
         )
 
-        viewport_request.additional_properties = d
-        return viewport_request
+        viewport_dto.additional_properties = d
+        return viewport_dto
 
     @property
     def additional_keys(self) -> List[str]:

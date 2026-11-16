@@ -6,7 +6,7 @@ from attrs import field as _attrs_field
 from dateutil.parser import isoparse
 
 if TYPE_CHECKING:
-    from ..models.keyframe_request import KeyframeRequest
+    from ..models.keyframe_dto import KeyframeDto
     from ..models.panel_revision_details_dto_metadata import (
         PanelRevisionDetailsDtoMetadata,
     )
@@ -49,7 +49,7 @@ class PanelRevisionDetailsDto:
         origin_sbp (PanelRevisionDetailsDtoOriginSbp): Contains information about panel revisions imported from
             Storyboard Pro.
             This is for internal use by the Storyboard Pro extension and might be removed in the future without notice.
-        keyframes (List['KeyframeRequest']): The camera move keyframes on this panel revisions.
+        keyframes (List['KeyframeDto']): The camera move keyframes on this panel revisions.
         origin (str): Where the panel comes from e.g. "manual import".
         shot_name (str): Sequence Revision shot this panel belongs to.
     """
@@ -71,7 +71,7 @@ class PanelRevisionDetailsDto:
     layer_transform: bool
     dialogue: str
     origin_sbp: "PanelRevisionDetailsDtoOriginSbp"
-    keyframes: List["KeyframeRequest"]
+    keyframes: List["KeyframeDto"]
     origin: str
     shot_name: str
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
@@ -138,7 +138,7 @@ class PanelRevisionDetailsDto:
 
     @classmethod
     def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
-        from ..models.keyframe_request import KeyframeRequest
+        from ..models.keyframe_dto import KeyframeDto
         from ..models.panel_revision_details_dto_metadata import (
             PanelRevisionDetailsDtoMetadata,
         )
@@ -184,7 +184,7 @@ class PanelRevisionDetailsDto:
         keyframes = []
         _keyframes = d.pop("keyframes")
         for keyframes_item_data in _keyframes:
-            keyframes_item = KeyframeRequest.from_dict(keyframes_item_data)
+            keyframes_item = KeyframeDto.from_dict(keyframes_item_data)
 
             keyframes.append(keyframes_item)
 

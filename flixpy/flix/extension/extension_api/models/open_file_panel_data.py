@@ -6,7 +6,7 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.keyframe_request import KeyframeRequest
+    from ..models.keyframe_dto import KeyframeDto
     from ..models.open_file_panel_data_origin_sbp import OpenFilePanelDataOriginSbp
     from ..models.open_source_file_data import OpenSourceFileData
 
@@ -28,7 +28,7 @@ class OpenFilePanelData:
         source_file (Optional[OpenSourceFileData]):
         dialogue (Union[Unset, str]):
         origin_sbp (Union[Unset, OpenFilePanelDataOriginSbp]):
-        keyframes (Union[Unset, List['KeyframeRequest']]):
+        keyframes (Union[Unset, List['KeyframeDto']]):
         shot_name (Union[Unset, str]):
     """
 
@@ -42,7 +42,7 @@ class OpenFilePanelData:
     shot_id: Union[Unset, int] = UNSET
     dialogue: Union[Unset, str] = UNSET
     origin_sbp: Union[Unset, "OpenFilePanelDataOriginSbp"] = UNSET
-    keyframes: Union[Unset, List["KeyframeRequest"]] = UNSET
+    keyframes: Union[Unset, List["KeyframeDto"]] = UNSET
     shot_name: Union[Unset, str] = UNSET
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -100,7 +100,7 @@ class OpenFilePanelData:
 
     @classmethod
     def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
-        from ..models.keyframe_request import KeyframeRequest
+        from ..models.keyframe_dto import KeyframeDto
         from ..models.open_file_panel_data_origin_sbp import OpenFilePanelDataOriginSbp
         from ..models.open_source_file_data import OpenSourceFileData
 
@@ -138,7 +138,7 @@ class OpenFilePanelData:
         keyframes = []
         _keyframes = d.pop("keyframes", UNSET)
         for keyframes_item_data in _keyframes or []:
-            keyframes_item = KeyframeRequest.from_dict(keyframes_item_data)
+            keyframes_item = KeyframeDto.from_dict(keyframes_item_data)
 
             keyframes.append(keyframes_item)
 

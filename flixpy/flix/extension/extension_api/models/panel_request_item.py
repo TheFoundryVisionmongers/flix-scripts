@@ -6,7 +6,7 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.keyframe_request import KeyframeRequest
+    from ..models.keyframe_dto import KeyframeDto
     from ..models.panel_request_item_metadata import PanelRequestItemMetadata
     from ..models.panel_request_item_origin_sbp import PanelRequestItemOriginSbp
 
@@ -33,7 +33,7 @@ class PanelRequestItem:
 
             Best practice: Use namespaced keys to avoid conflicts with other extensions (e.g., `vendor.plugin:key`).
             Example: {'com.myextension:status': 'inprogress', 'com.myextension:tag': None}.
-        keyframes (Union[Unset, List['KeyframeRequest']]): The camera move keyframes on this panel revisions.
+        keyframes (Union[Unset, List['KeyframeDto']]): The camera move keyframes on this panel revisions.
         origin_sbp (Union[Unset, PanelRequestItemOriginSbp]): Contains information about panel revisions imported from
             Storyboard Pro.
             This is for internal use by the Storyboard Pro extension and might be removed in the future without notice.
@@ -54,7 +54,7 @@ class PanelRequestItem:
     trim_in_frame: Union[Unset, int] = UNSET
     trim_out_frame: Union[Unset, int] = UNSET
     metadata: Union[Unset, "PanelRequestItemMetadata"] = UNSET
-    keyframes: Union[Unset, List["KeyframeRequest"]] = UNSET
+    keyframes: Union[Unset, List["KeyframeDto"]] = UNSET
     origin_sbp: Union[Unset, "PanelRequestItemOriginSbp"] = UNSET
     source_media: Union[Unset, str] = UNSET
     dialogue: Union[Unset, str] = UNSET
@@ -123,7 +123,7 @@ class PanelRequestItem:
 
     @classmethod
     def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
-        from ..models.keyframe_request import KeyframeRequest
+        from ..models.keyframe_dto import KeyframeDto
         from ..models.panel_request_item_metadata import PanelRequestItemMetadata
         from ..models.panel_request_item_origin_sbp import PanelRequestItemOriginSbp
 
@@ -148,7 +148,7 @@ class PanelRequestItem:
         keyframes = []
         _keyframes = d.pop("keyframes", UNSET)
         for keyframes_item_data in _keyframes or []:
-            keyframes_item = KeyframeRequest.from_dict(keyframes_item_data)
+            keyframes_item = KeyframeDto.from_dict(keyframes_item_data)
 
             keyframes.append(keyframes_item)
 
