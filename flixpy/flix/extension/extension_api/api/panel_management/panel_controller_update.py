@@ -66,8 +66,6 @@ def sync_detailed(
 ) -> Response[Union[Any, PanelRequestResponse]]:
     """Update Existing Panels
 
-     Updates existing panels in the active sequence revision from the list of provided file paths.
-
     Args:
         json_body (Union['BulkPanelRequest', 'FullPanelRequest']):
 
@@ -97,8 +95,6 @@ def sync(
 ) -> Optional[Union[Any, PanelRequestResponse]]:
     """Update Existing Panels
 
-     Updates existing panels in the active sequence revision from the list of provided file paths.
-
     Args:
         json_body (Union['BulkPanelRequest', 'FullPanelRequest']):
 
@@ -122,8 +118,6 @@ async def asyncio_detailed(
     json_body: Union["BulkPanelRequest", "FullPanelRequest"],
 ) -> Response[Union[Any, PanelRequestResponse]]:
     """Update Existing Panels
-
-     Updates existing panels in the active sequence revision from the list of provided file paths.
 
     Args:
         json_body (Union['BulkPanelRequest', 'FullPanelRequest']):
@@ -151,8 +145,6 @@ async def asyncio(
     json_body: Union["BulkPanelRequest", "FullPanelRequest"],
 ) -> Optional[Union[Any, PanelRequestResponse]]:
     """Update Existing Panels
-
-     Updates existing panels in the active sequence revision from the list of provided file paths.
 
     Args:
         json_body (Union['BulkPanelRequest', 'FullPanelRequest']):

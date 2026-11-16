@@ -63,8 +63,6 @@ def sync_detailed(
 ) -> Response[Union[Any, RegistrationResponse]]:
     """Register API consumer
 
-     Processes a registration request from a new API consumer.
-
     Args:
         json_body (RegistrationRequest):
 
@@ -94,8 +92,6 @@ def sync(
 ) -> Optional[Union[Any, RegistrationResponse]]:
     """Register API consumer
 
-     Processes a registration request from a new API consumer.
-
     Args:
         json_body (RegistrationRequest):
 
@@ -119,8 +115,6 @@ async def asyncio_detailed(
     json_body: RegistrationRequest,
 ) -> Response[Union[Any, RegistrationResponse]]:
     """Register API consumer
-
-     Processes a registration request from a new API consumer.
 
     Args:
         json_body (RegistrationRequest):
@@ -148,8 +142,6 @@ async def asyncio(
     json_body: RegistrationRequest,
 ) -> Optional[Union[Any, RegistrationResponse]]:
     """Register API consumer
-
-     Processes a registration request from a new API consumer.
 
     Args:
         json_body (RegistrationRequest):
