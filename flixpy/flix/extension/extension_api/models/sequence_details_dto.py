@@ -11,6 +11,8 @@ from ..types import UNSET, Unset
 from typing import cast
 import datetime
 
+if TYPE_CHECKING:
+  from ..models.sequence_details_dto_metadata import SequenceDetailsDtoMetadata
 
 
 
@@ -25,17 +27,27 @@ class SequenceDetailsDto:
     """ 
         Attributes:
             id (int): The Flix identifier for the sequence.
+            metadata (SequenceDetailsDtoMetadata): Arbitrary key-value metadata to merge into the entity. Each value must be
+                a string, or `null` to delete that key.
+
+                **Note:** Keys in this dictionary are **case-sensitive**.
+
+                Best practice: Use namespaced keys to avoid conflicts with other extensions (e.g., `vendor.plugin:key`).
+                Example: {'com.myextension:status': 'inprogress', 'com.myextension:tag': None}.
             tracking_code (str): The sequence's tracking code.
             created_date (datetime.datetime): The date the sequence was created.
             owner (str): The user that created the sequence.
             title (None | str): The sequence's display title.
+            aspect_ratio (float): The aspect ratio used by the sequence.
      """
 
     id: int
+    metadata: SequenceDetailsDtoMetadata
     tracking_code: str
     created_date: datetime.datetime
     owner: str
     title: None | str
+    aspect_ratio: float
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
 
@@ -43,7 +55,10 @@ class SequenceDetailsDto:
 
 
     def to_dict(self) -> dict[str, Any]:
+        from ..models.sequence_details_dto_metadata import SequenceDetailsDtoMetadata # noqa: PLC0415
         id = self.id
+
+        metadata = self.metadata.to_dict()
 
         tracking_code = self.tracking_code
 
@@ -54,15 +69,19 @@ class SequenceDetailsDto:
         title: None | str
         title = self.title
 
+        aspect_ratio = self.aspect_ratio
+
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({
             "id": id,
+            "metadata": metadata,
             "trackingCode": tracking_code,
             "createdDate": created_date,
             "owner": owner,
             "title": title,
+            "aspectRatio": aspect_ratio,
         })
 
         return field_dict
@@ -71,8 +90,14 @@ class SequenceDetailsDto:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+        from ..models.sequence_details_dto_metadata import SequenceDetailsDtoMetadata # noqa: PLC0415
         d = dict(src_dict)
         id = d.pop("id")
+
+        metadata = SequenceDetailsDtoMetadata.from_dict(d.pop("metadata"))
+
+
+
 
         tracking_code = d.pop("trackingCode")
 
@@ -91,12 +116,16 @@ class SequenceDetailsDto:
         title = _parse_title(d.pop("title"))
 
 
+        aspect_ratio = d.pop("aspectRatio")
+
         sequence_details_dto = cls(
             id=id,
+            metadata=metadata,
             tracking_code=tracking_code,
             created_date=created_date,
             owner=owner,
             title=title,
+            aspect_ratio=aspect_ratio,
         )
 
 

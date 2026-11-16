@@ -62,8 +62,6 @@ def sync_detailed(
 ) -> Response[InfoResponse]:
     """ Flix Client details
 
-     Provides details of current Flix Client and GRC API. Always returns a 200 response.
-
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx2.TimeoutException: If the request takes longer than Client.timeout.
@@ -90,8 +88,6 @@ def sync(
 ) -> InfoResponse | None:
     """ Flix Client details
 
-     Provides details of current Flix Client and GRC API. Always returns a 200 response.
-
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx2.TimeoutException: If the request takes longer than Client.timeout.
@@ -112,8 +108,6 @@ async def asyncio_detailed(
 
 ) -> Response[InfoResponse]:
     """ Flix Client details
-
-     Provides details of current Flix Client and GRC API. Always returns a 200 response.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -140,8 +134,6 @@ async def asyncio(
 
 ) -> InfoResponse | None:
     """ Flix Client details
-
-     Provides details of current Flix Client and GRC API. Always returns a 200 response.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

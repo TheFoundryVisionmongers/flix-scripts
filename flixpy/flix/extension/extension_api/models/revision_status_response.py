@@ -8,7 +8,6 @@ from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
 
-from ..types import UNSET, Unset
 from typing import cast
 
 if TYPE_CHECKING:
@@ -30,15 +29,14 @@ class RevisionStatusResponse:
             can_save (bool): Whether the current revision can be saved.
             can_publish (bool): Whether the user has permission to publish the current revision.
             can_export (bool): Whether the user has permission to export files from the current revision.
-            panel_selection (list[PanelSelectionResponse] | Unset): A list of the currently selected panel details,
-                including ID.
+            panel_selection (list[PanelSelectionResponse]): A list of the currently selected panel details, including ID.
      """
 
     selected_panels: list[int]
     can_save: bool
     can_publish: bool
     can_export: bool
-    panel_selection: list[PanelSelectionResponse] | Unset = UNSET
+    panel_selection: list[PanelSelectionResponse]
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
 
@@ -57,12 +55,10 @@ class RevisionStatusResponse:
 
         can_export = self.can_export
 
-        panel_selection: list[dict[str, Any]] | Unset = UNSET
-        if not isinstance(self.panel_selection, Unset):
-            panel_selection = []
-            for panel_selection_item_data in self.panel_selection:
-                panel_selection_item = panel_selection_item_data.to_dict()
-                panel_selection.append(panel_selection_item)
+        panel_selection = []
+        for panel_selection_item_data in self.panel_selection:
+            panel_selection_item = panel_selection_item_data.to_dict()
+            panel_selection.append(panel_selection_item)
 
 
 
@@ -74,9 +70,8 @@ class RevisionStatusResponse:
             "canSave": can_save,
             "canPublish": can_publish,
             "canExport": can_export,
+            "panelSelection": panel_selection,
         })
-        if panel_selection is not UNSET:
-            field_dict["panelSelection"] = panel_selection
 
         return field_dict
 
@@ -95,16 +90,14 @@ class RevisionStatusResponse:
 
         can_export = d.pop("canExport")
 
-        _panel_selection = d.pop("panelSelection", UNSET)
-        panel_selection: list[PanelSelectionResponse] | Unset = UNSET
-        if _panel_selection is not UNSET:
-            panel_selection = []
-            for panel_selection_item_data in _panel_selection:
-                panel_selection_item = PanelSelectionResponse.from_dict(panel_selection_item_data)
+        panel_selection = []
+        _panel_selection = d.pop("panelSelection")
+        for panel_selection_item_data in (_panel_selection):
+            panel_selection_item = PanelSelectionResponse.from_dict(panel_selection_item_data)
 
 
 
-                panel_selection.append(panel_selection_item)
+            panel_selection.append(panel_selection_item)
 
 
         revision_status_response = cls(

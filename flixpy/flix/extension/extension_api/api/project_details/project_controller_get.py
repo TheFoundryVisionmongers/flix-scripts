@@ -66,8 +66,6 @@ def sync_detailed(
 ) -> Response[Any | ProjectDetailsDto]:
     """ Get Current Flix Project
 
-     Returns details of the currently opened show, episode, sequence and sequence revision.
-
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx2.TimeoutException: If the request takes longer than Client.timeout.
@@ -94,8 +92,6 @@ def sync(
 ) -> Any | ProjectDetailsDto | None:
     """ Get Current Flix Project
 
-     Returns details of the currently opened show, episode, sequence and sequence revision.
-
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx2.TimeoutException: If the request takes longer than Client.timeout.
@@ -116,8 +112,6 @@ async def asyncio_detailed(
 
 ) -> Response[Any | ProjectDetailsDto]:
     """ Get Current Flix Project
-
-     Returns details of the currently opened show, episode, sequence and sequence revision.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -144,8 +138,6 @@ async def asyncio(
 
 ) -> Any | ProjectDetailsDto | None:
     """ Get Current Flix Project
-
-     Returns details of the currently opened show, episode, sequence and sequence revision.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

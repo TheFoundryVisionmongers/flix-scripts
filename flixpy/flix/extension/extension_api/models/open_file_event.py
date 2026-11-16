@@ -13,6 +13,7 @@ from typing import cast
 
 if TYPE_CHECKING:
   from ..models.open_file_panel_data import OpenFilePanelData
+  from ..models.open_file_shot_data import OpenFileShotData
   from ..models.project_ids_dto import ProjectIdsDto
   from ..models.ps_configuration import PsConfiguration
 
@@ -30,11 +31,13 @@ class OpenFileEvent:
         Attributes:
             project (ProjectIdsDto):
             panels (list[OpenFilePanelData]):
+            shots (list[OpenFileShotData]):
             sketching_tool_configuration (PsConfiguration | Unset):
      """
 
     project: ProjectIdsDto
     panels: list[OpenFilePanelData]
+    shots: list[OpenFileShotData]
     sketching_tool_configuration: PsConfiguration | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -44,6 +47,7 @@ class OpenFileEvent:
 
     def to_dict(self) -> dict[str, Any]:
         from ..models.open_file_panel_data import OpenFilePanelData # noqa: PLC0415
+        from ..models.open_file_shot_data import OpenFileShotData # noqa: PLC0415
         from ..models.project_ids_dto import ProjectIdsDto # noqa: PLC0415
         from ..models.ps_configuration import PsConfiguration # noqa: PLC0415
         project = self.project.to_dict()
@@ -52,6 +56,13 @@ class OpenFileEvent:
         for panels_item_data in self.panels:
             panels_item = panels_item_data.to_dict()
             panels.append(panels_item)
+
+
+
+        shots = []
+        for shots_item_data in self.shots:
+            shots_item = shots_item_data.to_dict()
+            shots.append(shots_item)
 
 
 
@@ -65,6 +76,7 @@ class OpenFileEvent:
         field_dict.update({
             "project": project,
             "panels": panels,
+            "shots": shots,
         })
         if sketching_tool_configuration is not UNSET:
             field_dict["sketchingToolConfiguration"] = sketching_tool_configuration
@@ -76,6 +88,7 @@ class OpenFileEvent:
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         from ..models.open_file_panel_data import OpenFilePanelData # noqa: PLC0415
+        from ..models.open_file_shot_data import OpenFileShotData # noqa: PLC0415
         from ..models.project_ids_dto import ProjectIdsDto # noqa: PLC0415
         from ..models.ps_configuration import PsConfiguration # noqa: PLC0415
         d = dict(src_dict)
@@ -94,6 +107,16 @@ class OpenFileEvent:
             panels.append(panels_item)
 
 
+        shots = []
+        _shots = d.pop("shots")
+        for shots_item_data in (_shots):
+            shots_item = OpenFileShotData.from_dict(shots_item_data)
+
+
+
+            shots.append(shots_item)
+
+
         _sketching_tool_configuration = d.pop("sketchingToolConfiguration", UNSET)
         sketching_tool_configuration: PsConfiguration | Unset
         if isinstance(_sketching_tool_configuration,  Unset):
@@ -107,6 +130,7 @@ class OpenFileEvent:
         open_file_event = cls(
             project=project,
             panels=panels,
+            shots=shots,
             sketching_tool_configuration=sketching_tool_configuration,
         )
 

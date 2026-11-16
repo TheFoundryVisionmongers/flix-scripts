@@ -26,8 +26,8 @@ T = TypeVar("T", bound="BulkPanelRequest")
 class BulkPanelRequest:
     """ 
         Attributes:
-            paths (list[str]): The file paths to upload as new panel artwork. Example:
-                ['/path/to/file/1.psd','/path/to/file/2.psd'].
+            paths (list[str]): The file paths to upload as new panel artwork. Example: ['/path/to/file/1.psd',
+                '/path/to/file/2.psd'].
             origin (str): The origin of the incoming panel artwork. Example: Photoshop.
             start_index (int | Unset): (Optional) The index from which to insert or update panels. Defaults to currently
                 selected panel. Example: 3.

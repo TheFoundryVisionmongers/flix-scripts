@@ -10,8 +10,11 @@ from ..types import UNSET, Unset
 
 from ..models.action_state import ActionState
 from ..models.action_type import ActionType
+from ..types import UNSET, Unset
 from typing import cast
 
+if TYPE_CHECKING:
+  from ..models.action_event_panel_response import ActionEventPanelResponse
 
 
 
@@ -29,12 +32,14 @@ class ActionEvent:
             action_id (int):
             state (ActionState):
             action (ActionType):
+            panels (list[ActionEventPanelResponse] | Unset):
      """
 
     api_client_id: int | None
     action_id: int
     state: ActionState
     action: ActionType
+    panels: list[ActionEventPanelResponse] | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
 
@@ -42,6 +47,7 @@ class ActionEvent:
 
 
     def to_dict(self) -> dict[str, Any]:
+        from ..models.action_event_panel_response import ActionEventPanelResponse # noqa: PLC0415
         api_client_id: int | None
         api_client_id = self.api_client_id
 
@@ -50,6 +56,15 @@ class ActionEvent:
         state = self.state.value
 
         action = self.action.value
+
+        panels: list[dict[str, Any]] | Unset = UNSET
+        if not isinstance(self.panels, Unset):
+            panels = []
+            for panels_item_data in self.panels:
+                panels_item = panels_item_data.to_dict()
+                panels.append(panels_item)
+
+
 
 
         field_dict: dict[str, Any] = {}
@@ -60,6 +75,8 @@ class ActionEvent:
             "state": state,
             "action": action,
         })
+        if panels is not UNSET:
+            field_dict["panels"] = panels
 
         return field_dict
 
@@ -67,6 +84,7 @@ class ActionEvent:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+        from ..models.action_event_panel_response import ActionEventPanelResponse # noqa: PLC0415
         d = dict(src_dict)
         def _parse_api_client_id(data: object) -> int | None:
             if data is None:
@@ -88,11 +106,24 @@ class ActionEvent:
 
 
 
+        _panels = d.pop("panels", UNSET)
+        panels: list[ActionEventPanelResponse] | Unset = UNSET
+        if _panels is not UNSET:
+            panels = []
+            for panels_item_data in _panels:
+                panels_item = ActionEventPanelResponse.from_dict(panels_item_data)
+
+
+
+                panels.append(panels_item)
+
+
         action_event = cls(
             api_client_id=api_client_id,
             action_id=action_id,
             state=state,
             action=action,
+            panels=panels,
         )
 
 

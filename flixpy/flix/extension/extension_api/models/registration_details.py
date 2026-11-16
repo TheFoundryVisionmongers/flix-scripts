@@ -11,6 +11,8 @@ from ..types import UNSET, Unset
 from ..types import UNSET, Unset
 from typing import cast
 
+if TYPE_CHECKING:
+  from ..models.registration_details_actions_item import RegistrationDetailsActionsItem
 
 
 
@@ -30,6 +32,9 @@ class RegistrationDetails:
             version (str | Unset): The version of this API consumer (Optional).
             log_paths (list[str] | Unset): Paths to the location where the extension will write its logs for different
                 versions of the app (Optional).
+            actions (list[RegistrationDetailsActionsItem] | Unset): List of actions available for this extension.
+            icon_svg (str | Unset): SVG icon for the default extension button.
+            short_name (str | Unset): Short name for extension to be used in context menu.
      """
 
     flix_id: int
@@ -37,6 +42,9 @@ class RegistrationDetails:
     client_uid: str
     version: str | Unset = UNSET
     log_paths: list[str] | Unset = UNSET
+    actions: list[RegistrationDetailsActionsItem] | Unset = UNSET
+    icon_svg: str | Unset = UNSET
+    short_name: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
 
@@ -44,6 +52,7 @@ class RegistrationDetails:
 
 
     def to_dict(self) -> dict[str, Any]:
+        from ..models.registration_details_actions_item import RegistrationDetailsActionsItem # noqa: PLC0415
         flix_id = self.flix_id
 
         name = self.name
@@ -58,6 +67,19 @@ class RegistrationDetails:
 
 
 
+        actions: list[dict[str, Any]] | Unset = UNSET
+        if not isinstance(self.actions, Unset):
+            actions = []
+            for actions_item_data in self.actions:
+                actions_item = actions_item_data.to_dict()
+                actions.append(actions_item)
+
+
+
+        icon_svg = self.icon_svg
+
+        short_name = self.short_name
+
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -70,6 +92,12 @@ class RegistrationDetails:
             field_dict["version"] = version
         if log_paths is not UNSET:
             field_dict["logPaths"] = log_paths
+        if actions is not UNSET:
+            field_dict["actions"] = actions
+        if icon_svg is not UNSET:
+            field_dict["iconSvg"] = icon_svg
+        if short_name is not UNSET:
+            field_dict["shortName"] = short_name
 
         return field_dict
 
@@ -77,6 +105,7 @@ class RegistrationDetails:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+        from ..models.registration_details_actions_item import RegistrationDetailsActionsItem # noqa: PLC0415
         d = dict(src_dict)
         flix_id = d.pop("flixId")
 
@@ -89,12 +118,31 @@ class RegistrationDetails:
         log_paths = cast(list[str], d.pop("logPaths", UNSET))
 
 
+        _actions = d.pop("actions", UNSET)
+        actions: list[RegistrationDetailsActionsItem] | Unset = UNSET
+        if _actions is not UNSET:
+            actions = []
+            for actions_item_data in _actions:
+                actions_item = RegistrationDetailsActionsItem.from_dict(actions_item_data)
+
+
+
+                actions.append(actions_item)
+
+
+        icon_svg = d.pop("iconSvg", UNSET)
+
+        short_name = d.pop("shortName", UNSET)
+
         registration_details = cls(
             flix_id=flix_id,
             name=name,
             client_uid=client_uid,
             version=version,
             log_paths=log_paths,
+            actions=actions,
+            icon_svg=icon_svg,
+            short_name=short_name,
         )
 
 
