@@ -523,6 +523,7 @@ class OpenEvent(ClientEvent):
     project: ProjectIds
     panels: list[OpenPanelData]
     shots: list[OpenShot]
+    action_id: str | None
 
     @classmethod
     def from_dict(cls, event_type: str, data: models.OpenFileEvent) -> Self:
@@ -532,6 +533,7 @@ class OpenEvent(ClientEvent):
             panels=[OpenPanelData.from_dict(panel) for panel in data.panels],
             shots=[OpenShot.from_dict(shot) for shot in data.shots],
             additional_properties=data.additional_properties,
+            action_id=_none_if_unset(data.action_id),
         )
 
 
