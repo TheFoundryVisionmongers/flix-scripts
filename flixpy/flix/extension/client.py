@@ -497,6 +497,7 @@ class Extension:
         source_file: types.SourceFile | None = None,
         start_index: int | None = None,
         replace_panels: bool = False,
+        skip_panel_reuse: bool = False,
     ) -> types.PanelRequestResponse:
         """Instructs the Flix Client to import the given files as panel revisions.
 
@@ -524,6 +525,7 @@ class Extension:
             if source_file is not None
             else api_types.UNSET,
             start_index=start_index if start_index is not None else api_types.UNSET,
+            skip_panel_reuse=skip_panel_reuse,
         )
 
         if not replace_panels:
