@@ -23,12 +23,14 @@ class OpenFileEvent:
         panels (List['OpenFilePanelData']):
         shots (List['OpenFileShotData']):
         sketching_tool_configuration (Union[Unset, PsConfiguration]):
+        action_id (Union[Unset, str]):
     """
 
     project: "ProjectIdsDto"
     panels: List["OpenFilePanelData"]
     shots: List["OpenFileShotData"]
     sketching_tool_configuration: Union[Unset, "PsConfiguration"] = UNSET
+    action_id: Union[Unset, str] = UNSET
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -50,6 +52,8 @@ class OpenFileEvent:
         if not isinstance(self.sketching_tool_configuration, Unset):
             sketching_tool_configuration = self.sketching_tool_configuration.to_dict()
 
+        action_id = self.action_id
+
         field_dict: Dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -61,6 +65,8 @@ class OpenFileEvent:
         )
         if sketching_tool_configuration is not UNSET:
             field_dict["sketchingToolConfiguration"] = sketching_tool_configuration
+        if action_id is not UNSET:
+            field_dict["actionId"] = action_id
 
         return field_dict
 
@@ -97,11 +103,14 @@ class OpenFileEvent:
                 _sketching_tool_configuration
             )
 
+        action_id = d.pop("actionId", UNSET)
+
         open_file_event = cls(
             project=project,
             panels=panels,
             shots=shots,
             sketching_tool_configuration=sketching_tool_configuration,
+            action_id=action_id,
         )
 
         open_file_event.additional_properties = d

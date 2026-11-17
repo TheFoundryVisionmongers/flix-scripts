@@ -1053,6 +1053,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/OpenFileShotData'
+        actionId:
+          type: string
       required:
         - project
         - panels
