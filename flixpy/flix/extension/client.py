@@ -528,7 +528,7 @@ class Extension:
             if source_file is not None
             else api_types.UNSET,
             start_index=start_index if start_index is not None else api_types.UNSET,
-            skip_panel_reuse=skip_panel_reuse,
+            skip_panel_reuse=skip_panel_reuse if skip_panel_reuse is not None else api_types.UNSET,
         )
 
         if not replace_panels:
