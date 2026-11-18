@@ -497,7 +497,7 @@ class Extension:
         source_file: types.SourceFile | None = None,
         start_index: int | None = None,
         replace_panels: bool = False,
-        skip_panel_reuse: bool = False,
+        skip_panel_reuse: bool | None = None,
     ) -> types.PanelRequestResponse:
         """Instructs the Flix Client to import the given files as panel revisions.
 
@@ -508,6 +508,9 @@ class Extension:
             start_index: If specified, panels will be inserted at the given index.
                 instead of the currently selected panel index.
             replace_panels: If True, version up existing panels instead of inserting new ones.
+            skip_panel_reuse: If set, will ignore the "Disable Panel Reuse" preference in the
+                Flix Client. When True, will always import panels as new panels.
+                When False, will always check for existing panels to reuse.
         """
         from .extension_api.api.panel_management import (
             panel_controller_create,
