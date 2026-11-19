@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class CustomActionRegistrationRequestType(str, Enum):
+class ActionRegistrationType(str, Enum):
     PANEL_BROWSER_ACTION = "PanelBrowserAction"
 
     def __str__(self) -> str:

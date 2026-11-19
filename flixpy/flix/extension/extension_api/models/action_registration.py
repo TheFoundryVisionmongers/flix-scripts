@@ -3,39 +3,41 @@ from typing import Any, Dict, List, Type, TypeVar, Union
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-from ..models.action_registration_response_type import ActionRegistrationResponseType
+from ..models.action_registration_type import ActionRegistrationType
 from ..types import UNSET, Unset
 
-T = TypeVar("T", bound="ActionRegistrationResponse")
+T = TypeVar("T", bound="ActionRegistration")
 
 
 @_attrs_define
-class ActionRegistrationResponse:
+class ActionRegistration:
     """
     Attributes:
-        id (str): The unique identifier for this action.
+        id (str): Unique identifier for this action.
         name (str): The user-friendly name for this action to be displayed in the UI.
+        type (Union[Unset, ActionRegistrationType]): Context/location of the action within the application.
+            For now only PanelBrowserAction is supported and will be set regardless of provided value.
         description (Union[Unset, str]): The user-friendly description for this action to be displayed in the UI.
         icon_svg (Union[Unset, str]): A simple SVG icon for this specific action when displayed in the UI.
-        type (Union[Unset, ActionRegistrationResponseType]): Context/location of the action within the application.
-            For now only PanelBrowserAction is supported and will be set regardless of provided value.
+            This value will be processed upon registration and may display incorrectly if unsupported SVG features are used.
     """
 
     id: str
     name: str
+    type: Union[Unset, ActionRegistrationType] = UNSET
     description: Union[Unset, str] = UNSET
     icon_svg: Union[Unset, str] = UNSET
-    type: Union[Unset, ActionRegistrationResponseType] = UNSET
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
         id = self.id
         name = self.name
-        description = self.description
-        icon_svg = self.icon_svg
         type: Union[Unset, str] = UNSET
         if not isinstance(self.type, Unset):
             type = self.type.value
+
+        description = self.description
+        icon_svg = self.icon_svg
 
         field_dict: Dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -45,12 +47,12 @@ class ActionRegistrationResponse:
                 "name": name,
             }
         )
+        if type is not UNSET:
+            field_dict["type"] = type
         if description is not UNSET:
             field_dict["description"] = description
         if icon_svg is not UNSET:
             field_dict["iconSvg"] = icon_svg
-        if type is not UNSET:
-            field_dict["type"] = type
 
         return field_dict
 
@@ -61,27 +63,27 @@ class ActionRegistrationResponse:
 
         name = d.pop("name")
 
+        _type = d.pop("type", UNSET)
+        type: Union[Unset, ActionRegistrationType]
+        if isinstance(_type, Unset):
+            type = UNSET
+        else:
+            type = ActionRegistrationType(_type)
+
         description = d.pop("description", UNSET)
 
         icon_svg = d.pop("iconSvg", UNSET)
 
-        _type = d.pop("type", UNSET)
-        type: Union[Unset, ActionRegistrationResponseType]
-        if isinstance(_type, Unset):
-            type = UNSET
-        else:
-            type = ActionRegistrationResponseType(_type)
-
-        action_registration_response = cls(
+        action_registration = cls(
             id=id,
             name=name,
+            type=type,
             description=description,
             icon_svg=icon_svg,
-            type=type,
         )
 
-        action_registration_response.additional_properties = d
-        return action_registration_response
+        action_registration.additional_properties = d
+        return action_registration
 
     @property
     def additional_keys(self) -> List[str]:

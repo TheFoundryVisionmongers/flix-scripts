@@ -4,9 +4,7 @@ from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 if TYPE_CHECKING:
-    from ..models.custom_action_registration_request import (
-        CustomActionRegistrationRequest,
-    )
+    from ..models.action_registration import ActionRegistration
 
 
 T = TypeVar("T", bound="ActionsUpdateRequest")
@@ -16,10 +14,10 @@ T = TypeVar("T", bound="ActionsUpdateRequest")
 class ActionsUpdateRequest:
     """
     Attributes:
-        actions (List['CustomActionRegistrationRequest']): List of actions to be updated for this API client.
+        actions (List['ActionRegistration']): List of actions to be updated for this API client.
     """
 
-    actions: List["CustomActionRegistrationRequest"]
+    actions: List["ActionRegistration"]
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -41,15 +39,13 @@ class ActionsUpdateRequest:
 
     @classmethod
     def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
-        from ..models.custom_action_registration_request import (
-            CustomActionRegistrationRequest,
-        )
+        from ..models.action_registration import ActionRegistration
 
         d = src_dict.copy()
         actions = []
         _actions = d.pop("actions")
         for actions_item_data in _actions:
-            actions_item = CustomActionRegistrationRequest.from_dict(actions_item_data)
+            actions_item = ActionRegistration.from_dict(actions_item_data)
 
             actions.append(actions_item)
 

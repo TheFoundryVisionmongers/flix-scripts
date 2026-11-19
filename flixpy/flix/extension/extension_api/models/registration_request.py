@@ -6,9 +6,7 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.custom_action_registration_request import (
-        CustomActionRegistrationRequest,
-    )
+    from ..models.action_registration import ActionRegistration
 
 
 T = TypeVar("T", bound="RegistrationRequest")
@@ -22,7 +20,7 @@ class RegistrationRequest:
         client_uid (str): A unique identifier for this API consumer.
         version (Union[Unset, str]): The version of this API consumer (Optional).
         log_paths (Union[Unset, List[str]]): Paths to the extension's log files.
-        actions (Union[Unset, List['CustomActionRegistrationRequest']]): List of actions available for this extension.
+        actions (Union[Unset, List['ActionRegistration']]): List of actions available for this extension.
         icon_svg (Union[Unset, str]): A simple SVG icon to be displayed by default for extension actions when displayed
             in the UI.
             This value will be processed upon registration and may display incorrectly if unsupported SVG features are used.
@@ -33,7 +31,7 @@ class RegistrationRequest:
     client_uid: str
     version: Union[Unset, str] = UNSET
     log_paths: Union[Unset, List[str]] = UNSET
-    actions: Union[Unset, List["CustomActionRegistrationRequest"]] = UNSET
+    actions: Union[Unset, List["ActionRegistration"]] = UNSET
     icon_svg: Union[Unset, str] = UNSET
     short_name: Union[Unset, str] = UNSET
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
@@ -80,9 +78,7 @@ class RegistrationRequest:
 
     @classmethod
     def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
-        from ..models.custom_action_registration_request import (
-            CustomActionRegistrationRequest,
-        )
+        from ..models.action_registration import ActionRegistration
 
         d = src_dict.copy()
         name = d.pop("name")
@@ -96,7 +92,7 @@ class RegistrationRequest:
         actions = []
         _actions = d.pop("actions", UNSET)
         for actions_item_data in _actions or []:
-            actions_item = CustomActionRegistrationRequest.from_dict(actions_item_data)
+            actions_item = ActionRegistration.from_dict(actions_item_data)
 
             actions.append(actions_item)
 

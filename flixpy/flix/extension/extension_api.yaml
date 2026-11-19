@@ -1275,9 +1275,22 @@ components:
           $ref: '#/components/schemas/SequenceRevisionDetailsDto'
       required:
         - success
-    CustomActionRegistrationRequest:
+    ActionRegistrationType:
+      type: string
+      enum:
+        - PanelBrowserAction
+      description: |-
+        Context/location of the action within the application.
+        For now only PanelBrowserAction is supported and will be set regardless of provided value.
+    ActionRegistration:
       type: object
       properties:
+        type:
+          description: |-
+            Context/location of the action within the application.
+            For now only PanelBrowserAction is supported and will be set regardless of provided value.
+          allOf:
+            - $ref: '#/components/schemas/ActionRegistrationType'
         id:
           type: string
           description: Unique identifier for this action.
@@ -1292,13 +1305,6 @@ components:
           description: |-
             A simple SVG icon for this specific action when displayed in the UI.
             This value will be processed upon registration and may display incorrectly if unsupported SVG features are used.
-        type:
-          type: string
-          description: |-
-            Context/location of the action within the application.
-            For now only PanelBrowserAction is supported and will be set regardless of provided value.
-          enum:
-            - PanelBrowserAction
       required:
         - id
         - name
@@ -1323,7 +1329,7 @@ components:
           description: List of actions available for this extension.
           type: array
           items:
-            $ref: '#/components/schemas/CustomActionRegistrationRequest'
+            $ref: '#/components/schemas/ActionRegistration'
         iconSvg:
           type: string
           description: |-
@@ -1389,34 +1395,9 @@ components:
           description: List of actions to be updated for this API client.
           type: array
           items:
-            $ref: '#/components/schemas/CustomActionRegistrationRequest'
+            $ref: '#/components/schemas/ActionRegistration'
       required:
         - actions
-    ActionRegistrationResponse:
-      type: object
-      properties:
-        id:
-          type: string
-          description: The unique identifier for this action.
-        name:
-          type: string
-          description: The user-friendly name for this action to be displayed in the UI.
-        description:
-          type: string
-          description: The user-friendly description for this action to be displayed in the UI.
-        iconSvg:
-          type: string
-          description: A simple SVG icon for this specific action when displayed in the UI.
-        type:
-          type: string
-          description: |-
-            Context/location of the action within the application.
-            For now only PanelBrowserAction is supported and will be set regardless of provided value.
-          enum:
-            - PanelBrowserAction
-      required:
-        - id
-        - name
     ActionsUpdateResponse:
       type: object
       properties:
@@ -1424,7 +1405,7 @@ components:
           description: The list of actions registered for this API consumer's extension.
           type: array
           items:
-            $ref: '#/components/schemas/ActionRegistrationResponse'
+            $ref: '#/components/schemas/ActionRegistration'
       required:
         - actions
     PanelRequestItem:

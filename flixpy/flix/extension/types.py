@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import dataclasses
 import enum
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any
 
 from typing_extensions import Self
 
 from ..lib import types as flix_types
 from .extension_api import models
 from .extension_api.models import (
+    ActionRegistrationType,
     ActionState,
     ActionType,
     AssetType,
@@ -26,7 +27,8 @@ if TYPE_CHECKING:
 __all__ = [
     "ActionEvent",
     "ActionEventPanel",
-    "ActionRegistrationResponse",
+    "ActionRegistration",
+    "ActionRegistrationType",
     "ActionState",
     "ActionType",
     "ActionsInProgress",
@@ -35,7 +37,6 @@ __all__ = [
     "ClientEventType",
     "ClientPingEvent",
     "ConnectionEvent",
-    "CustomActionRegistrationRequest",
     "DownloadResponse",
     "Event",
     "OpenEvent",
@@ -62,18 +63,6 @@ __all__ = [
     "VersionEvent",
     "VersionResponse",
 ]
-
-_T = TypeVar("_T")
-
-
-def _or_unset(value: _T | None) -> _T | Unset:
-    """Convert an optional value into the Unset sentinel used by the generated models."""
-    return UNSET if value is None else value
-
-
-def _none_if_unset(value: _T | Unset) -> _T | None:
-    """Convert the Unset sentinel used by the generated models into None."""
-    return None if isinstance(value, Unset) else value
 
 
 @dataclasses.dataclass
@@ -322,11 +311,11 @@ class PanelMetadataUpdateEvent(ClientEvent):
 
 @dataclasses.dataclass
 class ProjectMetadata:
-    """Custom metadata for the entities in the currently open project.
+    """Combined metadata for each of the entities in the currently open project.
 
-    Each field maps metadata keys to values. A field that is None is not present:
-    it is left out of an update, or was not included in an event from the Flix Client.
-    When updating, a value of None deletes that key.
+    Each loaded entity in the current project has it's metadata mapped into a dictionary under the
+    relevant property (show/episode/sequence/sequence revision). If the value is set to None, the
+    entity is not loaded in Flix.
     """
 
     show: dict[str, str | None] | None = None
@@ -499,7 +488,7 @@ class OpenPanelData:
             is_animated=data.is_animated,
             source_file_asset_id=data.source_file.asset_id if data.source_file else None,
             annotation_asset_id=data.annotation_asset_id if data.annotation_asset_id else None,
-            shot_id=_none_if_unset(data.shot_id),
+            shot_id=data.shot_id if data.shot_id else None,
         )
 
 
@@ -537,7 +526,7 @@ class OpenEvent(ClientEvent):
             panels=[OpenPanelData.from_dict(panel) for panel in data.panels],
             shots=[OpenShot.from_dict(shot) for shot in data.shots],
             additional_properties=data.additional_properties,
-            action_id=_none_if_unset(data.action_id),
+            action_id=data.action_id if data.action_id else None,
         )
 
 
@@ -600,43 +589,32 @@ class VersionResponse:
 
 
 @dataclasses.dataclass
-class CustomActionRegistrationRequest:
-    """An action that an extension asks the Flix Client to show in the Panel Browser."""
+class ActionRegistration:
+    """An action that an extension that is registered with the Flix Client."""
 
     id: str
     name: str
     description: str | None = None
     icon_svg: str | None = None
-    type: models.CustomActionRegistrationRequestType | None = None
+    type: ActionRegistrationType | None = None
 
-    def to_model(self) -> models.CustomActionRegistrationRequest:
-        return models.CustomActionRegistrationRequest(
+    def to_model(self) -> models.ActionRegistration:
+        return models.ActionRegistration(
             id=self.id,
             name=self.name,
-            description=_or_unset(self.description),
-            icon_svg=_or_unset(self.icon_svg),
-            type=_or_unset(self.type),
+            description=self.description if self.description else UNSET,
+            icon_svg=self.icon_svg if self.icon_svg else UNSET,
+            type=self.type if self.type else UNSET,
         )
 
-
-@dataclasses.dataclass
-class ActionRegistrationResponse:
-    """An action as registered with the Flix Client."""
-
-    id: str
-    name: str
-    description: str | None
-    icon_svg: str | None
-    type: models.ActionRegistrationResponseType | None
-
     @classmethod
-    def from_dict(cls, data: models.ActionRegistrationResponse) -> Self:
+    def from_dict(cls, data: models.ActionRegistration) -> Self:
         return cls(
             id=data.id,
             name=data.name,
-            description=_none_if_unset(data.description),
-            icon_svg=_none_if_unset(data.icon_svg),
-            type=_none_if_unset(data.type),
+            description=data.description if data.description else None,
+            icon_svg=data.icon_svg if data.icon_svg else None,
+            type=data.type if data.type else None,
         )
 
 

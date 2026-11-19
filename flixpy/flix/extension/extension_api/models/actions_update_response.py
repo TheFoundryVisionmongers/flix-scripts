@@ -4,7 +4,7 @@ from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 if TYPE_CHECKING:
-    from ..models.action_registration_response import ActionRegistrationResponse
+    from ..models.action_registration import ActionRegistration
 
 
 T = TypeVar("T", bound="ActionsUpdateResponse")
@@ -14,10 +14,10 @@ T = TypeVar("T", bound="ActionsUpdateResponse")
 class ActionsUpdateResponse:
     """
     Attributes:
-        actions (List['ActionRegistrationResponse']): The list of actions registered for this API consumer's extension.
+        actions (List['ActionRegistration']): The list of actions registered for this API consumer's extension.
     """
 
-    actions: List["ActionRegistrationResponse"]
+    actions: List["ActionRegistration"]
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -39,13 +39,13 @@ class ActionsUpdateResponse:
 
     @classmethod
     def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
-        from ..models.action_registration_response import ActionRegistrationResponse
+        from ..models.action_registration import ActionRegistration
 
         d = src_dict.copy()
         actions = []
         _actions = d.pop("actions")
         for actions_item_data in _actions:
-            actions_item = ActionRegistrationResponse.from_dict(actions_item_data)
+            actions_item = ActionRegistration.from_dict(actions_item_data)
 
             actions.append(actions_item)
 

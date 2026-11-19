@@ -1,7 +1,5 @@
 """Pythonic abstractions of the models used by the Flix Server REST API."""
 
-# pyright: reportTypedDictNotRequiredAccess=warning
-
 from __future__ import annotations
 
 import base64
