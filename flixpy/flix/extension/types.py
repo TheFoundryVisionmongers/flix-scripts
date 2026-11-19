@@ -181,7 +181,7 @@ class ClientEvent(Event):
             ws_event = models.WebsocketEvent.from_dict(event_data)
         except (ValueError, LookupError, TypeError) as e:
             if (data := event_data.get("data")) and isinstance(data, dict) and "type" in data:
-                return cls(type=str(data.pop("type")), additional_properties=data)  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
+                return cls(type=str(data.pop("type")), additional_properties=data)
             else:
                 raise ValueError("unexpected event format") from e
 
