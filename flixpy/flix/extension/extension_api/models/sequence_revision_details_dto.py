@@ -1,9 +1,11 @@
 import datetime
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, TypeVar, Union, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 from dateutil.parser import isoparse
+
+from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
     from ..models.sequence_revision_details_dto_metadata import (
@@ -19,38 +21,40 @@ class SequenceRevisionDetailsDto:
     """
     Attributes:
         id (int): The Flix identifier for the sequence revision.
-        metadata (SequenceRevisionDetailsDtoMetadata): Arbitrary key-value metadata to merge into the entity. Each value
-            must be a string, or `null` to delete that key.
-
-            **Note:** Keys in this dictionary are **case-sensitive**.
-
-            Best practice: Use namespaced keys to avoid conflicts with other extensions (e.g., `vendor.plugin:key`).
-            Example: {'com.myextension:status': 'inprogress', 'com.myextension:tag': None}.
         owner (str): The user that created the sequence revision.
         published (bool): Whether this sequence revision has been published to editorial.
         comment (str): Any comment added to the sequence revision when saving.
         shot_names (List[str]): The list of shot names included in the sequence revision, derived from the named shots
             of the panels in the sequence revision.
+        metadata (Union[Unset, SequenceRevisionDetailsDtoMetadata]): Arbitrary key-value metadata to merge into the
+            entity. Each value must be a string, or `null` to delete that key.
+
+            **Note:** Keys in this dictionary are **case-sensitive**.
+
+            Best practice: Use namespaced keys to avoid conflicts with other extensions (e.g., `vendor.plugin:key`).
+            Example: {'com.myextension:status': 'inprogress', 'com.myextension:tag': None}.
         created_date (Optional[datetime.datetime]): The date the sequence revision was created.
     """
 
     id: int
-    metadata: "SequenceRevisionDetailsDtoMetadata"
     owner: str
     published: bool
     comment: str
     shot_names: List[str]
     created_date: Optional[datetime.datetime]
+    metadata: Union[Unset, "SequenceRevisionDetailsDtoMetadata"] = UNSET
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
         id = self.id
-        metadata = self.metadata.to_dict()
-
         owner = self.owner
         published = self.published
         comment = self.comment
         shot_names = self.shot_names
+
+        metadata: Union[Unset, Dict[str, Any]] = UNSET
+        if not isinstance(self.metadata, Unset):
+            metadata = self.metadata.to_dict()
 
         created_date = self.created_date.isoformat() if self.created_date else None
 
@@ -59,7 +63,6 @@ class SequenceRevisionDetailsDto:
         field_dict.update(
             {
                 "id": id,
-                "metadata": metadata,
                 "owner": owner,
                 "published": published,
                 "comment": comment,
@@ -67,6 +70,8 @@ class SequenceRevisionDetailsDto:
                 "createdDate": created_date,
             }
         )
+        if metadata is not UNSET:
+            field_dict["metadata"] = metadata
 
         return field_dict
 
@@ -79,8 +84,6 @@ class SequenceRevisionDetailsDto:
         d = src_dict.copy()
         id = d.pop("id")
 
-        metadata = SequenceRevisionDetailsDtoMetadata.from_dict(d.pop("metadata"))
-
         owner = d.pop("owner")
 
         published = d.pop("published")
@@ -88,6 +91,13 @@ class SequenceRevisionDetailsDto:
         comment = d.pop("comment")
 
         shot_names = cast(List[str], d.pop("shotNames"))
+
+        _metadata = d.pop("metadata", UNSET)
+        metadata: Union[Unset, SequenceRevisionDetailsDtoMetadata]
+        if isinstance(_metadata, Unset):
+            metadata = UNSET
+        else:
+            metadata = SequenceRevisionDetailsDtoMetadata.from_dict(_metadata)
 
         _created_date = d.pop("createdDate")
         created_date: Optional[datetime.datetime]
@@ -98,11 +108,11 @@ class SequenceRevisionDetailsDto:
 
         sequence_revision_details_dto = cls(
             id=id,
-            metadata=metadata,
             owner=owner,
             published=published,
             comment=comment,
             shot_names=shot_names,
+            metadata=metadata,
             created_date=created_date,
         )
 

@@ -588,6 +588,8 @@ class Extension:
     ) -> list[types.ActionRegistration]:
         """Update the list of custom actions registered for this extension.
 
+        Requires Flix 9 or later.
+
         Args:
             actions: The full list of actions this extension should have registered.
                 This replaces any previously registered actions.
@@ -625,6 +627,8 @@ class Extension:
         With no arguments, all panels in the sequence revision are returned. The filters
         can be combined; a panel must match every filter given to be returned.
 
+        Requires Flix 9 or later.
+
         Args:
             selected: If True, only return the currently selected panels.
             panel_ids: If given, only return panels with these IDs.
@@ -661,6 +665,8 @@ class Extension:
         Adds new keys, updates the value for existing keys, removes keys set to None and leaves any
         other keys unchanged. Recommendation: Use namespaced keys (for example,
         `com.example.extension:status`) to avoid conflicts with other extensions.
+
+        Requires Flix 9 or later.
 
         Args:
             metadata: The key-value pairs to set on each matching panel. A value of None
@@ -733,7 +739,10 @@ class Extension:
         )
 
     async def get_project_metadata(self) -> types.ProjectMetadata:
-        """Get the custom metadata of the show, episode, sequence and sequence revision."""
+        """Get the custom metadata of the show, episode, sequence and sequence revision.
+
+        Requires Flix 9 or later.
+        """
         from .extension_api.api.project_metadata import project_metadata_controller_get
 
         resp = _assert_response(
@@ -751,6 +760,8 @@ class Extension:
         Only entities whose field in `metadata` is not None are updated, and only the keys
         provided are changed. A key set to None is deleted. The entities must exist in the
         current project context.
+
+        Requires Flix 9 or later.
 
         Args:
             metadata: The metadata to merge into the current project.

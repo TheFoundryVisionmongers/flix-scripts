@@ -1125,7 +1125,6 @@ components:
           description: The configured default aspect ratio for the sequence.
       required:
         - id
-        - metadata
         - trackingCode
         - title
         - aspectRatio
@@ -1165,7 +1164,6 @@ components:
           description: The episode's display title.
       required:
         - id
-        - metadata
         - trackingCode
         - createdDate
         - owner
@@ -1208,7 +1206,6 @@ components:
           description: The aspect ratio used by the sequence.
       required:
         - id
-        - metadata
         - trackingCode
         - createdDate
         - owner
@@ -1254,7 +1251,6 @@ components:
             type: string
       required:
         - id
-        - metadata
         - createdDate
         - owner
         - published

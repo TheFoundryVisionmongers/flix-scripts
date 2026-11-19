@@ -100,7 +100,7 @@ class ProjectDetails:
                 tracking_code=data.show.tracking_code,
                 aspect_ratio=data.show.aspect_ratio,
                 title=data.show.title or "",
-                metadata=data.show.metadata.to_dict(),
+                metadata=data.show.metadata.to_dict() if data.show.metadata else None,
                 _client=None,
             )
 
@@ -111,7 +111,7 @@ class ProjectDetails:
                     created_date=data.episode.created_date,
                     title=data.episode.title or "",
                     owner=flix_types.User(data.episode.owner, _client=None),
-                    metadata=data.episode.metadata.to_dict(),
+                    metadata=data.episode.metadata.to_dict() if data.episode.metadata else None,
                     _show=show,
                     _client=None,
                 )
@@ -123,7 +123,7 @@ class ProjectDetails:
                     created_date=data.sequence.created_date,
                     description=data.sequence.title or "",
                     owner=flix_types.User(data.sequence.owner, _client=None),
-                    metadata=data.sequence.metadata.to_dict(),
+                    metadata=data.sequence.metadata.to_dict() if data.sequence.metadata else None,
                     _show=show,
                     _episode=episode,
                     _client=None,
@@ -135,7 +135,7 @@ class ProjectDetails:
                         published=rev.published,
                         comment=rev.comment or "",
                         created_date=rev.created_date,
-                        metadata=rev.metadata.to_dict(),
+                        metadata=rev.metadata.to_dict() if rev.metadata else None,
                         owner=flix_types.User(rev.owner, _client=None) if rev.owner else None,
                         _sequence=sequence,
                         _client=None,
@@ -362,15 +362,18 @@ class ProjectMetadataUpdateEvent(ClientEvent):
             type=event_type,
             success=data.success,
             metadata=ProjectMetadata(
-                show=None if isinstance(data.show, Unset) else data.show.metadata.to_dict(),
+                show=None
+                if isinstance(data.show, Unset) or isinstance(data.show.metadata, Unset)
+                else data.show.metadata.to_dict(),
                 episode=None
-                if isinstance(data.episode, Unset)
+                if isinstance(data.episode, Unset) or isinstance(data.episode.metadata, Unset)
                 else data.episode.metadata.to_dict(),
                 sequence=None
-                if isinstance(data.sequence, Unset)
+                if isinstance(data.sequence, Unset) or isinstance(data.sequence.metadata, Unset)
                 else data.sequence.metadata.to_dict(),
                 sequence_revision=None
                 if isinstance(data.sequence_revision, Unset)
+                or isinstance(data.sequence_revision.metadata, Unset)
                 else data.sequence_revision.metadata.to_dict(),
             ),
             additional_properties=data.additional_properties,

@@ -1,9 +1,11 @@
 import datetime
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, TypeVar
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, TypeVar, Union
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 from dateutil.parser import isoparse
+
+from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
     from ..models.episode_details_dto_metadata import EpisodeDetailsDtoMetadata
@@ -17,35 +19,37 @@ class EpisodeDetailsDto:
     """
     Attributes:
         id (int): The Flix identifier for the episode.
-        metadata (EpisodeDetailsDtoMetadata): Arbitrary key-value metadata to merge into the entity. Each value must be
-            a string, or `null` to delete that key.
+        tracking_code (str): The episode's tracking code.
+        created_date (datetime.datetime): The date the episode was created.
+        owner (str): The user that created the episode.
+        metadata (Union[Unset, EpisodeDetailsDtoMetadata]): Arbitrary key-value metadata to merge into the entity. Each
+            value must be a string, or `null` to delete that key.
 
             **Note:** Keys in this dictionary are **case-sensitive**.
 
             Best practice: Use namespaced keys to avoid conflicts with other extensions (e.g., `vendor.plugin:key`).
             Example: {'com.myextension:status': 'inprogress', 'com.myextension:tag': None}.
-        tracking_code (str): The episode's tracking code.
-        created_date (datetime.datetime): The date the episode was created.
-        owner (str): The user that created the episode.
         title (Optional[str]): The episode's display title.
     """
 
     id: int
-    metadata: "EpisodeDetailsDtoMetadata"
     tracking_code: str
     created_date: datetime.datetime
     owner: str
     title: Optional[str]
+    metadata: Union[Unset, "EpisodeDetailsDtoMetadata"] = UNSET
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
         id = self.id
-        metadata = self.metadata.to_dict()
-
         tracking_code = self.tracking_code
         created_date = self.created_date.isoformat()
 
         owner = self.owner
+        metadata: Union[Unset, Dict[str, Any]] = UNSET
+        if not isinstance(self.metadata, Unset):
+            metadata = self.metadata.to_dict()
+
         title = self.title
 
         field_dict: Dict[str, Any] = {}
@@ -53,13 +57,14 @@ class EpisodeDetailsDto:
         field_dict.update(
             {
                 "id": id,
-                "metadata": metadata,
                 "trackingCode": tracking_code,
                 "createdDate": created_date,
                 "owner": owner,
                 "title": title,
             }
         )
+        if metadata is not UNSET:
+            field_dict["metadata"] = metadata
 
         return field_dict
 
@@ -70,22 +75,27 @@ class EpisodeDetailsDto:
         d = src_dict.copy()
         id = d.pop("id")
 
-        metadata = EpisodeDetailsDtoMetadata.from_dict(d.pop("metadata"))
-
         tracking_code = d.pop("trackingCode")
 
         created_date = isoparse(d.pop("createdDate"))
 
         owner = d.pop("owner")
 
+        _metadata = d.pop("metadata", UNSET)
+        metadata: Union[Unset, EpisodeDetailsDtoMetadata]
+        if isinstance(_metadata, Unset):
+            metadata = UNSET
+        else:
+            metadata = EpisodeDetailsDtoMetadata.from_dict(_metadata)
+
         title = d.pop("title")
 
         episode_details_dto = cls(
             id=id,
-            metadata=metadata,
             tracking_code=tracking_code,
             created_date=created_date,
             owner=owner,
+            metadata=metadata,
             title=title,
         )
 
