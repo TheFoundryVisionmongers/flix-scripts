@@ -8,7 +8,7 @@ from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
 
-from ..models.custom_action_registration_request_type import CustomActionRegistrationRequestType
+from ..models.action_registration_type import ActionRegistrationType
 from ..types import UNSET, Unset
 
 
@@ -16,28 +16,28 @@ from ..types import UNSET, Unset
 
 
 
-T = TypeVar("T", bound="CustomActionRegistrationRequest")
+T = TypeVar("T", bound="ActionRegistration")
 
 
 
 @_attrs_define
-class CustomActionRegistrationRequest:
+class ActionRegistration:
     """ 
         Attributes:
             id (str): Unique identifier for this action.
             name (str): The user-friendly name for this action to be displayed in the UI.
+            type_ (ActionRegistrationType | Unset): Context/location of the action within the application.
+                For now only PanelBrowserAction is supported and will be set regardless of provided value.
             description (str | Unset): The user-friendly description for this action to be displayed in the UI.
             icon_svg (str | Unset): A simple SVG icon for this specific action when displayed in the UI.
                 This value will be processed upon registration and may display incorrectly if unsupported SVG features are used.
-            type_ (CustomActionRegistrationRequestType | Unset): Context/location of the action within the application.
-                For now only PanelBrowserAction is supported and will be set regardless of provided value.
      """
 
     id: str
     name: str
+    type_: ActionRegistrationType | Unset = UNSET
     description: str | Unset = UNSET
     icon_svg: str | Unset = UNSET
-    type_: CustomActionRegistrationRequestType | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
 
@@ -49,14 +49,14 @@ class CustomActionRegistrationRequest:
 
         name = self.name
 
-        description = self.description
-
-        icon_svg = self.icon_svg
-
         type_: str | Unset = UNSET
         if not isinstance(self.type_, Unset):
             type_ = self.type_.value
 
+
+        description = self.description
+
+        icon_svg = self.icon_svg
 
 
         field_dict: dict[str, Any] = {}
@@ -65,12 +65,12 @@ class CustomActionRegistrationRequest:
             "id": id,
             "name": name,
         })
+        if type_ is not UNSET:
+            field_dict["type"] = type_
         if description is not UNSET:
             field_dict["description"] = description
         if icon_svg is not UNSET:
             field_dict["iconSvg"] = icon_svg
-        if type_ is not UNSET:
-            field_dict["type"] = type_
 
         return field_dict
 
@@ -83,31 +83,31 @@ class CustomActionRegistrationRequest:
 
         name = d.pop("name")
 
+        _type_ = d.pop("type", UNSET)
+        type_: ActionRegistrationType | Unset
+        if isinstance(_type_,  Unset):
+            type_ = UNSET
+        else:
+            type_ = ActionRegistrationType(_type_)
+
+
+
+
         description = d.pop("description", UNSET)
 
         icon_svg = d.pop("iconSvg", UNSET)
 
-        _type_ = d.pop("type", UNSET)
-        type_: CustomActionRegistrationRequestType | Unset
-        if isinstance(_type_,  Unset):
-            type_ = UNSET
-        else:
-            type_ = CustomActionRegistrationRequestType(_type_)
-
-
-
-
-        custom_action_registration_request = cls(
+        action_registration = cls(
             id=id,
             name=name,
+            type_=type_,
             description=description,
             icon_svg=icon_svg,
-            type_=type_,
         )
 
 
-        custom_action_registration_request.additional_properties = d
-        return custom_action_registration_request
+        action_registration.additional_properties = d
+        return action_registration
 
     @property
     def additional_keys(self) -> list[str]:

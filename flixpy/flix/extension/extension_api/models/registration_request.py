@@ -12,7 +12,7 @@ from ..types import UNSET, Unset
 from typing import cast
 
 if TYPE_CHECKING:
-  from ..models.custom_action_registration_request import CustomActionRegistrationRequest
+  from ..models.action_registration import ActionRegistration
 
 
 
@@ -30,7 +30,7 @@ class RegistrationRequest:
             client_uid (str): A unique identifier for this API consumer.
             version (str | Unset): The version of this API consumer (Optional).
             log_paths (list[str] | Unset): Paths to the extension's log files.
-            actions (list[CustomActionRegistrationRequest] | Unset): List of actions available for this extension.
+            actions (list[ActionRegistration] | Unset): List of actions available for this extension.
             icon_svg (str | Unset): A simple SVG icon to be displayed by default for extension actions when displayed in the
                 UI.
                 This value will be processed upon registration and may display incorrectly if unsupported SVG features are used.
@@ -41,7 +41,7 @@ class RegistrationRequest:
     client_uid: str
     version: str | Unset = UNSET
     log_paths: list[str] | Unset = UNSET
-    actions: list[CustomActionRegistrationRequest] | Unset = UNSET
+    actions: list[ActionRegistration] | Unset = UNSET
     icon_svg: str | Unset = UNSET
     short_name: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
@@ -51,7 +51,7 @@ class RegistrationRequest:
 
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.custom_action_registration_request import CustomActionRegistrationRequest # noqa: PLC0415
+        from ..models.action_registration import ActionRegistration # noqa: PLC0415
         name = self.name
 
         client_uid = self.client_uid
@@ -101,7 +101,7 @@ class RegistrationRequest:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.custom_action_registration_request import CustomActionRegistrationRequest # noqa: PLC0415
+        from ..models.action_registration import ActionRegistration # noqa: PLC0415
         d = dict(src_dict)
         name = d.pop("name")
 
@@ -113,11 +113,11 @@ class RegistrationRequest:
 
 
         _actions = d.pop("actions", UNSET)
-        actions: list[CustomActionRegistrationRequest] | Unset = UNSET
+        actions: list[ActionRegistration] | Unset = UNSET
         if _actions is not UNSET:
             actions = []
             for actions_item_data in _actions:
-                actions_item = CustomActionRegistrationRequest.from_dict(actions_item_data)
+                actions_item = ActionRegistration.from_dict(actions_item_data)
 
 
 

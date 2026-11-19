@@ -3,8 +3,8 @@
 from .action_event import ActionEvent
 from .action_event_panel_response import ActionEventPanelResponse
 from .action_event_panel_response_metadata import ActionEventPanelResponseMetadata
-from .action_registration_response import ActionRegistrationResponse
-from .action_registration_response_type import ActionRegistrationResponseType
+from .action_registration import ActionRegistration
+from .action_registration_type import ActionRegistrationType
 from .action_state import ActionState
 from .action_type import ActionType
 from .actions_in_progress_response import ActionsInProgressResponse
@@ -14,8 +14,6 @@ from .asset_type import AssetType
 from .bulk_panel_annotate_request import BulkPanelAnnotateRequest
 from .bulk_panel_request import BulkPanelRequest
 from .client_event_type import ClientEventType
-from .custom_action_registration_request import CustomActionRegistrationRequest
-from .custom_action_registration_request_type import CustomActionRegistrationRequestType
 from .download_request import DownloadRequest
 from .download_response import DownloadResponse
 from .episode_details_dto import EpisodeDetailsDto
@@ -123,8 +121,8 @@ __all__ = (
     "ActionEvent",
     "ActionEventPanelResponse",
     "ActionEventPanelResponseMetadata",
-    "ActionRegistrationResponse",
-    "ActionRegistrationResponseType",
+    "ActionRegistration",
+    "ActionRegistrationType",
     "ActionsInProgressResponse",
     "ActionState",
     "ActionsUpdateRequest",
@@ -134,8 +132,6 @@ __all__ = (
     "BulkPanelAnnotateRequest",
     "BulkPanelRequest",
     "ClientEventType",
-    "CustomActionRegistrationRequest",
-    "CustomActionRegistrationRequestType",
     "DownloadRequest",
     "DownloadResponse",
     "EpisodeDetailsDto",

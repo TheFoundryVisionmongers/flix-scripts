@@ -11,7 +11,7 @@ from ..types import UNSET, Unset
 from typing import cast
 
 if TYPE_CHECKING:
-  from ..models.custom_action_registration_request import CustomActionRegistrationRequest
+  from ..models.action_registration import ActionRegistration
 
 
 
@@ -25,10 +25,10 @@ T = TypeVar("T", bound="ActionsUpdateRequest")
 class ActionsUpdateRequest:
     """ 
         Attributes:
-            actions (list[CustomActionRegistrationRequest]): List of actions to be updated for this API client.
+            actions (list[ActionRegistration]): List of actions to be updated for this API client.
      """
 
-    actions: list[CustomActionRegistrationRequest]
+    actions: list[ActionRegistration]
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
 
@@ -36,7 +36,7 @@ class ActionsUpdateRequest:
 
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.custom_action_registration_request import CustomActionRegistrationRequest # noqa: PLC0415
+        from ..models.action_registration import ActionRegistration # noqa: PLC0415
         actions = []
         for actions_item_data in self.actions:
             actions_item = actions_item_data.to_dict()
@@ -57,12 +57,12 @@ class ActionsUpdateRequest:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.custom_action_registration_request import CustomActionRegistrationRequest # noqa: PLC0415
+        from ..models.action_registration import ActionRegistration # noqa: PLC0415
         d = dict(src_dict)
         actions = []
         _actions = d.pop("actions")
         for actions_item_data in (_actions):
-            actions_item = CustomActionRegistrationRequest.from_dict(actions_item_data)
+            actions_item = ActionRegistration.from_dict(actions_item_data)
 
 
 
