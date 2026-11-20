@@ -311,7 +311,7 @@ class PanelMetadataUpdateEvent(ClientEvent):
 class ProjectMetadata:
     """Combined metadata for each of the entities in the currently open project.
 
-    Each loaded entity in the current project has it's metadata mapped into a dictionary under the
+    Each loaded entity in the current project has its metadata mapped into a dictionary under the
     relevant property (show/episode/sequence/sequence revision). If the value is set to None, the
     entity is not loaded in Flix.
     """
