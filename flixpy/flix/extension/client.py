@@ -52,11 +52,7 @@ def _query_ids(ids: Iterable[int] | None) -> str | api_types.Unset:
     if ids is None:
         return api_types.UNSET
 
-    panel_ids = [str(panel_id) for panel_id in ids]
-    if len(panel_ids) == 0:
-        return api_types.UNSET
-
-    return ",".join(panel_ids)
+    return ",".join(map(str, ids)) or api_types.UNSET
 
 
 def _query_range(panel_range: tuple[int, int] | None) -> str | api_types.Unset:
