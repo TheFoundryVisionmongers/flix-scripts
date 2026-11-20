@@ -59,8 +59,6 @@ def sync_detailed(
 ) -> Response[Union[Any, DownloadResponse]]:
     """Download Media Object
 
-     Downloads a specific artwork type for a given asset, to a target folder on the local machine.
-
     Args:
         json_body (DownloadRequest):
 
@@ -90,8 +88,6 @@ def sync(
 ) -> Optional[Union[Any, DownloadResponse]]:
     """Download Media Object
 
-     Downloads a specific artwork type for a given asset, to a target folder on the local machine.
-
     Args:
         json_body (DownloadRequest):
 
@@ -115,8 +111,6 @@ async def asyncio_detailed(
     json_body: DownloadRequest,
 ) -> Response[Union[Any, DownloadResponse]]:
     """Download Media Object
-
-     Downloads a specific artwork type for a given asset, to a target folder on the local machine.
 
     Args:
         json_body (DownloadRequest):
@@ -144,8 +138,6 @@ async def asyncio(
     json_body: DownloadRequest,
 ) -> Optional[Union[Any, DownloadResponse]]:
     """Download Media Object
-
-     Downloads a specific artwork type for a given asset, to a target folder on the local machine.
 
     Args:
         json_body (DownloadRequest):

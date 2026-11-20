@@ -6,7 +6,7 @@ import asyncio
 import logging
 import warnings
 import weakref
-from collections.abc import AsyncIterable, AsyncIterator, Coroutine
+from collections.abc import AsyncIterable, AsyncIterator, Coroutine, Iterable, Mapping
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, TypeVar, cast
 
@@ -46,6 +46,20 @@ def _assert_response(expect: type[T], resp: api_types.Response[U]) -> T:
         return cast(T, resp.parsed)
 
     raise errors.FlixError(f"expected response type {expect}, got: {resp.content!r}")
+
+
+def _query_ids(ids: Iterable[int] | None) -> str | api_types.Unset:
+    if ids is None:
+        return api_types.UNSET
+
+    return ",".join(map(str, ids)) or api_types.UNSET
+
+
+def _query_range(panel_range: tuple[int, int] | None) -> str | api_types.Unset:
+    if panel_range is None:
+        return api_types.UNSET
+    start, end = panel_range
+    return f"{start},{end}"
 
 
 _ET_co = TypeVar("_ET_co", bound=types.Event, covariant=True)
@@ -163,6 +177,9 @@ class Extension:
         log_paths: list[str] | None = None,
         version: str | None = None,
         base_url: str = BASE_URL,
+        actions: list[types.ActionRegistration] | None = None,
+        icon_svg: str | None = None,
+        short_name: str | None = None,
     ) -> None:
         """Initialise an Extension.
 
@@ -173,6 +190,9 @@ class Extension:
             version: An optional version string for the extension
             base_url: The URL to use to connect to the Flix Client, if something other than
                 the standard Flix Client port on localhost
+            actions: Actions to register with the Flix Client when the extension registers.
+            icon_svg: An SVG icon shown by default for the extension's actions in the UI.
+            short_name: A short name for the extension, used in the context menu.
 
         """
         self.name = name
@@ -180,6 +200,9 @@ class Extension:
         self.version = version
         self.base_url = base_url
         self.log_paths = log_paths
+        self.actions = actions or []
+        self.icon_svg = icon_svg
+        self.short_name = short_name
         self.panel_browser_status = types.PanelBrowserStatus()
         self.project = types.ProjectDetails()
         self._online = False
@@ -253,8 +276,12 @@ class Extension:
                 types.ClientEventType.PROJECT,
                 types.ClientEventType.ACTION,
                 types.ClientEventType.OPEN,
+                types.ClientEventType.PANEL_METADATA_UPDATE,
+                types.ClientEventType.PROJECT_METADATA_UPDATE,
             ],
         )
+
+        # skip the online check when emitting the subscriptions after the initial connection
         await self.sio.emit("subscribe", data=events.to_dict())
 
     async def _on_disconnect(self) -> None:
@@ -372,6 +399,11 @@ class Extension:
                     client_uid=self.client_uid,
                     version=self.version or api_types.UNSET,
                     log_paths=self.log_paths or api_types.UNSET,
+                    actions=[action.to_model() for action in self.actions]
+                    if self.actions
+                    else api_types.UNSET,
+                    icon_svg=self.icon_svg or api_types.UNSET,
+                    short_name=self.short_name or api_types.UNSET,
                 ),
             ),
         )
@@ -461,6 +493,7 @@ class Extension:
         source_file: types.SourceFile | None = None,
         start_index: int | None = None,
         replace_panels: bool = False,
+        skip_panel_reuse: bool | None = None,
     ) -> types.PanelRequestResponse:
         """Instructs the Flix Client to import the given files as panel revisions.
 
@@ -471,6 +504,9 @@ class Extension:
             start_index: If specified, panels will be inserted at the given index.
                 instead of the currently selected panel index.
             replace_panels: If True, version up existing panels instead of inserting new ones.
+            skip_panel_reuse: If set, will ignore the "Disable Panel Reuse" preference in the
+                Flix Client. When True, will always import panels as new panels.
+                When False, will always check for existing panels to reuse.
         """
         from .extension_api.api.panel_management import (
             panel_controller_create,
@@ -488,6 +524,7 @@ class Extension:
             if source_file is not None
             else api_types.UNSET,
             start_index=start_index if start_index is not None else api_types.UNSET,
+            skip_panel_reuse=skip_panel_reuse if skip_panel_reuse is not None else api_types.UNSET,
         )
 
         if not replace_panels:
@@ -540,6 +577,200 @@ class Extension:
         )
 
         return types.DownloadResponse.from_dict(resp)
+
+    async def set_actions(
+        self,
+        actions: list[types.ActionRegistration],
+    ) -> list[types.ActionRegistration]:
+        """Update the list of custom actions registered for this extension.
+
+        Requires Flix 9 or later.
+
+        Args:
+            actions: The full list of actions this extension should have registered.
+                This replaces any previously registered actions.
+
+        Returns:
+            The actions as registered by the Flix Client.
+        """
+        from .extension_api.api.api_registration import (
+            registration_controller_set_client_actions,
+        )
+
+        resp = _assert_response(
+            models.ActionsUpdateResponse,
+            await registration_controller_set_client_actions.asyncio_detailed(
+                client=await self._get_registered_client(),
+                json_body=models.ActionsUpdateRequest(
+                    actions=[action.to_model() for action in actions],
+                ),
+            ),
+        )
+
+        # keep the stored actions in step, so that re-registering uses the latest list
+        self.actions = [types.ActionRegistration.from_dict(action) for action in resp.actions]
+        return self.actions
+
+    async def get_panels(
+        self,
+        *,
+        selected: bool | None = None,
+        panel_ids: Iterable[int] | None = None,
+        panel_range: tuple[int, int] | None = None,
+    ) -> list[types.PanelRevisionDetails]:
+        """Get panels from the sequence revision currently open in the Panel Browser.
+
+        With no arguments, all panels in the sequence revision are returned. The filters
+        can be combined; a panel must match every filter given to be returned.
+
+        Requires Flix 9 or later.
+
+        Args:
+            selected: If True, only return the currently selected panels.
+            panel_ids: If given, only return panels with these IDs.
+            panel_range: If given as `(start, end)`, only return panels placed between the
+                `start`th and `end`th panels (inclusive, 1-based).
+
+        Returns:
+            The panel revisions that match the filters.
+        """
+        from .extension_api.api.panel_management import panel_controller_get
+
+        resp = _assert_response(
+            models.PanelDetailsResponse,
+            await panel_controller_get.asyncio_detailed(
+                client=await self._get_registered_client(),
+                selected=selected,
+                range_=_query_range(panel_range),
+                panel_ids=_query_ids(panel_ids),
+            ),
+        )
+
+        return [types.PanelRevisionDetails.from_dict(panel) for panel in resp.panels]
+
+    async def update_panel_metadata(
+        self,
+        metadata: Mapping[str, str | None],
+        *,
+        selected: bool | None = None,
+        panel_ids: Iterable[int] | None = None,
+        panel_range: tuple[int, int] | None = None,
+    ) -> list[types.PanelMetadataUpdate]:
+        """Update metadata associated with panels in the current sequence revision.
+
+        Adds new keys, updates the value for existing keys, removes keys set to None and leaves any
+        other keys unchanged. Recommendation: Use namespaced keys (for example,
+        `com.example.extension:status`) to avoid conflicts with other extensions.
+
+        Requires Flix 9 or later.
+
+        Args:
+            metadata: The key-value pairs to set on each matching panel. A value of None
+                deletes that key.
+            selected: If True, only update the currently selected panels.
+            panel_ids: If given, only update panels with these IDs.
+            panel_range: If given as `(start, end)`, only update panels placed between the
+                `start`th and `end`th panels (inclusive, 1-based).
+
+        Returns:
+            The metadata of each panel after the update.
+        """
+        from .extension_api.api.panel_management import panel_controller_update_metadata
+
+        resp = _assert_response(
+            models.PanelUpdateMetadataResponse,
+            await panel_controller_update_metadata.asyncio_detailed(
+                client=await self._get_registered_client(),
+                json_body=models.PanelUpdateMetadataRequest(
+                    metadata=models.PanelUpdateMetadataRequestMetadata.from_dict(dict(metadata)),
+                ),
+                selected=selected,
+                range_=_query_range(panel_range),
+                panel_ids=_query_ids(panel_ids),
+            ),
+        )
+
+        return [types.PanelMetadataUpdate.from_model(result) for result in resp.results]
+
+    async def _emit_socket_message(self, event: str, data: dict[str, Any]) -> None:
+        if not self.online:
+            raise errors.FlixError("extension is not connected to the Flix Client")
+
+        await self.sio.emit(event, data)
+
+    async def track_panel(self, *, show_id: int, sequence_id: int, panel_id: int) -> None:
+        """Mark a panel as open in this extension.
+
+        The request is sent as a `trackPanel` message over the websocket connection,
+        so the extension must be connected to the Flix Client.
+
+        Raises:
+            errors.FlixError: If the extension is not connected to the Flix Client.
+        """
+        await self._emit_socket_message(
+            "trackPanel",
+            models.PanelTrackRequest(
+                show_id=show_id,
+                sequence_id=sequence_id,
+                panel_id=panel_id,
+            ).to_dict(),
+        )
+
+    async def untrack_panel(self, *, show_id: int, sequence_id: int, panel_id: int) -> None:
+        """Mark a panel as no longer open in this extension.
+
+        The request is sent as an `untrackPanel` message over the websocket connection,
+        so the extension must be connected to the Flix Client.
+
+        Raises:
+            errors.FlixError: If the extension is not connected to the Flix Client.
+        """
+        await self._emit_socket_message(
+            "untrackPanel",
+            models.PanelTrackRequest(
+                show_id=show_id,
+                sequence_id=sequence_id,
+                panel_id=panel_id,
+            ).to_dict(),
+        )
+
+    async def get_project_metadata(self) -> types.ProjectMetadata:
+        """Get the custom metadata of the show, episode, sequence and sequence revision.
+
+        Requires Flix 9 or later.
+        """
+        from .extension_api.api.project_metadata import project_metadata_controller_get
+
+        resp = _assert_response(
+            models.ProjectDetailsMetadataDto,
+            await project_metadata_controller_get.asyncio_detailed(
+                client=await self._get_registered_client(),
+            ),
+        )
+
+        return types.ProjectMetadata.from_model(resp)
+
+    async def update_project_metadata(self, metadata: types.ProjectMetadata) -> None:
+        """Merge custom metadata into the entities in the currently open project.
+
+        Only entities whose field in `metadata` is not None are updated, and only the keys
+        provided are changed. A key set to None is deleted. The entities must exist in the
+        current project context.
+
+        Requires Flix 9 or later.
+
+        Args:
+            metadata: The metadata to merge into the current project.
+        """
+        from .extension_api.api.project_metadata import (
+            project_metadata_controller_update_metadata,
+        )
+
+        resp = await project_metadata_controller_update_metadata.asyncio_detailed(
+            client=await self._get_registered_client(),
+            json_body=metadata.to_model(),
+        )
+        _assert_ok(resp)
 
     async def _aclose(self) -> None:
         # convert set to list to avoid modifying set while iterating over it

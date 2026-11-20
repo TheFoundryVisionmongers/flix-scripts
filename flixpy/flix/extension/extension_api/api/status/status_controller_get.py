@@ -51,8 +51,6 @@ def sync_detailed(
 ) -> Response[Union[Any, StatusResponse]]:
     """Get Flix Status
 
-     Returns details of the current state of the Flix Client.
-
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
@@ -76,8 +74,6 @@ def sync(
 ) -> Optional[Union[Any, StatusResponse]]:
     """Get Flix Status
 
-     Returns details of the current state of the Flix Client.
-
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
@@ -96,8 +92,6 @@ async def asyncio_detailed(
     client: AuthenticatedClient,
 ) -> Response[Union[Any, StatusResponse]]:
     """Get Flix Status
-
-     Returns details of the current state of the Flix Client.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -119,8 +113,6 @@ async def asyncio(
     client: AuthenticatedClient,
 ) -> Optional[Union[Any, StatusResponse]]:
     """Get Flix Status
-
-     Returns details of the current state of the Flix Client.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

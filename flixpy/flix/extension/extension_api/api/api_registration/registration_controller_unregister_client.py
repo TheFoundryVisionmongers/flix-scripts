@@ -53,8 +53,6 @@ def sync_detailed(
 ) -> Response[Any]:
     """Unregister API consumer
 
-     Removes the registration for the requesting API consumer.
-
     Args:
         authorization (str):
 
@@ -83,8 +81,6 @@ async def asyncio_detailed(
     authorization: str,
 ) -> Response[Any]:
     """Unregister API consumer
-
-     Removes the registration for the requesting API consumer.
 
     Args:
         authorization (str):

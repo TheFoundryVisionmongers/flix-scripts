@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import dataclasses
 import enum
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from typing_extensions import Self
 
 from ..lib import types as flix_types
 from .extension_api import models
 from .extension_api.models import (
+    ActionRegistrationType,
     ActionState,
     ActionType,
     AssetType,
@@ -18,10 +19,16 @@ from .extension_api.models import (
     SourceFilePreviewMode,
     SourceFileType,
 )
-from .extension_api.types import Unset
+from .extension_api.types import UNSET, Unset
+
+if TYPE_CHECKING:
+    import datetime
 
 __all__ = [
     "ActionEvent",
+    "ActionEventPanel",
+    "ActionRegistration",
+    "ActionRegistrationType",
     "ActionState",
     "ActionType",
     "ActionsInProgress",
@@ -34,13 +41,19 @@ __all__ = [
     "Event",
     "OpenEvent",
     "OpenPanelData",
+    "OpenShot",
     "OpenSourceFileEvent",
     "PanelBrowserStatus",
+    "PanelMetadataUpdate",
+    "PanelMetadataUpdateEvent",
     "PanelRequestResponse",
+    "PanelRevisionDetails",
     "PanelSelection",
     "ProjectDetails",
     "ProjectEvent",
     "ProjectIds",
+    "ProjectMetadata",
+    "ProjectMetadataUpdateEvent",
     "RevisionStatus",
     "SourceFile",
     "SourceFilePreviewMode",
@@ -87,6 +100,7 @@ class ProjectDetails:
                 tracking_code=data.show.tracking_code,
                 aspect_ratio=data.show.aspect_ratio,
                 title=data.show.title or "",
+                metadata=data.show.metadata.to_dict() if data.show.metadata else None,
                 _client=None,
             )
 
@@ -97,6 +111,7 @@ class ProjectDetails:
                     created_date=data.episode.created_date,
                     title=data.episode.title or "",
                     owner=flix_types.User(data.episode.owner, _client=None),
+                    metadata=data.episode.metadata.to_dict() if data.episode.metadata else None,
                     _show=show,
                     _client=None,
                 )
@@ -108,6 +123,7 @@ class ProjectDetails:
                     created_date=data.sequence.created_date,
                     description=data.sequence.title or "",
                     owner=flix_types.User(data.sequence.owner, _client=None),
+                    metadata=data.sequence.metadata.to_dict() if data.sequence.metadata else None,
                     _show=show,
                     _episode=episode,
                     _client=None,
@@ -119,6 +135,7 @@ class ProjectDetails:
                         published=rev.published,
                         comment=rev.comment or "",
                         created_date=rev.created_date,
+                        metadata=rev.metadata.to_dict() if rev.metadata else None,
                         owner=flix_types.User(rev.owner, _client=None) if rev.owner else None,
                         _sequence=sequence,
                         _client=None,
@@ -148,7 +165,7 @@ class ClientEvent(Event):
     additional_properties: dict[str, Any]
 
     @classmethod
-    def parse_event(cls, event_data: dict[str, Any]) -> ClientEvent:  # noqa: PLR0911
+    def parse_event(cls, event_data: dict[str, Any]) -> ClientEvent:  # noqa: PLR0911, C901
         try:
             ws_event = models.WebsocketEvent.from_dict(event_data)
         except (ValueError, LookupError, TypeError) as e:
@@ -172,6 +189,10 @@ class ClientEvent(Event):
             return StatusEvent.from_dict(event_type, data)
         elif isinstance(data, models.PingEvent):
             return ClientPingEvent.from_dict(event_type, data)
+        elif isinstance(data, models.PanelMetadataUpdateEvent):
+            return PanelMetadataUpdateEvent.from_dict(event_type, data)
+        elif isinstance(data, models.ProjectMetadataUpdateEvent):
+            return ProjectMetadataUpdateEvent.from_dict(event_type, data)
 
         return cls(
             type=event_type,
@@ -193,11 +214,29 @@ class ClientPingEvent(ClientEvent):
 
 
 @dataclasses.dataclass
+class ActionEventPanel:
+    panel_id: int
+    panel_revision: int
+    path: str
+    metadata: dict[str, str]
+
+    @classmethod
+    def from_dict(cls, data: models.ActionEventPanelResponse) -> Self:
+        return cls(
+            panel_id=data.panel_id,
+            panel_revision=data.panel_revision,
+            path=data.path,
+            metadata={} if isinstance(data.metadata, Unset) else data.metadata.to_dict(),
+        )
+
+
+@dataclasses.dataclass
 class ActionEvent(ClientEvent):
     state: ActionState
     action: ActionType
     action_id: int
     api_client_id: int | None
+    panels: list[ActionEventPanel]
 
     @classmethod
     def from_dict(cls, event_type: str, data: models.ActionEvent) -> Self:
@@ -207,6 +246,9 @@ class ActionEvent(ClientEvent):
             action=data.action,
             action_id=data.action_id,
             api_client_id=data.api_client_id,
+            panels=[ActionEventPanel.from_dict(panel) for panel in data.panels]
+            if not isinstance(data.panels, Unset)
+            else [],
             additional_properties=data.additional_properties,
         )
 
@@ -240,6 +282,105 @@ class ProjectEvent(ProjectDetails, ClientEvent):
 
 
 @dataclasses.dataclass
+class PanelMetadataUpdate:
+    """The metadata of a single panel, as returned after it was updated."""
+
+    panel_id: int
+    metadata: dict[str, str]
+
+    @classmethod
+    def from_model(
+        cls,
+        data: models.UpdatedPanelMetadataDto | models.PanelUpdateMetadataResponseItem,
+    ) -> Self:
+        return cls(panel_id=data.id, metadata=data.metadata.to_dict())
+
+
+@dataclasses.dataclass
+class PanelMetadataUpdateEvent(ClientEvent):
+    panels: list[PanelMetadataUpdate]
+
+    @classmethod
+    def from_dict(cls, event_type: str, data: models.PanelMetadataUpdateEvent) -> Self:
+        return cls(
+            type=event_type,
+            panels=[PanelMetadataUpdate.from_model(panel) for panel in data.panels],
+            additional_properties=data.additional_properties,
+        )
+
+
+@dataclasses.dataclass
+class ProjectMetadata:
+    """Combined metadata for each of the entities in the currently open project.
+
+    Each loaded entity in the current project has its metadata mapped into a dictionary under the
+    relevant property (show/episode/sequence/sequence revision). If the value is set to None, the
+    entity is not loaded in Flix.
+    """
+
+    show: dict[str, str | None] | None = None
+    episode: dict[str, str | None] | None = None
+    sequence: dict[str, str | None] | None = None
+    sequence_revision: dict[str, str | None] | None = None
+
+    @classmethod
+    def from_model(cls, data: models.ProjectDetailsMetadataDto) -> Self:
+        return cls(
+            show=None if isinstance(data.show, Unset) else data.show.to_dict(),
+            episode=None if isinstance(data.episode, Unset) else data.episode.to_dict(),
+            sequence=None if isinstance(data.sequence, Unset) else data.sequence.to_dict(),
+            sequence_revision=None
+            if isinstance(data.sequence_revision, Unset)
+            else data.sequence_revision.to_dict(),
+        )
+
+    def to_model(self) -> models.ProjectDetailsMetadataDto:
+        return models.ProjectDetailsMetadataDto(
+            show=UNSET
+            if self.show is None
+            else models.ProjectDetailsMetadataDtoShow.from_dict(self.show),
+            episode=UNSET
+            if self.episode is None
+            else models.ProjectDetailsMetadataDtoEpisode.from_dict(self.episode),
+            sequence=UNSET
+            if self.sequence is None
+            else models.ProjectDetailsMetadataDtoSequence.from_dict(self.sequence),
+            sequence_revision=UNSET
+            if self.sequence_revision is None
+            else models.ProjectDetailsMetadataDtoSequenceRevision.from_dict(self.sequence_revision),
+        )
+
+
+@dataclasses.dataclass
+class ProjectMetadataUpdateEvent(ClientEvent):
+    success: bool
+    metadata: ProjectMetadata
+
+    @classmethod
+    def from_dict(cls, event_type: str, data: models.ProjectMetadataUpdateEvent) -> Self:
+        return cls(
+            type=event_type,
+            success=data.success,
+            metadata=ProjectMetadata(
+                show=None
+                if isinstance(data.show, Unset) or isinstance(data.show.metadata, Unset)
+                else data.show.metadata.to_dict(),
+                episode=None
+                if isinstance(data.episode, Unset) or isinstance(data.episode.metadata, Unset)
+                else data.episode.metadata.to_dict(),
+                sequence=None
+                if isinstance(data.sequence, Unset) or isinstance(data.sequence.metadata, Unset)
+                else data.sequence.metadata.to_dict(),
+                sequence_revision=None
+                if isinstance(data.sequence_revision, Unset)
+                or isinstance(data.sequence_revision.metadata, Unset)
+                else data.sequence_revision.metadata.to_dict(),
+            ),
+            additional_properties=data.additional_properties,
+        )
+
+
+@dataclasses.dataclass
 class ProjectIds:
     show_id: int | None
     episode_id: int | None
@@ -259,15 +400,6 @@ class ProjectIds:
 
 
 @dataclasses.dataclass
-class RevisionStatus:
-    can_save: bool = False
-    can_publish: bool = False
-    can_export: bool = False
-    selected_panels: list[int] = dataclasses.field(default_factory=list)
-    panel_selection: list[PanelSelection] = dataclasses.field(default_factory=list)
-
-
-@dataclasses.dataclass
 class PanelSelection:
     id: int
     revision_id: int
@@ -280,6 +412,15 @@ class PanelSelection:
             revision_id=data.revision_id,
             index=data.index,
         )
+
+
+@dataclasses.dataclass
+class RevisionStatus:
+    can_save: bool = False
+    can_publish: bool = False
+    can_export: bool = False
+    selected_panels: list[int] = dataclasses.field(default_factory=list[int])
+    panel_selection: list[PanelSelection] = dataclasses.field(default_factory=list[PanelSelection])
 
 
 @dataclasses.dataclass
@@ -340,6 +481,7 @@ class OpenPanelData:
     is_animated: bool
     source_file_asset_id: int | None
     annotation_asset_id: int | None
+    shot_id: int | None
 
     @classmethod
     def from_dict(cls, data: models.OpenFilePanelData) -> Self:
@@ -349,6 +491,26 @@ class OpenPanelData:
             is_animated=data.is_animated,
             source_file_asset_id=data.source_file.asset_id if data.source_file else None,
             annotation_asset_id=data.annotation_asset_id if data.annotation_asset_id else None,
+            shot_id=data.shot_id if data.shot_id else None,
+        )
+
+
+@dataclasses.dataclass
+class OpenShot:
+    shot_id: int
+    index: int
+    name: str
+    start_panel_index: int
+    end_panel_index: int
+
+    @classmethod
+    def from_dict(cls, data: models.OpenFileShotData) -> Self:
+        return cls(
+            shot_id=data.id,
+            index=data.index,
+            name=data.name,
+            start_panel_index=data.start_panel_index,
+            end_panel_index=data.end_panel_index,
         )
 
 
@@ -356,6 +518,8 @@ class OpenPanelData:
 class OpenEvent(ClientEvent):
     project: ProjectIds
     panels: list[OpenPanelData]
+    shots: list[OpenShot]
+    action_id: str | None
 
     @classmethod
     def from_dict(cls, event_type: str, data: models.OpenFileEvent) -> Self:
@@ -363,7 +527,9 @@ class OpenEvent(ClientEvent):
             type=event_type,
             project=ProjectIds.from_dict(data.project),
             panels=[OpenPanelData.from_dict(panel) for panel in data.panels],
+            shots=[OpenShot.from_dict(shot) for shot in data.shots],
             additional_properties=data.additional_properties,
+            action_id=data.action_id if data.action_id else None,
         )
 
 
@@ -422,4 +588,85 @@ class VersionResponse:
         return cls(
             flix_version=data.flix_version,
             supported_api_versions=data.supported_api_versions,
+        )
+
+
+@dataclasses.dataclass
+class ActionRegistration:
+    """An action that an extension that is registered with the Flix Client."""
+
+    id: str
+    name: str
+    description: str | None = None
+    icon_svg: str | None = None
+    type: ActionRegistrationType | None = None
+
+    def to_model(self) -> models.ActionRegistration:
+        return models.ActionRegistration(
+            id=self.id,
+            name=self.name,
+            description=self.description if self.description else UNSET,
+            icon_svg=self.icon_svg if self.icon_svg else UNSET,
+            type=self.type if self.type else UNSET,
+        )
+
+    @classmethod
+    def from_dict(cls, data: models.ActionRegistration) -> Self:
+        return cls(
+            id=data.id,
+            name=data.name,
+            description=data.description if data.description else None,
+            icon_svg=data.icon_svg if data.icon_svg else None,
+            type=data.type if data.type else None,
+        )
+
+
+@dataclasses.dataclass
+class PanelRevisionDetails:
+    """A panel revision in the sequence revision currently open in the Panel Browser."""
+
+    panel_id: int
+    revision_id: int
+    panel_position: int
+    asset_id: int
+    created_date: datetime.datetime
+    revision_date: datetime.datetime
+    owner: str
+    show_id: int
+    sequence_id: int
+    hidden: bool
+    duration: int
+    trim_in_frame: int
+    trim_out_frame: int
+    layer_transform: bool
+    dialogue: str
+    origin_sbp: dict[str, str]
+    keyframes: list[dict[str, Any]]
+    origin: str
+    shot_name: str
+    metadata: dict[str, str]
+
+    @classmethod
+    def from_dict(cls, data: models.PanelRevisionDetailsDto) -> Self:
+        return cls(
+            panel_id=data.panel_id,
+            revision_id=data.revision_id,
+            panel_position=data.panel_position,
+            asset_id=data.asset_id,
+            created_date=data.created_date,
+            revision_date=data.revision_date,
+            owner=data.owner,
+            show_id=data.show_id,
+            sequence_id=data.sequence_id,
+            hidden=data.hidden,
+            duration=int(data.duration),
+            trim_in_frame=data.trim_in_frame,
+            trim_out_frame=data.trim_out_frame,
+            layer_transform=data.layer_transform,
+            dialogue=data.dialogue,
+            origin_sbp=data.origin_sbp.to_dict(),
+            keyframes=[keyframe.to_dict() for keyframe in data.keyframes],
+            origin=data.origin,
+            shot_name=data.shot_name,
+            metadata=data.metadata.to_dict(),
         )

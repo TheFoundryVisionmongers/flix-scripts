@@ -53,9 +53,6 @@ def sync_detailed(
 ) -> Response[List["RegistrationDetails"]]:
     """List API consumers
 
-     Returns a list of registered API consumer details.
-    Details returned by the registration manager are mapped to a DTO to avoid exposing access tokens.
-
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
@@ -79,9 +76,6 @@ def sync(
 ) -> Optional[List["RegistrationDetails"]]:
     """List API consumers
 
-     Returns a list of registered API consumer details.
-    Details returned by the registration manager are mapped to a DTO to avoid exposing access tokens.
-
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
@@ -100,9 +94,6 @@ async def asyncio_detailed(
     client: AuthenticatedClient,
 ) -> Response[List["RegistrationDetails"]]:
     """List API consumers
-
-     Returns a list of registered API consumer details.
-    Details returned by the registration manager are mapped to a DTO to avoid exposing access tokens.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -124,9 +115,6 @@ async def asyncio(
     client: AuthenticatedClient,
 ) -> Optional[List["RegistrationDetails"]]:
     """List API consumers
-
-     Returns a list of registered API consumer details.
-    Details returned by the registration manager are mapped to a DTO to avoid exposing access tokens.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

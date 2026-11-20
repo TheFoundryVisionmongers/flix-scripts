@@ -68,10 +68,11 @@ info:
     ### Step 5: All done
 
     That's it! You're now ready to interact with the Flix Client and ready to turn “My First Flix Extension” into the best thing ever. Although, maybe come up with a better name first.
-  version: v1.1.0
+  version: v1.2.1
   contact:
-    url: http://www.foundry.com
-    email: support@foundry.com
+    name: Foundry
+    url: https://www.foundry.com
+    email: https://support.foundry.com/hc
   license:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
@@ -116,23 +117,28 @@ tags:
   - name: Preferences
     description: |
       The preferences endpoint provides a lookup for the current Flix Client user preferences. A GET request to this endpoint will return the full list of preferences currently set in the client. This can optionally be filtered down by specifying a subset of properties via the `keys` query parameter. This can either be a comma separated string, or be specified multiple times for each desired preference.
+  - name: Events
+    description: |
+      The events endpoint provides an alternative way to listen to events from the Flix Client for clients that don't support websockets.
+      Instead, it uses Server-Sent Events over a regular HTTP request to provide multiple updates for one request.
+      Authorised requests to `/events` will return an initial response, followed by any additional events for the requesting client,
+      along with a regular PING event as a way to validate the connection.
+
+      By default, only events for the requesting client will be sent, but additional events types can be requested by specifiying the `events` query parameter. This can be specified multiple times to include multiple types of events. For example, `/events?event=project&event=status` will include updates for the active project, and the status of the client.
 paths:
   /health:
     get:
       operationId: HealthCheckController_healthCheck
-      summary: Health Check
-      description: Basic health check endpoint. Always returns a 200 response.
       parameters: []
       responses:
         '200':
           description: ''
+      summary: Health Check
       tags:
         - Health Check
   /info:
     get:
       operationId: InfoController_get
-      summary: Flix Client details
-      description: Provides details of current Flix Client and GRC API. Always returns a 200 response.
       parameters: []
       responses:
         '200':
@@ -141,13 +147,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/InfoResponse'
+      summary: Flix Client details
       tags:
         - Info
   /registration:
     post:
       operationId: RegistrationController_registerClient
-      summary: Register API consumer
-      description: Processes a registration request from a new API consumer.
       parameters: []
       requestBody:
         required: true
@@ -170,14 +175,11 @@ paths:
                 $ref: '#/components/schemas/RegistrationResponse'
         '400':
           description: The incoming API consumer details could not be validated
+      summary: Register API consumer
       tags:
         - API Registration
     get:
       operationId: RegistrationController_getAll
-      summary: List API consumers
-      description: |-
-        Returns a list of registered API consumer details.
-        Details returned by the registration manager are mapped to a DTO to avoid exposing access tokens.
       parameters: []
       responses:
         '200':
@@ -188,14 +190,13 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/RegistrationDetails'
-      tags:
-        - API Registration
       security:
         - bearer: []
+      summary: List API consumers
+      tags:
+        - API Registration
     delete:
       operationId: RegistrationController_unregisterClient
-      summary: Unregister API consumer
-      description: Removes the registration for the requesting API consumer.
       parameters:
         - name: authorization
           required: true
@@ -207,22 +208,98 @@ paths:
           description: The API consumer has been unregistered from Flix
         '400':
           description: The provided bearer token could not be validated
-      tags:
-        - API Registration
       security:
         - bearer: []
-  /panels:
+      summary: Unregister API consumer
+      tags:
+        - API Registration
+  /registration/actions:
     post:
-      operationId: PanelController_create
-      summary: Create New Panels
-      description: Creates new panels in the active sequence revision from the list of provided file paths.
+      operationId: RegistrationController_setClientActions
       parameters: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BulkPanelRequest'
+              $ref: '#/components/schemas/ActionsUpdateRequest'
+      responses:
+        '200':
+          description: Actions for the API consumer have been set successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionsUpdateResponse'
+        '400':
+          description: The incoming API consumer details could not be validated
+      security:
+        - bearer: []
+      summary: Set actions for the API consumer
+      tags:
+        - API Registration
+  /panels:
+    get:
+      description: |-
+        Returns panels from the sequence revision currently open in the Panel Browser.
+
+        Query params can be used on their own or combined:
+
+        - no params: all panels in the sequence revision
+
+        - `selected=true`: only the currently selected panels
+
+        - `range=2,5`: only the panels placed between 2nd and 5th panels (including 2nd and 5th)
+
+        - `panel_ids=1,2,3`: only the panels with the given ids
+
+        - `selected=true&panel_ids=1,2,3`: only the selected panels whose ids are in the list
+
+        - `selected=true&range=2,5&panel_ids=1,2,3`: only the selected panels, positioned between 2nd and 5th panels whose ids are in the list
+      operationId: PanelController_get
+      parameters:
+        - name: selected
+          required: false
+          in: query
+          description: Takes either "true" or "false". If "selected=true" targets currently selected panels
+          schema:
+            example: selected=true
+        - name: range
+          required: false
+          in: query
+          description: A range of panels based on their positions. Targets panels at start position, end position and every panel in between them. Takes 2 numbers like "range=[start],[end]". Provided numbers should be 2 positive integers.
+          schema:
+            example: range=1,5
+        - name: panel_ids
+          required: false
+          in: query
+          description: A list of panel ids to fetch. Provided ids must be positive integers.
+          schema:
+            example: panel_ids=1,2,3
+      responses:
+        '200':
+          description: Returns the panels information from the currently loaded sequence revision.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PanelDetailsResponse'
+        '400':
+          description: Flix Client is not currently in Panel Browser.
+      security:
+        - bearer: []
+      summary: Get Panels from currently loaded Sequence Revision.
+      tags:
+        - Panel Management
+    post:
+      operationId: PanelController_create
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/BulkPanelRequest'
+                - $ref: '#/components/schemas/FullPanelRequest'
       responses:
         '201':
           description: The panel creation has been scheduled
@@ -232,14 +309,13 @@ paths:
                 $ref: '#/components/schemas/PanelRequestResponse'
         '400':
           description: No sequence revision is loaded, or the panel create request is invalid
-      tags:
-        - Panel Management
       security:
         - bearer: []
+      summary: Create New Panels
+      tags:
+        - Panel Management
     patch:
       operationId: PanelController_update
-      summary: Update Existing Panels
-      description: Updates existing panels in the active sequence revision from the list of provided file paths.
       parameters: []
       requestBody:
         required: true
@@ -258,15 +334,78 @@ paths:
                 $ref: '#/components/schemas/PanelRequestResponse'
         '400':
           description: No sequence revision is loaded, or the panel update request is invalid
-      tags:
-        - Panel Management
       security:
         - bearer: []
+      summary: Update Existing Panels
+      tags:
+        - Panel Management
+  /panels/metadata:
+    patch:
+      description: |-
+        Updates panels metadata from the sequence revision currently open in the Panel Browser.
+
+        Takes object with `metadata` key, which must be an `object` with key-value pairs, where the value is a `string` or `null`.
+
+        If the value of the provided metadata key is `null`, the existing metadata for this key will be deleted.
+
+        Query params can be used on their own or combined:
+
+        - no params: all panels in the sequence revision
+
+        - `selected=true`: only the currently selected panels
+
+        - `range=2,5`: only the panels placed between 2nd and 5th panels (including 2nd and 5th)
+
+        - `panel_ids=1,2,3`: only the panels with the given ids
+
+        - `selected=true&panel_ids=1,2,3`: only the selected panels whose ids are in the list
+
+        - `selected=true&range=2,5&panel_ids=1,2,3`: only the selected panels, positioned between 2nd and 5th panels whose ids are in the list
+
+        Returns list of update results, each including panel id and updated metadata.
+      operationId: PanelController_updateMetadata
+      parameters:
+        - name: selected
+          required: false
+          in: query
+          description: Takes either "true" or "false". If "selected=true" targets currently selected panels
+          schema:
+            example: selected=true
+        - name: range
+          required: false
+          in: query
+          description: A range of panels based on their positions. Targets panels at start position, end position and every panel in between them. Takes 2 numbers like "range=[start],[end]". Provided numbers should be 2 positive integers.
+          schema:
+            example: range=1,5
+        - name: panel_ids
+          required: false
+          in: query
+          description: A list of panel ids to fetch. Provided ids must be positive integers.
+          schema:
+            example: panel_ids=1,2,3
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PanelUpdateMetadataRequest'
+      responses:
+        '200':
+          description: Updates the metadata on the panels from the currently loaded sequence revision.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PanelUpdateMetadataResponse'
+        '400':
+          description: Flix Client is not currently in Panel Browser.
+      security:
+        - bearer: []
+      summary: Update the metadata on the Panel Revisions from the currently loaded Sequence Revision.
+      tags:
+        - Panel Management
   /panels/annotate:
     patch:
       operationId: PanelController_annotate
-      summary: Update Panel Annotations
-      description: Adds annotations to panels in the active sequence revision from the list of provided file paths.
       parameters: []
       requestBody:
         required: true
@@ -285,15 +424,53 @@ paths:
                 $ref: '#/components/schemas/PanelRequestResponse'
         '400':
           description: No sequence revision is loaded, or the panel annotation request is invalid
-      tags:
-        - Panel Management
       security:
         - bearer: []
+      summary: Update Panel Annotations
+      tags:
+        - Panel Management
+  /panels/track:
+    post:
+      operationId: PanelController_trackPanel
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PanelTrackRequest'
+      responses:
+        '200':
+          description: The panel has been marked as open in the extension
+        '400':
+          description: No sequence revision is loaded, or the panel annotation request is invalid
+      security:
+        - bearer: []
+      summary: Marks a panel as open in an extension
+      tags:
+        - Panel Management
+    delete:
+      operationId: PanelController_untrackPanel
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PanelTrackRequest'
+      responses:
+        '200':
+          description: The panel has been marked as not open in the extension
+        '400':
+          description: No sequence revision is loaded, or the panel annotation request is invalid
+      security:
+        - bearer: []
+      summary: Marks a panel as not open in an extension
+      tags:
+        - Panel Management
   /download:
     post:
       operationId: DownloadController_downloadMediaObject
-      summary: Download Media Object
-      description: Downloads a specific artwork type for a given asset, to a target folder on the local machine.
       parameters: []
       requestBody:
         required: true
@@ -310,15 +487,14 @@ paths:
                 $ref: '#/components/schemas/DownloadResponse'
         '400':
           description: The Flix Client is not logged in, or the request is invalid
-      tags:
-        - Media Object Download
       security:
         - bearer: []
+      summary: Download Media Object
+      tags:
+        - Media Object Download
   /project:
     get:
       operationId: ProjectController_get
-      summary: Get Current Flix Project
-      description: Returns details of the currently opened show, episode, sequence and sequence revision.
       parameters: []
       responses:
         '200':
@@ -329,15 +505,14 @@ paths:
                 $ref: '#/components/schemas/ProjectDetailsDto'
         '400':
           description: The Flix Client is not logged in to a server
-      tags:
-        - Project Details
       security:
         - bearer: []
+      summary: Get Current Flix Project
+      tags:
+        - Project Details
   /status:
     get:
       operationId: StatusController_get
-      summary: Get Flix Status
-      description: Returns details of the current state of the Flix Client.
       parameters: []
       responses:
         '200':
@@ -348,14 +523,14 @@ paths:
                 $ref: '#/components/schemas/StatusResponse'
         '400':
           description: The Flix Client is not logged in to a server
-      tags:
-        - Status
       security:
         - bearer: []
+      summary: Get Flix Status
+      tags:
+        - Status
   /preferences:
     get:
       operationId: PreferencesController_lookupPreferences
-      summary: Get Flix Preferences Values
       parameters:
         - name: keys
           required: false
@@ -379,10 +554,90 @@ paths:
                     - type: boolean
         '400':
           description: The Flix Client is not logged in to a server
-      tags:
-        - Preferences
       security:
         - bearer: []
+      summary: Get Flix Preferences Values
+      tags:
+        - Preferences
+  /events:
+    get:
+      operationId: EventController_handleConnection
+      parameters:
+        - name: event
+          required: false
+          in: query
+          description: An array of event types to subscribe to. If not provided, only client-specific events will be sent.
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - ping
+                - action
+                - open
+                - project
+                - status
+                - version
+                - preferences
+                - panel_metadata_update
+                - project_metadata_update
+      responses:
+        '200':
+          description: A stream of events from the Flix Client.
+          content:
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/SSEEvent'
+      security:
+        - bearer: []
+      summary: Subscribe to events from the Client.
+      tags:
+        - Events
+  /project/metadata:
+    get:
+      operationId: ProjectMetadataController_get
+      parameters: []
+      responses:
+        '200':
+          description: Returns the current Flix project metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectDetailsMetadataDto'
+        '400':
+          description: The Flix Client is not logged in to a server
+      security:
+        - bearer: []
+      summary: Get Current Flix Project metadata
+      tags:
+        - Project Metadata
+    patch:
+      description: |
+        Merges custom metadata into the target entity (show, episode, sequence, or sequence-revision) within the active project context.Requested entities must exist in the current project context.
+        ### Convention & Best Practices:
+        - Prefix keys with your extension/plugin identifier (e.g. `com.vendor.plugin:key`) to avoid collisions.
+        - Only keys provided are updated; omitted keys remain untouched.
+        - If the key does not exist, it will be created unless its value is `null`.
+        - Set a key's value to `null` to delete it.
+        - If the key does not exist with the specified name and `null` is provided as its value, it will be ignored.
+      operationId: ProjectMetadataController_updateMetadata
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectDetailsMetadataDto'
+      responses:
+        '200':
+          description: Metadata successfully updated.
+        '400':
+          description: Invalid payload, missing entities in the current project context or Flix Client is not logged in.
+      security:
+        - bearer: []
+      summary: Update Entity Metadata in Current Project
+      tags:
+        - Project Metadata
 components:
   securitySchemes:
     bearer:
@@ -419,6 +674,8 @@ components:
               - STATUS
               - VERSION
               - PREFERENCES
+              - PANEL_METADATA_UPDATE
+              - PROJECT_METADATA_UPDATE
       required:
         - eventTypes
     WebsocketEvent:
@@ -510,6 +767,28 @@ components:
               required:
                 - type
                 - data
+            - type: object
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - PANEL_METADATA_UPDATE
+                data:
+                  $ref: '#/components/schemas/PanelMetadataUpdateEvent'
+              required:
+                - type
+                - data
+            - type: object
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - PROJECT_METADATA_UPDATE
+                data:
+                  $ref: '#/components/schemas/ProjectMetadataUpdateEvent'
+              required:
+                - type
+                - data
       required:
         - data
     PingEvent:
@@ -519,6 +798,26 @@ components:
           type: integer
       required:
         - apiClientId
+    ActionEventPanelResponse:
+      type: object
+      properties:
+        panelId:
+          type: integer
+        panelRevision:
+          type: integer
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+          description: Arbitrary key-value metadata for the panel.
+          example:
+            ftrack:sequence_id: 9402
+        path:
+          type: string
+      required:
+        - panelId
+        - panelRevision
+        - path
     ActionEvent:
       type: object
       properties:
@@ -540,6 +839,10 @@ components:
             - PANEL_CREATE
             - PANEL_UPDATE
             - PANEL_ANNOTATE
+        panels:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActionEventPanelResponse'
       required:
         - apiClientId
         - actionId
@@ -570,23 +873,136 @@ components:
           type: integer
       required:
         - assetId
+    ViewportDto:
+      type: object
+      properties:
+        width:
+          type: integer
+          description: Width is the width of the media in pixels, dictating the scale of horizontal camera movements.
+        height:
+          type: integer
+          description: Height is the height of the media in pixels, dictating the scale of vertical camera movements.
+        scale:
+          type: integer
+          description: |-
+            Stretch (Scale in API) specifies how much the source artwork has been stretched within this media.
+            More specifically, it is the inverse stretch, such that if the source artwork has a width of 1000
+            while the bounding box of the same artwork within this media has a width of 2000, the stretch will be
+            1000 / 2000 = 0.5.
+        offsetX:
+          type: integer
+          description: |-
+            OffsetX is the horizontal offset of the source artwork within this media, if this media has been padded.
+            In particular, it is the horizontal distance from the centre of this media to the centre of the source artwork.
+            Specified in terms of the pixel space of the source artwork; calculate OffsetX / Stretch to get
+            the offset in pixels within this me.
+        offsetY:
+          type: integer
+          description: |-
+            OffsetY is the vertical offset of the source artwork within this media, if this media has been padded.
+            In particular, it is the vertical distance from the centre of this media to the centre of the source artwork.
+            Specified in terms of the pixel space of the source artwork; calculate OffsetY / Stretch to get
+            the offset in pixels within this media.
+      required:
+        - width
+        - height
+        - scale
+        - offsetX
+        - offsetY
+    KeyframeDto:
+      type: object
+      properties:
+        anchorPointHorizontal:
+          type: integer
+          description: |-
+            The horizontal value of the point that CenterHoriz, CenterVert and Rotation are applied to,
+            specified as an offset from the viewport centre in fractions of the horizontal viewport resolution.
+            A value of 0 is the centre of the viewport, while a value of -0.5 is the left edge of the viewport.
+          default: 0
+        anchorPointVertical:
+          type: integer
+          description: |-
+            The vertical value of the point that CenterHoriz, CenterVert and Rotation are applied to,
+            specified as an offset from the viewport centre in fractions of the vertical viewport resolution.
+            A value of 0 is the centre of the viewport, while a value of -0.5 is the top edge of the viewport.
+          default: 0
+        centerHorizontal:
+          type: integer
+          description: |-
+            The horizontal position of the camera in fractions of the viewport width, relative to the centre of the viewport.
+            A positive value means the camera is positioned to the left of the viewport centre.
+          default: 0
+        centerVertical:
+          type: integer
+          description: |-
+            The vertical position of the camera in fractions of the viewport height, relative to the centre of the viewport.
+            A positive value means the camera is positioned above the viewport centre.
+          default: 0
+        rotation:
+          type: integer
+          description: How much to rotate the image clockwise in degrees.
+          default: 0
+        scale:
+          type: integer
+          description: A vertical and horizontal scale, 100 meaning no scaling.
+          default: 0
+        startKey:
+          type: integer
+          description: The frame of the panel revision that the information of this keyframe relates to, starting at 0.
+          default: 0
+        viewport:
+          description: |-
+            Describes the media a keyframe applies to.
+            In the event that the media is a padded or stretched version of some source artwork,
+            it will contain information about the nature of the padding/stretch to facilitate comparison of
+            the keyframes associated with this descriptor and the keyframes of the source panel.
+          default: null
+          allOf:
+            - $ref: '#/components/schemas/ViewportDto'
+      required:
+        - anchorPointHorizontal
+        - anchorPointVertical
+        - centerHorizontal
+        - centerVertical
+        - rotation
+        - scale
+        - startKey
     OpenFilePanelData:
       type: object
       properties:
         id:
           type: integer
+        index:
+          type: integer
+        revisionId:
+          type: integer
         assetId:
           type: integer
         annotationAssetId:
+          type: integer
+        shotId:
           type: integer
         isAnimated:
           type: boolean
         sourceFile:
           nullable: true
+          type: object
           allOf:
             - $ref: '#/components/schemas/OpenSourceFileData'
+        dialogue:
+          type: string
+        originSbp:
+          type: object
+        keyframes:
+          type: array
+          items:
+            $ref: '#/components/schemas/KeyframeDto'
+        shotName:
+          type: string
       required:
         - id
+        - index
+        - revisionId
         - assetId
         - isAnimated
         - sourceFile
@@ -603,6 +1019,25 @@ components:
         - alwaysOpenSourceFile
         - openBehaviour
         - sendAnnotationAsLayer
+    OpenFileShotData:
+      type: object
+      properties:
+        id:
+          type: integer
+        index:
+          type: integer
+        startPanelIndex:
+          type: integer
+        endPanelIndex:
+          type: integer
+        name:
+          type: string
+      required:
+        - id
+        - index
+        - startPanelIndex
+        - endPanelIndex
+        - name
     OpenFileEvent:
       type: object
       properties:
@@ -614,9 +1049,16 @@ components:
             $ref: '#/components/schemas/OpenFilePanelData'
         sketchingToolConfiguration:
           $ref: '#/components/schemas/PsConfiguration'
+        shots:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenFileShotData'
+        actionId:
+          type: string
       required:
         - project
         - panels
+        - shots
     OpenSourceFileEvent:
       type: object
       properties:
@@ -624,6 +1066,244 @@ components:
           $ref: '#/components/schemas/OpenSourceFileData'
       required:
         - sourceFile
+    UpdatedPanelMetadataDto:
+      type: object
+      properties:
+        id:
+          type: integer
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+          description: Arbitrary key-value metadata for the panel.
+          example:
+            ftrack:sequence_id: '9402'
+      required:
+        - id
+        - metadata
+    PanelMetadataUpdateEvent:
+      type: object
+      properties:
+        panels:
+          type: array
+          items:
+            $ref: '#/components/schemas/UpdatedPanelMetadataDto'
+      required:
+        - panels
+    ShowDetailsDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: The Flix identifier for the show.
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+          description: |-
+            Arbitrary key-value metadata to merge into the entity. Each value must be a string, or `null` to delete that key.
+
+            **Note:** Keys in this dictionary are **case-sensitive**.
+
+            Best practice: Use namespaced keys to avoid conflicts with other extensions (e.g., `vendor.plugin:key`).
+          example:
+            com.myextension:status: inprogress
+            com.myextension:tag: null
+        trackingCode:
+          type: string
+          description: The show's tracking code.
+        title:
+          type: string
+          nullable: true
+          description: The show's display title.
+        aspectRatio:
+          type: number
+          description: The configured aspect ratio for the active sequence or show.
+          deprecated: true
+        defaultAspectRatio:
+          type: number
+          description: The configured default aspect ratio for the sequence.
+      required:
+        - id
+        - trackingCode
+        - title
+        - aspectRatio
+        - defaultAspectRatio
+    EpisodeDetailsDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: The Flix identifier for the episode.
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+          description: |-
+            Arbitrary key-value metadata to merge into the entity. Each value must be a string, or `null` to delete that key.
+
+            **Note:** Keys in this dictionary are **case-sensitive**.
+
+            Best practice: Use namespaced keys to avoid conflicts with other extensions (e.g., `vendor.plugin:key`).
+          example:
+            com.myextension:status: inprogress
+            com.myextension:tag: null
+        trackingCode:
+          type: string
+          description: The episode's tracking code.
+        createdDate:
+          format: date-time
+          type: string
+          description: The date the episode was created.
+        owner:
+          type: string
+          description: The user that created the episode.
+        title:
+          type: string
+          nullable: true
+          description: The episode's display title.
+      required:
+        - id
+        - trackingCode
+        - createdDate
+        - owner
+        - title
+    SequenceDetailsDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: The Flix identifier for the sequence.
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+          description: |-
+            Arbitrary key-value metadata to merge into the entity. Each value must be a string, or `null` to delete that key.
+
+            **Note:** Keys in this dictionary are **case-sensitive**.
+
+            Best practice: Use namespaced keys to avoid conflicts with other extensions (e.g., `vendor.plugin:key`).
+          example:
+            com.myextension:status: inprogress
+            com.myextension:tag: null
+        trackingCode:
+          type: string
+          description: The sequence's tracking code.
+        createdDate:
+          format: date-time
+          type: string
+          description: The date the sequence was created.
+        owner:
+          type: string
+          description: The user that created the sequence.
+        title:
+          type: string
+          nullable: true
+          description: The sequence's display title.
+        aspectRatio:
+          type: number
+          description: The aspect ratio used by the sequence.
+      required:
+        - id
+        - trackingCode
+        - createdDate
+        - owner
+        - title
+        - aspectRatio
+    SequenceRevisionDetailsDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: The Flix identifier for the sequence revision.
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+          description: |-
+            Arbitrary key-value metadata to merge into the entity. Each value must be a string, or `null` to delete that key.
+
+            **Note:** Keys in this dictionary are **case-sensitive**.
+
+            Best practice: Use namespaced keys to avoid conflicts with other extensions (e.g., `vendor.plugin:key`).
+          example:
+            com.myextension:status: inprogress
+            com.myextension:tag: null
+        createdDate:
+          format: date-time
+          type: string
+          nullable: true
+          description: The date the sequence revision was created.
+        owner:
+          type: string
+          description: The user that created the sequence revision.
+        published:
+          type: boolean
+          description: Whether this sequence revision has been published to editorial.
+        comment:
+          type: string
+          description: Any comment added to the sequence revision when saving.
+        shotNames:
+          description: The list of shot names included in the sequence revision, derived from the named shots of the panels in the sequence revision.
+          type: array
+          items:
+            type: string
+      required:
+        - id
+        - createdDate
+        - owner
+        - published
+        - comment
+        - shotNames
+    ProjectMetadataUpdateEvent:
+      type: object
+      properties:
+        success:
+          type: boolean
+        show:
+          $ref: '#/components/schemas/ShowDetailsDto'
+        episode:
+          $ref: '#/components/schemas/EpisodeDetailsDto'
+        sequence:
+          $ref: '#/components/schemas/SequenceDetailsDto'
+        sequenceRevision:
+          $ref: '#/components/schemas/SequenceRevisionDetailsDto'
+      required:
+        - success
+    ActionRegistrationType:
+      type: string
+      enum:
+        - PanelBrowserAction
+      description: |-
+        Context/location of the action within the application.
+        For now only PanelBrowserAction is supported and will be set regardless of provided value.
+    ActionRegistration:
+      type: object
+      properties:
+        type:
+          description: |-
+            Context/location of the action within the application.
+            For now only PanelBrowserAction is supported and will be set regardless of provided value.
+          allOf:
+            - $ref: '#/components/schemas/ActionRegistrationType'
+        id:
+          type: string
+          description: Unique identifier for this action.
+        name:
+          type: string
+          description: The user-friendly name for this action to be displayed in the UI.
+        description:
+          type: string
+          description: The user-friendly description for this action to be displayed in the UI.
+        iconSvg:
+          type: string
+          description: |-
+            A simple SVG icon for this specific action when displayed in the UI.
+            This value will be processed upon registration and may display incorrectly if unsupported SVG features are used.
+      required:
+        - id
+        - name
     RegistrationRequest:
       type: object
       properties:
@@ -641,6 +1321,19 @@ components:
           type: array
           items:
             type: string
+        actions:
+          description: List of actions available for this extension.
+          type: array
+          items:
+            $ref: '#/components/schemas/ActionRegistration'
+        iconSvg:
+          type: string
+          description: |-
+            A simple SVG icon to be displayed by default for extension actions when displayed in the UI.
+            This value will be processed upon registration and may display incorrectly if unsupported SVG features are used.
+        shortName:
+          type: string
+          description: Short name for extension to be used in context menu.
       required:
         - name
         - clientUid
@@ -676,10 +1369,41 @@ components:
           type: array
           items:
             type: string
+        actions:
+          description: List of actions available for this extension.
+          type: array
+          items:
+            type: object
+        iconSvg:
+          type: string
+          description: SVG icon for the default extension button.
+        shortName:
+          type: string
+          description: Short name for extension to be used in context menu.
       required:
         - flixId
         - name
         - clientUid
+    ActionsUpdateRequest:
+      type: object
+      properties:
+        actions:
+          description: List of actions to be updated for this API client.
+          type: array
+          items:
+            $ref: '#/components/schemas/ActionRegistration'
+      required:
+        - actions
+    ActionsUpdateResponse:
+      type: object
+      properties:
+        actions:
+          description: The list of actions registered for this API consumer's extension.
+          type: array
+          items:
+            $ref: '#/components/schemas/ActionRegistration'
+      required:
+        - actions
     PanelRequestItem:
       type: object
       properties:
@@ -687,10 +1411,61 @@ components:
           type: integer
           description: The ID of the panel that should be updated.
           example: 15
+        duration:
+          type: integer
+          description: Duration is the number of frames this instance of [PanelRevision] has, within this [Shot].
+        trimInFrame:
+          type: integer
+          description: TrimInFrame is the trim in of this panel revision in a given sequence revision if this is an animated panel.
+        trimOutFrame:
+          type: integer
+          description: TrimOutFrame is the trim out of this panel revision in a given sequence revision if this is an animated panel.
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+          description: |-
+            Arbitrary key-value metadata to merge into the entity. Each value must be a string, or `null` to delete that key.
+
+            **Note:** Keys in this dictionary are **case-sensitive**.
+
+            Best practice: Use namespaced keys to avoid conflicts with other extensions (e.g., `vendor.plugin:key`).
+          example:
+            com.myextension:status: inprogress
+            com.myextension:tag: null
         path:
           type: string
           description: The file path to upload.
           example: /path/to/file/1.psd
+        keyframes:
+          description: The camera move keyframes on this panel revisions.
+          type: array
+          items:
+            $ref: '#/components/schemas/KeyframeDto'
+        originSbp:
+          type: object
+          additionalProperties:
+            type: string
+          description: |-
+            Contains information about panel revisions imported from Storyboard Pro.
+            This is for internal use by the Storyboard Pro extension and might be removed in the future without notice.
+        sourceMedia:
+          type: string
+          description: This is used to upload a MOV file that will be used as the source media for the panel preview.
+        dialogue:
+          type: string
+          description: This is dialogue text that will be associated with the panel.
+        layerTransform:
+          type: boolean
+          description: This indicates whether panel has layer transform.
+        shotName:
+          type: string
+          description: |-
+            The name of the shot this panel belongs to.
+            When specified, a shot with the given name will be created and this panel will be added to it.
+            If the name already exists within the sequence, the request will be rejected with a 400 Bad Request response.
+            If not provided, the panel will be added to an existing shot based on the target insert index.
+          example: Shot 001
       required:
         - path
     PanelRequestSourceFile:
@@ -702,7 +1477,9 @@ components:
           example: /path/to/source/file.psd
         previewMode:
           type: string
-          description: The mode to use to generate the source file preview.
+          description: |-
+            The mode to use to generate the source file preview.
+            @default 'first_panel'
           example: source_file
           enum:
             - first_panel
@@ -757,7 +1534,9 @@ components:
           example: 3
         paths:
           description: The file paths to be uploaded as panel annotations.
-          example: '[''/path/to/file/1.psd'',''/path/to/file/2.psd'']'
+          example:
+            - /path/to/file/1.psd
+            - /path/to/file/2.psd
           type: array
           items:
             type: string
@@ -798,7 +1577,9 @@ components:
           example: 3
         paths:
           description: The file paths to upload as new panel artwork.
-          example: '[''/path/to/file/1.psd'',''/path/to/file/2.psd'']'
+          example:
+            - /path/to/file/1.psd
+            - /path/to/file/2.psd
           type: array
           items:
             type: string
@@ -817,6 +1598,118 @@ components:
       required:
         - paths
         - origin
+    PanelRevisionDetailsDto:
+      type: object
+      properties:
+        panelId:
+          type: integer
+          description: The identifier of this panel.
+        revisionId:
+          type: integer
+          description: The panel revision of this panel instance.
+        panelPosition:
+          type: integer
+          description: The position of the panel in the sequence revision it belongs to.
+        assetId:
+          type: integer
+          description: The identifier for the asset associated with this panel.
+        showId:
+          type: integer
+          description: The show this panel belongs to.
+        sequenceId:
+          type: integer
+          description: The sequence this panel belongs to.
+        trimInFrame:
+          type: integer
+          description: TrimInFrame is the trim in of this panel revision in a given sequence revision if this is an animated panel.
+        trimOutFrame:
+          type: integer
+          description: TrimOutFrame is the trim out of this panel revision in a given sequence revision if this is an animated panel.
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+          description: |-
+            Arbitrary key-value metadata to merge into the entity. Each value must be a string, or `null` to delete that key.
+
+            **Note:** Keys in this dictionary are **case-sensitive**.
+
+            Best practice: Use namespaced keys to avoid conflicts with other extensions (e.g., `vendor.plugin:key`).
+          example:
+            com.myextension:status: inprogress
+            com.myextension:tag: null
+        createdDate:
+          format: date-time
+          type: string
+          description: The date the panel was created.
+        revisionDate:
+          format: date-time
+          type: string
+          description: The date at which this panel revision was created.
+        owner:
+          type: string
+          description: The user that originally created this "panel revision".
+        hidden:
+          type: boolean
+          description: Flag that indicates if a panel has been hidden in a sequence revision.
+        duration:
+          type: number
+          description: The duration of the panel in frames.
+        layerTransform:
+          type: boolean
+          description: Whether the panel revision had a layer transform applied to it in Storyboard Pro.
+        dialogue:
+          type: string
+          description: This dialogue associated with this panel.
+        originSbp:
+          type: object
+          additionalProperties:
+            type: string
+          description: |-
+            Contains information about panel revisions imported from Storyboard Pro.
+            This is for internal use by the Storyboard Pro extension and might be removed in the future without notice.
+        keyframes:
+          description: The camera move keyframes on this panel revisions.
+          type: array
+          items:
+            $ref: '#/components/schemas/KeyframeDto'
+        origin:
+          type: string
+          description: Where the panel comes from e.g. "manual import".
+        shotName:
+          type: string
+          description: Sequence Revision shot this panel belongs to.
+      required:
+        - panelId
+        - revisionId
+        - panelPosition
+        - assetId
+        - showId
+        - sequenceId
+        - trimInFrame
+        - trimOutFrame
+        - metadata
+        - createdDate
+        - revisionDate
+        - owner
+        - hidden
+        - duration
+        - layerTransform
+        - dialogue
+        - originSbp
+        - keyframes
+        - origin
+        - shotName
+    PanelDetailsResponse:
+      type: object
+      properties:
+        panels:
+          description: Requested panels.
+          type: array
+          items:
+            $ref: '#/components/schemas/PanelRevisionDetailsDto'
+      required:
+        - panels
     PanelRequestResponse:
       type: object
       properties:
@@ -829,6 +1722,79 @@ components:
       required:
         - actionId
         - message
+    PanelUpdateMetadataRequest:
+      type: object
+      properties:
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+          description: |-
+            Arbitrary key-value metadata to merge into the entity. Each value must be a string, or `null` to delete that key.
+
+            **Note:** Keys in this dictionary are **case-sensitive**.
+
+            Best practice: Use namespaced keys to avoid conflicts with other extensions (e.g., `vendor.plugin:key`).
+          example:
+            com.myextension:status: inprogress
+            com.myextension:tag: null
+      required:
+        - metadata
+    PanelUpdateMetadataResponseItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: The panel ID against which this metadata item is associated.
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+          description: |-
+            Arbitrary key-value metadata to merge into the entity. Each value must be a string, or `null` to delete that key.
+
+            **Note:** Keys in this dictionary are **case-sensitive**.
+
+            Best practice: Use namespaced keys to avoid conflicts with other extensions (e.g., `vendor.plugin:key`).
+          example:
+            com.myextension:status: inprogress
+            com.myextension:tag: null
+      required:
+        - id
+        - metadata
+    PanelUpdateMetadataResponse:
+      type: object
+      properties:
+        results:
+          description: List of metadata update results. Each includes panel id and updated metadata.
+          example:
+            - id: '1'
+              metadata:
+                com.myextension:status: inprogress
+          type: array
+          items:
+            $ref: '#/components/schemas/PanelUpdateMetadataResponseItem'
+      required:
+        - results
+    PanelTrackRequest:
+      type: object
+      properties:
+        showId:
+          type: integer
+          description: The ID of the show the tracked panel belongs to.
+          example: 1
+        sequenceId:
+          type: integer
+          description: The ID of the sequence the tracked panel belongs to.
+          example: 12
+        panelId:
+          type: integer
+          description: The ID of the panel that is being tracked.
+          example: 1234
+      required:
+        - showId
+        - sequenceId
+        - panelId
     DownloadRequest:
       type: object
       properties:
@@ -851,10 +1817,18 @@ components:
             - dnxhd
             - extension
             - fullres
+            - import_log
+            - import_log_bundle
             - logo
             - xml
             - publish
             - publish_fullsized
+            - profile_original
+            - profile_image_64x64
+            - profile_image_128x128
+            - profile_image_256x256
+            - profile_image_512x512
+            - sboard
             - scaled
             - show-thumbnail
             - source_media
@@ -888,126 +1862,31 @@ components:
         - mediaObjectId
         - fileName
         - filePath
-    ShowDetailsDto:
-      type: object
-      properties:
-        id:
-          type: integer
-          description: The Flix identifier for the show.
-        trackingCode:
-          type: string
-          description: The show's tracking code.
-        title:
-          type: string
-          nullable: true
-          description: The show's display title.
-        aspectRatio:
-          type: number
-          description: The configured aspect ratio for the show.
-      required:
-        - id
-        - trackingCode
-        - title
-        - aspectRatio
-    EpisodeDetailsDto:
-      type: object
-      properties:
-        id:
-          type: integer
-          description: The Flix identifier for the episode.
-        trackingCode:
-          type: string
-          description: The episode's tracking code.
-        createdDate:
-          format: date-time
-          type: string
-          description: The date the episode was created.
-        owner:
-          type: string
-          description: The user that created the episode.
-        title:
-          type: string
-          nullable: true
-          description: The episode's display title.
-      required:
-        - id
-        - trackingCode
-        - createdDate
-        - owner
-        - title
-    SequenceDetailsDto:
-      type: object
-      properties:
-        id:
-          type: integer
-          description: The Flix identifier for the sequence.
-        trackingCode:
-          type: string
-          description: The sequence's tracking code.
-        createdDate:
-          format: date-time
-          type: string
-          description: The date the sequence was created.
-        owner:
-          type: string
-          description: The user that created the sequence.
-        title:
-          type: string
-          nullable: true
-          description: The sequence's display title.
-      required:
-        - id
-        - trackingCode
-        - createdDate
-        - owner
-        - title
-    SequenceRevisionDetailsDto:
-      type: object
-      properties:
-        id:
-          type: integer
-          description: The Flix identifier for the sequence revision.
-        createdDate:
-          format: date-time
-          type: string
-          nullable: true
-          description: The date the sequence revision was created.
-        owner:
-          type: string
-          description: The user that created the sequence revision.
-        published:
-          type: boolean
-          description: Whether this sequence revision has been published to editorial.
-        comment:
-          type: string
-          description: Any comment added to the sequence revision when saving.
-      required:
-        - id
-        - createdDate
-        - owner
-        - published
-        - comment
     ProjectDetailsDto:
       type: object
       properties:
         show:
           nullable: true
           description: Details of the currently opened show.
+          type: object
           allOf:
             - $ref: '#/components/schemas/ShowDetailsDto'
         episode:
           nullable: true
           description: Details of the currently opened episode, if in an episodic show.
+          type: object
           allOf:
             - $ref: '#/components/schemas/EpisodeDetailsDto'
         sequence:
           nullable: true
           description: Details of the currently opened sequence.
+          type: object
           allOf:
             - $ref: '#/components/schemas/SequenceDetailsDto'
         sequenceRevision:
           nullable: true
           description: Details of the currently opened sequence revision.
+          type: object
           allOf:
             - $ref: '#/components/schemas/SequenceRevisionDetailsDto'
       required:
@@ -1059,6 +1938,7 @@ components:
         - canSave
         - canPublish
         - canExport
+        - panelSelection
     ActionsInProgressResponse:
       type: object
       properties:
@@ -1093,3 +1973,171 @@ components:
         - canCreate
         - revisionStatus
         - actionsInProgress
+    SSEEvent:
+      type: object
+      properties:
+        data:
+          oneOf:
+            - type: object
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - PING
+                data:
+                  $ref: '#/components/schemas/PingEvent'
+              required:
+                - type
+                - data
+            - type: object
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - STATUS
+                data:
+                  $ref: '#/components/schemas/StatusResponse'
+              required:
+                - type
+                - data
+            - type: object
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - PROJECT
+                data:
+                  $ref: '#/components/schemas/ProjectDetailsDto'
+              required:
+                - type
+                - data
+            - type: object
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - ACTION
+                data:
+                  $ref: '#/components/schemas/ActionEvent'
+              required:
+                - type
+                - data
+            - type: object
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - OPEN
+                data:
+                  oneOf:
+                    - $ref: '#/components/schemas/OpenFileEvent'
+                    - $ref: '#/components/schemas/OpenSourceFileEvent'
+              required:
+                - type
+                - data
+            - type: object
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - VERSION
+                data:
+                  $ref: '#/components/schemas/VersionEvent'
+              required:
+                - type
+                - data
+            - type: object
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - PREFERENCES
+                data:
+                  type: object
+                  additionalProperties:
+                    oneOf:
+                      - type: string
+                      - type: integer
+                      - type: boolean
+              required:
+                - type
+                - data
+            - type: object
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - PANEL_METADATA_UPDATE
+                data:
+                  $ref: '#/components/schemas/PanelMetadataUpdateEvent'
+              required:
+                - type
+                - data
+            - type: object
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - PROJECT_METADATA_UPDATE
+                data:
+                  $ref: '#/components/schemas/ProjectMetadataUpdateEvent'
+              required:
+                - type
+                - data
+      required:
+        - data
+    ProjectDetailsMetadataDto:
+      type: object
+      properties:
+        show:
+          type: object
+          additionalProperties:
+            type: string
+          description: |-
+            Arbitrary key-value metadata to merge into the entity. Each value must be a string, or `null` to delete that key.
+
+            **Note:** Keys in this dictionary are **case-sensitive**.
+
+            Best practice: Use namespaced keys to avoid conflicts with other extensions (e.g., `vendor.plugin:key`).
+          example:
+            com.myextension:status: inprogress
+            com.myextension:tag: null
+        episode:
+          type: object
+          additionalProperties:
+            type: string
+          description: |-
+            Arbitrary key-value metadata to merge into the entity. Each value must be a string, or `null` to delete that key.
+
+            **Note:** Keys in this dictionary are **case-sensitive**.
+
+            Best practice: Use namespaced keys to avoid conflicts with other extensions (e.g., `vendor.plugin:key`).
+          example:
+            com.myextension:status: inprogress
+            com.myextension:tag: null
+        sequence:
+          type: object
+          additionalProperties:
+            type: string
+          description: |-
+            Arbitrary key-value metadata to merge into the entity. Each value must be a string, or `null` to delete that key.
+
+            **Note:** Keys in this dictionary are **case-sensitive**.
+
+            Best practice: Use namespaced keys to avoid conflicts with other extensions (e.g., `vendor.plugin:key`).
+          example:
+            com.myextension:status: inprogress
+            com.myextension:tag: null
+        sequenceRevision:
+          type: object
+          additionalProperties:
+            type: string
+          description: |-
+            Arbitrary key-value metadata to merge into the entity. Each value must be a string, or `null` to delete that key.
+
+            **Note:** Keys in this dictionary are **case-sensitive**.
+
+            Best practice: Use namespaced keys to avoid conflicts with other extensions (e.g., `vendor.plugin:key`).
+          example:
+            com.myextension:status: inprogress
+            com.myextension:tag: null

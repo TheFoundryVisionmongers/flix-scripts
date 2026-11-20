@@ -31,6 +31,8 @@ $(EXTENSION_API_OUT): .download $(addprefix $(EXTENSION_DIR),$(EXTENSION_API_OPE
 
 .PHONY: typecheck
 typecheck: .download
+	poetry run ruff check
+	poetry run ruff format --check
 	poetry run mypy
 
 .PHONY: build

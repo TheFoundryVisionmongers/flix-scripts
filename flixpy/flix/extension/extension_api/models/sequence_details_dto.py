@@ -1,9 +1,15 @@
 import datetime
-from typing import Any, Dict, List, Optional, Type, TypeVar
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, TypeVar, Union
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 from dateutil.parser import isoparse
+
+from ..types import UNSET, Unset
+
+if TYPE_CHECKING:
+    from ..models.sequence_details_dto_metadata import SequenceDetailsDtoMetadata
+
 
 T = TypeVar("T", bound="SequenceDetailsDto")
 
@@ -16,6 +22,14 @@ class SequenceDetailsDto:
         tracking_code (str): The sequence's tracking code.
         created_date (datetime.datetime): The date the sequence was created.
         owner (str): The user that created the sequence.
+        aspect_ratio (float): The aspect ratio used by the sequence.
+        metadata (Union[Unset, SequenceDetailsDtoMetadata]): Arbitrary key-value metadata to merge into the entity. Each
+            value must be a string, or `null` to delete that key.
+
+            **Note:** Keys in this dictionary are **case-sensitive**.
+
+            Best practice: Use namespaced keys to avoid conflicts with other extensions (e.g., `vendor.plugin:key`).
+            Example: {'com.myextension:status': 'inprogress', 'com.myextension:tag': None}.
         title (Optional[str]): The sequence's display title.
     """
 
@@ -23,7 +37,9 @@ class SequenceDetailsDto:
     tracking_code: str
     created_date: datetime.datetime
     owner: str
+    aspect_ratio: float
     title: Optional[str]
+    metadata: Union[Unset, "SequenceDetailsDtoMetadata"] = UNSET
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -32,6 +48,11 @@ class SequenceDetailsDto:
         created_date = self.created_date.isoformat()
 
         owner = self.owner
+        aspect_ratio = self.aspect_ratio
+        metadata: Union[Unset, Dict[str, Any]] = UNSET
+        if not isinstance(self.metadata, Unset):
+            metadata = self.metadata.to_dict()
+
         title = self.title
 
         field_dict: Dict[str, Any] = {}
@@ -42,14 +63,19 @@ class SequenceDetailsDto:
                 "trackingCode": tracking_code,
                 "createdDate": created_date,
                 "owner": owner,
+                "aspectRatio": aspect_ratio,
                 "title": title,
             }
         )
+        if metadata is not UNSET:
+            field_dict["metadata"] = metadata
 
         return field_dict
 
     @classmethod
     def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
+        from ..models.sequence_details_dto_metadata import SequenceDetailsDtoMetadata
+
         d = src_dict.copy()
         id = d.pop("id")
 
@@ -59,6 +85,15 @@ class SequenceDetailsDto:
 
         owner = d.pop("owner")
 
+        aspect_ratio = d.pop("aspectRatio")
+
+        _metadata = d.pop("metadata", UNSET)
+        metadata: Union[Unset, SequenceDetailsDtoMetadata]
+        if isinstance(_metadata, Unset):
+            metadata = UNSET
+        else:
+            metadata = SequenceDetailsDtoMetadata.from_dict(_metadata)
+
         title = d.pop("title")
 
         sequence_details_dto = cls(
@@ -66,6 +101,8 @@ class SequenceDetailsDto:
             tracking_code=tracking_code,
             created_date=created_date,
             owner=owner,
+            aspect_ratio=aspect_ratio,
+            metadata=metadata,
             title=title,
         )
 
