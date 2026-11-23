@@ -38,7 +38,7 @@ from .panel_request_response import PanelRequestResponse
 from .panel_request_source_file import PanelRequestSourceFile
 from .panel_revision_details_dto import PanelRevisionDetailsDto
 from .panel_revision_details_dto_metadata import PanelRevisionDetailsDtoMetadata
-from .panel_revision_details_dto_origin_sbp import PanelRevisionDetailsDtoOriginSbp
+from .panel_revision_details_dto_origin_sbp_type_0 import PanelRevisionDetailsDtoOriginSbpType0
 from .panel_selection_response import PanelSelectionResponse
 from .panel_track_request import PanelTrackRequest
 from .panel_update_metadata_request import PanelUpdateMetadataRequest
@@ -156,7 +156,7 @@ __all__ = (
     "PanelRequestSourceFile",
     "PanelRevisionDetailsDto",
     "PanelRevisionDetailsDtoMetadata",
-    "PanelRevisionDetailsDtoOriginSbp",
+    "PanelRevisionDetailsDtoOriginSbpType0",
     "PanelSelectionResponse",
     "PanelTrackRequest",
     "PanelUpdateMetadataRequest",

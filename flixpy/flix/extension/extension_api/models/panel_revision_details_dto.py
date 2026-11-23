@@ -14,7 +14,7 @@ import datetime
 if TYPE_CHECKING:
   from ..models.keyframe_dto import KeyframeDto
   from ..models.panel_revision_details_dto_metadata import PanelRevisionDetailsDtoMetadata
-  from ..models.panel_revision_details_dto_origin_sbp import PanelRevisionDetailsDtoOriginSbp
+  from ..models.panel_revision_details_dto_origin_sbp_type_0 import PanelRevisionDetailsDtoOriginSbpType0
 
 
 
@@ -52,8 +52,8 @@ class PanelRevisionDetailsDto:
             duration (float): The duration of the panel in frames.
             layer_transform (bool): Whether the panel revision had a layer transform applied to it in Storyboard Pro.
             dialogue (str): This dialogue associated with this panel.
-            origin_sbp (PanelRevisionDetailsDtoOriginSbp): Contains information about panel revisions imported from
-                Storyboard Pro.
+            origin_sbp (None | PanelRevisionDetailsDtoOriginSbpType0): Contains information about panel revisions imported
+                from Storyboard Pro.
                 This is for internal use by the Storyboard Pro extension and might be removed in the future without notice.
             keyframes (list[KeyframeDto]): The camera move keyframes on this panel revisions.
             origin (str): Where the panel comes from e.g. "manual import".
@@ -76,7 +76,7 @@ class PanelRevisionDetailsDto:
     duration: float
     layer_transform: bool
     dialogue: str
-    origin_sbp: PanelRevisionDetailsDtoOriginSbp
+    origin_sbp: None | PanelRevisionDetailsDtoOriginSbpType0
     keyframes: list[KeyframeDto]
     origin: str
     shot_name: str
@@ -89,7 +89,7 @@ class PanelRevisionDetailsDto:
     def to_dict(self) -> dict[str, Any]:
         from ..models.keyframe_dto import KeyframeDto # noqa: PLC0415
         from ..models.panel_revision_details_dto_metadata import PanelRevisionDetailsDtoMetadata # noqa: PLC0415
-        from ..models.panel_revision_details_dto_origin_sbp import PanelRevisionDetailsDtoOriginSbp # noqa: PLC0415
+        from ..models.panel_revision_details_dto_origin_sbp_type_0 import PanelRevisionDetailsDtoOriginSbpType0 # noqa: PLC0415
         panel_id = self.panel_id
 
         revision_id = self.revision_id
@@ -122,7 +122,11 @@ class PanelRevisionDetailsDto:
 
         dialogue = self.dialogue
 
-        origin_sbp = self.origin_sbp.to_dict()
+        origin_sbp: dict[str, Any] | None
+        if isinstance(self.origin_sbp, PanelRevisionDetailsDtoOriginSbpType0):
+            origin_sbp = self.origin_sbp.to_dict()
+        else:
+            origin_sbp = self.origin_sbp
 
         keyframes = []
         for keyframes_item_data in self.keyframes:
@@ -169,7 +173,7 @@ class PanelRevisionDetailsDto:
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         from ..models.keyframe_dto import KeyframeDto # noqa: PLC0415
         from ..models.panel_revision_details_dto_metadata import PanelRevisionDetailsDtoMetadata # noqa: PLC0415
-        from ..models.panel_revision_details_dto_origin_sbp import PanelRevisionDetailsDtoOriginSbp # noqa: PLC0415
+        from ..models.panel_revision_details_dto_origin_sbp_type_0 import PanelRevisionDetailsDtoOriginSbpType0 # noqa: PLC0415
         d = dict(src_dict)
         panel_id = d.pop("panelId")
 
@@ -212,9 +216,22 @@ class PanelRevisionDetailsDto:
 
         dialogue = d.pop("dialogue")
 
-        origin_sbp = PanelRevisionDetailsDtoOriginSbp.from_dict(d.pop("originSbp"))
+        def _parse_origin_sbp(data: object) -> None | PanelRevisionDetailsDtoOriginSbpType0:
+            if data is None:
+                return data
+            try:
+                if not isinstance(data, dict):
+                    raise TypeError()
+                origin_sbp_type_0 = PanelRevisionDetailsDtoOriginSbpType0.from_dict(data)
 
 
+
+                return origin_sbp_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            return cast(None | PanelRevisionDetailsDtoOriginSbpType0, data)
+
+        origin_sbp = _parse_origin_sbp(d.pop("originSbp"))
 
 
         keyframes = []

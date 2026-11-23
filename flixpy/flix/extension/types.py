@@ -636,7 +636,7 @@ class PanelRevisionDetails:
     trim_out_frame: int
     layer_transform: bool
     dialogue: str
-    origin_sbp: dict[str, str]
+    origin_sbp: dict[str, str] | None
     keyframes: list[dict[str, Any]]
     origin: str
     shot_name: str
@@ -660,7 +660,7 @@ class PanelRevisionDetails:
             trim_out_frame=data.trim_out_frame,
             layer_transform=data.layer_transform,
             dialogue=data.dialogue,
-            origin_sbp=data.origin_sbp.to_dict(),
+            origin_sbp=data.origin_sbp.to_dict() if data.origin_sbp else None,
             keyframes=[keyframe.to_dict() for keyframe in data.keyframes],
             origin=data.origin,
             shot_name=data.shot_name,

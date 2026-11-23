@@ -14,12 +14,12 @@ from ..types import UNSET, Unset
 
 
 
-T = TypeVar("T", bound="PanelRevisionDetailsDtoOriginSbp")
+T = TypeVar("T", bound="PanelRevisionDetailsDtoOriginSbpType0")
 
 
 
 @_attrs_define
-class PanelRevisionDetailsDtoOriginSbp:
+class PanelRevisionDetailsDtoOriginSbpType0:
     """ Contains information about panel revisions imported from Storyboard Pro.
     This is for internal use by the Storyboard Pro extension and might be removed in the future without notice.
 
@@ -43,12 +43,12 @@ class PanelRevisionDetailsDtoOriginSbp:
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         d = dict(src_dict)
-        panel_revision_details_dto_origin_sbp = cls(
+        panel_revision_details_dto_origin_sbp_type_0 = cls(
         )
 
 
-        panel_revision_details_dto_origin_sbp.additional_properties = d
-        return panel_revision_details_dto_origin_sbp
+        panel_revision_details_dto_origin_sbp_type_0.additional_properties = d
+        return panel_revision_details_dto_origin_sbp_type_0
 
     @property
     def additional_keys(self) -> list[str]:
