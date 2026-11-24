@@ -2,12 +2,12 @@ files: ^flixpy/
 repos:
 - repo: local
   hooks:
-#    - id: ruff-check
-#      name: ruff check
-#      entry: uv --directory flixpy run ruff check
-#      language: python
-#      types_or: [python, pyi]
-#      pass_filenames: false
+    - id: ruff-check
+      name: ruff check
+      entry: uv --directory flixpy run ruff check
+      language: python
+      types_or: [python, pyi]
+      pass_filenames: false
 
     - id: ruff-format
       name: ruff format

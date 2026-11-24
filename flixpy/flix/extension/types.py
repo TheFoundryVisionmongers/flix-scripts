@@ -247,12 +247,10 @@ class ProjectIds:
     @classmethod
     def from_dict(cls, data: models.ProjectIdsDto) -> Self:
         return cls(
-            show_id=data.show_id if data.show_id else None,
-            episode_id=data.episode_id if data.episode_id else None,
-            sequence_id=data.sequence_id if data.sequence_id else None,
-            sequence_revision_number=data.sequence_revision_id
-            if data.sequence_revision_id
-            else None,
+            show_id=data.show_id or None,
+            episode_id=data.episode_id or None,
+            sequence_id=data.sequence_id or None,
+            sequence_revision_number=data.sequence_revision_id or None,
         )
 
 
@@ -346,7 +344,7 @@ class OpenPanelData:
             asset_id=data.asset_id,
             is_animated=data.is_animated,
             source_file_asset_id=data.source_file.asset_id if data.source_file else None,
-            annotation_asset_id=data.annotation_asset_id if data.annotation_asset_id else None,
+            annotation_asset_id=data.annotation_asset_id or None,
         )
 
 

@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, TypedDict
-
-from typing_extensions import NotRequired, Required
+from typing import Any, NotRequired, Required, TypedDict
 
 
 class MetadataField(TypedDict, total=False):

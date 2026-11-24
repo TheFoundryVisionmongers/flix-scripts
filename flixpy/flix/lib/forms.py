@@ -8,7 +8,7 @@ import math
 import re
 import urllib.parse
 from collections.abc import Callable, Mapping
-from typing import Any, ClassVar, Generic, TypedDict, TypeVar, cast
+from typing import Any, ClassVar, Generic, Required, TypedDict, TypeVar, cast
 
 import asyncclick as click
 
@@ -47,8 +47,8 @@ class FormSectionModel(TypedDict, total=False):
     type: str
     elements: list[FormSectionModel]
     heading: str
-    label: str
-    id: str
+    label: Required[str]
+    id: Required[str]
     default: Any
     required: bool
     minimum: int
@@ -156,9 +156,10 @@ class StringField(Field):
             )
             try:
                 self.verify_value(value)
-                return cast(str, value)
             except ValueError as e:
                 click.echo(f"Error: {e!s}", err=True)
+            else:
+                return cast("str", value)
 
 
 class IntField(Field):
@@ -377,7 +378,7 @@ def _set_to_range(choices: set[int]) -> str | None:
     if len(choices) == 0:
         return None
 
-    ranges = []
+    ranges: list[tuple[int, int]] = []
     start = -1
     prev = -1
     for choice in sorted(choices):
@@ -485,7 +486,7 @@ class Form:
         """
         # a bit ugly, but needed to work around typing limitations
         # the creation form specification guarantees type correctness
-        params = cast(dict[str, Any], parameters)
+        params = cast("dict[str, Any]", parameters)
         while True:
             # query for any unset fields, or fields that became enabled
             # after a change to another field
@@ -507,9 +508,9 @@ class Form:
                 break
             else:
                 params[option] = self.fields[option].prompt()
-        return cast(TDict, params)
+        return cast("TDict", params)
 
-    def print(self, parameters: TDict, *, err: bool = False) -> None:
+    def print(self, parameters: Mapping[str, Any], *, err: bool = False) -> None:
         """Pretty-print an instance of the object type defined by this form.
 
         Args:

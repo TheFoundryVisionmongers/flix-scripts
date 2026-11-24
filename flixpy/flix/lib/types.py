@@ -8,7 +8,7 @@ import base64
 import collections.abc
 import contextlib
 import dataclasses
-import datetime
+import datetime as dt
 import enum
 import os
 import pathlib
@@ -81,13 +81,13 @@ class MetadataField:
         value: Any | None,
         *,
         value_type: str = "",
-        created_date: datetime.datetime | None = None,
-        modified_date: datetime.datetime | None = None,
+        created_date: dt.datetime | None = None,
+        modified_date: dt.datetime | None = None,
     ) -> None:
         self._value = value
         self._value_type = value_type
-        self.created_date = created_date or datetime.datetime.now(datetime.timezone.utc)
-        self.modified_date = modified_date or datetime.datetime.now(datetime.timezone.utc)
+        self.created_date = created_date or dt.datetime.now(dt.UTC)
+        self.modified_date = modified_date or dt.datetime.now(dt.UTC)
 
     @classmethod
     def from_dict(cls, data: models.MetadataField) -> MetadataField:
@@ -120,7 +120,7 @@ class MetadataField:
         # leave any existing value type unchanged if just nulling out the value
         if value is not None:
             self._value_type = ""
-        self.modified_date = datetime.datetime.now(datetime.timezone.utc)
+        self.modified_date = dt.datetime.now(dt.UTC)
 
     @property
     def value_type(self) -> str:
@@ -137,21 +137,22 @@ class MetadataField:
                 return "int"
             case float():
                 return "float"
-            case datetime.datetime():
+            case dt.datetime():
                 return "datetime"
             case str():
                 return "string"
             case collections.abc.Sequence() as seq if all(isinstance(elem, str) for elem in seq):
                 return "stringarray"
-        return "object"
+            case _:
+                return "object"
 
     @property
     def json_value(self) -> Any | None:
         match self.value:
-            case datetime.datetime() as d:
+            case dt.datetime() as d:
                 if d.tzinfo is None:
                     # make timezone aware to ensure correct date format; assume UTC
-                    d = d.replace(tzinfo=datetime.timezone.utc)
+                    d = d.replace(tzinfo=dt.UTC)
                 return d.isoformat()
             case _:
                 return self.value
@@ -268,13 +269,13 @@ class Metadata(FlixType, MutableMapping[str, Any]):
         return f"{self._parent.path_prefix()}/metadata"
 
     async def fetch_metadata(self) -> Metadata:
-        result = cast(_MetadataModel, await self.client.get(self.path_prefix()))
+        result = cast("_MetadataModel", await self.client.get(self.path_prefix()))
         Metadata.from_dict(result["metadata"], into=self, parent=self._parent, _client=self.client)
         return self
 
     async def fetch_field(self, name: str) -> MetadataField:
         result = cast(
-            models.MetadataField, await self.client.get(self.path_prefix(), params={"name": name})
+            "models.MetadataField", await self.client.get(self.path_prefix(), params={"name": name})
         )
         field = MetadataField.from_dict(result)
         self.set_field(name, field)
@@ -406,7 +407,7 @@ class User(FlixType):
         *,
         user_id: int | None = None,
         password: str | None = None,
-        created_date: datetime.datetime | None = None,
+        created_date: dt.datetime | None = None,
         is_system: bool = False,
         is_third_party: bool = False,
         user_type: str = "flix",
@@ -420,9 +421,7 @@ class User(FlixType):
         self.password = password
         self.email = email
         self.groups = groups or []
-        self.created_date: datetime.datetime = created_date or datetime.datetime.now(
-            datetime.timezone.utc
-        )
+        self.created_date: dt.datetime = created_date or dt.datetime.now(dt.UTC)
         self.user_type = user_type
         self.is_admin = is_admin
         self.is_system = is_system
@@ -501,7 +500,7 @@ class MediaObjectHash:
 class MediaObject(FlixType):
     """Represents a single physical file within an asset."""
 
-    def __init__(
+    def __init__(  # noqa: PLR0917
         self,
         media_object_id: int = 0,
         asset_id: int = 0,
@@ -509,7 +508,7 @@ class MediaObject(FlixType):
         content_type: str = "",
         content_length: int = 0,
         content_hashes: list[MediaObjectHash] | None = None,
-        created_date: datetime.datetime | None = None,
+        created_date: dt.datetime | None = None,
         status: MediaObjectStatus = MediaObjectStatus.INITIALIZED,
         owner: User | None = None,
         asset_type: str = "",
@@ -540,9 +539,7 @@ class MediaObject(FlixType):
         self.content_type: str = content_type
         self.content_length: int = content_length
         self.content_hashes: list[MediaObjectHash] = content_hashes or []
-        self.created_date: datetime.datetime = created_date or datetime.datetime.now(
-            datetime.timezone.utc
-        )
+        self.created_date: dt.datetime = created_date or dt.datetime.now(dt.UTC)
         self.status: MediaObjectStatus = status
         self.owner: User | None = owner
         self.asset_type: str = asset_type
@@ -573,12 +570,12 @@ class MediaObject(FlixType):
         )
         into.owner = User.from_dict(data["owner"], _client=_client) if data.get("owner") else None
         into.asset_type = data.get("asset_type", "")
-        into._client = _client  # noqa: SLF001
+        into._client = _client
         return into
 
     async def update(self) -> None:
         path = f"/file/{self.media_object_id}"
-        result = cast(models.MediaObject, await self.client.get(path))
+        result = cast("models.MediaObject", await self.client.get(path))
         self.from_dict(result, into=self, _client=self.client)
 
     async def upload(
@@ -667,7 +664,7 @@ class MediaObject(FlixType):
             The path to the saved file.
         """
         dirpath = pathlib.Path(directory)
-        dirpath.mkdir(parents=True, exist_ok=True)
+        dirpath.mkdir(parents=True, exist_ok=True)  # noqa: ASYNC240
         if filename is None:
             path = dirpath / f"{self.media_object_id}_{self.filename}"
         else:
@@ -712,7 +709,7 @@ class Episode(FlixType):
         hidden: bool = False,
         *,
         episode_id: int | None = None,
-        created_date: datetime.datetime | None = None,
+        created_date: dt.datetime | None = None,
         owner: User | None = None,
         metadata: Mapping[str, Any] | None = None,
         _show: Show,
@@ -780,7 +777,7 @@ class Episode(FlixType):
             page=page,
             per_page=per_page,
         )
-        all_sequences = cast(_AllSequences, await self.client.get(path, params=params))
+        all_sequences = cast("_AllSequences", await self.client.get(path, params=params))
         return [
             Sequence.from_dict(sequence, _show=self._show, _episode=self, _client=self.client)
             for sequence in all_sequences["sequences"]
@@ -794,10 +791,10 @@ class Episode(FlixType):
         """
         if self.episode_id is None or force_create_new:
             path = f"{self._show.path_prefix()}/episode"
-            result = cast(models.Episode, await self.client.post(path, body=self.to_dict()))
+            result = cast("models.Episode", await self.client.post(path, body=self.to_dict()))
         else:
             path = self.path_prefix()
-            result = cast(models.Episode, await self.client.patch(path, body=self.to_dict()))
+            result = cast("models.Episode", await self.client.patch(path, body=self.to_dict()))
         self.from_dict(result, into=self, _show=self._show, _client=self.client)
 
 
@@ -811,7 +808,7 @@ class Sequence(FlixType):
         aspect_ratio: float | None = None,
         *,
         sequence_id: int | None = None,
-        created_date: datetime.datetime | None = None,
+        created_date: dt.datetime | None = None,
         owner: User | None = None,
         revision_count: int = 0,
         panel_revision_count: int = 0,
@@ -826,9 +823,7 @@ class Sequence(FlixType):
         self.sequence_id = sequence_id
         self.tracking_code = tracking_code
         self.description = description
-        self.created_date: datetime.datetime = created_date or datetime.datetime.now(
-            datetime.timezone.utc
-        )
+        self.created_date: dt.datetime = created_date or dt.datetime.now(dt.UTC)
         self.owner = owner
         self.revision_count = revision_count
         self.panel_revision_count = panel_revision_count
@@ -980,7 +975,7 @@ class Sequence(FlixType):
         prefix = self.path_prefix(include_episode=False)
         path = f"{prefix}/panels"
         result = cast(
-            _Panels, await self.client.post(path, body=[panel.to_dict() for panel in panels])
+            "_Panels", await self.client.post(path, body=[panel.to_dict() for panel in panels])
         )
         for i, result_panel in enumerate(result["panels"]):
             PanelRevision.from_dict(
@@ -1000,7 +995,7 @@ class Sequence(FlixType):
             The sequence revision with the requested revision number.
         """
         path = f"{self.path_prefix()}/revision/{revision_number}"
-        revision = cast(models.SequenceRevision, await self.client.get(path))
+        revision = cast("models.SequenceRevision", await self.client.get(path))
         seqrev = SequenceRevision.from_dict(revision, _sequence=self, _client=self.client)
 
         if fetch_shots:
@@ -1012,7 +1007,7 @@ class Sequence(FlixType):
             sequence_revisions: list[models.SequenceRevision]
 
         path = f"{self.path_prefix()}/revisions"
-        all_revisions = cast(_AllRevisions, await self.client.get(path))
+        all_revisions = cast("_AllRevisions", await self.client.get(path))
         return [
             SequenceRevision.from_dict(revision, _sequence=self, _client=self.client)
             for revision in all_revisions["sequence_revisions"]
@@ -1021,7 +1016,7 @@ class Sequence(FlixType):
     async def get_panel_revision(self, panel_id: int, panel_revision: int) -> PanelRevision:
         prefix = self.path_prefix(include_episode=False)
         path = f"{prefix}/panel/{panel_id}/revision/{panel_revision}"
-        result = cast(models.PanelRevision, await self.client.get(path))
+        result = cast("models.PanelRevision", await self.client.get(path))
         return PanelRevision.from_dict(result, _sequence=self, _client=self.client)
 
     async def get_all_panel_revisions(
@@ -1039,18 +1034,18 @@ class Sequence(FlixType):
             page=page,
             per_page=per_page,
         )
-        all_panels = cast(_AllPanels, await self.client.get(path, params=params))
+        all_panels = cast("_AllPanels", await self.client.get(path, params=params))
         return [
             PanelRevision.from_dict(panel, _sequence=self, _client=self.client)
             for panel in all_panels["panels"]
         ]
 
-    async def import_aaf(
+    async def import_aaf(  # noqa: PLR0917
         self,
         aaf_asset: Asset,
         comment: str = "",
         extra_params: Mapping[str, Any] | None = None,
-        timeout: float | None = None,
+        timeout: float | None = None,  # noqa: ASYNC109
         chain_status_callback: Callable[[websocket.MessageJobChainStatus], None] | None = None,
         panel_status_callback: Callable[[websocket.MessageEditorialImportStatus], None]
         | None = None,
@@ -1100,10 +1095,10 @@ class Sequence(FlixType):
 
         if self.sequence_id is None or force_create_new:
             path = f"{self._show.path_prefix()}/sequence"
-            result = cast(models.Sequence, await self.client.post(path, body=self.to_dict()))
+            result = cast("models.Sequence", await self.client.post(path, body=self.to_dict()))
         else:
             path = self.path_prefix()
-            result = cast(models.Sequence, await self.client.patch(path, body=self.to_dict()))
+            result = cast("models.Sequence", await self.client.patch(path, body=self.to_dict()))
         self.from_dict(
             result, into=self, _show=self._show, _episode=self._episode, _client=self.client
         )
@@ -1129,7 +1124,7 @@ class Asset(FlixType):
         *,
         asset_id: int = 0,
         show_id: int | None = None,
-        created_date: datetime.datetime | None = None,
+        created_date: dt.datetime | None = None,
         owner: User | None = None,
         media_objects: dict[str, list[MediaObject]] | None = None,
         _client: client.Client | None,
@@ -1147,9 +1142,7 @@ class Asset(FlixType):
         super().__init__(_client)
         self.asset_id: int = asset_id
         self.show_id: int | None = show_id
-        self.created_date: datetime.datetime = created_date or datetime.datetime.now(
-            datetime.timezone.utc
-        )
+        self.created_date: dt.datetime = created_date or dt.datetime.now(dt.UTC)
         self.owner: User | None = owner
         self.media_objects: dict[str, list[MediaObject]] = media_objects or {}
 
@@ -1181,7 +1174,7 @@ class Asset(FlixType):
 
         path = f"/show/{self.show_id}/media_object/{ref}"
         body = {"asset_ids": [self.asset_id]}
-        mos = cast(_MediaObjects, await self.client.post(path, body=body))
+        mos = cast("_MediaObjects", await self.client.post(path, body=body))
         media_object = MediaObject.from_dict(mos["media_objects"][0], _client=self.client)
         self.media_objects.setdefault(ref, []).append(media_object)
         return media_object
@@ -1217,7 +1210,7 @@ class ContactSheetCoverOptions(enum.Enum):
 
 
 class ContactSheet(FlixType):
-    def __init__(
+    def __init__(  # noqa: PLR0917
         self,
         name: str = "",
         orientation: ContactSheetOrientation = ContactSheetOrientation.PORTRAIT,
@@ -1237,20 +1230,16 @@ class ContactSheet(FlixType):
         *,
         contactsheet_id: int | None = None,
         owner: User | None = None,
-        created_date: datetime.datetime | None = None,
-        modified_date: datetime.datetime | None = None,
+        created_date: dt.datetime | None = None,
+        modified_date: dt.datetime | None = None,
         _client: client.Client | None,
     ) -> None:
         super().__init__(_client)
         self.contactsheet_id = contactsheet_id
         self.name = name
         self.owner = owner
-        self.created_date: datetime.datetime = created_date or datetime.datetime.now(
-            datetime.timezone.utc
-        )
-        self.modified_date: datetime.datetime = modified_date or datetime.datetime.now(
-            datetime.timezone.utc
-        )
+        self.created_date: dt.datetime = created_date or dt.datetime.now(dt.UTC)
+        self.modified_date: dt.datetime = modified_date or dt.datetime.now(dt.UTC)
 
         self.orientation = orientation
         self.width = width
@@ -1339,7 +1328,7 @@ class ShowState(enum.Enum):
 
 
 class Show(FlixType):
-    def __init__(
+    def __init__(  # noqa: PLR0917
         self,
         tracking_code: str = "",
         aspect_ratio: float = 16 / 9,
@@ -1353,7 +1342,7 @@ class Show(FlixType):
         *,
         show_id: int | None = None,
         owner: User | None = None,
-        created_date: datetime.datetime | None = None,
+        created_date: dt.datetime | None = None,
         state: ShowState = ShowState.ACTIVE,
         metadata: Mapping[str, Any] | None = None,
         _client: client.Client | None,
@@ -1370,9 +1359,7 @@ class Show(FlixType):
         self.show_thumbnail_id = show_thumbnail_id
         self.hidden = hidden
         self.owner = owner
-        self.created_date: datetime.datetime = created_date or datetime.datetime.now(
-            datetime.timezone.utc
-        )
+        self.created_date: dt.datetime = created_date or dt.datetime.now(dt.UTC)
         self.state = state
         self.metadata = Metadata(metadata, parent=self, _client=_client)
 
@@ -1431,7 +1418,7 @@ class Show(FlixType):
 
     async def get_sequence(self, sequence_id: int) -> Sequence:
         path = f"{self.path_prefix()}/sequence/{sequence_id}"
-        sequence = cast(models.Sequence, await self.client.get(path))
+        sequence = cast("models.Sequence", await self.client.get(path))
         return Sequence.from_dict(sequence, _show=self, _episode=None, _client=self.client)
 
     async def get_all_sequences(
@@ -1446,7 +1433,7 @@ class Show(FlixType):
             page=page,
             per_page=per_page,
         )
-        all_sequences = cast(_AllSequences, await self.client.get(path, params=params))
+        all_sequences = cast("_AllSequences", await self.client.get(path, params=params))
         return [
             Sequence.from_dict(sequence, _show=self, _episode=None, _client=self.client)
             for sequence in all_sequences["sequences"]
@@ -1454,7 +1441,7 @@ class Show(FlixType):
 
     async def get_episode(self, episode_id: int) -> Episode:
         path = f"{self.path_prefix()}/episode/{episode_id}"
-        episode = cast(models.Episode, await self.client.get(path))
+        episode = cast("models.Episode", await self.client.get(path))
         return Episode.from_dict(episode, _show=self, _client=self.client)
 
     async def get_all_episodes(self) -> list[Episode]:
@@ -1462,7 +1449,7 @@ class Show(FlixType):
             episodes: list[models.Episode]
 
         path = f"{self.path_prefix()}/episodes"
-        all_episodes = cast(_AllEpisodes, await self.client.get(path))
+        all_episodes = cast("_AllEpisodes", await self.client.get(path))
         return [
             Episode.from_dict(episode, _show=self, _client=self.client)
             for episode in all_episodes["episodes"]
@@ -1473,7 +1460,7 @@ class Show(FlixType):
             contact_sheets: list[models.ContactSheet]
 
         path = f"{self.path_prefix()}/contactsheets"
-        all_contactsheets = cast(_AllContactSheets, await self.client.get(path))
+        all_contactsheets = cast("_AllContactSheets", await self.client.get(path))
         return [
             ContactSheet.from_dict(cs, _client=self.client)
             for cs in all_contactsheets["contact_sheets"]
@@ -1494,7 +1481,7 @@ class Show(FlixType):
             colour_tags: list[models.ColorTag]
 
         path = f"{self.path_prefix()}/colourtags/{model}"
-        all_tags = cast(_AllColorTags, await self.client.get(path))
+        all_tags = cast("_AllColorTags", await self.client.get(path))
         tag_by_name = {
             tag["colour_name"]: ColorTag.from_dict(tag) for tag in all_tags["colour_tags"]
         }
@@ -1528,7 +1515,7 @@ class Show(FlixType):
 
         path = f"{self.path_prefix()}/asset"
         body = {"asset_count": num_assets}
-        assets = cast(_Assets, await self.client.post(path, body=body))
+        assets = cast("_Assets", await self.client.post(path, body=body))
         return [Asset.from_dict(asset, _client=self.client) for asset in assets["assets"]]
 
     async def create_media_objects(self, assets: list[Asset], ref: str) -> list[MediaObject]:
@@ -1537,7 +1524,7 @@ class Show(FlixType):
 
         path = f"{self.path_prefix()}/media_object/{ref}"
         body = {"asset_ids": [asset.asset_id for asset in assets]}
-        mos = cast(_MediaObjects, await self.client.post(path, body=body))
+        mos = cast("_MediaObjects", await self.client.post(path, body=body))
         media_objects = [
             MediaObject.from_dict(mo, _client=self.client) for mo in mos["media_objects"]
         ]
@@ -1566,7 +1553,7 @@ class Show(FlixType):
 
         path = f"{self.path_prefix()}/asset/transcode"
         body = {"asset_ids": [a.asset_id for a in assets]}
-        task_ids = cast(_Tasks, await self.client.post(path, body))
+        task_ids = cast("_Tasks", await self.client.post(path, body))
         return task_ids["task_ids"]
 
     async def upload_file(
@@ -1710,16 +1697,16 @@ class Show(FlixType):
         """
         if self.show_id is None or force_create_new:
             path = "/show"
-            result = cast(models.Show, await self.client.post(path, body=self.to_dict()))
+            result = cast("models.Show", await self.client.post(path, body=self.to_dict()))
         else:
             path = self.path_prefix()
-            result = cast(models.Show, await self.client.patch(path, body=self.to_dict()))
+            result = cast("models.Show", await self.client.patch(path, body=self.to_dict()))
         self.from_dict(result, into=self, _client=self.client)
 
     async def update(self) -> None:
         """Re-fetch this show from the server and update it in-place."""
         path = f"/show/{self.show_id}"
-        result = cast(models.Show, await self.client.get(path))
+        result = cast("models.Show", await self.client.get(path))
         self.from_dict(result, into=self, _client=self.client)
 
 
@@ -1808,8 +1795,8 @@ class PanelComment:
     panel_id: int
     revision_id: int
     closer_user_id: int | None = None
-    closed_date: datetime.datetime | None = None
-    created_date: datetime.datetime | None = None
+    closed_date: dt.datetime | None = None
+    created_date: dt.datetime | None = None
     comment_id: int | None = None
     deleted: bool = False
     closed: bool = False
@@ -1926,7 +1913,7 @@ class Panel(FlixType):
         show_id: int | None = None,
         revision_count: int = 0,
         owner: User | None = None,
-        created_date: datetime.datetime | None = None,
+        created_date: dt.datetime | None = None,
         metadata: Mapping[str, Any] | None = None,
         _sequence: Sequence,
         _client: client.Client | None,
@@ -1937,7 +1924,7 @@ class Panel(FlixType):
         self.show_id = show_id
         self.revision_count = revision_count
         self.owner = owner
-        self.created_date = created_date or datetime.datetime.now(datetime.timezone.utc)
+        self.created_date = created_date or dt.datetime.now(dt.UTC)
         self.metadata = Metadata(metadata, parent=self, _client=_client)
         self._sequence = _sequence
 
@@ -1989,8 +1976,8 @@ class PanelRevision(FlixType):
         sequence_id: int | None = None,
         show_id: int | None = None,
         revision_counter: int = 0,
-        created_date: datetime.datetime | None = None,
-        modified_date: datetime.datetime | None = None,
+        created_date: dt.datetime | None = None,
+        modified_date: dt.datetime | None = None,
         owner: User | None = None,
         published: int | None = None,
         latest_open_comment: PanelComment | None = None,
@@ -2016,12 +2003,8 @@ class PanelRevision(FlixType):
         self.keyframes = keyframes or []
         self.related_panels = related_panels or []
         self.revision_counter = revision_counter
-        self.created_date: datetime.datetime = created_date or datetime.datetime.now(
-            datetime.timezone.utc
-        )
-        self.modified_date: datetime.datetime = modified_date or datetime.datetime.now(
-            datetime.timezone.utc
-        )
+        self.created_date: dt.datetime = created_date or dt.datetime.now(dt.UTC)
+        self.modified_date: dt.datetime = modified_date or dt.datetime.now(dt.UTC)
         self.owner = owner
         self.published = published
         self.latest_open_comment = latest_open_comment
@@ -2141,7 +2124,7 @@ class PanelRevision(FlixType):
             hidden=hidden,
         )
 
-    def new_keyframe(
+    def new_keyframe(  # noqa: PLR0917
         self,
         start_key: int,
         scale: float = 100,
@@ -2172,7 +2155,7 @@ class PanelRevision(FlixType):
             dialogues: list[models.Dialogue]
 
         path = f"{self._sequence.path_prefix()}/panel/{self.panel_id}/dialogues"
-        result = cast(_AllDialogue, await self.client.get(path))
+        result = cast("_AllDialogue", await self.client.get(path))
         return [
             Dialogue.from_dict(d, _show=self.show, _client=self.client) for d in result["dialogues"]
         ]
@@ -2186,10 +2169,10 @@ class PanelRevision(FlixType):
         """
         if self.panel_id is None or force_create_new_panel:
             path = f"{self._sequence.path_prefix()}/panel"
-            result = cast(models.PanelRevision, await self.client.post(path, body=self.to_dict()))
+            result = cast("models.PanelRevision", await self.client.post(path, body=self.to_dict()))
         else:
             path = f"{self._sequence.path_prefix()}/panel/{self.panel_id}/revision"
-            result = cast(models.PanelRevision, await self.client.post(path, body=self.to_dict()))
+            result = cast("models.PanelRevision", await self.client.post(path, body=self.to_dict()))
         self.from_dict(result, into=self, _sequence=self._sequence, _client=self.client)
 
 
@@ -2198,7 +2181,7 @@ class Dialogue(FlixType):
         self,
         text: str,
         *,
-        created_date: datetime.datetime | None = None,
+        created_date: dt.datetime | None = None,
         owner: User | None = None,
         dialogue_id: int | None = None,
         _show: Show,
@@ -2208,7 +2191,7 @@ class Dialogue(FlixType):
         self._show = _show
         self.dialogue_id = dialogue_id
         self._text = text
-        self.created_date = created_date or datetime.datetime.now(datetime.timezone.utc)
+        self.created_date = created_date or dt.datetime.now(dt.UTC)
         self.owner = owner
 
     @property
@@ -2253,7 +2236,7 @@ class Dialogue(FlixType):
         when saving a sequence revision.
         """
         path = f"{self._show.path_prefix()}/dialogue"
-        result = cast(models.Dialogue, await self.client.post(path, body=self.to_dict()))
+        result = cast("models.Dialogue", await self.client.post(path, body=self.to_dict()))
         self.from_dict(result, into=self, _client=self.client, _show=self._show)
 
 
@@ -2344,7 +2327,7 @@ class Shot(FlixType):
         transitive: bool = True,
         *,
         owner: User | None = None,
-        created_date: datetime.datetime | None = None,
+        created_date: dt.datetime | None = None,
         metadata: Mapping[str, Any] | None = None,
         shot_id: int | None = None,
         show_id: int | None = None,
@@ -2356,9 +2339,7 @@ class Shot(FlixType):
         self.panel_revisions: list[ShotPanelRevision] = panel_revisions or []
         self.transitive: bool = transitive
         self.owner: User | None = owner
-        self.created_date: datetime.datetime = created_date or datetime.datetime.now(
-            datetime.timezone.utc
-        )
+        self.created_date: dt.datetime = created_date or dt.datetime.now(dt.UTC)
         self.metadata = Metadata(metadata, parent=self, _client=_client)
         self.shot_id: int | None = shot_id
         self.show_id: int | None = show_id
@@ -2383,9 +2364,7 @@ class Shot(FlixType):
         ]
         into.owner = User.from_dict(o, _client=_client) if (o := data.get("owner")) else None
         into.created_date = (
-            dateutil.parser.parse(d)
-            if (d := data.get("created_date"))
-            else datetime.datetime.now(datetime.timezone.utc)
+            dateutil.parser.parse(d) if (d := data.get("created_date")) else dt.datetime.now(dt.UTC)
         )
         into.shot_id = data.get("id")
         into.show_id = data.get("show_id")
@@ -2563,7 +2542,7 @@ class SequenceRevision(FlixType):
         show_id: int | None = None,
         revision_number: int | None = None,
         owner: User | None = None,
-        created_date: datetime.datetime | None = None,
+        created_date: dt.datetime | None = None,
         published: bool = False,
         imported: bool = False,
         task_id: str | None = None,
@@ -2583,9 +2562,7 @@ class SequenceRevision(FlixType):
         self.color_tag = color_tag
         self.autosave = autosave
         self.owner = owner
-        self.created_date: datetime.datetime = created_date or datetime.datetime.now(
-            datetime.timezone.utc
-        )
+        self.created_date: dt.datetime = created_date or dt.datetime.now(dt.UTC)
         self.published = published
         self.imported = imported
         self.task_id = task_id
@@ -2701,7 +2678,7 @@ class SequenceRevision(FlixType):
             sequence_revision_shots: list[models.SequenceRevisionShot]
 
         path = f"{self.path_prefix()}/shots"
-        all_shots = cast(_AllShots, await self.client.get(path))
+        all_shots = cast("_AllShots", await self.client.get(path))
         self.shots = [
             SequenceRevisionShot.from_dict(shot, _sequence=self._sequence, _client=self.client)
             for shot in all_shots["sequence_revision_shots"]
@@ -2870,12 +2847,12 @@ class SequenceRevision(FlixType):
 
             path = f"{self._sequence.path_prefix()}/revision"
             result = cast(
-                models.SequenceRevision, await self.client.post(path, body=self.to_dict())
+                "models.SequenceRevision", await self.client.post(path, body=self.to_dict())
             )
         else:
             path = self.path_prefix()
             result = cast(
-                models.SequenceRevision, await self.client.patch(path, body=self.to_dict())
+                "models.SequenceRevision", await self.client.patch(path, body=self.to_dict())
             )
         self.from_dict(result, into=self, _sequence=self._sequence, _client=self.client)
 
@@ -2887,7 +2864,7 @@ class Server:
     ip: str
     port: int
     running: bool
-    start_date: datetime.datetime
+    start_date: dt.datetime
     hostname: str
     db_ident: str
     is_ssl: bool

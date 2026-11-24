@@ -5,6 +5,8 @@ when certain predefined actions are performed, such as publishing to editorial
 or creating a new revision of a sequence.
 """
 
+# pyright: reportTypedDictNotRequiredAccess=warning
+
 from __future__ import annotations
 
 import asyncio
@@ -12,13 +14,11 @@ import contextlib
 import enum
 import json
 import logging
-from collections.abc import AsyncIterator, Callable, Coroutine
-from typing import TYPE_CHECKING, Any, TypeAlias, TypeVar, cast
+from collections.abc import AsyncGenerator, Callable, Coroutine
+from typing import TYPE_CHECKING, Any, Required, TypeAlias, TypedDict, TypeVar, Unpack, cast
 
-import aiohttp.typedefs
 import aiohttp.web
 import dateutil.parser
-from typing_extensions import Required, TypedDict, Unpack
 
 import flix
 from flix.lib import client as _client
@@ -95,7 +95,7 @@ class ErrorEvent(WebhookEvent):
 
     def __init__(self, data: models.Event, _: _client.Client | None) -> None:
         super().__init__(data)
-        event_data = cast(models.ErrorEvent, data)
+        event_data = cast("models.ErrorEvent", data)
         self.message = event_data["message"]
         self.fields = event_data["fields"]
 
@@ -110,7 +110,7 @@ class PublishEditorialEvent(WebhookEvent):
         client: _client.Client | None,
     ) -> None:
         super().__init__(data)
-        event_data = cast(models.PublishToEditorialEvent, data)
+        event_data = cast("models.PublishToEditorialEvent", data)
         self.target_app = event_data["target_app"]
         self.user = types.User.from_dict(event_data["user"], _client=client)
         self.created_media_objects = [
@@ -134,7 +134,7 @@ class PublishFlixEvent(WebhookEvent):
 
     def __init__(self, data: models.Event, client: _client.Client | None) -> None:
         super().__init__(data)
-        event_data = cast(models.PublishToFlixEvent, data)
+        event_data = cast("models.PublishToFlixEvent", data)
         self.source_app = event_data["source_app"]
         self.user = types.User.from_dict(event_data["user"], _client=client)
         self.show = types.Show.from_dict(event_data["show"], _client=client)
@@ -172,7 +172,7 @@ class ExportSBPEvent(WebhookEvent):
 
     def __init__(self, data: models.Event, client: _client.Client | None) -> None:
         super().__init__(data)
-        event_data = cast(models.ExportToSBPEvent, data)
+        event_data = cast("models.ExportToSBPEvent", data)
         self.sequence_revision = types.SequenceRevision.from_dict(
             event_data["sequence_revision"],
             _sequence=_sparse_sequence(event_data["sequence_revision"], client),
@@ -190,7 +190,7 @@ class NewSequenceRevisionEvent(WebhookEvent):
         client: _client.Client | None,
     ) -> None:
         super().__init__(data)
-        event_data = cast(models.SequenceRevisionCreatedEvent, data)
+        event_data = cast("models.SequenceRevisionCreatedEvent", data)
         self.sequence_revision = types.SequenceRevision.from_dict(
             event_data["sequence_revision"],
             _sequence=_sparse_sequence(event_data["sequence_revision"], client),
@@ -208,7 +208,7 @@ class NewPanelRevisionEvent(WebhookEvent):
         client: _client.Client | None,
     ) -> None:
         super().__init__(data)
-        event_data = cast(models.PanelRevisionCreatedEvent, data)
+        event_data = cast("models.PanelRevisionCreatedEvent", data)
         self.panel_revision = types.PanelRevision.from_dict(
             event_data["panel_revision"],
             _sequence=_sparse_sequence(event_data["panel_revision"], client),
@@ -226,7 +226,7 @@ class NewContactSheetEvent(WebhookEvent):
         client: _client.Client | None,
     ) -> None:
         super().__init__(data)
-        event_data = cast(models.ContactSheetCreatedEvent, data)
+        event_data = cast("models.ContactSheetCreatedEvent", data)
         self.asset = types.Asset.from_dict(event_data["asset"], _client=client)
         self.user = types.User.from_dict(event_data["user"], _client=client)
         self.show = types.Show.from_dict(event_data["show"], _client=client)
@@ -246,7 +246,7 @@ class PingEvent(WebhookEvent):
 
     def __init__(self, data: models.Event, client: _client.Client | None) -> None:
         super().__init__(data)
-        event_data = cast(models.PingEvent, data)
+        event_data = cast("models.PingEvent", data)
         self.event_time = dateutil.parser.parse(event_data["event_time"])
         self.user = types.User.from_dict(event_data["user"], _client=client)
 
@@ -307,13 +307,13 @@ class WebhookHandler:
     ) -> None:
         if event_type not in self._sub_handlers:
             self._sub_handlers[event_type] = []
-        self._sub_handlers[event_type].append(cast(WebhookHandlerType[WebhookEvent], handler))
+        self._sub_handlers[event_type].append(cast("WebhookHandlerType[WebhookEvent]", handler))
 
     def _get_handlers(
         self, event_type: EventFactory[WebhookEventType]
     ) -> list[WebhookHandlerType[WebhookEventType]]:
         if (handlers := self._sub_handlers.get(event_type)) is not None:
-            return cast(list[WebhookHandlerType[WebhookEventType]], handlers)
+            return cast("list[WebhookHandlerType[WebhookEventType]]", handlers)
         return []
 
     def make_route(self, client: _client.Client | None) -> aiohttp.web.RouteDef:
@@ -351,7 +351,7 @@ class WebhookHandler:
             return aiohttp.web.Response(status=400)
 
         event_type = EventType(request.headers.get("X-Flix-Event"))
-        event_body = cast(models.Event, json.loads(data))
+        event_body = cast("models.Event", json.loads(data))
         event_factory = _EVENT_TYPES[event_type]
         event = event_factory(event_body, client)
 
@@ -471,7 +471,7 @@ async def run_webhook_server(
 @contextlib.asynccontextmanager
 async def _webhook_client(
     client_options: ClientOptions | None,
-) -> AsyncIterator[_client.Client | None]:
+) -> AsyncGenerator[_client.Client | None]:
     if client_options is not None:
         async with _client.Client(**client_options) as client:
             yield client
@@ -482,7 +482,7 @@ async def _webhook_client(
 @contextlib.asynccontextmanager
 async def _webhook_runner(
     app: aiohttp.web.Application,
-) -> AsyncIterator[aiohttp.web.AppRunner]:
+) -> AsyncGenerator[aiohttp.web.AppRunner]:
     runner = aiohttp.web.AppRunner(app)
     await runner.setup()
 

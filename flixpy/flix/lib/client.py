@@ -5,15 +5,14 @@ from __future__ import annotations
 import asyncio
 import base64
 import contextlib
-import datetime
+import datetime as dt
 import json
 import logging
-import typing
 import urllib.parse
 import warnings
-from collections.abc import AsyncIterator, Mapping
+from collections.abc import AsyncGenerator, Mapping
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, TypedDict, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Self, TypedDict, cast
 
 import aiohttp
 import dateutil.parser
@@ -54,9 +53,7 @@ class AccessKey:
     @property
     def has_expired(self) -> bool:
         """Whether this access key has expired."""
-        return self.expiry_date is not None and self.expiry_date < datetime.datetime.now(
-            datetime.timezone.utc
-        )
+        return self.expiry_date is not None and self.expiry_date < dt.datetime.now(dt.UTC)
 
     def to_json(self) -> dict[str, Any]:
         """Returns a JSON-serialisable representation of this access key.
@@ -72,10 +69,7 @@ class AccessKey:
         }
 
 
-ClientSelf = TypeVar("ClientSelf", bound="BaseClient")
-
-
-class DeprecatedOptions(typing.TypedDict, total=False):
+class DeprecatedOptions(TypedDict, total=False):
     """Additional deprecated/discouraged client options which may be removed in the future."""
 
     auto_extend_session: bool
@@ -269,7 +263,7 @@ class BaseClient:
             The response parsed as JSON.
         """
         response = await self.request(method, path, body, **kwargs)
-        return cast(dict[str, Any], await response.json())
+        return cast("dict[str, Any]", await response.json())
 
     async def get(self, path: str, body: Any | None = None, **kwargs: Any) -> dict[str, Any]:
         """Perform a GET request against the Flix server.
@@ -390,7 +384,7 @@ class BaseClient:
             A object representing the creation form for the path.
         """
         resp = await self.get(f"{path}/form")
-        return forms.Form(cast(forms.FormSectionModel, resp))
+        return forms.Form(cast("forms.FormSectionModel", resp))
 
     async def authenticate(self, user: str, password: str) -> AccessKey:
         """Authenticate as a Flix user.
@@ -419,7 +413,7 @@ class BaseClient:
         response = await self._request(
             "POST", "/authenticate", auth=aiohttp.BasicAuth(user, password)
         )
-        access_key = cast(models.AccessKey, await response.json())
+        access_key = cast("models.AccessKey", await response.json())
         self._access_key = AccessKey(access_key)
 
         if self._refresh_token_task is None and self._auto_extend_session:
@@ -455,7 +449,7 @@ class BaseClient:
         # a FlixNotVerifiedError means the access key has expired,
         # in which case we'll reauthenticate before the next request
         with contextlib.suppress(errors.FlixNotVerifiedError):
-            access_key = cast(models.AccessKey, await self.post("/authenticate/extend"))
+            access_key = cast("models.AccessKey", await self.post("/authenticate/extend"))
             self._access_key = AccessKey(access_key)
 
     async def _periodically_refresh_token(self) -> None:
@@ -489,7 +483,7 @@ class BaseClient:
         warnings.warn("Use Client.aclose()", DeprecationWarning, stacklevel=1)
         await self.aclose()
 
-    async def __aenter__(self: ClientSelf) -> ClientSelf:
+    async def __aenter__(self) -> Self:
         return self
 
     async def __aexit__(
@@ -561,7 +555,7 @@ class Client(BaseClient):
         )
 
     @contextlib.asynccontextmanager
-    async def websocket(self) -> AsyncIterator[websocket.Websocket]:
+    async def websocket(self) -> AsyncGenerator[websocket.Websocket]:
         """Open a new websocket connection to listen for server events.
 
         Returns:
@@ -585,7 +579,7 @@ class Client(BaseClient):
             shows: list[models.Show]
 
         params = {"display_hidden": "true" if include_hidden else "falsae"}
-        shows = cast(_AllShows, await self.get("/shows", params=params))
+        shows = cast("_AllShows", await self.get("/shows", params=params))
         return [types.Show.from_dict(show, _client=self) for show in shows["shows"]]
 
     async def get_show(self, show_id: int) -> types.Show:
@@ -597,7 +591,7 @@ class Client(BaseClient):
         Returns:
             The show matching the given ID.
         """
-        show = cast(models.Show, await self.get(f"/show/{show_id}"))
+        show = cast("models.Show", await self.get(f"/show/{show_id}"))
         return types.Show.from_dict(show, _client=self)
 
     async def get_asset(self, asset_id: int) -> types.Asset:
@@ -609,7 +603,7 @@ class Client(BaseClient):
         Returns:
             The asset matching the given ID.
         """
-        asset = cast(models.Asset, await self.get(f"/asset/{asset_id}"))
+        asset = cast("models.Asset", await self.get(f"/asset/{asset_id}"))
         return types.Asset.from_dict(asset, _client=self)
 
     async def get_media_object(self, media_object_id: int) -> types.MediaObject:
@@ -621,10 +615,10 @@ class Client(BaseClient):
         Returns:
             The media object with the given ID.
         """
-        media_object = cast(models.MediaObject, await self.get(f"/file/{media_object_id}"))
+        media_object = cast("models.MediaObject", await self.get(f"/file/{media_object_id}"))
         return types.MediaObject.from_dict(media_object, _client=self)
 
-    def new_show(
+    def new_show(  # noqa: PLR0917
         self,
         tracking_code: str,
         aspect_ratio: float = 1.77,
@@ -690,7 +684,7 @@ class Client(BaseClient):
         class _AllUsers(TypedDict):
             users: list[models.User]
 
-        users = cast(_AllUsers, await self.get("/users"))
+        users = cast("_AllUsers", await self.get("/users"))
         return [types.User.from_dict(user, _client=self) for user in users["users"]]
 
     def new_user(
@@ -720,7 +714,7 @@ class Client(BaseClient):
         if with_permission is not None:
             perm = json.dumps(with_permission.to_dict())
             params = {"permissions": base64.b64encode(perm.encode()).decode()}
-        groups = cast(_AllGroups, await self.get("/groups", params=params))
+        groups = cast("_AllGroups", await self.get("/groups", params=params))
         return [types.Group.from_dict(group) for group in groups["groups"]]
 
     @_utils.cache(30)
@@ -729,5 +723,5 @@ class Client(BaseClient):
             servers: list[models.Server]
 
         path = "/servers"
-        servers = cast(_Servers, await self.get(path))
+        servers = cast("_Servers", await self.get(path))
         return [types.Server.from_dict(server) for server in servers["servers"]]

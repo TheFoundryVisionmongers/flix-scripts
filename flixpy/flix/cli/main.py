@@ -1,5 +1,7 @@
 """The implementations of the commands available from the ``flix`` command-line utility."""
 
+# pyright: reportTypedDictNotRequiredAccess=warning
+
 from __future__ import annotations
 
 import asyncio
@@ -25,7 +27,7 @@ _CONFIG_FILE = _CONFIG_DIR / "config.json"
 def read_config() -> dict[str, Any]:
     try:
         with _CONFIG_FILE.open("r") as f:
-            return cast(dict[str, Any], json.load(f))
+            return cast("dict[str, Any]", json.load(f))
     except FileNotFoundError:
         return {}
 
@@ -65,6 +67,7 @@ async def get_client(ctx: click.Context, server: str | None = None) -> client.Cl
 @click.pass_context
 async def flix_cli(
     ctx: click.Context,
+    *,
     server: str | None,
     username: str | None,
     password: str | None,
@@ -106,6 +109,7 @@ def save_config(ctx: click.Context, /, *_args: Any, **_kwargs: Any) -> None:
 @click.pass_context
 def config(
     ctx: click.Context,
+    *,
     server: str | None,
     key: str | None,
     secret: str | None,
@@ -219,7 +223,7 @@ class _WebhookResponse(TypedDict):
 @click.pass_context
 async def webhook_delete(ctx: click.Context) -> None:
     async with await get_client(ctx) as flix_client:
-        webhooks: _WebhookResponse = cast(_WebhookResponse, await flix_client.get("/webhooks"))
+        webhooks: _WebhookResponse = cast("_WebhookResponse", await flix_client.get("/webhooks"))
         if len(webhooks["webhooks"]) == 0:
             raise click.ClickException("No webhooks added.")
         webhook_form = await flix_client.form("/webhook")
@@ -244,7 +248,7 @@ async def webhook_delete(ctx: click.Context) -> None:
 @click.pass_context
 async def webhook_edit(ctx: click.Context) -> None:
     async with await get_client(ctx) as flix_client:
-        webhooks: _WebhookResponse = cast(_WebhookResponse, await flix_client.get("/webhooks"))
+        webhooks: _WebhookResponse = cast("_WebhookResponse", await flix_client.get("/webhooks"))
         if len(webhooks["webhooks"]) == 0:
             raise click.ClickException("No webhooks added.")
         webhook_form = await flix_client.form("/webhook")
@@ -267,7 +271,7 @@ async def webhook_edit(ctx: click.Context) -> None:
 @click.pass_context
 async def webhook_ping(ctx: click.Context) -> None:
     async with await get_client(ctx) as flix_client:
-        webhooks = cast(_WebhookResponse, await flix_client.get("/webhooks"))
+        webhooks = cast("_WebhookResponse", await flix_client.get("/webhooks"))
         if len(webhooks["webhooks"]) == 0:
             raise click.ClickException("No webhooks added.")
 
@@ -307,7 +311,7 @@ async def webhook_ping(ctx: click.Context) -> None:
     "--certfile", type=str, help="Path to a signed certificate. Providing this will enable HTTPS."
 )
 @click.option("--keyfile", type=str, help="Path to the private key used to sign the certificate.")
-async def webhook_server(
+async def webhook_server(  # noqa: PLR0917
     path: str, port: int, address: str, secret: str, certfile: str | None, keyfile: str | None
 ) -> None:
     """Run a test server that prints events to standard out.
@@ -378,7 +382,7 @@ async def contactsheet_edit_loop(
 async def contactsheet_add(ctx: click.Context) -> None:
     async with await get_client(ctx) as flix_client:
         contactsheet_form = await flix_client.form("/contactsheet")
-        data = cast(models.ContactSheet, contactsheet_form.prompt())
+        data = cast("models.ContactSheet", contactsheet_form.prompt())
         click.echo(err=True)
         contactsheet_form.print(data, err=True)
 
@@ -397,7 +401,7 @@ class _ContactSheetResponse(TypedDict):
 @click.pass_context
 async def contactsheet_list(ctx: click.Context) -> None:
     async with await get_client(ctx) as flix_client:
-        contactsheets = cast(_ContactSheetResponse, await flix_client.get("/contactsheets"))
+        contactsheets = cast("_ContactSheetResponse", await flix_client.get("/contactsheets"))
         contactsheet_form = await flix_client.form("/contactsheet")
 
         for i, cs in enumerate(contactsheets["contact_sheets"]):
@@ -416,7 +420,7 @@ async def contactsheet_list(ctx: click.Context) -> None:
 @click.pass_context
 async def contactsheet_delete(ctx: click.Context) -> None:
     async with await get_client(ctx) as flix_client:
-        contactsheets = cast(_ContactSheetResponse, await flix_client.get("/contactsheets"))
+        contactsheets = cast("_ContactSheetResponse", await flix_client.get("/contactsheets"))
         if len(contactsheets["contact_sheets"]) == 0:
             raise click.ClickException("No contact sheet templates added.")
         contactsheet_form = await flix_client.form("/contactsheet")
@@ -443,7 +447,7 @@ async def contactsheet_delete(ctx: click.Context) -> None:
 @click.pass_context
 async def contactsheet_edit(ctx: click.Context) -> None:
     async with await get_client(ctx) as flix_client:
-        contactsheets = cast(_ContactSheetResponse, await flix_client.get("/contactsheets"))
+        contactsheets = cast("_ContactSheetResponse", await flix_client.get("/contactsheets"))
         if len(contactsheets["contact_sheets"]) == 0:
             raise click.ClickException("No contact sheet templates added.")
         contactsheet_form = await flix_client.form("/contactsheet")
@@ -477,7 +481,7 @@ class _ShowResponse(TypedDict):
 @click.pass_context
 async def contactsheet_assign(ctx: click.Context) -> None:
     async with await get_client(ctx) as flix_client:
-        contactsheets = cast(_ContactSheetResponse, await flix_client.get("/contactsheets"))
+        contactsheets = cast("_ContactSheetResponse", await flix_client.get("/contactsheets"))
         if len(contactsheets["contact_sheets"]) == 0:
             raise click.ClickException("No contact sheet templates added.")
 
@@ -489,7 +493,7 @@ async def contactsheet_assign(ctx: click.Context) -> None:
         cs = contactsheets["contact_sheets"][j]
         assigned_shows: list[models.Show] = cs.get("shows") or []
 
-        all_shows = cast(_ShowResponse, await flix_client.get("/shows"))["shows"]
+        all_shows = cast("_ShowResponse", await flix_client.get("/shows"))["shows"]
 
         while True:
             show_list = ", ".join(

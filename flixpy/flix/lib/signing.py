@@ -7,7 +7,7 @@ required to access protected endpoints.
 from __future__ import annotations
 
 import base64
-import datetime
+import datetime as dt
 import hashlib
 import hmac
 
@@ -18,11 +18,11 @@ DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
 def get_time_rfc3999() -> str:
     """Get the current date and time in the format expected by Flix's signing mechanism."""
-    utc_now = datetime.datetime.now(datetime.timezone.utc)
+    utc_now = dt.datetime.now(dt.UTC)
     return utc_now.strftime(DATE_FORMAT)
 
 
-def sign_request(
+def sign_request(  # noqa: PLR0917
     access_key_id: str,
     secret: str,
     method: str,

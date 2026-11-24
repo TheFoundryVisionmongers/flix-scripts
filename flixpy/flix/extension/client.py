@@ -42,7 +42,7 @@ def _assert_response(expect: type[T], resp: api_types.Response[U]) -> T:
     _assert_ok(resp)
 
     if resp.parsed is not None:
-        return cast(T, resp.parsed)
+        return cast("T", resp.parsed)
 
     raise errors.FlixError(f"expected response type {expect}, got: {resp.content!r}")
 

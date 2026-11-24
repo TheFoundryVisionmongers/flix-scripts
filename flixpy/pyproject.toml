@@ -101,6 +101,8 @@ ignore = [
     "ISC001", "COM812",
     # lots of arguments is ok as long as they're keyword arguments
     "PLR0913",
+    # non-top-level imports can be useful for readability in some cases
+    "PLC0415",
     # very silly rule, why would you want less informative exceptions
     "TRY003",
     # these exception rules are bad
@@ -113,6 +115,8 @@ ignore = [
     "UP032",
     # breaking change
     "A005",
+    # not part of our current code style
+    "CPY001",
     # TODO re-enable these ASAP
     "FBT001", "FBT002", "ANN401",
     "D101", "D102", "D103", "D105", "D106", "D107",

@@ -136,7 +136,7 @@ def get_channel(hostname: str, port: int, access_key: client.AccessKey) -> grpc.
         target,
         grpc.ssl_channel_credentials(certificate),
         [("grpc.ssl_target_name_override", name) for name in names],
-        interceptors=[cast(grpc.aio.ClientInterceptor, MessageSigner(access_key))],
+        interceptors=[cast("grpc.aio.ClientInterceptor", MessageSigner(access_key))],
     )
 
 

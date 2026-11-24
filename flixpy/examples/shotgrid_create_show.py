@@ -62,7 +62,7 @@ async def import_sg_show() -> None:
     try:
         # fetch the existing ShotGrid project and sequence data
         sg_project = cast(
-            ShotgridProject,
+            "ShotgridProject",
             sg.find_one(
                 "Project",
                 [["id", "is", SHOTGRID_PROJECT]],
@@ -70,7 +70,7 @@ async def import_sg_show() -> None:
             ),
         )
         sg_sequences = cast(
-            list[ShotgridSequence],
+            "list[ShotgridSequence]",
             sg.find(
                 "Sequence",
                 [["project.Project.id", "is", SHOTGRID_PROJECT]],

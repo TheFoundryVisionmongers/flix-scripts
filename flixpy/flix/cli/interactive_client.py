@@ -28,6 +28,7 @@ class InteractiveClient(client.Client):
         port: int,
         ssl: bool,
         config: dict[str, Any],
+        *,
         username: str | None = None,
         password: str | None = None,
         access_key: models.AccessKey | None = None,

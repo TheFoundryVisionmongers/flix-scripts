@@ -12,7 +12,7 @@ import json
 import time
 import urllib.parse
 import uuid
-from typing import TYPE_CHECKING, Any, Generic, TypedDict, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Generic, Self, TypedDict, TypeVar, cast
 
 import aiohttp
 import yarl
@@ -103,7 +103,7 @@ class MessageAssetUpdated(KnownWebsocketMessage):
 
     def __init__(self, flix_client: client.Client, msg_type: MessageType, raw_data: bytes) -> None:
         super().__init__(flix_client, msg_type, raw_data)
-        data = cast(MessageAssetUpdated.Model, self.data)
+        data = cast("MessageAssetUpdated.Model", self.data)
         self.asset_id = data["assetID"]
         self.status = data["status"]
 
@@ -118,7 +118,7 @@ class AssetCreatedMessage(KnownWebsocketMessage):
 
     def __init__(self, flix_client: client.Client, msg_type: MessageType, raw_data: bytes) -> None:
         super().__init__(flix_client, msg_type, raw_data)
-        data = cast(AssetCreatedMessage.Model, self.data)
+        data = cast("AssetCreatedMessage.Model", self.data)
         self.asset_id = data["assetID"]
 
     async def get_asset(self) -> types.Asset:
@@ -138,7 +138,7 @@ class MessageJobError(KnownWebsocketMessage):
 
     def __init__(self, flix_client: client.Client, msg_type: MessageType, raw_data: bytes) -> None:
         super().__init__(flix_client, msg_type, raw_data)
-        data = cast(MessageJobError.Model, self.data)
+        data = cast("MessageJobError.Model", self.data)
         self.task_id = data["taskId"]
         self.percentage = data["percentage"]
         self.status = data["status"]
@@ -151,7 +151,7 @@ class MessageLicenseValid(KnownWebsocketMessage):
 
     def __init__(self, flix_client: client.Client, msg_type: MessageType, raw_data: bytes) -> None:
         super().__init__(flix_client, msg_type, raw_data)
-        data = cast(MessageLicenseValid.Model, self.data)
+        data = cast("MessageLicenseValid.Model", self.data)
         self.licensed = data["licensed"]
 
 
@@ -167,7 +167,7 @@ class MessageJobChainStatus(KnownWebsocketMessage):
 
     def __init__(self, flix_client: client.Client, msg_type: MessageType, raw_data: bytes) -> None:
         super().__init__(flix_client, msg_type, raw_data)
-        data = cast(MessageJobChainStatus.Model, self.data)
+        data = cast("MessageJobChainStatus.Model", self.data)
         self.task_id = data["taskId"]
         self.percentage = data["percentage"]
         self.status = data["status"]
@@ -195,7 +195,7 @@ class MessageEditorialImportStatus(KnownWebsocketMessage):
 
     def __init__(self, flix_client: client.Client, msg_type: MessageType, raw_data: bytes) -> None:
         super().__init__(flix_client, msg_type, raw_data)
-        data = cast(MessageEditorialImportStatus.Model, self.data)
+        data = cast("MessageEditorialImportStatus.Model", self.data)
         self.position = data["position"]
         self.frame_in = data["frameIn"]
         self.name = data["name"]
@@ -210,7 +210,7 @@ class MessageEditorialImportComplete(KnownWebsocketMessage):
 
     def __init__(self, flix_client: client.Client, msg_type: MessageType, raw_data: bytes) -> None:
         super().__init__(flix_client, msg_type, raw_data)
-        data = cast(MessageEditorialImportComplete.Model, self.data)
+        data = cast("MessageEditorialImportComplete.Model", self.data)
         self.sequence_revision = data["sequence_revision"]
 
     async def get_sequence_revision(self, sequence: types.Sequence) -> types.SequenceRevision:
@@ -229,7 +229,7 @@ class MessageStoryboardProImportComplete(KnownWebsocketMessage):
 
     def __init__(self, flix_client: client.Client, msg_type: MessageType, raw_data: bytes) -> None:
         super().__init__(flix_client, msg_type, raw_data)
-        data = cast(MessageStoryboardProImportComplete.Model, self.data)
+        data = cast("MessageStoryboardProImportComplete.Model", self.data)
         self.sequence_revision = data["sequence_revision"]
 
 
@@ -244,7 +244,7 @@ class MessageDialogueComplete(AssetCreatedMessage):
 
     def __init__(self, flix_client: client.Client, msg_type: MessageType, raw_data: bytes) -> None:
         super().__init__(flix_client, msg_type, raw_data)
-        data = cast(MessageDialogueComplete.Model, self.data)
+        data = cast("MessageDialogueComplete.Model", self.data)
         # asset ID is set in AssetCreatedMessage
         self.task_id = data["taskId"]
 
@@ -256,7 +256,7 @@ class MessageAssetStatus(KnownWebsocketMessage):
 
     def __init__(self, flix_client: client.Client, msg_type: MessageType, raw_data: bytes) -> None:
         super().__init__(flix_client, msg_type, raw_data)
-        data = cast(MessageAssetStatus.Model, self.data)
+        data = cast("MessageAssetStatus.Model", self.data)
         self.asset_id = data["assetID"]
         self.status = data["status"]
 
@@ -280,7 +280,7 @@ class MessageArchiveCreated(KnownWebsocketMessage):
 
     def __init__(self, flix_client: client.Client, msg_type: MessageType, raw_data: bytes) -> None:
         super().__init__(flix_client, msg_type, raw_data)
-        data = cast(MessageArchiveCreated.Model, self.data)
+        data = cast("MessageArchiveCreated.Model", self.data)
         self.task_id = data["taskId"]
         self.archive_path = data["archivePath"]
 
@@ -292,7 +292,7 @@ class MessageArchiveRestored(KnownWebsocketMessage):
 
     def __init__(self, flix_client: client.Client, msg_type: MessageType, raw_data: bytes) -> None:
         super().__init__(flix_client, msg_type, raw_data)
-        data = cast(MessageArchiveRestored.Model, self.data)
+        data = cast("MessageArchiveRestored.Model", self.data)
         self.task_id = data["taskId"]
         self.show_id = data["showId"]
 
@@ -319,7 +319,6 @@ _MESSAGE_TYPES: dict[MessageType, type[KnownWebsocketMessage]] = {
     MessageType.ARCHIVE_RESTORED: MessageArchiveRestored,
 }
 
-WebsocketSelf = TypeVar("WebsocketSelf", bound="Websocket")
 WebsocketMessageType = TypeVar("WebsocketMessageType", bound="WebsocketMessage")
 AssetCreatedMessageType = TypeVar("AssetCreatedMessageType", bound="AssetCreatedMessage")
 
@@ -447,7 +446,7 @@ class Websocket:
                 else:
                     yield msg_class(self._client, msg_type, data[1:])
 
-    async def __aenter__(self: WebsocketSelf) -> WebsocketSelf:
+    async def __aenter__(self) -> Self:
         await self.open()
         return self
 
