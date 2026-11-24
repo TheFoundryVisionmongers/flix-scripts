@@ -169,7 +169,7 @@ class Extension:
     ```
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0917
         self,
         name: str,
         client_uid: str,
@@ -485,7 +485,7 @@ class Extension:
 
         return types.VersionResponse.from_model(resp)
 
-    async def import_panels(
+    async def import_panels(  # noqa: PLR0917
         self,
         paths: list[str],
         origin: str,
@@ -512,7 +512,7 @@ class Extension:
             panel_controller_update,
         )
 
-        json_body = models.BulkPanelRequest(
+        body = models.BulkPanelRequest(
             paths=paths,
             origin=origin,
             source_file=models.PanelRequestSourceFile(
@@ -530,14 +530,14 @@ class Extension:
             response = _assert_response(
                 models.PanelRequestResponse,
                 await panel_controller_create.asyncio_detailed(
-                    client=await self._get_registered_client(), body=json_body
+                    client=await self._get_registered_client(), body=body
                 ),
             )
         else:
             response = _assert_response(
                 models.PanelRequestResponse,
                 await panel_controller_update.asyncio_detailed(
-                    client=await self._get_registered_client(), body=json_body
+                    client=await self._get_registered_client(), body=body
                 ),
             )
 
@@ -600,7 +600,7 @@ class Extension:
             models.ActionsUpdateResponse,
             await registration_controller_set_client_actions.asyncio_detailed(
                 client=await self._get_registered_client(),
-                json_body=models.ActionsUpdateRequest(
+                body=models.ActionsUpdateRequest(
                     actions=[action.to_model() for action in actions],
                 ),
             ),
@@ -680,7 +680,7 @@ class Extension:
             models.PanelUpdateMetadataResponse,
             await panel_controller_update_metadata.asyncio_detailed(
                 client=await self._get_registered_client(),
-                json_body=models.PanelUpdateMetadataRequest(
+                body=models.PanelUpdateMetadataRequest(
                     metadata=models.PanelUpdateMetadataRequestMetadata.from_dict(dict(metadata)),
                 ),
                 selected=selected,
@@ -767,7 +767,7 @@ class Extension:
 
         resp = await project_metadata_controller_update_metadata.asyncio_detailed(
             client=await self._get_registered_client(),
-            json_body=metadata.to_model(),
+            body=metadata.to_model(),
         )
         _assert_ok(resp)
 

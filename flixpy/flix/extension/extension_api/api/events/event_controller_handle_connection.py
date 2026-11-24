@@ -53,7 +53,7 @@ def _get_kwargs(
 
 def _parse_response(*, client: AuthenticatedClient | Client, response: httpx2.Response) -> SSEEvent | None:
     if response.status_code == 200:
-        response_200 = SSEEvent.from_dict(response.text)
+        response_200 = SSEEvent.from_dict(response.json())
 
 
 

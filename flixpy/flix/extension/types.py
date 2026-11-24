@@ -20,7 +20,7 @@ from .extension_api.models import (
 from .extension_api.types import UNSET, Unset
 
 if TYPE_CHECKING:
-    import datetime
+    import datetime as dt
 
 __all__ = [
     "ActionEvent",
@@ -525,7 +525,7 @@ class OpenEvent(ClientEvent):
             panels=[OpenPanelData.from_dict(panel) for panel in data.panels],
             shots=[OpenShot.from_dict(shot) for shot in data.shots],
             additional_properties=data.additional_properties,
-            action_id=data.action_id if data.action_id else None,
+            action_id=data.action_id or None,
         )
 
 
@@ -595,15 +595,15 @@ class ActionRegistration:
     name: str
     description: str | None = None
     icon_svg: str | None = None
-    type: ActionRegistrationType | None = None
+    type_: ActionRegistrationType | None = None
 
     def to_model(self) -> models.ActionRegistration:
         return models.ActionRegistration(
             id=self.id,
             name=self.name,
-            description=self.description if self.description else UNSET,
-            icon_svg=self.icon_svg if self.icon_svg else UNSET,
-            type=self.type if self.type else UNSET,
+            description=self.description or UNSET,
+            icon_svg=self.icon_svg or UNSET,
+            type_=self.type_ or UNSET,
         )
 
     @classmethod
@@ -611,9 +611,9 @@ class ActionRegistration:
         return cls(
             id=data.id,
             name=data.name,
-            description=data.description if data.description else None,
-            icon_svg=data.icon_svg if data.icon_svg else None,
-            type=data.type if data.type else None,
+            description=data.description or None,
+            icon_svg=data.icon_svg or None,
+            type_=data.type_ or None,
         )
 
 
@@ -625,8 +625,8 @@ class PanelRevisionDetails:
     revision_id: int
     panel_position: int
     asset_id: int
-    created_date: datetime.datetime
-    revision_date: datetime.datetime
+    created_date: dt.datetime
+    revision_date: dt.datetime
     owner: str
     show_id: int
     sequence_id: int
