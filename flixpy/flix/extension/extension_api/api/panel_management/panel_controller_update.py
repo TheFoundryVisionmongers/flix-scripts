@@ -1,56 +1,70 @@
 from http import HTTPStatus
-from typing import Any, Dict, Optional, Union, cast
+from typing import Any, cast
+from urllib.parse import quote
 
-import httpx
+import httpx2
 
-from ... import errors
 from ...client import AuthenticatedClient, Client
+from ...types import Response, UNSET
+from ... import errors
+
 from ...models.bulk_panel_request import BulkPanelRequest
 from ...models.full_panel_request import FullPanelRequest
 from ...models.panel_request_response import PanelRequestResponse
-from ...types import Response
+from typing import cast
+
 
 
 def _get_kwargs(
     *,
-    json_body: Union["BulkPanelRequest", "FullPanelRequest"],
-) -> Dict[str, Any]:
-    pass
+    body: BulkPanelRequest | FullPanelRequest,
 
-    json_json_body: Dict[str, Any]
+) -> dict[str, Any]:
+    headers: dict[str, Any] = {}
 
-    if isinstance(json_body, BulkPanelRequest):
-        json_json_body = json_body.to_dict()
 
-    else:
-        json_json_body = json_body.to_dict()
+    
 
-    return {
+    
+
+    _kwargs: dict[str, Any] = {
         "method": "patch",
         "url": "/panels",
-        "json": json_json_body,
     }
 
+    
+    if isinstance(body, BulkPanelRequest):
+        _kwargs["json"] = body.to_dict()
+    else:
+        _kwargs["json"] = body.to_dict()
 
-def _parse_response(
-    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Optional[Union[Any, PanelRequestResponse]]:
-    if response.status_code == HTTPStatus.OK:
+
+    headers["Content-Type"] = "application/json"
+
+    _kwargs["headers"] = headers
+    return _kwargs
+
+
+
+def _parse_response(*, client: AuthenticatedClient | Client, response: httpx2.Response) -> Any | PanelRequestResponse | None:
+    if response.status_code == 200:
         response_200 = PanelRequestResponse.from_dict(response.json())
 
+
+
         return response_200
-    if response.status_code == HTTPStatus.BAD_REQUEST:
+
+    if response.status_code == 400:
         response_400 = cast(Any, None)
         return response_400
+
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
     else:
         return None
 
 
-def _build_response(
-    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Response[Union[Any, PanelRequestResponse]]:
+def _build_response(*, client: AuthenticatedClient | Client, response: httpx2.Response) -> Response[Any | PanelRequestResponse]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -62,25 +76,28 @@ def _build_response(
 def sync_detailed(
     *,
     client: AuthenticatedClient,
-    json_body: Union["BulkPanelRequest", "FullPanelRequest"],
-) -> Response[Union[Any, PanelRequestResponse]]:
-    """Update Existing Panels
+    body: BulkPanelRequest | FullPanelRequest,
+
+) -> Response[Any | PanelRequestResponse]:
+    """ Update Existing Panels
 
      Updates existing panels in the active sequence revision from the list of provided file paths.
 
     Args:
-        json_body (Union['BulkPanelRequest', 'FullPanelRequest']):
+        body (BulkPanelRequest | FullPanelRequest):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
+        httpx2.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, PanelRequestResponse]]
-    """
+        Response[Any | PanelRequestResponse]
+     """
+
 
     kwargs = _get_kwargs(
-        json_body=json_body,
+        body=body,
+
     )
 
     response = client.get_httpx_client().request(
@@ -89,85 +106,91 @@ def sync_detailed(
 
     return _build_response(client=client, response=response)
 
-
 def sync(
     *,
     client: AuthenticatedClient,
-    json_body: Union["BulkPanelRequest", "FullPanelRequest"],
-) -> Optional[Union[Any, PanelRequestResponse]]:
-    """Update Existing Panels
+    body: BulkPanelRequest | FullPanelRequest,
+
+) -> Any | PanelRequestResponse | None:
+    """ Update Existing Panels
 
      Updates existing panels in the active sequence revision from the list of provided file paths.
 
     Args:
-        json_body (Union['BulkPanelRequest', 'FullPanelRequest']):
+        body (BulkPanelRequest | FullPanelRequest):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
+        httpx2.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, PanelRequestResponse]
-    """
+        Any | PanelRequestResponse
+     """
+
 
     return sync_detailed(
         client=client,
-        json_body=json_body,
-    ).parsed
+body=body,
 
+    ).parsed
 
 async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
-    json_body: Union["BulkPanelRequest", "FullPanelRequest"],
-) -> Response[Union[Any, PanelRequestResponse]]:
-    """Update Existing Panels
+    body: BulkPanelRequest | FullPanelRequest,
+
+) -> Response[Any | PanelRequestResponse]:
+    """ Update Existing Panels
 
      Updates existing panels in the active sequence revision from the list of provided file paths.
 
     Args:
-        json_body (Union['BulkPanelRequest', 'FullPanelRequest']):
+        body (BulkPanelRequest | FullPanelRequest):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
+        httpx2.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, PanelRequestResponse]]
-    """
+        Response[Any | PanelRequestResponse]
+     """
+
 
     kwargs = _get_kwargs(
-        json_body=json_body,
+        body=body,
+
     )
 
-    response = await client.get_async_httpx_client().request(**kwargs)
+    response = await client.get_async_httpx_client().request(
+        **kwargs
+    )
 
     return _build_response(client=client, response=response)
-
 
 async def asyncio(
     *,
     client: AuthenticatedClient,
-    json_body: Union["BulkPanelRequest", "FullPanelRequest"],
-) -> Optional[Union[Any, PanelRequestResponse]]:
-    """Update Existing Panels
+    body: BulkPanelRequest | FullPanelRequest,
+
+) -> Any | PanelRequestResponse | None:
+    """ Update Existing Panels
 
      Updates existing panels in the active sequence revision from the list of provided file paths.
 
     Args:
-        json_body (Union['BulkPanelRequest', 'FullPanelRequest']):
+        body (BulkPanelRequest | FullPanelRequest):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
+        httpx2.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, PanelRequestResponse]
-    """
+        Any | PanelRequestResponse
+     """
 
-    return (
-        await asyncio_detailed(
-            client=client,
-            json_body=json_body,
-        )
-    ).parsed
+
+    return (await asyncio_detailed(
+        client=client,
+body=body,
+
+    )).parsed

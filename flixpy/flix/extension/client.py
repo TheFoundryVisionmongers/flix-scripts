@@ -8,11 +8,10 @@ import warnings
 import weakref
 from collections.abc import AsyncIterable, AsyncIterator, Coroutine
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Self, TypeVar, cast
 
-import httpx
+import httpx2 as httpx
 import socketio
-from typing_extensions import Self
 
 from ..lib import errors
 from . import extension_api, types
@@ -43,7 +42,7 @@ def _assert_response(expect: type[T], resp: api_types.Response[U]) -> T:
     _assert_ok(resp)
 
     if resp.parsed is not None:
-        return cast(T, resp.parsed)
+        return cast("T", resp.parsed)
 
     raise errors.FlixError(f"expected response type {expect}, got: {resp.content!r}")
 
@@ -367,7 +366,7 @@ class Extension:
             models.RegistrationResponse,
             await registration_controller_register_client.asyncio_detailed(
                 client=self._client,
-                json_body=models.RegistrationRequest(
+                body=models.RegistrationRequest(
                     name=self.name,
                     client_uid=self.client_uid,
                     version=self.version or api_types.UNSET,
@@ -494,14 +493,14 @@ class Extension:
             response = _assert_response(
                 models.PanelRequestResponse,
                 await panel_controller_create.asyncio_detailed(
-                    client=await self._get_registered_client(), json_body=json_body
+                    client=await self._get_registered_client(), body=json_body
                 ),
             )
         else:
             response = _assert_response(
                 models.PanelRequestResponse,
                 await panel_controller_update.asyncio_detailed(
-                    client=await self._get_registered_client(), json_body=json_body
+                    client=await self._get_registered_client(), body=json_body
                 ),
             )
 
@@ -531,7 +530,7 @@ class Extension:
             models.DownloadResponse,
             await download_controller_download_media_object.asyncio_detailed(
                 client=await self._get_registered_client(),
-                json_body=models.DownloadRequest(
+                body=models.DownloadRequest(
                     asset_id=asset_id,
                     asset_type=asset_type,
                     target_folder=target_folder,

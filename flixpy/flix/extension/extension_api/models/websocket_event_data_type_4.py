@@ -1,89 +1,111 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Type, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..types import UNSET, Unset
+
 from ..models.websocket_event_data_type_4_type import WebsocketEventDataType4Type
+from typing import cast
 
 if TYPE_CHECKING:
-    from ..models.open_file_event import OpenFileEvent
-    from ..models.open_source_file_event import OpenSourceFileEvent
+  from ..models.open_file_event import OpenFileEvent
+  from ..models.open_source_file_event import OpenSourceFileEvent
+
+
+
 
 
 T = TypeVar("T", bound="WebsocketEventDataType4")
 
 
+
 @_attrs_define
 class WebsocketEventDataType4:
-    """
-    Attributes:
-        type (WebsocketEventDataType4Type):
-        data (Union['OpenFileEvent', 'OpenSourceFileEvent']):
-    """
+    """ 
+        Attributes:
+            type_ (WebsocketEventDataType4Type):
+            data (OpenFileEvent | OpenSourceFileEvent):
+     """
 
-    type: WebsocketEventDataType4Type
-    data: Union["OpenFileEvent", "OpenSourceFileEvent"]
-    additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
+    type_: WebsocketEventDataType4Type
+    data: OpenFileEvent | OpenSourceFileEvent
+    additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
-        from ..models.open_file_event import OpenFileEvent
 
-        type = self.type.value
 
-        data: Dict[str, Any]
 
+
+    def to_dict(self) -> dict[str, Any]:
+        from ..models.open_file_event import OpenFileEvent # noqa: PLC0415
+        from ..models.open_source_file_event import OpenSourceFileEvent # noqa: PLC0415
+        type_ = self.type_.value
+
+        data: dict[str, Any]
         if isinstance(self.data, OpenFileEvent):
             data = self.data.to_dict()
-
         else:
             data = self.data.to_dict()
 
-        field_dict: Dict[str, Any] = {}
+
+
+        field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update(
-            {
-                "type": type,
-                "data": data,
-            }
-        )
+        field_dict.update({
+            "type": type_,
+            "data": data,
+        })
 
         return field_dict
 
+
+
     @classmethod
-    def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
-        from ..models.open_file_event import OpenFileEvent
-        from ..models.open_source_file_event import OpenSourceFileEvent
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+        from ..models.open_file_event import OpenFileEvent # noqa: PLC0415
+        from ..models.open_source_file_event import OpenSourceFileEvent # noqa: PLC0415
+        d = dict(src_dict)
+        type_ = WebsocketEventDataType4Type(d.pop("type"))
 
-        d = src_dict.copy()
-        type = WebsocketEventDataType4Type(d.pop("type"))
 
-        def _parse_data(data: object) -> Union["OpenFileEvent", "OpenSourceFileEvent"]:
+
+
+        def _parse_data(data: object) -> OpenFileEvent | OpenSourceFileEvent:
             try:
                 if not isinstance(data, dict):
                     raise TypeError()
                 data_type_0 = OpenFileEvent.from_dict(data)
 
+
+
                 return data_type_0
-            except:  # noqa: E722
+            except (TypeError, ValueError, AttributeError, KeyError):
                 pass
             if not isinstance(data, dict):
                 raise TypeError()
             data_type_1 = OpenSourceFileEvent.from_dict(data)
 
+
+
             return data_type_1
 
         data = _parse_data(d.pop("data"))
 
+
         websocket_event_data_type_4 = cls(
-            type=type,
+            type_=type_,
             data=data,
         )
+
 
         websocket_event_data_type_4.additional_properties = d
         return websocket_event_data_type_4
 
     @property
-    def additional_keys(self) -> List[str]:
+    def additional_keys(self) -> list[str]:
         return list(self.additional_properties.keys())
 
     def __getitem__(self, key: str) -> Any:

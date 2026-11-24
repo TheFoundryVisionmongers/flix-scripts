@@ -10,7 +10,7 @@ including panels, panel revisions and sequence revisions.
 from __future__ import annotations
 
 import asyncio
-import datetime
+import datetime as dt
 import os
 
 import flix
@@ -35,7 +35,7 @@ async def update_sequence_metadata() -> None:
         print("Current metadata:", sequence.metadata)
 
         # set a single metadata field without persisting to the database
-        sequence.metadata["processed_time"] = datetime.datetime.now(tz=datetime.timezone.utc)
+        sequence.metadata["processed_time"] = dt.datetime.now(tz=dt.UTC)
 
         # set multiple metadata fields
         sequence.metadata.update(

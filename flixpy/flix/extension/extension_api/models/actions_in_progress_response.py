@@ -1,45 +1,64 @@
-from typing import Any, Dict, List, Type, TypeVar
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..types import UNSET, Unset
+
+
+
+
+
+
+
 T = TypeVar("T", bound="ActionsInProgressResponse")
+
 
 
 @_attrs_define
 class ActionsInProgressResponse:
-    """
-    Attributes:
-        is_saving (bool): Whether the Flix Client is currently saving a sequence revision.
-        is_publishing (bool): Whether the Flix Client is currently publishing a sequence revision.
-        is_exporting (bool): Whether the Flix Client is currently exporting files from a sequence revision.
-    """
+    """ 
+        Attributes:
+            is_saving (bool): Whether the Flix Client is currently saving a sequence revision.
+            is_publishing (bool): Whether the Flix Client is currently publishing a sequence revision.
+            is_exporting (bool): Whether the Flix Client is currently exporting files from a sequence revision.
+     """
 
     is_saving: bool
     is_publishing: bool
     is_exporting: bool
-    additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
+    additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+
+
+
+
+    def to_dict(self) -> dict[str, Any]:
         is_saving = self.is_saving
+
         is_publishing = self.is_publishing
+
         is_exporting = self.is_exporting
 
-        field_dict: Dict[str, Any] = {}
+
+        field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update(
-            {
-                "isSaving": is_saving,
-                "isPublishing": is_publishing,
-                "isExporting": is_exporting,
-            }
-        )
+        field_dict.update({
+            "isSaving": is_saving,
+            "isPublishing": is_publishing,
+            "isExporting": is_exporting,
+        })
 
         return field_dict
 
+
+
     @classmethod
-    def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
-        d = src_dict.copy()
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+        d = dict(src_dict)
         is_saving = d.pop("isSaving")
 
         is_publishing = d.pop("isPublishing")
@@ -52,11 +71,12 @@ class ActionsInProgressResponse:
             is_exporting=is_exporting,
         )
 
+
         actions_in_progress_response.additional_properties = d
         return actions_in_progress_response
 
     @property
-    def additional_keys(self) -> List[str]:
+    def additional_keys(self) -> list[str]:
         return list(self.additional_properties.keys())
 
     def __getitem__(self, key: str) -> Any:

@@ -7,15 +7,8 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Install Poetry
-      run: pipx install poetry
-      shell: bash
-    - name: Setup Python
-      uses: actions/setup-python@v5
+    - name: Setup uv
+      uses: astral-sh/setup-uv@v10.4.0
       with:
         python-version: ${{ inputs.python_version }}
-        cache: 'poetry'
-    - name: Install Dependencies
-      run: poetry install
-      shell: bash
-      working-directory: ./flixpy
+        working-directory: ./flixpy

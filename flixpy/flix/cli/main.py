@@ -1,5 +1,7 @@
 """The implementations of the commands available from the ``flix`` command-line utility."""
 
+# pyright: reportTypedDictNotRequiredAccess=warning
+
 from __future__ import annotations
 
 import asyncio
@@ -25,7 +27,7 @@ _CONFIG_FILE = _CONFIG_DIR / "config.json"
 def read_config() -> dict[str, Any]:
     try:
         with _CONFIG_FILE.open("r") as f:
-            return cast(dict[str, Any], json.load(f))
+            return cast("dict[str, Any]", json.load(f))
     except FileNotFoundError:
         return {}
 
@@ -65,6 +67,7 @@ async def get_client(ctx: click.Context, server: str | None = None) -> client.Cl
 @click.pass_context
 async def flix_cli(
     ctx: click.Context,
+    *,
     server: str | None,
     username: str | None,
     password: str | None,
@@ -106,6 +109,7 @@ def save_config(ctx: click.Context, /, *_args: Any, **_kwargs: Any) -> None:
 @click.pass_context
 def config(
     ctx: click.Context,
+    *,
     server: str | None,
     key: str | None,
     secret: str | None,
@@ -219,12 +223,12 @@ class _WebhookResponse(TypedDict):
 @click.pass_context
 async def webhook_delete(ctx: click.Context) -> None:
     async with await get_client(ctx) as flix_client:
-        webhooks: _WebhookResponse = cast(_WebhookResponse, await flix_client.get("/webhooks"))
+        webhooks: _WebhookResponse = cast("_WebhookResponse", await flix_client.get("/webhooks"))
         if len(webhooks["webhooks"]) == 0:
             raise click.ClickException("No webhooks added.")
         webhook_form = await flix_client.form("/webhook")
 
-        j = forms.prompt_enum(
+        j = await forms.prompt_enum(
             [forms.Choice(i, wh["name"]) for i, wh in enumerate(webhooks["webhooks"])],
             prompt="Which webhook do you want to delete?",
             prompt_suffix=" ",
@@ -244,18 +248,18 @@ async def webhook_delete(ctx: click.Context) -> None:
 @click.pass_context
 async def webhook_edit(ctx: click.Context) -> None:
     async with await get_client(ctx) as flix_client:
-        webhooks: _WebhookResponse = cast(_WebhookResponse, await flix_client.get("/webhooks"))
+        webhooks: _WebhookResponse = cast("_WebhookResponse", await flix_client.get("/webhooks"))
         if len(webhooks["webhooks"]) == 0:
             raise click.ClickException("No webhooks added.")
         webhook_form = await flix_client.form("/webhook")
 
-        j = forms.prompt_enum(
+        j = await forms.prompt_enum(
             [forms.Choice(i, wh["name"]) for i, wh in enumerate(webhooks["webhooks"])],
             prompt="Which webhook do you want to edit?",
             prompt_suffix=" ",
         )
         wh = webhooks["webhooks"][j]
-        wh = webhook_form.prompt_edit(wh)
+        wh = await webhook_form.prompt_edit(wh)
         await flix_client.put(f"/webhook/{wh['id']}", wh)
         click.echo(
             "Saved successfully. It may take a few seconds for your changes to be reflected.",
@@ -267,11 +271,11 @@ async def webhook_edit(ctx: click.Context) -> None:
 @click.pass_context
 async def webhook_ping(ctx: click.Context) -> None:
     async with await get_client(ctx) as flix_client:
-        webhooks = cast(_WebhookResponse, await flix_client.get("/webhooks"))
+        webhooks = cast("_WebhookResponse", await flix_client.get("/webhooks"))
         if len(webhooks["webhooks"]) == 0:
             raise click.ClickException("No webhooks added.")
 
-        j = forms.prompt_enum(
+        j = await forms.prompt_enum(
             [forms.Choice(i, wh["name"]) for i, wh in enumerate(webhooks["webhooks"])],
             prompt="Which webhook do you want to ping?",
             prompt_suffix=" ",
@@ -307,7 +311,7 @@ async def webhook_ping(ctx: click.Context) -> None:
     "--certfile", type=str, help="Path to a signed certificate. Providing this will enable HTTPS."
 )
 @click.option("--keyfile", type=str, help="Path to the private key used to sign the certificate.")
-async def webhook_server(
+async def webhook_server(  # noqa: PLR0917
     path: str, port: int, address: str, secret: str, certfile: str | None, keyfile: str | None
 ) -> None:
     """Run a test server that prints events to standard out.
@@ -347,7 +351,7 @@ async def contactsheet_edit_loop(
 ) -> models.ContactSheet:
     preview_file = "preview.pdf"
     while True:
-        action = forms.prompt_enum(
+        action = await forms.prompt_enum(
             [
                 forms.Choice("edit", "Edit"),
                 forms.Choice("preview", "Preview"),
@@ -357,9 +361,9 @@ async def contactsheet_edit_loop(
             prompt_suffix=" ",
         )
         if action == "edit":
-            data = contactsheet_form.prompt_edit(data)
+            data = await contactsheet_form.prompt_edit(data)
         elif action == "preview":
-            preview_file = click.prompt(
+            preview_file = await click.prompt(
                 "Where would you like to save the preview?", default=preview_file, show_default=True
             )
             data_str = json.dumps(data)
@@ -378,7 +382,7 @@ async def contactsheet_edit_loop(
 async def contactsheet_add(ctx: click.Context) -> None:
     async with await get_client(ctx) as flix_client:
         contactsheet_form = await flix_client.form("/contactsheet")
-        data = cast(models.ContactSheet, contactsheet_form.prompt())
+        data = cast("models.ContactSheet", contactsheet_form.prompt())
         click.echo(err=True)
         contactsheet_form.print(data, err=True)
 
@@ -397,7 +401,7 @@ class _ContactSheetResponse(TypedDict):
 @click.pass_context
 async def contactsheet_list(ctx: click.Context) -> None:
     async with await get_client(ctx) as flix_client:
-        contactsheets = cast(_ContactSheetResponse, await flix_client.get("/contactsheets"))
+        contactsheets = cast("_ContactSheetResponse", await flix_client.get("/contactsheets"))
         contactsheet_form = await flix_client.form("/contactsheet")
 
         for i, cs in enumerate(contactsheets["contact_sheets"]):
@@ -416,12 +420,12 @@ async def contactsheet_list(ctx: click.Context) -> None:
 @click.pass_context
 async def contactsheet_delete(ctx: click.Context) -> None:
     async with await get_client(ctx) as flix_client:
-        contactsheets = cast(_ContactSheetResponse, await flix_client.get("/contactsheets"))
+        contactsheets = cast("_ContactSheetResponse", await flix_client.get("/contactsheets"))
         if len(contactsheets["contact_sheets"]) == 0:
             raise click.ClickException("No contact sheet templates added.")
         contactsheet_form = await flix_client.form("/contactsheet")
 
-        j = forms.prompt_enum(
+        j = await forms.prompt_enum(
             [forms.Choice(i, cs["name"]) for i, cs in enumerate(contactsheets["contact_sheets"])],
             prompt="Which contact sheet template do you want to delete?",
             prompt_suffix=" ",
@@ -443,12 +447,12 @@ async def contactsheet_delete(ctx: click.Context) -> None:
 @click.pass_context
 async def contactsheet_edit(ctx: click.Context) -> None:
     async with await get_client(ctx) as flix_client:
-        contactsheets = cast(_ContactSheetResponse, await flix_client.get("/contactsheets"))
+        contactsheets = cast("_ContactSheetResponse", await flix_client.get("/contactsheets"))
         if len(contactsheets["contact_sheets"]) == 0:
             raise click.ClickException("No contact sheet templates added.")
         contactsheet_form = await flix_client.form("/contactsheet")
 
-        j = forms.prompt_enum(
+        j = await forms.prompt_enum(
             [forms.Choice(i, cs["name"]) for i, cs in enumerate(contactsheets["contact_sheets"])],
             prompt="Which contact sheet template do you want to edit?",
             prompt_suffix=" ",
@@ -458,7 +462,7 @@ async def contactsheet_edit(ctx: click.Context) -> None:
             # don't update shows
             del cs["shows"]
 
-        cs = contactsheet_form.prompt_edit(cs)
+        cs = await contactsheet_form.prompt_edit(cs)
 
         cs = await contactsheet_edit_loop(flix_client, contactsheet_form, cs)
 
@@ -477,11 +481,11 @@ class _ShowResponse(TypedDict):
 @click.pass_context
 async def contactsheet_assign(ctx: click.Context) -> None:
     async with await get_client(ctx) as flix_client:
-        contactsheets = cast(_ContactSheetResponse, await flix_client.get("/contactsheets"))
+        contactsheets = cast("_ContactSheetResponse", await flix_client.get("/contactsheets"))
         if len(contactsheets["contact_sheets"]) == 0:
             raise click.ClickException("No contact sheet templates added.")
 
-        j = forms.prompt_enum(
+        j = await forms.prompt_enum(
             [forms.Choice(i, cs["name"]) for i, cs in enumerate(contactsheets["contact_sheets"])],
             prompt="Which contact sheet template do you want assign?",
             prompt_suffix=" ",
@@ -489,7 +493,7 @@ async def contactsheet_assign(ctx: click.Context) -> None:
         cs = contactsheets["contact_sheets"][j]
         assigned_shows: list[models.Show] = cs.get("shows") or []
 
-        all_shows = cast(_ShowResponse, await flix_client.get("/shows"))["shows"]
+        all_shows = cast("_ShowResponse", await flix_client.get("/shows"))["shows"]
 
         while True:
             show_list = ", ".join(
@@ -498,7 +502,7 @@ async def contactsheet_assign(ctx: click.Context) -> None:
             )
             click.echo("Currently assigned shows: {}".format(show_list or "None"), err=True)
 
-            action = forms.prompt_enum(
+            action = await forms.prompt_enum(
                 [
                     forms.Choice("assign", "Assign shows"),
                     forms.Choice("unassign", "Unassign shows"),
@@ -519,7 +523,7 @@ async def contactsheet_assign(ctx: click.Context) -> None:
                 click.echo(f"Error: No shows to {action}", err=True)
                 continue
 
-            selected_shows = forms.prompt_multichoice(
+            selected_shows = await forms.prompt_multichoice(
                 [
                     forms.Choice(i, "{} [{}]".format(show["title"], show["tracking_code"]))
                     for i, show in enumerate(shows)
@@ -545,7 +549,7 @@ def export() -> None:
 
 async def choose_show(flix_client: client.Client) -> types.Show:
     shows = await flix_client.get_all_shows()
-    return forms.prompt_enum(
+    return await forms.prompt_enum(
         [forms.Choice(shw, f"{shw.title} [{shw.tracking_code}]") for shw in shows],
         prompt="Select a show",
     )
@@ -554,7 +558,7 @@ async def choose_show(flix_client: client.Client) -> types.Show:
 async def choose_sequence(flix_client: client.Client) -> tuple[types.Show, types.Sequence]:
     show = await choose_show(flix_client)
     seqs = await show.get_all_sequences()
-    return show, forms.prompt_enum(
+    return show, await forms.prompt_enum(
         [forms.Choice(seq, f"{seq.description} [{seq.tracking_code}]") for seq in seqs],
         prompt="Select a sequence",
     )
@@ -568,7 +572,7 @@ async def choose_sequence_revision(
     return (
         show,
         seq,
-        forms.prompt_enum(
+        await forms.prompt_enum(
             [
                 forms.Choice(
                     rev,
@@ -587,7 +591,7 @@ async def choose_sequence_revision(
 
 async def download_file(mo: types.MediaObject) -> None:
     save_path = pathlib.Path(
-        click.prompt(
+        await click.prompt(
             "Path to save to",
             default=f"{mo.media_object_id}_{mo.filename}",
             show_default=True,
@@ -606,7 +610,7 @@ async def export_contactsheet(ctx: click.Context) -> None:
         if len(templates) == 0:
             raise click.ClickException("no contact sheet templates assigned to show")
 
-        cs = forms.prompt_enum(
+        cs = await forms.prompt_enum(
             [forms.Choice(cs, cs.name) for cs in templates],
             prompt="Select a contact sheet template",
         )
@@ -637,7 +641,9 @@ async def export_dialogue(ctx: click.Context, file_format: str) -> None:
     async with await get_client(ctx) as flix_client:
         _, _, rev = await choose_sequence_revision(flix_client)
         clip_name = (
-            click.prompt("Avid clip name", type=str, err=True) if file_format == "avid" else ""
+            await click.prompt("Avid clip name", type=str, err=True)
+            if file_format == "avid"
+            else ""
         )
         dialogue_media_object = await rev.export_dialogue(
             file_format=types.DialogueFormat(file_format),
@@ -656,7 +662,7 @@ async def export_yaml(ctx: click.Context, anonymize: bool, include_assets: bool)
         sequences: list[types.Sequence] | None = None
         if not click.confirm("Export all sequences?", err=True, default=True):
             all_sequences = await show.get_all_sequences()
-            sequences = forms.prompt_multichoice(
+            sequences = await forms.prompt_multichoice(
                 [
                     forms.Choice(seq, f"{seq.description} [{seq.tracking_code}]")
                     for seq in all_sequences

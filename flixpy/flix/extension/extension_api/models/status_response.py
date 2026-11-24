@@ -1,61 +1,83 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Type, TypeVar
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..types import UNSET, Unset
+
+from typing import cast
+
 if TYPE_CHECKING:
-    from ..models.actions_in_progress_response import ActionsInProgressResponse
-    from ..models.revision_status_response import RevisionStatusResponse
+  from ..models.actions_in_progress_response import ActionsInProgressResponse
+  from ..models.revision_status_response import RevisionStatusResponse
+
+
+
 
 
 T = TypeVar("T", bound="StatusResponse")
 
 
+
 @_attrs_define
 class StatusResponse:
-    """
-    Attributes:
-        can_create (bool): Whether or not the panel browser is open and writable.
-        revision_status (RevisionStatusResponse):
-        actions_in_progress (ActionsInProgressResponse):
-    """
+    """ 
+        Attributes:
+            can_create (bool): Whether or not the panel browser is open and writable.
+            revision_status (RevisionStatusResponse):
+            actions_in_progress (ActionsInProgressResponse):
+     """
 
     can_create: bool
-    revision_status: "RevisionStatusResponse"
-    actions_in_progress: "ActionsInProgressResponse"
-    additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
+    revision_status: RevisionStatusResponse
+    actions_in_progress: ActionsInProgressResponse
+    additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+
+
+
+
+    def to_dict(self) -> dict[str, Any]:
+        from ..models.actions_in_progress_response import ActionsInProgressResponse # noqa: PLC0415
+        from ..models.revision_status_response import RevisionStatusResponse # noqa: PLC0415
         can_create = self.can_create
+
         revision_status = self.revision_status.to_dict()
 
         actions_in_progress = self.actions_in_progress.to_dict()
 
-        field_dict: Dict[str, Any] = {}
+
+        field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update(
-            {
-                "canCreate": can_create,
-                "revisionStatus": revision_status,
-                "actionsInProgress": actions_in_progress,
-            }
-        )
+        field_dict.update({
+            "canCreate": can_create,
+            "revisionStatus": revision_status,
+            "actionsInProgress": actions_in_progress,
+        })
 
         return field_dict
 
-    @classmethod
-    def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
-        from ..models.actions_in_progress_response import ActionsInProgressResponse
-        from ..models.revision_status_response import RevisionStatusResponse
 
-        d = src_dict.copy()
+
+    @classmethod
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+        from ..models.actions_in_progress_response import ActionsInProgressResponse # noqa: PLC0415
+        from ..models.revision_status_response import RevisionStatusResponse # noqa: PLC0415
+        d = dict(src_dict)
         can_create = d.pop("canCreate")
 
         revision_status = RevisionStatusResponse.from_dict(d.pop("revisionStatus"))
 
-        actions_in_progress = ActionsInProgressResponse.from_dict(
-            d.pop("actionsInProgress")
-        )
+
+
+
+        actions_in_progress = ActionsInProgressResponse.from_dict(d.pop("actionsInProgress"))
+
+
+
 
         status_response = cls(
             can_create=can_create,
@@ -63,11 +85,12 @@ class StatusResponse:
             actions_in_progress=actions_in_progress,
         )
 
+
         status_response.additional_properties = d
         return status_response
 
     @property
-    def additional_keys(self) -> List[str]:
+    def additional_keys(self) -> list[str]:
         return list(self.additional_properties.keys())
 
     def __getitem__(self, key: str) -> Any:

@@ -4,9 +4,7 @@ from __future__ import annotations
 
 import dataclasses
 import enum
-from typing import Any
-
-from typing_extensions import Self
+from typing import Any, Self
 
 from ..lib import types as flix_types
 from .extension_api import models
@@ -157,7 +155,7 @@ class ClientEvent(Event):
             else:
                 raise ValueError("unexpected event format") from e
 
-        data, event_type = ws_event.data.data, ws_event.data.type
+        data, event_type = ws_event.data.data, ws_event.data.type_
         if isinstance(data, models.OpenFileEvent):
             return OpenEvent.from_dict(event_type, data)
         elif isinstance(data, models.OpenSourceFileEvent):
@@ -249,12 +247,10 @@ class ProjectIds:
     @classmethod
     def from_dict(cls, data: models.ProjectIdsDto) -> Self:
         return cls(
-            show_id=data.show_id if data.show_id else None,
-            episode_id=data.episode_id if data.episode_id else None,
-            sequence_id=data.sequence_id if data.sequence_id else None,
-            sequence_revision_number=data.sequence_revision_id
-            if data.sequence_revision_id
-            else None,
+            show_id=data.show_id or None,
+            episode_id=data.episode_id or None,
+            sequence_id=data.sequence_id or None,
+            sequence_revision_number=data.sequence_revision_id or None,
         )
 
 
@@ -348,7 +344,7 @@ class OpenPanelData:
             asset_id=data.asset_id,
             is_animated=data.is_animated,
             source_file_asset_id=data.source_file.asset_id if data.source_file else None,
-            annotation_asset_id=data.annotation_asset_id if data.annotation_asset_id else None,
+            annotation_asset_id=data.annotation_asset_id or None,
         )
 
 

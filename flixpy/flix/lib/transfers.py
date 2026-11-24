@@ -12,7 +12,7 @@ import pathlib
 import random
 import ssl
 import uuid
-from collections.abc import AsyncIterable, AsyncIterator, Callable, Iterable
+from collections.abc import AsyncIterable, AsyncIterator, Awaitable, Callable, Iterable
 from typing import (
     TYPE_CHECKING,
     BinaryIO,
@@ -22,6 +22,7 @@ from typing import (
 
 import grpc.aio
 from cryptography import x509
+from cryptography.x509 import extensions
 
 from . import client, errors, signing, types
 from .proto import transfer_pb2, transfer_pb2_grpc
@@ -29,17 +30,9 @@ from .proto import transfer_pb2, transfer_pb2_grpc
 if TYPE_CHECKING:
     from grpc.aio import ClientCallDetails, StreamStreamCall
 
-    BaseInterceptor = grpc.aio.StreamStreamClientInterceptor[
-        transfer_pb2.TransferReq, transfer_pb2.TransferResp
-    ]
-else:
-    BaseInterceptor = grpc.aio.StreamStreamClientInterceptor
-
 Streamer = Callable[[bytes], AsyncIterator[transfer_pb2.TransferReq]]
-RequestType = TypeVar("RequestType")
-ResponseType = TypeVar("ResponseType")
-RequestIterableType = AsyncIterable[RequestType] | Iterable[RequestType]
-ResponseIterableType = AsyncIterable[ResponseType]
+_TRequest = TypeVar("_TRequest")
+_TResponse = TypeVar("_TResponse")
 
 
 def download_streamer() -> Streamer:
@@ -107,44 +100,33 @@ def upload_streamer(f: AsyncIterable[bytes], *, name: str, size: int) -> Streame
 def get_certificate(hostname: str, port: int) -> tuple[bytes, Iterable[str]]:
     certificate_data = ssl.get_server_certificate((hostname, port)).encode()
     cert = x509.load_pem_x509_certificate(certificate_data)
-    alt_names = cert.extensions.get_extension_for_class(
-        x509.extensions.SubjectAlternativeName
-    ).value
+    alt_names = cert.extensions.get_extension_for_class(extensions.SubjectAlternativeName).value
     name_types: list[type[x509.IPAddress | x509.DNSName]] = [x509.IPAddress, x509.DNSName]
     return certificate_data, [
         str(name) for name_type in name_types for name in alt_names.get_values_for_type(name_type)
     ]
 
 
-class MessageSigner(BaseInterceptor):
+class MessageSigner(grpc.aio.StreamStreamClientInterceptor):
     def __init__(self, access_key: client.AccessKey) -> None:
         self._access_key = access_key
 
-    def intercept_stream_stream(  # type: ignore[override] # https://github.com/shabbyrobe/grpc-stubs/issues/47
+    async def intercept_stream_stream(
         self,
         continuation: Callable[
-            [ClientCallDetails, transfer_pb2.TransferReq],
-            StreamStreamCall[transfer_pb2.TransferReq, transfer_pb2.TransferResp],
+            [ClientCallDetails, AsyncIterable[_TRequest] | Iterable[_TRequest]],
+            Awaitable[StreamStreamCall[_TRequest, _TResponse]],
         ],
         client_call_details: ClientCallDetails,
-        request_iterator: RequestIterableType[transfer_pb2.TransferReq],
-    ) -> (
-        ResponseIterableType[transfer_pb2.TransferResp]
-        | StreamStreamCall[transfer_pb2.TransferReq, transfer_pb2.TransferResp]
-    ):
+        request_iterator: AsyncIterable[_TRequest] | Iterable[_TRequest],
+    ) -> AsyncIterator[_TResponse] | StreamStreamCall[_TRequest, _TResponse]:
         time = signing.get_time_rfc3999()
-        # https://github.com/grpc/grpc/issues/31092
-        if isinstance(client_call_details.method, bytes):
-            method = client_call_details.method.decode()
-        else:
-            method = client_call_details.method
-        message = f"{method}{time}"
+        message = f"{client_call_details.method}{time}"
         signature = signing.signature(message.encode(), self._access_key.secret_access_key)
         if client_call_details.metadata is not None:
             client_call_details.metadata.add("fnauth", f"{self._access_key.id}:{signature}")
             client_call_details.metadata.add("time", time)
-        # https://github.com/shabbyrobe/grpc-stubs/issues/46
-        return continuation(client_call_details, request_iterator)  # type: ignore[arg-type]
+        return await continuation(client_call_details, request_iterator)
 
 
 def get_channel(hostname: str, port: int, access_key: client.AccessKey) -> grpc.aio.Channel:
@@ -154,7 +136,7 @@ def get_channel(hostname: str, port: int, access_key: client.AccessKey) -> grpc.
         target,
         grpc.ssl_channel_credentials(certificate),
         [("grpc.ssl_target_name_override", name) for name in names],
-        interceptors=[cast(grpc.aio.ClientInterceptor, MessageSigner(access_key))],
+        interceptors=[cast("grpc.aio.ClientInterceptor", MessageSigner(access_key))],
     )
 
 
@@ -180,12 +162,7 @@ async def transfer(
             }
         ).encode()
 
-        stub = transfer_pb2_grpc.FileTransferStub(channel)
-        if TYPE_CHECKING:
-            async_stub = cast(transfer_pb2_grpc.FileTransferAsyncStub, stub)
-        else:
-            async_stub = stub
-
+        async_stub = transfer_pb2_grpc.FileTransferStub(channel)
         async for resp in async_stub.Transfer(
             streamer(metadata),
             metadata=grpc.aio.Metadata(("x-flix-metadata", metadata)),

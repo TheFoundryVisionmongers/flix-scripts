@@ -13,17 +13,17 @@ EXTENSION_API_OUT := $(addprefix $(EXTENSION_DIR),extension_api)
 
 all:build
 
-.download: poetry.lock
-	poetry install
+.download: uv.lock
+	uv sync
 	touch $@
 
 $(GRPC_OUT): $(PROTO) .download
-	poetry run python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. --mypy_out=. --mypy_grpc_out=. $<
+	uv run python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. --mypy_out=. --mypy_grpc_out=. $<
 
 $(EXTENSION_API_OUT): .download $(addprefix $(EXTENSION_DIR),$(EXTENSION_API_OPENAPI) $(EXTENSION_API_CONFIG)) $(EXTENSION_API_TEMPLATES)
-	rm -rf $@ && mkdir -p $@
+	rm -rf $@
 	cd flix/extension && \
-		poetry run openapi-python-client update \
+		uv run openapi-python-client generate \
 			--path $(EXTENSION_API_OPENAPI) \
 			 --meta none \
 			 --config $(EXTENSION_API_CONFIG) \
@@ -31,18 +31,18 @@ $(EXTENSION_API_OUT): .download $(addprefix $(EXTENSION_DIR),$(EXTENSION_API_OPE
 
 .PHONY: typecheck
 typecheck: .download
-	poetry run mypy
+	uv run mypy
 
 .PHONY: build
 build:$(GRPC_OUT) $(EXTENSION_API_OUT) typecheck
-	poetry build
+	uv build
 
 .PHONY: publish
 publish: build
-	# requires POETRY_PYPI_TOKEN_PYPI to be set with an api key
-	poetry publish
+	# requires UV_PUBLISH_TOKEN to be set with an api key
+	uv publish
 
 .PHONY: publish_test
 publish_test: build
-	# requires POETRY_PYPI_TOKEN_TESTPYPI to be set with an api key
-	poetry publish -r testpypi
+	# requires UV_PUBLISH_TOKEN to be set with an api key
+	uv publish --index testpypi

@@ -1,44 +1,57 @@
 from http import HTTPStatus
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, cast
+from urllib.parse import quote
 
-import httpx
+import httpx2
 
-from ... import errors
 from ...client import AuthenticatedClient, Client
+from ...types import Response, UNSET
+from ... import errors
+
 from ...models.registration_details import RegistrationDetails
-from ...types import Response
+from typing import cast
 
 
-def _get_kwargs() -> Dict[str, Any]:
-    pass
 
-    return {
+def _get_kwargs(
+    
+) -> dict[str, Any]:
+    
+
+    
+
+    
+
+    _kwargs: dict[str, Any] = {
         "method": "get",
         "url": "/registration",
     }
 
 
-def _parse_response(
-    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Optional[List["RegistrationDetails"]]:
-    if response.status_code == HTTPStatus.OK:
+    return _kwargs
+
+
+
+def _parse_response(*, client: AuthenticatedClient | Client, response: httpx2.Response) -> list[RegistrationDetails] | None:
+    if response.status_code == 200:
         response_200 = []
         _response_200 = response.json()
-        for response_200_item_data in _response_200:
+        for response_200_item_data in (_response_200):
             response_200_item = RegistrationDetails.from_dict(response_200_item_data)
+
+
 
             response_200.append(response_200_item)
 
         return response_200
+
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
     else:
         return None
 
 
-def _build_response(
-    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Response[List["RegistrationDetails"]]:
+def _build_response(*, client: AuthenticatedClient | Client, response: httpx2.Response) -> Response[list[RegistrationDetails]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -50,21 +63,25 @@ def _build_response(
 def sync_detailed(
     *,
     client: AuthenticatedClient,
-) -> Response[List["RegistrationDetails"]]:
-    """List API consumers
+
+) -> Response[list[RegistrationDetails]]:
+    """ List API consumers
 
      Returns a list of registered API consumer details.
     Details returned by the registration manager are mapped to a DTO to avoid exposing access tokens.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
+        httpx2.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[List['RegistrationDetails']]
-    """
+        Response[list[RegistrationDetails]]
+     """
 
-    kwargs = _get_kwargs()
+
+    kwargs = _get_kwargs(
+        
+    )
 
     response = client.get_httpx_client().request(
         **kwargs,
@@ -72,72 +89,79 @@ def sync_detailed(
 
     return _build_response(client=client, response=response)
 
-
 def sync(
     *,
     client: AuthenticatedClient,
-) -> Optional[List["RegistrationDetails"]]:
-    """List API consumers
+
+) -> list[RegistrationDetails] | None:
+    """ List API consumers
 
      Returns a list of registered API consumer details.
     Details returned by the registration manager are mapped to a DTO to avoid exposing access tokens.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
+        httpx2.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        List['RegistrationDetails']
-    """
+        list[RegistrationDetails]
+     """
+
 
     return sync_detailed(
         client=client,
-    ).parsed
 
+    ).parsed
 
 async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
-) -> Response[List["RegistrationDetails"]]:
-    """List API consumers
+
+) -> Response[list[RegistrationDetails]]:
+    """ List API consumers
 
      Returns a list of registered API consumer details.
     Details returned by the registration manager are mapped to a DTO to avoid exposing access tokens.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
+        httpx2.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[List['RegistrationDetails']]
-    """
+        Response[list[RegistrationDetails]]
+     """
 
-    kwargs = _get_kwargs()
 
-    response = await client.get_async_httpx_client().request(**kwargs)
+    kwargs = _get_kwargs(
+        
+    )
+
+    response = await client.get_async_httpx_client().request(
+        **kwargs
+    )
 
     return _build_response(client=client, response=response)
-
 
 async def asyncio(
     *,
     client: AuthenticatedClient,
-) -> Optional[List["RegistrationDetails"]]:
-    """List API consumers
+
+) -> list[RegistrationDetails] | None:
+    """ List API consumers
 
      Returns a list of registered API consumer details.
     Details returned by the registration manager are mapped to a DTO to avoid exposing access tokens.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
+        httpx2.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        List['RegistrationDetails']
-    """
+        list[RegistrationDetails]
+     """
 
-    return (
-        await asyncio_detailed(
-            client=client,
-        )
-    ).parsed
+
+    return (await asyncio_detailed(
+        client=client,
+
+    )).parsed

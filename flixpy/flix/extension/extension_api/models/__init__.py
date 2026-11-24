@@ -23,9 +23,7 @@ from .panel_request_response import PanelRequestResponse
 from .panel_request_source_file import PanelRequestSourceFile
 from .panel_selection_response import PanelSelectionResponse
 from .ping_event import PingEvent
-from .preferences_controller_lookup_preferences_response_200 import (
-    PreferencesControllerLookupPreferencesResponse200,
-)
+from .preferences_controller_lookup_preferences_response_200 import PreferencesControllerLookupPreferencesResponse200
 from .project_details_dto import ProjectDetailsDto
 from .project_ids_dto import ProjectIdsDto
 from .ps_configuration import PsConfiguration

@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python_version: ["3.10", "3.11", "3.12"]
+        python_version: ["3.11", "3.12", "3.13", "3.14", "3.15"]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -22,13 +22,13 @@ jobs:
         with:
           python_version: ${{ matrix.python_version }}
       - name: Test
-        run: poetry run ruff check
+        run: uv run ruff check
   ruff-format:
     name: Ruff Format
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python_version: ["3.10", "3.11", "3.12"]
+        python_version: ["3.11", "3.12", "3.13", "3.14", "3.15"]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -37,13 +37,13 @@ jobs:
         with:
           python_version: ${{ matrix.python_version }}
       - name: Test
-        run: poetry run ruff format --check
+        run: uv run ruff format --check
   mypy:
     name: Mypy
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python_version: ["3.10", "3.11", "3.12"]
+        python_version: ["3.11", "3.12", "3.13", "3.14", "3.15"]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -52,4 +52,4 @@ jobs:
         with:
           python_version: ${{ matrix.python_version }}
       - name: Test
-        run: poetry run mypy
+        run: uv run mypy
