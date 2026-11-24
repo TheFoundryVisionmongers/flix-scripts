@@ -1,59 +1,81 @@
-from typing import Any, Dict, List, Type, TypeVar
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..types import UNSET, Unset
+
 from ..models.client_event_type import ClientEventType
+from typing import cast
+
+
+
+
+
 
 T = TypeVar("T", bound="SubscribeRequest")
 
 
+
 @_attrs_define
 class SubscribeRequest:
-    """
-    Attributes:
-        event_types (List[ClientEventType]):
-    """
+    """ 
+        Attributes:
+            event_types (list[ClientEventType]):
+     """
 
-    event_types: List[ClientEventType]
-    additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
+    event_types: list[ClientEventType]
+    additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+
+
+
+
+    def to_dict(self) -> dict[str, Any]:
         event_types = []
         for event_types_item_data in self.event_types:
             event_types_item = event_types_item_data.value
-
             event_types.append(event_types_item)
 
-        field_dict: Dict[str, Any] = {}
+
+
+
+        field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update(
-            {
-                "eventTypes": event_types,
-            }
-        )
+        field_dict.update({
+            "eventTypes": event_types,
+        })
 
         return field_dict
 
+
+
     @classmethod
-    def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
-        d = src_dict.copy()
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+        d = dict(src_dict)
         event_types = []
         _event_types = d.pop("eventTypes")
-        for event_types_item_data in _event_types:
+        for event_types_item_data in (_event_types):
             event_types_item = ClientEventType(event_types_item_data)
 
+
+
             event_types.append(event_types_item)
+
 
         subscribe_request = cls(
             event_types=event_types,
         )
 
+
         subscribe_request.additional_properties = d
         return subscribe_request
 
     @property
-    def additional_keys(self) -> List[str]:
+    def additional_keys(self) -> list[str]:
         return list(self.additional_properties.keys())
 
     def __getitem__(self, key: str) -> Any:

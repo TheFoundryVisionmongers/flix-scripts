@@ -4,9 +4,7 @@ from __future__ import annotations
 
 import dataclasses
 import enum
-from typing import Any
-
-from typing_extensions import Self
+from typing import Any, Self
 
 from ..lib import types as flix_types
 from .extension_api import models
@@ -157,7 +155,7 @@ class ClientEvent(Event):
             else:
                 raise ValueError("unexpected event format") from e
 
-        data, event_type = ws_event.data.data, ws_event.data.type
+        data, event_type = ws_event.data.data, ws_event.data.type_
         if isinstance(data, models.OpenFileEvent):
             return OpenEvent.from_dict(event_type, data)
         elif isinstance(data, models.OpenSourceFileEvent):

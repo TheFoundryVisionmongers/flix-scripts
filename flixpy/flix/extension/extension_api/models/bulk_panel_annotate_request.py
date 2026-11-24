@@ -1,51 +1,73 @@
-from typing import Any, Dict, List, Type, TypeVar, cast
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..types import UNSET, Unset
+
+from typing import cast
+
+
+
+
+
+
 T = TypeVar("T", bound="BulkPanelAnnotateRequest")
+
 
 
 @_attrs_define
 class BulkPanelAnnotateRequest:
-    """
-    Attributes:
-        start_index (int): (Optional) The index from which to annotate panels. Defaults to currently selected panel.
-            Example: 3.
-        paths (List[str]): The file paths to be uploaded as panel annotations. Example:
-            ['/path/to/file/1.psd','/path/to/file/2.psd'].
-        origin (str): The origin of the incoming annotation. Example: Photoshop.
-    """
+    """ 
+        Attributes:
+            start_index (int): (Optional) The index from which to annotate panels. Defaults to currently selected panel.
+                Example: 3.
+            paths (list[str]): The file paths to be uploaded as panel annotations. Example:
+                ['/path/to/file/1.psd','/path/to/file/2.psd'].
+            origin (str): The origin of the incoming annotation. Example: Photoshop.
+     """
 
     start_index: int
-    paths: List[str]
+    paths: list[str]
     origin: str
-    additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
+    additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+
+
+
+
+    def to_dict(self) -> dict[str, Any]:
         start_index = self.start_index
+
         paths = self.paths
+
+
 
         origin = self.origin
 
-        field_dict: Dict[str, Any] = {}
+
+        field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update(
-            {
-                "startIndex": start_index,
-                "paths": paths,
-                "origin": origin,
-            }
-        )
+        field_dict.update({
+            "startIndex": start_index,
+            "paths": paths,
+            "origin": origin,
+        })
 
         return field_dict
 
+
+
     @classmethod
-    def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
-        d = src_dict.copy()
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+        d = dict(src_dict)
         start_index = d.pop("startIndex")
 
-        paths = cast(List[str], d.pop("paths"))
+        paths = cast(list[str], d.pop("paths"))
+
 
         origin = d.pop("origin")
 
@@ -55,11 +77,12 @@ class BulkPanelAnnotateRequest:
             origin=origin,
         )
 
+
         bulk_panel_annotate_request.additional_properties = d
         return bulk_panel_annotate_request
 
     @property
-    def additional_keys(self) -> List[str]:
+    def additional_keys(self) -> list[str]:
         return list(self.additional_properties.keys())
 
     def __getitem__(self, key: str) -> Any:

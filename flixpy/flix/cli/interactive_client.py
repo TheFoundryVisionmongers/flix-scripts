@@ -47,8 +47,10 @@ class InteractiveClient(client.Client):
         click.echo("Not signed in, attempting to authenticate...", err=True)
         self.__config.pop("access_key", None)
 
-        username = self.__username or click.prompt("Username", type=str, err=True)
-        password = self.__password or click.prompt("Password", type=str, hide_input=True, err=True)
+        username = self.__username or await click.prompt("Username", type=str, err=True)
+        password = self.__password or await click.prompt(
+            "Password", type=str, hide_input=True, err=True
+        )
         access_key = await self.authenticate(username, password)
         self.__config["access_key"] = access_key.to_json()
 

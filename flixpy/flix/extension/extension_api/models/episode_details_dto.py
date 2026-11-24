@@ -1,65 +1,95 @@
-import datetime
-from typing import Any, Dict, List, Optional, Type, TypeVar
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
-from dateutil.parser import isoparse
+
+from ..types import UNSET, Unset
+
+from typing import cast
+import datetime
+
+
+
+
+
 
 T = TypeVar("T", bound="EpisodeDetailsDto")
 
 
+
 @_attrs_define
 class EpisodeDetailsDto:
-    """
-    Attributes:
-        id (int): The Flix identifier for the episode.
-        tracking_code (str): The episode's tracking code.
-        created_date (datetime.datetime): The date the episode was created.
-        owner (str): The user that created the episode.
-        title (Optional[str]): The episode's display title.
-    """
+    """ 
+        Attributes:
+            id (int): The Flix identifier for the episode.
+            tracking_code (str): The episode's tracking code.
+            created_date (datetime.datetime): The date the episode was created.
+            owner (str): The user that created the episode.
+            title (None | str): The episode's display title.
+     """
 
     id: int
     tracking_code: str
     created_date: datetime.datetime
     owner: str
-    title: Optional[str]
-    additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
+    title: None | str
+    additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+
+
+
+
+    def to_dict(self) -> dict[str, Any]:
         id = self.id
+
         tracking_code = self.tracking_code
+
         created_date = self.created_date.isoformat()
 
         owner = self.owner
+
+        title: None | str
         title = self.title
 
-        field_dict: Dict[str, Any] = {}
+
+        field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update(
-            {
-                "id": id,
-                "trackingCode": tracking_code,
-                "createdDate": created_date,
-                "owner": owner,
-                "title": title,
-            }
-        )
+        field_dict.update({
+            "id": id,
+            "trackingCode": tracking_code,
+            "createdDate": created_date,
+            "owner": owner,
+            "title": title,
+        })
 
         return field_dict
 
+
+
     @classmethod
-    def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
-        d = src_dict.copy()
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+        d = dict(src_dict)
         id = d.pop("id")
 
         tracking_code = d.pop("trackingCode")
 
-        created_date = isoparse(d.pop("createdDate"))
+        created_date = datetime.datetime.fromisoformat(d.pop("createdDate"))
+
+
+
 
         owner = d.pop("owner")
 
-        title = d.pop("title")
+        def _parse_title(data: object) -> None | str:
+            if data is None:
+                return data
+            return cast(None | str, data)
+
+        title = _parse_title(d.pop("title"))
+
 
         episode_details_dto = cls(
             id=id,
@@ -69,11 +99,12 @@ class EpisodeDetailsDto:
             title=title,
         )
 
+
         episode_details_dto.additional_properties = d
         return episode_details_dto
 
     @property
-    def additional_keys(self) -> List[str]:
+    def additional_keys(self) -> list[str]:
         return list(self.additional_properties.keys())
 
     def __getitem__(self, key: str) -> Any:

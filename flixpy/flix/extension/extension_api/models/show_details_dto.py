@@ -1,69 +1,98 @@
-from typing import Any, Dict, List, Optional, Type, TypeVar
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..types import UNSET, Unset
+
+from typing import cast
+
+
+
+
+
+
 T = TypeVar("T", bound="ShowDetailsDto")
+
 
 
 @_attrs_define
 class ShowDetailsDto:
-    """
-    Attributes:
-        id (int): The Flix identifier for the show.
-        tracking_code (str): The show's tracking code.
-        aspect_ratio (float): The configured aspect ratio for the show.
-        title (Optional[str]): The show's display title.
-    """
+    """ 
+        Attributes:
+            id (int): The Flix identifier for the show.
+            tracking_code (str): The show's tracking code.
+            title (None | str): The show's display title.
+            aspect_ratio (float): The configured aspect ratio for the show.
+     """
 
     id: int
     tracking_code: str
+    title: None | str
     aspect_ratio: float
-    title: Optional[str]
-    additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
+    additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+
+
+
+
+    def to_dict(self) -> dict[str, Any]:
         id = self.id
+
         tracking_code = self.tracking_code
-        aspect_ratio = self.aspect_ratio
+
+        title: None | str
         title = self.title
 
-        field_dict: Dict[str, Any] = {}
+        aspect_ratio = self.aspect_ratio
+
+
+        field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update(
-            {
-                "id": id,
-                "trackingCode": tracking_code,
-                "aspectRatio": aspect_ratio,
-                "title": title,
-            }
-        )
+        field_dict.update({
+            "id": id,
+            "trackingCode": tracking_code,
+            "title": title,
+            "aspectRatio": aspect_ratio,
+        })
 
         return field_dict
 
+
+
     @classmethod
-    def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
-        d = src_dict.copy()
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+        d = dict(src_dict)
         id = d.pop("id")
 
         tracking_code = d.pop("trackingCode")
 
-        aspect_ratio = d.pop("aspectRatio")
+        def _parse_title(data: object) -> None | str:
+            if data is None:
+                return data
+            return cast(None | str, data)
 
-        title = d.pop("title")
+        title = _parse_title(d.pop("title"))
+
+
+        aspect_ratio = d.pop("aspectRatio")
 
         show_details_dto = cls(
             id=id,
             tracking_code=tracking_code,
-            aspect_ratio=aspect_ratio,
             title=title,
+            aspect_ratio=aspect_ratio,
         )
+
 
         show_details_dto.additional_properties = d
         return show_details_dto
 
     @property
-    def additional_keys(self) -> List[str]:
+    def additional_keys(self) -> list[str]:
         return list(self.additional_properties.keys())
 
     def __getitem__(self, key: str) -> Any:

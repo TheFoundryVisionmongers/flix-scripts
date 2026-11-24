@@ -1,50 +1,71 @@
-from typing import Any, Dict, List, Type, TypeVar, Union, cast
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
 
+from ..types import UNSET, Unset
+from typing import cast
+
+
+
+
+
+
 T = TypeVar("T", bound="RegistrationDetails")
+
 
 
 @_attrs_define
 class RegistrationDetails:
-    """
-    Attributes:
-        flix_id (int): The Flix-maintained identifier for this API consumer.
-        name (str): The name for this API consumer.
-        client_uid (str): The API client-specified identifier for this API consumer.
-        version (Union[Unset, str]): The version of this API consumer (Optional).
-        log_paths (Union[Unset, List[str]]): Paths to the location where the extension will write its logs for different
-            versions of the app (Optional).
-    """
+    """ 
+        Attributes:
+            flix_id (int): The Flix-maintained identifier for this API consumer.
+            name (str): The name for this API consumer.
+            client_uid (str): The API client-specified identifier for this API consumer.
+            version (str | Unset): The version of this API consumer (Optional).
+            log_paths (list[str] | Unset): Paths to the location where the extension will write its logs for different
+                versions of the app (Optional).
+     """
 
     flix_id: int
     name: str
     client_uid: str
-    version: Union[Unset, str] = UNSET
-    log_paths: Union[Unset, List[str]] = UNSET
-    additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
+    version: str | Unset = UNSET
+    log_paths: list[str] | Unset = UNSET
+    additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+
+
+
+
+    def to_dict(self) -> dict[str, Any]:
         flix_id = self.flix_id
+
         name = self.name
+
         client_uid = self.client_uid
+
         version = self.version
-        log_paths: Union[Unset, List[str]] = UNSET
+
+        log_paths: list[str] | Unset = UNSET
         if not isinstance(self.log_paths, Unset):
             log_paths = self.log_paths
 
-        field_dict: Dict[str, Any] = {}
+
+
+
+        field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update(
-            {
-                "flixId": flix_id,
-                "name": name,
-                "clientUid": client_uid,
-            }
-        )
+        field_dict.update({
+            "flixId": flix_id,
+            "name": name,
+            "clientUid": client_uid,
+        })
         if version is not UNSET:
             field_dict["version"] = version
         if log_paths is not UNSET:
@@ -52,9 +73,11 @@ class RegistrationDetails:
 
         return field_dict
 
+
+
     @classmethod
-    def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
-        d = src_dict.copy()
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+        d = dict(src_dict)
         flix_id = d.pop("flixId")
 
         name = d.pop("name")
@@ -63,7 +86,8 @@ class RegistrationDetails:
 
         version = d.pop("version", UNSET)
 
-        log_paths = cast(List[str], d.pop("logPaths", UNSET))
+        log_paths = cast(list[str], d.pop("logPaths", UNSET))
+
 
         registration_details = cls(
             flix_id=flix_id,
@@ -73,11 +97,12 @@ class RegistrationDetails:
             log_paths=log_paths,
         )
 
+
         registration_details.additional_properties = d
         return registration_details
 
     @property
-    def additional_keys(self) -> List[str]:
+    def additional_keys(self) -> list[str]:
         return list(self.additional_properties.keys())
 
     def __getitem__(self, key: str) -> Any:

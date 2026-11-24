@@ -21,7 +21,7 @@ from typing import TypedDict, cast
 
 import aiohttp
 import flix
-import shotgun_api3  # type: ignore[import-untyped]
+from shotgun_api3.shotgun import BaseEntity, Shotgun
 
 # ShotGrid credentials and project ID to fetch the project data from
 SHOTGRID_BASE_URL = "https://yourstudio.shotgunstudio.com/"
@@ -49,20 +49,16 @@ class ShotgridProject(TypedDict):
     code: str | None
 
 
-class ShotgridSequence(TypedDict):
+class ShotgridSequence(BaseEntity):
     """Typed schema for ShotGrid sequences."""
 
-    type: str
-    id: int
     code: str | None
     description: str | None
 
 
 async def import_sg_show() -> None:
     """Create a Flix show from an existing ShotGrid project."""
-    sg = shotgun_api3.Shotgun(
-        SHOTGRID_BASE_URL, login=SHOTGRID_USERNAME, password=SHOTGRID_PASSWORD
-    )
+    sg = Shotgun(SHOTGRID_BASE_URL, login=SHOTGRID_USERNAME, password=SHOTGRID_PASSWORD)
     try:
         # fetch the existing ShotGrid project and sequence data
         sg_project = cast(

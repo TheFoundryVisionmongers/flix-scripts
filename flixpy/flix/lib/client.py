@@ -198,7 +198,7 @@ class BaseClient:
             url,
             data=data,
             headers=flix_headers,
-            ssl=False if self._disable_ssl_validation else None,
+            ssl=not self._disable_ssl_validation,
             **kwargs,
         )
         if response.status >= HTTPStatus.BAD_REQUEST:

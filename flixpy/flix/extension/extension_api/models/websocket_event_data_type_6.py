@@ -1,66 +1,86 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Type, TypeVar
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..types import UNSET, Unset
+
 from ..models.websocket_event_data_type_6_type import WebsocketEventDataType6Type
+from typing import cast
 
 if TYPE_CHECKING:
-    from ..models.websocket_event_data_type_6_data import WebsocketEventDataType6Data
+  from ..models.websocket_event_data_type_6_data import WebsocketEventDataType6Data
+
+
+
 
 
 T = TypeVar("T", bound="WebsocketEventDataType6")
 
 
+
 @_attrs_define
 class WebsocketEventDataType6:
-    """
-    Attributes:
-        type (WebsocketEventDataType6Type):
-        data (WebsocketEventDataType6Data):
-    """
+    """ 
+        Attributes:
+            type_ (WebsocketEventDataType6Type):
+            data (WebsocketEventDataType6Data):
+     """
 
-    type: WebsocketEventDataType6Type
-    data: "WebsocketEventDataType6Data"
-    additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
+    type_: WebsocketEventDataType6Type
+    data: WebsocketEventDataType6Data
+    additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
-        type = self.type.value
+
+
+
+
+    def to_dict(self) -> dict[str, Any]:
+        from ..models.websocket_event_data_type_6_data import WebsocketEventDataType6Data # noqa: PLC0415
+        type_ = self.type_.value
 
         data = self.data.to_dict()
 
-        field_dict: Dict[str, Any] = {}
+
+        field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update(
-            {
-                "type": type,
-                "data": data,
-            }
-        )
+        field_dict.update({
+            "type": type_,
+            "data": data,
+        })
 
         return field_dict
 
-    @classmethod
-    def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
-        from ..models.websocket_event_data_type_6_data import (
-            WebsocketEventDataType6Data,
-        )
 
-        d = src_dict.copy()
-        type = WebsocketEventDataType6Type(d.pop("type"))
+
+    @classmethod
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+        from ..models.websocket_event_data_type_6_data import WebsocketEventDataType6Data # noqa: PLC0415
+        d = dict(src_dict)
+        type_ = WebsocketEventDataType6Type(d.pop("type"))
+
+
+
 
         data = WebsocketEventDataType6Data.from_dict(d.pop("data"))
 
+
+
+
         websocket_event_data_type_6 = cls(
-            type=type,
+            type_=type_,
             data=data,
         )
+
 
         websocket_event_data_type_6.additional_properties = d
         return websocket_event_data_type_6
 
     @property
-    def additional_keys(self) -> List[str]:
+    def additional_keys(self) -> list[str]:
         return list(self.additional_properties.keys())
 
     def __getitem__(self, key: str) -> Any:

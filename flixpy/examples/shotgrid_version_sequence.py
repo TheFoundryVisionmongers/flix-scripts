@@ -22,11 +22,10 @@ import contextlib
 import logging
 import os
 import tempfile
-from typing import TYPE_CHECKING, Literal, TypedDict, cast
+from typing import TYPE_CHECKING, Literal, NotRequired, TypedDict, cast
 
 import flix
-import shotgun_api3  # type: ignore[import-untyped]
-from typing_extensions import NotRequired
+from shotgun_api3.shotgun import Shotgun
 
 if TYPE_CHECKING:
     import pathlib
@@ -46,7 +45,7 @@ FLIX_API_SECRET = os.getenv("FLIX_API_SECRET")
 
 # create long-lived ShotGrid client so we don't need
 # to create a new one for each event
-SG = shotgun_api3.Shotgun(SHOTGRID_BASE_URL, login=SHOTGRID_USERNAME, password=SHOTGRID_PASSWORD)
+SG = Shotgun(SHOTGRID_BASE_URL, login=SHOTGRID_USERNAME, password=SHOTGRID_PASSWORD)
 
 
 # optional: typed schemas for our ShotGrid entities for use with Mypy/Pyright
@@ -122,7 +121,9 @@ async def on_publish(event: flix.PublishEditorialEvent) -> None:
 def _upload_to_shotgrid(event: flix.PublishEditorialEvent, quicktime_path: pathlib.Path) -> None:
     """Create a new ShotGrid version from a Flix sequence revision and attach a QuickTime."""
     logger.info("Creating new ShotGrid version...")
-    version = cast(ShotgridVersionWithID, SG.create("Version", _version_from_publish(event)))
+    version = cast(
+        "ShotgridVersionWithID", SG.create("Version", dict(_version_from_publish(event)))
+    )
 
     logger.info("Uploading QuickTime to ShotGrid...")
     SG.upload(

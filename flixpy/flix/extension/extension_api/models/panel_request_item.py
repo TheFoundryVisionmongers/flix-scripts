@@ -1,44 +1,61 @@
-from typing import Any, Dict, List, Type, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
 
+from ..types import UNSET, Unset
+
+
+
+
+
+
 T = TypeVar("T", bound="PanelRequestItem")
+
 
 
 @_attrs_define
 class PanelRequestItem:
-    """
-    Attributes:
-        path (str): The file path to upload. Example: /path/to/file/1.psd.
-        panel_id (Union[Unset, int]): The ID of the panel that should be updated. Example: 15.
-    """
+    """ 
+        Attributes:
+            path (str): The file path to upload. Example: /path/to/file/1.psd.
+            panel_id (int | Unset): The ID of the panel that should be updated. Example: 15.
+     """
 
     path: str
-    panel_id: Union[Unset, int] = UNSET
-    additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
+    panel_id: int | Unset = UNSET
+    additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+
+
+
+
+    def to_dict(self) -> dict[str, Any]:
         path = self.path
+
         panel_id = self.panel_id
 
-        field_dict: Dict[str, Any] = {}
+
+        field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update(
-            {
-                "path": path,
-            }
-        )
+        field_dict.update({
+            "path": path,
+        })
         if panel_id is not UNSET:
             field_dict["panelId"] = panel_id
 
         return field_dict
 
+
+
     @classmethod
-    def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
-        d = src_dict.copy()
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+        d = dict(src_dict)
         path = d.pop("path")
 
         panel_id = d.pop("panelId", UNSET)
@@ -48,11 +65,12 @@ class PanelRequestItem:
             panel_id=panel_id,
         )
 
+
         panel_request_item.additional_properties = d
         return panel_request_item
 
     @property
-    def additional_keys(self) -> List[str]:
+    def additional_keys(self) -> list[str]:
         return list(self.additional_properties.keys())
 
     def __getitem__(self, key: str) -> Any:

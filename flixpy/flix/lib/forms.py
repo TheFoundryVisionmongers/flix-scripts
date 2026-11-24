@@ -104,7 +104,7 @@ class Field:
     def verify_value(self, value: Any) -> None:
         raise NotImplementedError
 
-    def prompt(self) -> Any:
+    async def prompt(self) -> Any:
         raise NotImplementedError
 
     def format(self, value: Any) -> str:
@@ -145,9 +145,9 @@ class StringField(Field):
         elif self.format_type == "email" and "@" not in value:
             raise ValueError(f"not an email address: {value}")
 
-    def prompt(self) -> str:
+    async def prompt(self) -> str:
         while True:
-            value = click.prompt(
+            value = await click.prompt(
                 self.label,
                 default=self.default,
                 type=str,
@@ -167,8 +167,8 @@ class IntField(Field):
     def __init__(self, spec: FormSectionModel) -> None:
         super().__init__(spec)
 
-        self.minimum = spec.get("minimum", -math.inf)
-        self.maximum = spec.get("maximum", math.inf)
+        self.minimum = spec.get("minimum")
+        self.maximum = spec.get("maximum")
         if not self.required:
             self.default = self.default or 0
 
@@ -176,17 +176,15 @@ class IntField(Field):
         if not isinstance(value, int):
             raise TypeError(f"not an integer: {value}")
 
-        if value < self.minimum:
+        if self.minimum is not None and value < self.minimum:
             raise ValueError(f"value below minimum allowed value ({self.minimum}): {value}")
-        elif value > self.maximum:
+        elif self.maximum is not None and value > self.maximum:
             raise ValueError(f"value above maximum allowed value ({self.maximum}): {value}")
 
-    def prompt(self) -> int:
-        field_type = click.IntRange(
-            max=self.maximum if self.maximum < math.inf else None,
-            min=self.minimum if self.minimum > -math.inf else None,
-        )
-        return cast(int, click.prompt(self.label, default=self.default, type=field_type, err=True))
+    async def prompt(self) -> int:
+        field_type = click.IntRange(max=self.maximum, min=self.minimum)
+        value = await click.prompt(self.label, default=self.default, type=field_type, err=True)
+        return cast("int", value)
 
 
 class FloatField(Field):
@@ -209,14 +207,13 @@ class FloatField(Field):
         elif value > self.maximum:
             raise ValueError(f"value above maximum allowed value ({self.maximum}): {value}")
 
-    def prompt(self) -> float:
+    async def prompt(self) -> float:
         field_type = click.FloatRange(
             max=self.maximum if self.maximum < math.inf else None,
             min=self.minimum if self.minimum > -math.inf else None,
         )
-        return cast(
-            float, click.prompt(self.label, default=self.default, type=field_type, err=True)
-        )
+        value = await click.prompt(self.label, default=self.default, type=field_type, err=True)
+        return cast("float", value)
 
 
 class BoolField(Field):
@@ -231,7 +228,7 @@ class BoolField(Field):
         if not isinstance(value, bool):
             raise TypeError(f"not a boolean: {value}")
 
-    def prompt(self) -> bool:
+    async def prompt(self) -> bool:
         return click.confirm(self.label, default=self.default, err=True)
 
     def format(self, value: Any) -> str:
@@ -250,9 +247,9 @@ class EnumField(Field):
         if not any(value == choice["value"] for choice in self.options):
             raise ValueError(f"not a valid option: {value}")
 
-    def prompt(self) -> Any:
+    async def prompt(self) -> Any:
         choices = [Choice(choice["value"], choice["display_value"]) for choice in self.options]
-        return prompt_enum(choices, label=self.label, default=self.default)
+        return await prompt_enum(choices, label=self.label, default=self.default)
 
     def format(self, value: Any) -> str:
         for choice in self.options:
@@ -277,9 +274,9 @@ class MultichoiceField(Field):
             if not any(val == choice["value"] for choice in self.options):
                 raise ValueError(f"not a valid option: {val}")
 
-    def prompt(self) -> list[Any]:
+    async def prompt(self) -> list[Any]:
         choices = [Choice(choice["value"], choice["display_value"]) for choice in self.options]
-        return prompt_multichoice(choices, label=self.label, default=self.default)
+        return await prompt_multichoice(choices, label=self.label, default=self.default)
 
     def format(self, value: Any) -> str:
         return ", ".join(
@@ -300,7 +297,7 @@ class Choice(Generic[T]):
     display_value: str
 
 
-def prompt_enum(
+async def prompt_enum(
     options: list[Choice[T]],
     label: str | None = None,
     default: T | None = None,
@@ -331,7 +328,7 @@ def prompt_enum(
             (i for i, choice in enumerate(options, 1) if choice.value == default), 0
         )
 
-    selection: int = click.prompt(
+    selection: int = await click.prompt(
         prompt,
         default=default_index,
         type=click.IntRange(0 if default_index == 0 else 1, len(options)),
@@ -345,7 +342,7 @@ def prompt_enum(
         return options[selection - 1].value if selection > 0 else default
 
 
-def prompt_multichoice(
+async def prompt_multichoice(
     options: list[Choice[T]],
     label: str | None = None,
     default: T | None = None,
@@ -363,7 +360,7 @@ def prompt_multichoice(
     )
 
     while True:
-        selection = click.prompt(prompt, default=default_range, type=str, err=True)
+        selection = await click.prompt(prompt, default=default_range, type=str, err=True)
         try:
             choices = _range_to_set(selection)
         except ValueError:
@@ -476,7 +473,7 @@ class Form:
                 parameters[field.id] = field.prompt()
         return parameters
 
-    def prompt_edit(self, parameters: TDict) -> TDict:
+    async def prompt_edit(self, parameters: TDict) -> TDict:
         """Prompt the user for input to modify an existing object adhering to this creation form.
 
         Args:
@@ -494,7 +491,7 @@ class Form:
             # after a change to another field
             params = self.prompt(params)
 
-            option: str = prompt_enum(
+            option: str = await prompt_enum(
                 [
                     Choice(
                         field_id,
