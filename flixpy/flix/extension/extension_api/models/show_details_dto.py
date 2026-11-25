@@ -108,7 +108,7 @@ class ShowDetailsDto:
 
         _metadata = d.pop("metadata", UNSET)
         metadata: ShowDetailsDtoMetadata | Unset
-        if isinstance(_metadata,  Unset):
+        if isinstance(_metadata,  Unset) or _metadata is None:
             metadata = UNSET
         else:
             metadata = ShowDetailsDtoMetadata.from_dict(_metadata)

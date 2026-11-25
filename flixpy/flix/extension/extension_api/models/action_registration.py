@@ -85,7 +85,7 @@ class ActionRegistration:
 
         _type_ = d.pop("type", UNSET)
         type_: ActionRegistrationType | Unset
-        if isinstance(_type_,  Unset):
+        if isinstance(_type_,  Unset) or _type_ is None:
             type_ = UNSET
         else:
             type_ = ActionRegistrationType(_type_)

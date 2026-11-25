@@ -120,7 +120,7 @@ class KeyframeDto:
 
         _viewport = d.pop("viewport", UNSET)
         viewport: ViewportDto | Unset
-        if isinstance(_viewport,  Unset):
+        if isinstance(_viewport,  Unset) or _viewport is None:
             viewport = UNSET
         else:
             viewport = ViewportDto.from_dict(_viewport)

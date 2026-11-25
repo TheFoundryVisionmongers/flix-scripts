@@ -92,7 +92,7 @@ class ProjectDetails:
         sequence: flix_types.Sequence | None = None
         sequence_revision: flix_types.SequenceRevision | None = None
 
-        if data.show is not None:
+        if not isinstance(data.show, Unset):
             show = flix_types.Show(
                 show_id=data.show.id,
                 tracking_code=data.show.tracking_code,
@@ -102,7 +102,7 @@ class ProjectDetails:
                 _client=None,
             )
 
-            if data.episode is not None:
+            if not isinstance(data.episode, Unset):
                 episode = flix_types.Episode(
                     episode_id=data.episode.id,
                     tracking_code=data.episode.tracking_code,
@@ -114,7 +114,7 @@ class ProjectDetails:
                     _client=None,
                 )
 
-            if data.sequence is not None:
+            if not isinstance(data.sequence, Unset):
                 sequence = flix_types.Sequence(
                     sequence_id=data.sequence.id,
                     tracking_code=data.sequence.tracking_code,
@@ -127,7 +127,7 @@ class ProjectDetails:
                     _client=None,
                 )
 
-                if (rev := data.sequence_revision) is not None:
+                if not isinstance((rev := data.sequence_revision), Unset):
                     sequence_revision = flix_types.SequenceRevision(
                         revision_number=rev.id,
                         published=rev.published,
@@ -473,21 +473,39 @@ class StatusEvent(PanelBrowserStatus, ClientEvent):
 @dataclasses.dataclass
 class OpenPanelData:
     panel_id: int
+    panel_index: int
+    revision_id: int
     asset_id: int
     is_animated: bool
     source_file_asset_id: int | None
     annotation_asset_id: int | None
     shot_id: int | None
+    dialogue: str | None
+    origin_sbp: dict[str, Any] | None
+    keyframes: list[dict[str, Any]] | None
+    shot_name: str | None
 
     @classmethod
     def from_dict(cls, data: models.OpenFilePanelData) -> Self:
         return cls(
             panel_id=data.id,
+            panel_index=data.index,
+            revision_id=data.revision_id,
             asset_id=data.asset_id,
             is_animated=data.is_animated,
-            source_file_asset_id=data.source_file.asset_id if data.source_file else None,
+            source_file_asset_id=data.source_file.asset_id
+            if not isinstance(data.source_file, Unset)
+            else None,
             annotation_asset_id=data.annotation_asset_id or None,
             shot_id=data.shot_id or None,
+            dialogue=data.dialogue if not isinstance(data.dialogue, Unset) else None,
+            origin_sbp=data.origin_sbp.to_dict()
+            if not isinstance(data.origin_sbp, Unset)
+            else None,
+            keyframes=[keyframe.to_dict() for keyframe in data.keyframes]
+            if not isinstance(data.keyframes, Unset)
+            else None,
+            shot_name=data.shot_name if not isinstance(data.shot_name, Unset) else None,
         )
 
 
@@ -660,7 +678,9 @@ class PanelRevisionDetails:
             trim_out_frame=data.trim_out_frame,
             layer_transform=data.layer_transform,
             dialogue=data.dialogue,
-            origin_sbp=data.origin_sbp.to_dict() if data.origin_sbp else None,
+            origin_sbp=data.origin_sbp.to_dict()
+            if not isinstance(data.origin_sbp, Unset) and data.origin_sbp is not None
+            else None,
             keyframes=[keyframe.to_dict() for keyframe in data.keyframes],
             origin=data.origin,
             shot_name=data.shot_name,

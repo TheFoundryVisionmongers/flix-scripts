@@ -8,6 +8,7 @@ from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
 
+from ..types import UNSET, Unset
 from typing import cast
 import datetime
 
@@ -52,12 +53,12 @@ class PanelRevisionDetailsDto:
             duration (float): The duration of the panel in frames.
             layer_transform (bool): Whether the panel revision had a layer transform applied to it in Storyboard Pro.
             dialogue (str): This dialogue associated with this panel.
-            origin_sbp (None | PanelRevisionDetailsDtoOriginSbpType0): Contains information about panel revisions imported
-                from Storyboard Pro.
-                This is for internal use by the Storyboard Pro extension and might be removed in the future without notice.
             keyframes (list[KeyframeDto]): The camera move keyframes on this panel revisions.
             origin (str): Where the panel comes from e.g. "manual import".
             shot_name (str): Sequence Revision shot this panel belongs to.
+            origin_sbp (None | PanelRevisionDetailsDtoOriginSbpType0 | Unset): Contains information about panel revisions
+                imported from Storyboard Pro.
+                This is for internal use by the Storyboard Pro extension and might be removed in the future without notice.
      """
 
     panel_id: int
@@ -76,10 +77,10 @@ class PanelRevisionDetailsDto:
     duration: float
     layer_transform: bool
     dialogue: str
-    origin_sbp: None | PanelRevisionDetailsDtoOriginSbpType0
     keyframes: list[KeyframeDto]
     origin: str
     shot_name: str
+    origin_sbp: None | PanelRevisionDetailsDtoOriginSbpType0 | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
 
@@ -122,12 +123,6 @@ class PanelRevisionDetailsDto:
 
         dialogue = self.dialogue
 
-        origin_sbp: dict[str, Any] | None
-        if isinstance(self.origin_sbp, PanelRevisionDetailsDtoOriginSbpType0):
-            origin_sbp = self.origin_sbp.to_dict()
-        else:
-            origin_sbp = self.origin_sbp
-
         keyframes = []
         for keyframes_item_data in self.keyframes:
             keyframes_item = keyframes_item_data.to_dict()
@@ -138,6 +133,14 @@ class PanelRevisionDetailsDto:
         origin = self.origin
 
         shot_name = self.shot_name
+
+        origin_sbp: dict[str, Any] | None | Unset
+        if isinstance(self.origin_sbp, Unset):
+            origin_sbp = UNSET
+        elif isinstance(self.origin_sbp, PanelRevisionDetailsDtoOriginSbpType0):
+            origin_sbp = self.origin_sbp.to_dict()
+        else:
+            origin_sbp = self.origin_sbp
 
 
         field_dict: dict[str, Any] = {}
@@ -159,11 +162,12 @@ class PanelRevisionDetailsDto:
             "duration": duration,
             "layerTransform": layer_transform,
             "dialogue": dialogue,
-            "originSbp": origin_sbp,
             "keyframes": keyframes,
             "origin": origin,
             "shotName": shot_name,
         })
+        if origin_sbp is not UNSET:
+            field_dict["originSbp"] = origin_sbp
 
         return field_dict
 
@@ -216,24 +220,6 @@ class PanelRevisionDetailsDto:
 
         dialogue = d.pop("dialogue")
 
-        def _parse_origin_sbp(data: object) -> None | PanelRevisionDetailsDtoOriginSbpType0:
-            if data is None:
-                return data
-            try:
-                if not isinstance(data, dict):
-                    raise TypeError()
-                origin_sbp_type_0 = PanelRevisionDetailsDtoOriginSbpType0.from_dict(data)
-
-
-
-                return origin_sbp_type_0
-            except (TypeError, ValueError, AttributeError, KeyError):
-                pass
-            return cast(None | PanelRevisionDetailsDtoOriginSbpType0, data)
-
-        origin_sbp = _parse_origin_sbp(d.pop("originSbp"))
-
-
         keyframes = []
         _keyframes = d.pop("keyframes")
         for keyframes_item_data in (_keyframes):
@@ -247,6 +233,26 @@ class PanelRevisionDetailsDto:
         origin = d.pop("origin")
 
         shot_name = d.pop("shotName")
+
+        def _parse_origin_sbp(data: object) -> None | PanelRevisionDetailsDtoOriginSbpType0 | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            try:
+                if not isinstance(data, dict):
+                    raise TypeError()
+                origin_sbp_type_0 = PanelRevisionDetailsDtoOriginSbpType0.from_dict(data)
+
+
+
+                return origin_sbp_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            return cast(None | PanelRevisionDetailsDtoOriginSbpType0 | Unset, data)
+
+        origin_sbp = _parse_origin_sbp(d.pop("originSbp", UNSET))
+
 
         panel_revision_details_dto = cls(
             panel_id=panel_id,
@@ -265,10 +271,10 @@ class PanelRevisionDetailsDto:
             duration=duration,
             layer_transform=layer_transform,
             dialogue=dialogue,
-            origin_sbp=origin_sbp,
             keyframes=keyframes,
             origin=origin,
             shot_name=shot_name,
+            origin_sbp=origin_sbp,
         )
 
 

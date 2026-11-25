@@ -978,17 +978,17 @@ components:
           type: integer
         assetId:
           type: integer
+        sourceFile:
+          nullable: true
+          type: object
+          allOf:
+            - $ref: '#/components/schemas/OpenSourceFileData'
         annotationAssetId:
           type: integer
         shotId:
           type: integer
         isAnimated:
           type: boolean
-        sourceFile:
-          nullable: true
-          type: object
-          allOf:
-            - $ref: '#/components/schemas/OpenSourceFileData'
         dialogue:
           type: string
         originSbp:
@@ -1005,7 +1005,6 @@ components:
         - revisionId
         - assetId
         - isAnimated
-        - sourceFile
     PsConfiguration:
       type: object
       properties:
@@ -1625,6 +1624,14 @@ components:
         trimOutFrame:
           type: integer
           description: TrimOutFrame is the trim out of this panel revision in a given sequence revision if this is an animated panel.
+        originSbp:
+          type: object
+          additionalProperties:
+            type: string
+          nullable: true
+          description: |-
+            Contains information about panel revisions imported from Storyboard Pro.
+            This is for internal use by the Storyboard Pro extension and might be removed in the future without notice.
         metadata:
           type: object
           additionalProperties:
@@ -1661,14 +1668,6 @@ components:
         dialogue:
           type: string
           description: This dialogue associated with this panel.
-        originSbp:
-          type: object
-          additionalProperties:
-            type: string
-          nullable: true
-          description: |-
-            Contains information about panel revisions imported from Storyboard Pro.
-            This is for internal use by the Storyboard Pro extension and might be removed in the future without notice.
         keyframes:
           description: The camera move keyframes on this panel revisions.
           type: array
@@ -1697,7 +1696,6 @@ components:
         - duration
         - layerTransform
         - dialogue
-        - originSbp
         - keyframes
         - origin
         - shotName
@@ -1890,11 +1888,6 @@ components:
           type: object
           allOf:
             - $ref: '#/components/schemas/SequenceRevisionDetailsDto'
-      required:
-        - show
-        - episode
-        - sequence
-        - sequenceRevision
     PanelSelectionResponse:
       type: object
       properties:

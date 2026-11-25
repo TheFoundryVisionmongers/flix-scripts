@@ -117,7 +117,7 @@ class ProjectDetailsMetadataDto:
         d = dict(src_dict)
         _show = d.pop("show", UNSET)
         show: ProjectDetailsMetadataDtoShow | Unset
-        if isinstance(_show,  Unset):
+        if isinstance(_show,  Unset) or _show is None:
             show = UNSET
         else:
             show = ProjectDetailsMetadataDtoShow.from_dict(_show)
@@ -127,7 +127,7 @@ class ProjectDetailsMetadataDto:
 
         _episode = d.pop("episode", UNSET)
         episode: ProjectDetailsMetadataDtoEpisode | Unset
-        if isinstance(_episode,  Unset):
+        if isinstance(_episode,  Unset) or _episode is None:
             episode = UNSET
         else:
             episode = ProjectDetailsMetadataDtoEpisode.from_dict(_episode)
@@ -137,7 +137,7 @@ class ProjectDetailsMetadataDto:
 
         _sequence = d.pop("sequence", UNSET)
         sequence: ProjectDetailsMetadataDtoSequence | Unset
-        if isinstance(_sequence,  Unset):
+        if isinstance(_sequence,  Unset) or _sequence is None:
             sequence = UNSET
         else:
             sequence = ProjectDetailsMetadataDtoSequence.from_dict(_sequence)
@@ -147,7 +147,7 @@ class ProjectDetailsMetadataDto:
 
         _sequence_revision = d.pop("sequenceRevision", UNSET)
         sequence_revision: ProjectDetailsMetadataDtoSequenceRevision | Unset
-        if isinstance(_sequence_revision,  Unset):
+        if isinstance(_sequence_revision,  Unset) or _sequence_revision is None:
             sequence_revision = UNSET
         else:
             sequence_revision = ProjectDetailsMetadataDtoSequenceRevision.from_dict(_sequence_revision)

@@ -94,7 +94,7 @@ class BulkPanelRequest:
 
         _source_file = d.pop("sourceFile", UNSET)
         source_file: PanelRequestSourceFile | Unset
-        if isinstance(_source_file,  Unset):
+        if isinstance(_source_file,  Unset) or _source_file is None:
             source_file = UNSET
         else:
             source_file = PanelRequestSourceFile.from_dict(_source_file)

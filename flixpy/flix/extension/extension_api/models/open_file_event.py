@@ -125,7 +125,7 @@ class OpenFileEvent:
 
         _sketching_tool_configuration = d.pop("sketchingToolConfiguration", UNSET)
         sketching_tool_configuration: PsConfiguration | Unset
-        if isinstance(_sketching_tool_configuration,  Unset):
+        if isinstance(_sketching_tool_configuration,  Unset) or _sketching_tool_configuration is None:
             sketching_tool_configuration = UNSET
         else:
             sketching_tool_configuration = PsConfiguration.from_dict(_sketching_tool_configuration)

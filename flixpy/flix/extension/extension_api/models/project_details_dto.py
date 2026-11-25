@@ -8,6 +8,7 @@ from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
 
+from ..types import UNSET, Unset
 from typing import cast
 
 if TYPE_CHECKING:
@@ -28,16 +29,16 @@ T = TypeVar("T", bound="ProjectDetailsDto")
 class ProjectDetailsDto:
     """ 
         Attributes:
-            show (ShowDetailsDto):
-            episode (EpisodeDetailsDto):
-            sequence (SequenceDetailsDto):
-            sequence_revision (SequenceRevisionDetailsDto):
+            show (ShowDetailsDto | Unset):
+            episode (EpisodeDetailsDto | Unset):
+            sequence (SequenceDetailsDto | Unset):
+            sequence_revision (SequenceRevisionDetailsDto | Unset):
      """
 
-    show: ShowDetailsDto
-    episode: EpisodeDetailsDto
-    sequence: SequenceDetailsDto
-    sequence_revision: SequenceRevisionDetailsDto
+    show: ShowDetailsDto | Unset = UNSET
+    episode: EpisodeDetailsDto | Unset = UNSET
+    sequence: SequenceDetailsDto | Unset = UNSET
+    sequence_revision: SequenceRevisionDetailsDto | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
 
@@ -49,23 +50,35 @@ class ProjectDetailsDto:
         from ..models.sequence_details_dto import SequenceDetailsDto # noqa: PLC0415
         from ..models.sequence_revision_details_dto import SequenceRevisionDetailsDto # noqa: PLC0415
         from ..models.show_details_dto import ShowDetailsDto # noqa: PLC0415
-        show = self.show.to_dict()
+        show: dict[str, Any] | Unset = UNSET
+        if not isinstance(self.show, Unset):
+            show = self.show.to_dict()
 
-        episode = self.episode.to_dict()
+        episode: dict[str, Any] | Unset = UNSET
+        if not isinstance(self.episode, Unset):
+            episode = self.episode.to_dict()
 
-        sequence = self.sequence.to_dict()
+        sequence: dict[str, Any] | Unset = UNSET
+        if not isinstance(self.sequence, Unset):
+            sequence = self.sequence.to_dict()
 
-        sequence_revision = self.sequence_revision.to_dict()
+        sequence_revision: dict[str, Any] | Unset = UNSET
+        if not isinstance(self.sequence_revision, Unset):
+            sequence_revision = self.sequence_revision.to_dict()
 
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({
-            "show": show,
-            "episode": episode,
-            "sequence": sequence,
-            "sequenceRevision": sequence_revision,
         })
+        if show is not UNSET:
+            field_dict["show"] = show
+        if episode is not UNSET:
+            field_dict["episode"] = episode
+        if sequence is not UNSET:
+            field_dict["sequence"] = sequence
+        if sequence_revision is not UNSET:
+            field_dict["sequenceRevision"] = sequence_revision
 
         return field_dict
 
@@ -78,22 +91,42 @@ class ProjectDetailsDto:
         from ..models.sequence_revision_details_dto import SequenceRevisionDetailsDto # noqa: PLC0415
         from ..models.show_details_dto import ShowDetailsDto # noqa: PLC0415
         d = dict(src_dict)
-        show = ShowDetailsDto.from_dict(d.pop("show"))
+        _show = d.pop("show", UNSET)
+        show: ShowDetailsDto | Unset
+        if isinstance(_show,  Unset) or _show is None:
+            show = UNSET
+        else:
+            show = ShowDetailsDto.from_dict(_show)
 
 
 
 
-        episode = EpisodeDetailsDto.from_dict(d.pop("episode"))
+        _episode = d.pop("episode", UNSET)
+        episode: EpisodeDetailsDto | Unset
+        if isinstance(_episode,  Unset) or _episode is None:
+            episode = UNSET
+        else:
+            episode = EpisodeDetailsDto.from_dict(_episode)
 
 
 
 
-        sequence = SequenceDetailsDto.from_dict(d.pop("sequence"))
+        _sequence = d.pop("sequence", UNSET)
+        sequence: SequenceDetailsDto | Unset
+        if isinstance(_sequence,  Unset) or _sequence is None:
+            sequence = UNSET
+        else:
+            sequence = SequenceDetailsDto.from_dict(_sequence)
 
 
 
 
-        sequence_revision = SequenceRevisionDetailsDto.from_dict(d.pop("sequenceRevision"))
+        _sequence_revision = d.pop("sequenceRevision", UNSET)
+        sequence_revision: SequenceRevisionDetailsDto | Unset
+        if isinstance(_sequence_revision,  Unset) or _sequence_revision is None:
+            sequence_revision = UNSET
+        else:
+            sequence_revision = SequenceRevisionDetailsDto.from_dict(_sequence_revision)
 
 
 

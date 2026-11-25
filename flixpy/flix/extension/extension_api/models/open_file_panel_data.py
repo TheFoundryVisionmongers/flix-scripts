@@ -33,7 +33,7 @@ class OpenFilePanelData:
             revision_id (int):
             asset_id (int):
             is_animated (bool):
-            source_file (OpenSourceFileData):
+            source_file (OpenSourceFileData | Unset):
             annotation_asset_id (int | Unset):
             shot_id (int | Unset):
             dialogue (str | Unset):
@@ -47,7 +47,7 @@ class OpenFilePanelData:
     revision_id: int
     asset_id: int
     is_animated: bool
-    source_file: OpenSourceFileData
+    source_file: OpenSourceFileData | Unset = UNSET
     annotation_asset_id: int | Unset = UNSET
     shot_id: int | Unset = UNSET
     dialogue: str | Unset = UNSET
@@ -74,7 +74,9 @@ class OpenFilePanelData:
 
         is_animated = self.is_animated
 
-        source_file = self.source_file.to_dict()
+        source_file: dict[str, Any] | Unset = UNSET
+        if not isinstance(self.source_file, Unset):
+            source_file = self.source_file.to_dict()
 
         annotation_asset_id = self.annotation_asset_id
 
@@ -106,8 +108,9 @@ class OpenFilePanelData:
             "revisionId": revision_id,
             "assetId": asset_id,
             "isAnimated": is_animated,
-            "sourceFile": source_file,
         })
+        if source_file is not UNSET:
+            field_dict["sourceFile"] = source_file
         if annotation_asset_id is not UNSET:
             field_dict["annotationAssetId"] = annotation_asset_id
         if shot_id is not UNSET:
@@ -141,7 +144,12 @@ class OpenFilePanelData:
 
         is_animated = d.pop("isAnimated")
 
-        source_file = OpenSourceFileData.from_dict(d.pop("sourceFile"))
+        _source_file = d.pop("sourceFile", UNSET)
+        source_file: OpenSourceFileData | Unset
+        if isinstance(_source_file,  Unset) or _source_file is None:
+            source_file = UNSET
+        else:
+            source_file = OpenSourceFileData.from_dict(_source_file)
 
 
 
@@ -154,7 +162,7 @@ class OpenFilePanelData:
 
         _origin_sbp = d.pop("originSbp", UNSET)
         origin_sbp: OpenFilePanelDataOriginSbp | Unset
-        if isinstance(_origin_sbp,  Unset):
+        if isinstance(_origin_sbp,  Unset) or _origin_sbp is None:
             origin_sbp = UNSET
         else:
             origin_sbp = OpenFilePanelDataOriginSbp.from_dict(_origin_sbp)

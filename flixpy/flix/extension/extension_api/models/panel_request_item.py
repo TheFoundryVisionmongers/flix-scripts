@@ -166,7 +166,7 @@ class PanelRequestItem:
 
         _metadata = d.pop("metadata", UNSET)
         metadata: PanelRequestItemMetadata | Unset
-        if isinstance(_metadata,  Unset):
+        if isinstance(_metadata,  Unset) or _metadata is None:
             metadata = UNSET
         else:
             metadata = PanelRequestItemMetadata.from_dict(_metadata)
@@ -188,7 +188,7 @@ class PanelRequestItem:
 
         _origin_sbp = d.pop("originSbp", UNSET)
         origin_sbp: PanelRequestItemOriginSbp | Unset
-        if isinstance(_origin_sbp,  Unset):
+        if isinstance(_origin_sbp,  Unset) or _origin_sbp is None:
             origin_sbp = UNSET
         else:
             origin_sbp = PanelRequestItemOriginSbp.from_dict(_origin_sbp)
