@@ -678,9 +678,7 @@ class PanelRevisionDetails:
             trim_out_frame=data.trim_out_frame,
             layer_transform=data.layer_transform,
             dialogue=data.dialogue,
-            origin_sbp=data.origin_sbp.to_dict()
-            if not isinstance(data.origin_sbp, Unset) and data.origin_sbp is not None
-            else None,
+            origin_sbp=data.origin_sbp.to_dict() if data.origin_sbp else None,
             keyframes=[keyframe.to_dict() for keyframe in data.keyframes],
             origin=data.origin,
             shot_name=data.shot_name,
