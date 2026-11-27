@@ -81,8 +81,6 @@ def sync_detailed(
 ) -> Response[Any | PanelRequestResponse]:
     """ Update Existing Panels
 
-     Updates existing panels in the active sequence revision from the list of provided file paths.
-
     Args:
         body (BulkPanelRequest | FullPanelRequest):
 
@@ -114,8 +112,6 @@ def sync(
 ) -> Any | PanelRequestResponse | None:
     """ Update Existing Panels
 
-     Updates existing panels in the active sequence revision from the list of provided file paths.
-
     Args:
         body (BulkPanelRequest | FullPanelRequest):
 
@@ -141,8 +137,6 @@ async def asyncio_detailed(
 
 ) -> Response[Any | PanelRequestResponse]:
     """ Update Existing Panels
-
-     Updates existing panels in the active sequence revision from the list of provided file paths.
 
     Args:
         body (BulkPanelRequest | FullPanelRequest):
@@ -174,8 +168,6 @@ async def asyncio(
 
 ) -> Any | PanelRequestResponse | None:
     """ Update Existing Panels
-
-     Updates existing panels in the active sequence revision from the list of provided file paths.
 
     Args:
         body (BulkPanelRequest | FullPanelRequest):

@@ -12,3 +12,5 @@ class_overrides:
     class_name: SourceFileType
   PanelRequestSourceFilePreviewMode:
     class_name: SourceFilePreviewMode
+content_type_overrides:
+  text/event-stream: application/json

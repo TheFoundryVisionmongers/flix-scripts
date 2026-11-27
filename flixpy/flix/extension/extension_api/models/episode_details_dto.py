@@ -8,9 +8,12 @@ from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
 
+from ..types import UNSET, Unset
 from typing import cast
 import datetime
 
+if TYPE_CHECKING:
+  from ..models.episode_details_dto_metadata import EpisodeDetailsDtoMetadata
 
 
 
@@ -29,6 +32,13 @@ class EpisodeDetailsDto:
             created_date (datetime.datetime): The date the episode was created.
             owner (str): The user that created the episode.
             title (None | str): The episode's display title.
+            metadata (EpisodeDetailsDtoMetadata | Unset): Arbitrary key-value metadata to merge into the entity. Each value
+                must be a string, or `null` to delete that key.
+
+                **Note:** Keys in this dictionary are **case-sensitive**.
+
+                Best practice: Use namespaced keys to avoid conflicts with other extensions (e.g., `vendor.plugin:key`).
+                Example: {'com.myextension:status': 'inprogress', 'com.myextension:tag': None}.
      """
 
     id: int
@@ -36,6 +46,7 @@ class EpisodeDetailsDto:
     created_date: datetime.datetime
     owner: str
     title: None | str
+    metadata: EpisodeDetailsDtoMetadata | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
 
@@ -43,6 +54,7 @@ class EpisodeDetailsDto:
 
 
     def to_dict(self) -> dict[str, Any]:
+        from ..models.episode_details_dto_metadata import EpisodeDetailsDtoMetadata # noqa: PLC0415
         id = self.id
 
         tracking_code = self.tracking_code
@@ -54,6 +66,10 @@ class EpisodeDetailsDto:
         title: None | str
         title = self.title
 
+        metadata: dict[str, Any] | Unset = UNSET
+        if not isinstance(self.metadata, Unset):
+            metadata = self.metadata.to_dict()
+
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -64,6 +80,8 @@ class EpisodeDetailsDto:
             "owner": owner,
             "title": title,
         })
+        if metadata is not UNSET:
+            field_dict["metadata"] = metadata
 
         return field_dict
 
@@ -71,6 +89,7 @@ class EpisodeDetailsDto:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+        from ..models.episode_details_dto_metadata import EpisodeDetailsDtoMetadata # noqa: PLC0415
         d = dict(src_dict)
         id = d.pop("id")
 
@@ -91,12 +110,23 @@ class EpisodeDetailsDto:
         title = _parse_title(d.pop("title"))
 
 
+        _metadata = d.pop("metadata", UNSET)
+        metadata: EpisodeDetailsDtoMetadata | Unset
+        if isinstance(_metadata,  Unset) or _metadata is None:
+            metadata = UNSET
+        else:
+            metadata = EpisodeDetailsDtoMetadata.from_dict(_metadata)
+
+
+
+
         episode_details_dto = cls(
             id=id,
             tracking_code=tracking_code,
             created_date=created_date,
             owner=owner,
             title=title,
+            metadata=metadata,
         )
 
 

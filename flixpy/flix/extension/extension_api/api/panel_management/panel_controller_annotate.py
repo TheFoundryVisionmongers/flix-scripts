@@ -81,8 +81,6 @@ def sync_detailed(
 ) -> Response[Any | PanelRequestResponse]:
     """ Update Panel Annotations
 
-     Adds annotations to panels in the active sequence revision from the list of provided file paths.
-
     Args:
         body (BulkPanelAnnotateRequest | FullPanelAnnotateRequest):
 
@@ -114,8 +112,6 @@ def sync(
 ) -> Any | PanelRequestResponse | None:
     """ Update Panel Annotations
 
-     Adds annotations to panels in the active sequence revision from the list of provided file paths.
-
     Args:
         body (BulkPanelAnnotateRequest | FullPanelAnnotateRequest):
 
@@ -141,8 +137,6 @@ async def asyncio_detailed(
 
 ) -> Response[Any | PanelRequestResponse]:
     """ Update Panel Annotations
-
-     Adds annotations to panels in the active sequence revision from the list of provided file paths.
 
     Args:
         body (BulkPanelAnnotateRequest | FullPanelAnnotateRequest):
@@ -174,8 +168,6 @@ async def asyncio(
 
 ) -> Any | PanelRequestResponse | None:
     """ Update Panel Annotations
-
-     Adds annotations to panels in the active sequence revision from the list of provided file paths.
 
     Args:
         body (BulkPanelAnnotateRequest | FullPanelAnnotateRequest):

@@ -25,8 +25,8 @@ class BulkPanelAnnotateRequest:
         Attributes:
             start_index (int): (Optional) The index from which to annotate panels. Defaults to currently selected panel.
                 Example: 3.
-            paths (list[str]): The file paths to be uploaded as panel annotations. Example:
-                ['/path/to/file/1.psd','/path/to/file/2.psd'].
+            paths (list[str]): The file paths to be uploaded as panel annotations. Example: ['/path/to/file/1.psd',
+                '/path/to/file/2.psd'].
             origin (str): The origin of the incoming annotation. Example: Photoshop.
      """
 

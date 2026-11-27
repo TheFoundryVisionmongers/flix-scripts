@@ -75,8 +75,6 @@ def sync_detailed(
 ) -> Response[Any | DownloadResponse]:
     """ Download Media Object
 
-     Downloads a specific artwork type for a given asset, to a target folder on the local machine.
-
     Args:
         body (DownloadRequest):
 
@@ -108,8 +106,6 @@ def sync(
 ) -> Any | DownloadResponse | None:
     """ Download Media Object
 
-     Downloads a specific artwork type for a given asset, to a target folder on the local machine.
-
     Args:
         body (DownloadRequest):
 
@@ -135,8 +131,6 @@ async def asyncio_detailed(
 
 ) -> Response[Any | DownloadResponse]:
     """ Download Media Object
-
-     Downloads a specific artwork type for a given asset, to a target folder on the local machine.
 
     Args:
         body (DownloadRequest):
@@ -168,8 +162,6 @@ async def asyncio(
 
 ) -> Any | DownloadResponse | None:
     """ Download Media Object
-
-     Downloads a specific artwork type for a given asset, to a target folder on the local machine.
 
     Args:
         body (DownloadRequest):

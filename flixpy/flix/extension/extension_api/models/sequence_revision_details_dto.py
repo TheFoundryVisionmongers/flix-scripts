@@ -8,9 +8,12 @@ from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
 
+from ..types import UNSET, Unset
 from typing import cast
 import datetime
 
+if TYPE_CHECKING:
+  from ..models.sequence_revision_details_dto_metadata import SequenceRevisionDetailsDtoMetadata
 
 
 
@@ -29,6 +32,15 @@ class SequenceRevisionDetailsDto:
             owner (str): The user that created the sequence revision.
             published (bool): Whether this sequence revision has been published to editorial.
             comment (str): Any comment added to the sequence revision when saving.
+            shot_names (list[str]): The list of shot names included in the sequence revision, derived from the named shots
+                of the panels in the sequence revision.
+            metadata (SequenceRevisionDetailsDtoMetadata | Unset): Arbitrary key-value metadata to merge into the entity.
+                Each value must be a string, or `null` to delete that key.
+
+                **Note:** Keys in this dictionary are **case-sensitive**.
+
+                Best practice: Use namespaced keys to avoid conflicts with other extensions (e.g., `vendor.plugin:key`).
+                Example: {'com.myextension:status': 'inprogress', 'com.myextension:tag': None}.
      """
 
     id: int
@@ -36,6 +48,8 @@ class SequenceRevisionDetailsDto:
     owner: str
     published: bool
     comment: str
+    shot_names: list[str]
+    metadata: SequenceRevisionDetailsDtoMetadata | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
 
@@ -43,6 +57,7 @@ class SequenceRevisionDetailsDto:
 
 
     def to_dict(self) -> dict[str, Any]:
+        from ..models.sequence_revision_details_dto_metadata import SequenceRevisionDetailsDtoMetadata # noqa: PLC0415
         id = self.id
 
         created_date: None | str
@@ -57,6 +72,14 @@ class SequenceRevisionDetailsDto:
 
         comment = self.comment
 
+        shot_names = self.shot_names
+
+
+
+        metadata: dict[str, Any] | Unset = UNSET
+        if not isinstance(self.metadata, Unset):
+            metadata = self.metadata.to_dict()
+
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -66,7 +89,10 @@ class SequenceRevisionDetailsDto:
             "owner": owner,
             "published": published,
             "comment": comment,
+            "shotNames": shot_names,
         })
+        if metadata is not UNSET:
+            field_dict["metadata"] = metadata
 
         return field_dict
 
@@ -74,6 +100,7 @@ class SequenceRevisionDetailsDto:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+        from ..models.sequence_revision_details_dto_metadata import SequenceRevisionDetailsDtoMetadata # noqa: PLC0415
         d = dict(src_dict)
         id = d.pop("id")
 
@@ -101,12 +128,27 @@ class SequenceRevisionDetailsDto:
 
         comment = d.pop("comment")
 
+        shot_names = cast(list[str], d.pop("shotNames"))
+
+
+        _metadata = d.pop("metadata", UNSET)
+        metadata: SequenceRevisionDetailsDtoMetadata | Unset
+        if isinstance(_metadata,  Unset) or _metadata is None:
+            metadata = UNSET
+        else:
+            metadata = SequenceRevisionDetailsDtoMetadata.from_dict(_metadata)
+
+
+
+
         sequence_revision_details_dto = cls(
             id=id,
             created_date=created_date,
             owner=owner,
             published=published,
             comment=comment,
+            shot_names=shot_names,
+            metadata=metadata,
         )
 
 

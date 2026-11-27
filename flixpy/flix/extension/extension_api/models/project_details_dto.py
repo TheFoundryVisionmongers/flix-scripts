@@ -8,6 +8,7 @@ from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
 
+from ..types import UNSET, Unset
 from typing import cast
 
 if TYPE_CHECKING:
@@ -28,16 +29,16 @@ T = TypeVar("T", bound="ProjectDetailsDto")
 class ProjectDetailsDto:
     """ 
         Attributes:
-            show (None | ShowDetailsDto): Details of the currently opened show.
-            episode (EpisodeDetailsDto | None): Details of the currently opened episode, if in an episodic show.
-            sequence (None | SequenceDetailsDto): Details of the currently opened sequence.
-            sequence_revision (None | SequenceRevisionDetailsDto): Details of the currently opened sequence revision.
+            show (ShowDetailsDto | Unset):
+            episode (EpisodeDetailsDto | Unset):
+            sequence (SequenceDetailsDto | Unset):
+            sequence_revision (SequenceRevisionDetailsDto | Unset):
      """
 
-    show: None | ShowDetailsDto
-    episode: EpisodeDetailsDto | None
-    sequence: None | SequenceDetailsDto
-    sequence_revision: None | SequenceRevisionDetailsDto
+    show: ShowDetailsDto | Unset = UNSET
+    episode: EpisodeDetailsDto | Unset = UNSET
+    sequence: SequenceDetailsDto | Unset = UNSET
+    sequence_revision: SequenceRevisionDetailsDto | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
 
@@ -49,39 +50,35 @@ class ProjectDetailsDto:
         from ..models.sequence_details_dto import SequenceDetailsDto # noqa: PLC0415
         from ..models.sequence_revision_details_dto import SequenceRevisionDetailsDto # noqa: PLC0415
         from ..models.show_details_dto import ShowDetailsDto # noqa: PLC0415
-        show: dict[str, Any] | None
-        if isinstance(self.show, ShowDetailsDto):
+        show: dict[str, Any] | Unset = UNSET
+        if not isinstance(self.show, Unset):
             show = self.show.to_dict()
-        else:
-            show = self.show
 
-        episode: dict[str, Any] | None
-        if isinstance(self.episode, EpisodeDetailsDto):
+        episode: dict[str, Any] | Unset = UNSET
+        if not isinstance(self.episode, Unset):
             episode = self.episode.to_dict()
-        else:
-            episode = self.episode
 
-        sequence: dict[str, Any] | None
-        if isinstance(self.sequence, SequenceDetailsDto):
+        sequence: dict[str, Any] | Unset = UNSET
+        if not isinstance(self.sequence, Unset):
             sequence = self.sequence.to_dict()
-        else:
-            sequence = self.sequence
 
-        sequence_revision: dict[str, Any] | None
-        if isinstance(self.sequence_revision, SequenceRevisionDetailsDto):
+        sequence_revision: dict[str, Any] | Unset = UNSET
+        if not isinstance(self.sequence_revision, Unset):
             sequence_revision = self.sequence_revision.to_dict()
-        else:
-            sequence_revision = self.sequence_revision
 
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({
-            "show": show,
-            "episode": episode,
-            "sequence": sequence,
-            "sequenceRevision": sequence_revision,
         })
+        if show is not UNSET:
+            field_dict["show"] = show
+        if episode is not UNSET:
+            field_dict["episode"] = episode
+        if sequence is not UNSET:
+            field_dict["sequence"] = sequence
+        if sequence_revision is not UNSET:
+            field_dict["sequenceRevision"] = sequence_revision
 
         return field_dict
 
@@ -94,76 +91,44 @@ class ProjectDetailsDto:
         from ..models.sequence_revision_details_dto import SequenceRevisionDetailsDto # noqa: PLC0415
         from ..models.show_details_dto import ShowDetailsDto # noqa: PLC0415
         d = dict(src_dict)
-        def _parse_show(data: object) -> None | ShowDetailsDto:
-            if data is None:
-                return data
-            try:
-                if not isinstance(data, dict):
-                    raise TypeError()
-                show_type_1 = ShowDetailsDto.from_dict(data)
+        _show = d.pop("show", UNSET)
+        show: ShowDetailsDto | Unset
+        if isinstance(_show,  Unset) or _show is None:
+            show = UNSET
+        else:
+            show = ShowDetailsDto.from_dict(_show)
 
 
 
-                return show_type_1
-            except (TypeError, ValueError, AttributeError, KeyError):
-                pass
-            return cast(None | ShowDetailsDto, data)
 
-        show = _parse_show(d.pop("show"))
-
-
-        def _parse_episode(data: object) -> EpisodeDetailsDto | None:
-            if data is None:
-                return data
-            try:
-                if not isinstance(data, dict):
-                    raise TypeError()
-                episode_type_1 = EpisodeDetailsDto.from_dict(data)
+        _episode = d.pop("episode", UNSET)
+        episode: EpisodeDetailsDto | Unset
+        if isinstance(_episode,  Unset) or _episode is None:
+            episode = UNSET
+        else:
+            episode = EpisodeDetailsDto.from_dict(_episode)
 
 
 
-                return episode_type_1
-            except (TypeError, ValueError, AttributeError, KeyError):
-                pass
-            return cast(EpisodeDetailsDto | None, data)
 
-        episode = _parse_episode(d.pop("episode"))
-
-
-        def _parse_sequence(data: object) -> None | SequenceDetailsDto:
-            if data is None:
-                return data
-            try:
-                if not isinstance(data, dict):
-                    raise TypeError()
-                sequence_type_1 = SequenceDetailsDto.from_dict(data)
+        _sequence = d.pop("sequence", UNSET)
+        sequence: SequenceDetailsDto | Unset
+        if isinstance(_sequence,  Unset) or _sequence is None:
+            sequence = UNSET
+        else:
+            sequence = SequenceDetailsDto.from_dict(_sequence)
 
 
 
-                return sequence_type_1
-            except (TypeError, ValueError, AttributeError, KeyError):
-                pass
-            return cast(None | SequenceDetailsDto, data)
 
-        sequence = _parse_sequence(d.pop("sequence"))
-
-
-        def _parse_sequence_revision(data: object) -> None | SequenceRevisionDetailsDto:
-            if data is None:
-                return data
-            try:
-                if not isinstance(data, dict):
-                    raise TypeError()
-                sequence_revision_type_1 = SequenceRevisionDetailsDto.from_dict(data)
+        _sequence_revision = d.pop("sequenceRevision", UNSET)
+        sequence_revision: SequenceRevisionDetailsDto | Unset
+        if isinstance(_sequence_revision,  Unset) or _sequence_revision is None:
+            sequence_revision = UNSET
+        else:
+            sequence_revision = SequenceRevisionDetailsDto.from_dict(_sequence_revision)
 
 
-
-                return sequence_revision_type_1
-            except (TypeError, ValueError, AttributeError, KeyError):
-                pass
-            return cast(None | SequenceRevisionDetailsDto, data)
-
-        sequence_revision = _parse_sequence_revision(d.pop("sequenceRevision"))
 
 
         project_details_dto = cls(

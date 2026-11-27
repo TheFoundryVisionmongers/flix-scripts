@@ -9,6 +9,7 @@ from ...types import Response, UNSET
 from ... import errors
 
 from ...models.bulk_panel_request import BulkPanelRequest
+from ...models.full_panel_request import FullPanelRequest
 from ...models.panel_request_response import PanelRequestResponse
 from typing import cast
 
@@ -16,7 +17,7 @@ from typing import cast
 
 def _get_kwargs(
     *,
-    body: BulkPanelRequest,
+    body: BulkPanelRequest | FullPanelRequest,
 
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
@@ -31,7 +32,12 @@ def _get_kwargs(
         "url": "/panels",
     }
 
-    _kwargs["json"] = body.to_dict()
+    
+    if isinstance(body, BulkPanelRequest):
+        _kwargs["json"] = body.to_dict()
+    else:
+        _kwargs["json"] = body.to_dict()
+
 
     headers["Content-Type"] = "application/json"
 
@@ -70,15 +76,13 @@ def _build_response(*, client: AuthenticatedClient | Client, response: httpx2.Re
 def sync_detailed(
     *,
     client: AuthenticatedClient,
-    body: BulkPanelRequest,
+    body: BulkPanelRequest | FullPanelRequest,
 
 ) -> Response[Any | PanelRequestResponse]:
     """ Create New Panels
 
-     Creates new panels in the active sequence revision from the list of provided file paths.
-
     Args:
-        body (BulkPanelRequest):
+        body (BulkPanelRequest | FullPanelRequest):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -103,15 +107,13 @@ def sync_detailed(
 def sync(
     *,
     client: AuthenticatedClient,
-    body: BulkPanelRequest,
+    body: BulkPanelRequest | FullPanelRequest,
 
 ) -> Any | PanelRequestResponse | None:
     """ Create New Panels
 
-     Creates new panels in the active sequence revision from the list of provided file paths.
-
     Args:
-        body (BulkPanelRequest):
+        body (BulkPanelRequest | FullPanelRequest):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -131,15 +133,13 @@ body=body,
 async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
-    body: BulkPanelRequest,
+    body: BulkPanelRequest | FullPanelRequest,
 
 ) -> Response[Any | PanelRequestResponse]:
     """ Create New Panels
 
-     Creates new panels in the active sequence revision from the list of provided file paths.
-
     Args:
-        body (BulkPanelRequest):
+        body (BulkPanelRequest | FullPanelRequest):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -164,15 +164,13 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: AuthenticatedClient,
-    body: BulkPanelRequest,
+    body: BulkPanelRequest | FullPanelRequest,
 
 ) -> Any | PanelRequestResponse | None:
     """ Create New Panels
 
-     Creates new panels in the active sequence revision from the list of provided file paths.
-
     Args:
-        body (BulkPanelRequest):
+        body (BulkPanelRequest | FullPanelRequest):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

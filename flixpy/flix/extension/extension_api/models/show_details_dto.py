@@ -8,8 +8,11 @@ from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
 
+from ..types import UNSET, Unset
 from typing import cast
 
+if TYPE_CHECKING:
+  from ..models.show_details_dto_metadata import ShowDetailsDtoMetadata
 
 
 
@@ -26,13 +29,23 @@ class ShowDetailsDto:
             id (int): The Flix identifier for the show.
             tracking_code (str): The show's tracking code.
             title (None | str): The show's display title.
-            aspect_ratio (float): The configured aspect ratio for the show.
+            aspect_ratio (float): The configured aspect ratio for the active sequence or show.
+            default_aspect_ratio (float): The configured default aspect ratio for the sequence.
+            metadata (ShowDetailsDtoMetadata | Unset): Arbitrary key-value metadata to merge into the entity. Each value
+                must be a string, or `null` to delete that key.
+
+                **Note:** Keys in this dictionary are **case-sensitive**.
+
+                Best practice: Use namespaced keys to avoid conflicts with other extensions (e.g., `vendor.plugin:key`).
+                Example: {'com.myextension:status': 'inprogress', 'com.myextension:tag': None}.
      """
 
     id: int
     tracking_code: str
     title: None | str
     aspect_ratio: float
+    default_aspect_ratio: float
+    metadata: ShowDetailsDtoMetadata | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
 
@@ -40,6 +53,7 @@ class ShowDetailsDto:
 
 
     def to_dict(self) -> dict[str, Any]:
+        from ..models.show_details_dto_metadata import ShowDetailsDtoMetadata # noqa: PLC0415
         id = self.id
 
         tracking_code = self.tracking_code
@@ -49,6 +63,12 @@ class ShowDetailsDto:
 
         aspect_ratio = self.aspect_ratio
 
+        default_aspect_ratio = self.default_aspect_ratio
+
+        metadata: dict[str, Any] | Unset = UNSET
+        if not isinstance(self.metadata, Unset):
+            metadata = self.metadata.to_dict()
+
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -57,7 +77,10 @@ class ShowDetailsDto:
             "trackingCode": tracking_code,
             "title": title,
             "aspectRatio": aspect_ratio,
+            "defaultAspectRatio": default_aspect_ratio,
         })
+        if metadata is not UNSET:
+            field_dict["metadata"] = metadata
 
         return field_dict
 
@@ -65,6 +88,7 @@ class ShowDetailsDto:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+        from ..models.show_details_dto_metadata import ShowDetailsDtoMetadata # noqa: PLC0415
         d = dict(src_dict)
         id = d.pop("id")
 
@@ -80,11 +104,25 @@ class ShowDetailsDto:
 
         aspect_ratio = d.pop("aspectRatio")
 
+        default_aspect_ratio = d.pop("defaultAspectRatio")
+
+        _metadata = d.pop("metadata", UNSET)
+        metadata: ShowDetailsDtoMetadata | Unset
+        if isinstance(_metadata,  Unset) or _metadata is None:
+            metadata = UNSET
+        else:
+            metadata = ShowDetailsDtoMetadata.from_dict(_metadata)
+
+
+
+
         show_details_dto = cls(
             id=id,
             tracking_code=tracking_code,
             title=title,
             aspect_ratio=aspect_ratio,
+            default_aspect_ratio=default_aspect_ratio,
+            metadata=metadata,
         )
 
 

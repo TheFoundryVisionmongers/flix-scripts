@@ -82,8 +82,6 @@ def sync_detailed(
 ) -> Response[Any | RegistrationResponse]:
     """ Register API consumer
 
-     Processes a registration request from a new API consumer.
-
     Args:
         body (RegistrationRequest):
 
@@ -115,8 +113,6 @@ def sync(
 ) -> Any | RegistrationResponse | None:
     """ Register API consumer
 
-     Processes a registration request from a new API consumer.
-
     Args:
         body (RegistrationRequest):
 
@@ -142,8 +138,6 @@ async def asyncio_detailed(
 
 ) -> Response[Any | RegistrationResponse]:
     """ Register API consumer
-
-     Processes a registration request from a new API consumer.
 
     Args:
         body (RegistrationRequest):
@@ -175,8 +169,6 @@ async def asyncio(
 
 ) -> Any | RegistrationResponse | None:
     """ Register API consumer
-
-     Processes a registration request from a new API consumer.
 
     Args:
         body (RegistrationRequest):
