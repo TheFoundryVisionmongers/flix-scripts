@@ -92,7 +92,7 @@ class ProjectDetails:
         sequence: flix_types.Sequence | None = None
         sequence_revision: flix_types.SequenceRevision | None = None
 
-        if not isinstance(data.show, Unset):
+        if data.show:
             show = flix_types.Show(
                 show_id=data.show.id,
                 tracking_code=data.show.tracking_code,
@@ -102,7 +102,7 @@ class ProjectDetails:
                 _client=None,
             )
 
-            if not isinstance(data.episode, Unset):
+            if data.episode:
                 episode = flix_types.Episode(
                     episode_id=data.episode.id,
                     tracking_code=data.episode.tracking_code,
@@ -114,7 +114,7 @@ class ProjectDetails:
                     _client=None,
                 )
 
-            if not isinstance(data.sequence, Unset):
+            if data.sequence:
                 sequence = flix_types.Sequence(
                     sequence_id=data.sequence.id,
                     tracking_code=data.sequence.tracking_code,
@@ -127,7 +127,7 @@ class ProjectDetails:
                     _client=None,
                 )
 
-                if not isinstance((rev := data.sequence_revision), Unset):
+                if (rev := data.sequence_revision):
                     sequence_revision = flix_types.SequenceRevision(
                         revision_number=rev.id,
                         published=rev.published,
